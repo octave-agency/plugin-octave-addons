@@ -1,0 +1,341 @@
+/*
+BREAKDANCE AJAX FILTERING
+-- Styles native filter enhancements, loading feedback, and AJAX navigation
+---------------------------------------------------------- */
+
+/*
+Configuration payload
+-- The module reads term IDs and counts from this block; the visible interface
+-- is always Breakdance's own Filter Bar
+-- The wrapper itself stays in the accessibility tree so its live region can
+-- announce loading and result changes
+---------------------------------------------------------- */
+
+.oa-breakdance-ajax-controls {
+    margin: 0;
+}
+
+.oa-breakdance-ajax-controls__form {
+    display: none !important;
+}
+
+.oa-breakdance-ajax-feedback {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.baa-results,
+[class*="bde-post-list-"],
+[class*="bde-post-loop-builder-"] {
+    scroll-margin-top: 24px;
+}
+
+/*
+Native Breakdance loop
+---------------------------------------------------------- */
+
+.oa-breakdance-ajax-target {
+    position: relative;
+}
+
+.oa-breakdance-ajax-target > .ee-posts {
+    height: auto !important;
+}
+
+.oa-breakdance-ajax-target > .ee-posts > .ee-post {
+    position: static !important;
+    inset: auto !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+.oa-breakdance-ajax-target > .ee-posts > .ee-post-gutter,
+.oa-breakdance-ajax-target > .ee-posts > .ee-post-sizer {
+    display: none !important;
+}
+
+.oa-breakdance-ajax-target > .bde-post-pagination,
+.oa-breakdance-ajax-target > .bde-pagination {
+    display: none !important;
+}
+
+.oa-breakdance-ajax-native-filter button:disabled {
+    cursor: wait;
+}
+
+/*
+Result status and loader
+---------------------------------------------------------- */
+
+.oa-breakdance-ajax-status {
+    display: flex;
+    min-height: 28px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 2px 0 24px;
+}
+
+.oa-breakdance-ajax-count {
+    margin: 0;
+    color: var(--bde-body-text-color, #302942);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.oa-breakdance-ajax-loader {
+    display: flex;
+    visibility: hidden;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 14px 5px 10px;
+    border-radius: 999px;
+    background: rgb(103 78 255 / 8%);
+    color: var(--bde-body-text-color, #302942);
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.oa-breakdance-ajax-error {
+    flex: 0 0 100%;
+    margin: 0;
+    color: #b42318;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.oa-breakdance-ajax-empty {
+    margin: 0 0 8px;
+    color: var(--bde-body-text-color, #302942);
+    font-size: 16px;
+}
+
+.oa-breakdance-ajax-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgb(103 78 255 / 22%);
+    border-top-color: #674eff;
+    border-radius: 50%;
+    animation: oa-breakdance-ajax-spin 700ms linear infinite;
+}
+
+.oa-breakdance-ajax-is-loading .oa-breakdance-ajax-loader {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.oa-breakdance-ajax-is-loading > .ee-posts {
+    pointer-events: none;
+}
+
+/*
+Skeleton placeholders
+---------------------------------------------------------- */
+
+.ee-posts.oa-breakdance-ajax-is-replacing > .ee-post:not(.oa-breakdance-ajax-skeleton) {
+    display: none !important;
+}
+
+.oa-breakdance-ajax-skeleton {
+    display: flex !important;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.oa-breakdance-ajax-skeleton__media {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 12px;
+}
+
+.oa-breakdance-ajax-skeleton__body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 2px 6px;
+}
+
+.oa-breakdance-ajax-skeleton__line {
+    display: block;
+    height: 12px;
+    border-radius: 6px;
+}
+
+.oa-breakdance-ajax-skeleton__line:nth-child(1) {
+    width: 42%;
+    height: 10px;
+}
+
+.oa-breakdance-ajax-skeleton__line:nth-child(2) {
+    width: 100%;
+    height: 16px;
+}
+
+.oa-breakdance-ajax-skeleton__line:nth-child(3) {
+    width: 72%;
+    height: 16px;
+}
+
+.oa-breakdance-ajax-skeleton__media,
+.oa-breakdance-ajax-skeleton__line {
+    background: linear-gradient(90deg, rgb(48 41 66 / 7%) 25%, rgb(48 41 66 / 13%) 37%, rgb(48 41 66 / 7%) 63%);
+    background-size: 400% 100%;
+    animation: oa-breakdance-ajax-shimmer 1400ms ease-in-out infinite;
+}
+
+@keyframes oa-breakdance-ajax-spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+@keyframes oa-breakdance-ajax-shimmer {
+
+    from {
+        background-position: 100% 50%;
+    }
+
+    to {
+        background-position: 0 50%;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .oa-breakdance-ajax-spinner,
+    .oa-breakdance-ajax-skeleton__media,
+    .oa-breakdance-ajax-skeleton__line,
+    .oa-breakdance-ajax-load-more.is-loading::before {
+        animation-duration: 0ms;
+    }
+
+    .oa-breakdance-ajax-loader {
+        transition: none;
+    }
+
+}
+
+/*
+Load More and pagination
+---------------------------------------------------------- */
+
+.oa-breakdance-ajax-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 34px;
+}
+
+.oa-breakdance-ajax-load-more,
+.oa-breakdance-ajax-page {
+    display: inline-flex;
+    box-sizing: border-box;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #674eff;
+    border-radius: 999px;
+    background: #fff;
+    color: #674eff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.oa-breakdance-ajax-load-more {
+    gap: 11px;
+    padding: 12px 34px;
+    background: #674eff;
+    color: #fff;
+}
+
+.oa-breakdance-ajax-load-more:hover,
+.oa-breakdance-ajax-load-more:focus-visible {
+    background: #5038ed;
+    transform: translateY(-1px);
+}
+
+.oa-breakdance-ajax-load-more.is-loading {
+    cursor: wait;
+    transform: none;
+}
+
+.oa-breakdance-ajax-load-more.is-loading::before {
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgb(255 255 255 / 35%);
+    border-top-color: #fff;
+    border-radius: 50%;
+    content: "";
+    animation: oa-breakdance-ajax-spin 700ms linear infinite;
+}
+
+.oa-breakdance-ajax-page {
+    min-width: 46px;
+    height: 46px;
+    padding: 0 6px;
+}
+
+.oa-breakdance-ajax-page:hover,
+.oa-breakdance-ajax-page:focus-visible,
+.oa-breakdance-ajax-page.is-active {
+    background: #674eff;
+    color: #fff;
+}
+
+.oa-breakdance-ajax-page.is-active {
+    cursor: default;
+}
+
+.oa-breakdance-ajax-page--previous,
+.oa-breakdance-ajax-page--next {
+    padding-right: 20px;
+    padding-left: 20px;
+}
+
+.oa-breakdance-ajax-pagination__ellipsis {
+    padding: 0 4px;
+    color: var(--bde-body-text-color, #302942);
+}
+
+.oa-breakdance-ajax-navigation button:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+@media (max-width: 767px) {
+
+    .oa-breakdance-ajax-status {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .oa-breakdance-ajax-navigation {
+        flex-wrap: wrap;
+    }
+
+    .oa-breakdance-ajax-page--previous,
+    .oa-breakdance-ajax-page--next {
+        width: 100%;
+    }
+
+}

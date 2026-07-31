@@ -3,7 +3,7 @@
 A modular WordPress plugin by Octave Agency. One settings screen, many
 toggleable add-ons, and native WordPress updates powered by GitHub Releases.
 
-## What's inside (v1.0.1)
+## What's inside (v1.4.0)
 
 | Add-on | Description |
 | --- | --- |
@@ -13,6 +13,8 @@ toggleable add-ons, and native WordPress updates powered by GitHub Releases.
 | **Custom Login** | Provides a configurable branded WordPress login screen. |
 | **Mobile Contact Popup** | Adds a configurable contact popup for mobile visitors. |
 | **Breakdance Custom Elements** | Provides a persistent location for locally saved Breakdance elements. |
+| **Breakdance AJAX Filtering** | Adds server-backed filtering and pagination to every Breakdance loop with a Filter Bar. |
+| **Custom Post Types** | Adds root-level Landing Pages and configurable Case Studies with optional categories. |
 
 ## Folder layout
 

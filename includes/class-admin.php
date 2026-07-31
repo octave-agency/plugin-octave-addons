@@ -92,6 +92,9 @@ class Octave_Addons_Admin {
 			'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
 			'nonce'            => wp_create_nonce( 'oa_icon_picker' ),
 			'breakdanceActive' => function_exists( 'Breakdance\Icons\find_icons' ),
+			'savedText'        => __( 'All changes saved', 'octave-addons' ),
+			'unsavedText'      => __( 'Unsaved changes', 'octave-addons' ),
+			'savingText'       => __( 'Saving changes…', 'octave-addons' ),
 		] );
 
 	}
@@ -202,6 +205,22 @@ class Octave_Addons_Admin {
 		$all        = $this->modules->visible_in_admin();
 		$active_tab = $this->current_tab();
 		$icon_url   = OCTAVE_ADDONS_URL . 'assets/admin-icon.png';
+
+		$module_settings = [];
+		$enabled_count   = 0;
+
+		foreach ( $all as $id => $module ) {
+
+			$module_settings[ $id ] = $this->modules->settings_for( $id );
+
+			if ( ! empty( $module_settings[ $id ]['enabled'] ) ) {
+
+				$enabled_count++;
+
+			}
+
+		}
+
 		?>
 
 		<div class="wrap octave-addons-wrap">
@@ -210,10 +229,12 @@ class Octave_Addons_Admin {
 
 				<aside class="oa-sidebar">
 					<div class="oa-sidebar-brand">
-						<img src="<?= esc_url( $icon_url ); ?>" alt="" class="oa-brand-icon">
+						<span class="oa-brand-mark">
+							<img src="<?= esc_url( $icon_url ); ?>" alt="" class="oa-brand-icon">
+						</span>
 						<div class="oa-brand-info">
 							<span class="oa-brand-name"><?php esc_html_e( 'Octave Addons', 'octave-addons' ); ?></span>
-							<span class="oa-brand-version">v<?= esc_html( OCTAVE_ADDONS_VERSION ); ?></span>
+							<span class="oa-brand-version"><?php esc_html_e( 'Site toolkit', 'octave-addons' ); ?> · v<?= esc_html( OCTAVE_ADDONS_VERSION ); ?></span>
 						</div>
 					</div>
 
@@ -224,10 +245,11 @@ class Octave_Addons_Admin {
 					?>
 
 					<nav class="oa-nav" aria-label="<?php esc_attr_e( 'Modules', 'octave-addons' ); ?>">
+						<span class="oa-nav-heading"><?php esc_html_e( 'Modules', 'octave-addons' ); ?></span>
 						<?php
 
 						foreach ( $all as $id => $module ) :
-							$settings  = $this->modules->settings_for( $id );
+							$settings  = $module_settings[ $id ];
 							$enabled   = ! empty( $settings['enabled'] );
 							$url       = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG, 'tab' => $id ], admin_url( 'admin.php' ) );
 							$is_active = ( $id === $active_tab );
@@ -271,9 +293,51 @@ class Octave_Addons_Admin {
 
 					?>
 
+					<div class="oa-sidebar-footer">
+						<span class="oa-sidebar-status" aria-hidden="true"></span>
+						<span>
+							<strong class="oa-enabled-count"><?= esc_html( (string) $enabled_count ); ?></strong>
+							<?php
+
+							printf(
+								/* translators: %d: total number of modules. */
+								esc_html__( 'of %d modules active', 'octave-addons' ),
+								count( $all )
+							);
+
+							?>
+						</span>
+					</div>
+
 				</aside>
 
 				<div class="oa-content">
+					<section class="oa-hero">
+						<div class="oa-hero-copy">
+							<span class="oa-eyebrow"><?php esc_html_e( 'Octave site toolkit', 'octave-addons' ); ?></span>
+							<h1><?php esc_html_e( 'Shape a better WordPress experience.', 'octave-addons' ); ?></h1>
+							<p><?php esc_html_e( 'Activate focused enhancements, tune their behaviour, and keep every site capability organised in one place.', 'octave-addons' ); ?></p>
+						</div>
+						<div class="oa-hero-visual" aria-hidden="true">
+							<span class="oa-orbit oa-orbit-one"></span>
+							<span class="oa-orbit oa-orbit-two"></span>
+							<span class="oa-hero-core"><?= esc_html( (string) count( $all ) ); ?></span>
+						</div>
+						<div class="oa-hero-stats">
+							<div class="oa-stat">
+								<strong class="oa-enabled-count"><?= esc_html( (string) $enabled_count ); ?></strong>
+								<span><?php esc_html_e( 'Active modules', 'octave-addons' ); ?></span>
+							</div>
+							<div class="oa-stat">
+								<strong><?= esc_html( (string) count( $all ) ); ?></strong>
+								<span><?php esc_html_e( 'Available tools', 'octave-addons' ); ?></span>
+							</div>
+							<div class="oa-stat oa-stat-status">
+								<strong><span class="oa-live-dot"></span><?php esc_html_e( 'Ready', 'octave-addons' ); ?></strong>
+								<span><?php esc_html_e( 'Configuration status', 'octave-addons' ); ?></span>
+							</div>
+						</div>
+					</section>
 
 					<?php settings_errors(); ?>
 					<?php
@@ -297,13 +361,14 @@ class Octave_Addons_Admin {
 						<?php
 
 						foreach ( $all as $id => $module ) :
-							$settings  = $this->modules->settings_for( $id );
+							$settings  = $module_settings[ $id ];
 							$is_active = ( $id === $active_tab );
 						?>
 
 							<div class="oa-panel<?= $is_active ? '' : ' oa-hidden'; ?>" id="oa-panel-<?= esc_attr( $id ); ?>">
 								<div class="oa-panel-head">
 									<div class="oa-panel-head-text">
+										<span class="oa-panel-kicker"><?php esc_html_e( 'Module settings', 'octave-addons' ); ?></span>
 										<h2 class="oa-panel-title"><?= esc_html( $module->get_title() ); ?></h2>
 										<p class="oa-panel-desc"><?= esc_html( $module->get_description() ); ?></p>
 									</div>
@@ -339,6 +404,10 @@ class Octave_Addons_Admin {
 						?>
 
 						<div class="oa-save-bar">
+							<div class="oa-save-state" role="status" aria-live="polite">
+								<span class="oa-save-state-dot" aria-hidden="true"></span>
+								<span class="oa-save-state-text"><?php esc_html_e( 'All changes saved', 'octave-addons' ); ?></span>
+							</div>
 							<?php submit_button( __( 'Save settings', 'octave-addons' ), 'primary', 'submit', false ); ?>
 						</div>
 

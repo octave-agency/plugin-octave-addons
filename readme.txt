@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        1.0.1
+Stable tag:        1.4.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -14,7 +14,7 @@ as self-contained modules.
 
 == Description ==
 
-Octave Addons ships with three add-ons out of the box:
+Octave Addons ships with a growing collection of focused modules:
 
 *   **Empty Link Highlighter** – visually flags `<a>` tags with empty
     `href` or `href="#"` so editors can spot broken navigation.
@@ -22,6 +22,10 @@ Octave Addons ships with three add-ons out of the box:
     (post types, REST endpoint, admin menus, admin bar).
 *   **Scroll Animations** – enqueues Octave's fade/slide-in CSS and
     IntersectionObserver JS, with an editable override for each file.
+*   **Breakdance AJAX Filtering** – adds server-backed filtering and
+    pagination to Breakdance loops with a Filter Bar.
+*   **Custom Post Types** – adds configurable content types, beginning
+    with Landing Pages at clean root-level URLs.
 
 Each add-on has its own tab under *Octave Addons* in the WordPress
 admin. Adding a new add-on later is a drop-in operation — create a
@@ -41,6 +45,21 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 1.4.0 =
+* Added an optional Landing Page URL slug while retaining root-level URLs by default.
+
+= 1.3.0 =
+* Added configurable Case Studies, archive routing, and optional Case Study Categories.
+
+= 1.2.0 =
+* Added configurable Landing Pages with page-style editing and root-level URLs.
+
+= 1.1.0 =
+* Redesigned the admin experience with a modern dashboard, responsive navigation, live module totals, and save-state feedback.
+
+= 1.0.2 =
+* Added global Breakdance AJAX filtering with Breakdance availability checks.
 
 = 1.0.1 =
 * Replaced the legacy manifest updater with GitHub Releases integration.

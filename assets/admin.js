@@ -46,6 +46,77 @@
 		});
 	}
 
+	/*
+	SETTINGS FEEDBACK
+	-- Tracks unsaved changes and keeps active-module totals current
+	---------------------------------------------------------- */
+
+	var settingsForm = document.querySelector( '.oa-form' );
+	var saveBar = document.querySelector( '.oa-save-bar' );
+	var saveStateText = document.querySelector( '.oa-save-state-text' );
+
+	function setSaveState( state ) {
+
+		if ( ! saveBar || ! saveStateText || ! window.oaAdmin ) {
+
+			return;
+
+		}
+
+		saveBar.classList.toggle( 'has-changes', 'changed' === state );
+		saveBar.classList.toggle( 'is-saving', 'saving' === state );
+
+		if ( 'changed' === state ) {
+
+			saveStateText.textContent = oaAdmin.unsavedText;
+
+		} else if ( 'saving' === state ) {
+
+			saveStateText.textContent = oaAdmin.savingText;
+
+		} else {
+
+			saveStateText.textContent = oaAdmin.savedText;
+
+		}
+
+	}
+
+	function syncEnabledCounts() {
+
+		var enabledCount = document.querySelectorAll( '.oa-enable-toggle:checked' ).length;
+
+		document.querySelectorAll( '.oa-enabled-count' ).forEach( function ( count ) {
+
+			count.textContent = enabledCount;
+
+		} );
+
+	}
+
+	if ( settingsForm ) {
+
+		settingsForm.addEventListener( 'input', function () {
+
+			setSaveState( 'changed' );
+
+		} );
+
+		settingsForm.addEventListener( 'change', function () {
+
+			setSaveState( 'changed' );
+			syncEnabledCounts();
+
+		} );
+
+		settingsForm.addEventListener( 'submit', function () {
+
+			setSaveState( 'saving' );
+
+		} );
+
+	}
+
 	/* ---- Breakdance icon picker ---- */
 	(function () {
 		if (!window.oaAdmin || !oaAdmin.breakdanceActive) return;
@@ -165,6 +236,7 @@
 				input.value = svgCode;
 				updatePreview(input, svgCode);
 				showClearBtn(input, true);
+				input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 			}
 			closeModal();
 		}
@@ -237,6 +309,7 @@
 				input.value = '';
 				updatePreview(input, '');
 				showClearBtn(input, false);
+				input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 			});
 		}
 
