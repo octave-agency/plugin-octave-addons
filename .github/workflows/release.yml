@@ -2,8 +2,8 @@ name: Build WordPress release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -17,26 +17,47 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Verify tag matches plugin version
+      - name: Read and verify plugin version
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
 
           plugin_version="$(sed -n 's/^ \* Version:[[:space:]]*//p' octave-addons/octave-addons.php | head -n 1)"
-          tag_version="${GITHUB_REF_NAME#v}"
+          stable_tag="$(sed -n 's/^Stable tag:[[:space:]]*//p' octave-addons/readme.txt | head -n 1)"
+          release_tag="v${plugin_version}"
 
-          if [[ "$plugin_version" != "$tag_version" ]]; then
-              echo "Plugin version $plugin_version does not match tag $GITHUB_REF_NAME."
+          if [[ ! "$plugin_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Plugin version $plugin_version is not valid semantic versioning."
               exit 1
           fi
 
+          if [[ "$plugin_version" != "$stable_tag" ]]; then
+              echo "Plugin version $plugin_version does not match stable tag $stable_tag."
+              exit 1
+          fi
+
+          echo "plugin_version=$plugin_version" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+
+          if gh release view "$release_tag" >/dev/null 2>&1; then
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+              echo "Release $release_tag already exists; nothing to publish."
+          else
+              echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build WordPress installation ZIP
+        if: steps.release.outputs.publish == 'true'
         shell: bash
+        env:
+          PLUGIN_VERSION: ${{ steps.release.outputs.plugin_version }}
         run: |
           set -euo pipefail
 
-          plugin_version="${GITHUB_REF_NAME#v}"
-          versioned_package="octave-addons_${plugin_version}.zip"
+          versioned_package="octave-addons_${PLUGIN_VERSION}.zip"
 
           git archive \
               --format=zip \
@@ -47,12 +68,14 @@ jobs:
           cp "$versioned_package" octave-addons.zip
 
       - name: Verify package structure
+        if: steps.release.outputs.publish == 'true'
         shell: bash
+        env:
+          PLUGIN_VERSION: ${{ steps.release.outputs.plugin_version }}
         run: |
           set -euo pipefail
 
-          plugin_version="${GITHUB_REF_NAME#v}"
-          versioned_package="octave-addons_${plugin_version}.zip"
+          versioned_package="octave-addons_${PLUGIN_VERSION}.zip"
 
           for package in "$versioned_package" octave-addons.zip; do
               unzip -t "$package"
@@ -64,17 +87,20 @@ jobs:
           cmp -s "$versioned_package" octave-addons.zip
 
       - name: Create GitHub release
+        if: steps.release.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          PLUGIN_VERSION: ${{ steps.release.outputs.plugin_version }}
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         shell: bash
         run: |
           set -euo pipefail
 
-          plugin_version="${GITHUB_REF_NAME#v}"
-          versioned_package="octave-addons_${plugin_version}.zip"
+          versioned_package="octave-addons_${PLUGIN_VERSION}.zip"
 
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-              gh release upload "$GITHUB_REF_NAME" "$versioned_package" octave-addons.zip --clobber
-          else
-              gh release create "$GITHUB_REF_NAME" "$versioned_package" octave-addons.zip --generate-notes --title "$GITHUB_REF_NAME"
-          fi
+          gh release create "$RELEASE_TAG" \
+              "$versioned_package" \
+              octave-addons.zip \
+              --generate-notes \
+              --target "$GITHUB_SHA" \
+              --title "$RELEASE_TAG"
