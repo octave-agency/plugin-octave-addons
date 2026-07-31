@@ -1,0 +1,4 @@
+# Ignore custom client elements — keep only this folder scaffold
+*
+!.gitignore
+!.gitkeep

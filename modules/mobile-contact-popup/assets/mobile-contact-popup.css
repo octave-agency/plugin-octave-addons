@@ -1,0 +1,247 @@
+/*
+MOBILE CONTACT POPUP — MOBILE VIEWPORTS ONLY
+-------------------------------------------------------- */
+
+#oaContactPopupBar,
+#oaContactPopupWrap {
+    display: none;
+}
+
+@media (max-width: 767px) {
+
+    /*
+    STICKY BAR
+    -------------------------------------------------------- */
+
+    #oaContactPopupBar {
+        display: flex ;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999997;
+        width: 100%;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    #oaContactPopupBar svg {
+        height: 18px;
+        width: auto;
+    }
+
+    #oaContactPopupBar svg:not([fill="none"]) {
+        fill: currentColor;
+    }
+
+    /*
+    BAR BUTTONS (trigger + optional call button)
+    -------------------------------------------------------- */
+
+    #oaContactPopupTrigger,
+    #oaContactCallBtn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex: 1 1 0%;
+        width: auto;
+        min-width: 0;
+        max-width: none;
+        padding: 15px 16px;
+        margin: 0;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        line-height: 1;
+        border: none;
+        border-radius: 0;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        text-decoration: none;
+        box-sizing: border-box;
+        /* colours come from inline style attributes */
+    }
+
+    #oaContactPopupTrigger:active,
+    #oaContactCallBtn:active {
+        filter: brightness(0.82);
+    }
+
+    /* Subtle separator between call btn and trigger */
+    #oaContactCallBtn + #oaContactPopupTrigger {
+        border-left: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /*
+    BACKDROP OVERLAY
+    -------------------------------------------------------- */
+
+    #oaContactPopupWrap {
+        display: block;
+    }
+
+    #oaContactPopupOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 9999998;
+        -webkit-backdrop-filter: blur(2px);
+        backdrop-filter: blur(2px);
+    }
+
+    #oaContactPopupWrap.is-open #oaContactPopupOverlay {
+        display: block;
+    }
+
+    /*
+    POPUP SHEET
+    -------------------------------------------------------- */
+
+    #oaContactPopup {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999999;
+        background: #fff;
+        border-radius: 20px 20px 0 0;
+        max-height: 85dvh;
+        max-height: 85vh; /* fallback */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        transform: translateY(100%);
+        transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    #oaContactPopupWrap.is-open #oaContactPopup {
+        transform: translateY(0);
+    }
+
+    /* Drag handle indicator */
+    #oaContactPopup::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: #d8d8d8;
+        border-radius: 99px;
+        margin: 12px auto 0;
+    }
+
+    /*
+    HEADER
+    -------------------------------------------------------- */
+
+    .oa-contact-popup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px 14px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .oa-contact-popup-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #111;
+        font-family: inherit;
+    }
+
+    .oa-contact-popup-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: #f2f2f2;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        color: #555;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+        flex-shrink: 0;
+    }
+
+    .oa-contact-popup-close:active {
+        background: #e5e5e5;
+        color: #111;
+    }
+
+    /*
+    CONTACT ITEMS
+    -------------------------------------------------------- */
+
+    .oa-contact-popup-body {
+        padding: 14px 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .oa-contact-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        background: #f7f7f7;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #111;
+        font-size: 15px;
+        font-family: inherit;
+        line-height: 1;
+    }
+
+    a.oa-contact-item:active {
+        background: #efefef;
+    }
+
+    .oa-contact-icon {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        align-self: flex-start;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        color: var(--bde-brand-primary-color);
+    }
+
+    .oa-contact-icon svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    /* Fill-based icons (FA, IcoMoon): inherit text colour */
+    .oa-contact-icon svg:not([fill="none"]) {
+        fill: currentColor;
+    }
+
+    .oa-contact-icon svg:not([fill="none"]) path,
+    .oa-contact-icon svg:not([fill="none"]) use,
+    .oa-contact-icon svg:not([fill="none"]) rect,
+    .oa-contact-icon svg:not([fill="none"]) circle,
+    .oa-contact-icon svg:not([fill="none"]) polygon,
+    .oa-contact-icon svg:not([fill="none"]) polyline {
+        fill: currentColor;
+    }
+
+    /* Stroke-based icons (Feather): white stroke */
+    .oa-contact-icon svg[fill="none"] {
+        stroke: currentColor;
+    }
+
+    .oa-contact-text {
+        word-break: break-word;
+        color: var(--bde-headings-color);
+        margin: 0;
+    }
+
+}

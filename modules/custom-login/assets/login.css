@@ -1,0 +1,253 @@
+/* =========================================================
+   Octave Addons – Custom Login Page
+   Loaded only on the WordPress login page.
+   Override tokens via wp_add_inline_style() in class-module.php.
+   ========================================================= */
+
+/* --- Tokens ------------------------------------------------ */
+
+:root {
+    --oa-login-bg:          #f0f2f5;
+    --oa-login-card-bg:     #ffffff;
+    --oa-login-primary:     #4f8ef7;
+    --oa-login-text:        #111827;
+    --oa-login-muted:       #6b7280;
+    --oa-login-border:      #e5e7eb;
+    --oa-login-input-bg:    #f9fafb;
+    --oa-login-error:       #ef4444;
+    --oa-login-radius:      10px;
+
+    /* Link colour for elements that sit on the page background
+       (lost password, back to site). PHP overrides this to a
+       light value when a dark background colour is chosen.   */
+    --oa-login-page-link:       #6b7280;
+    --oa-login-page-link-hover: var(--oa-login-primary);
+
+    /* Pre-computed shadows for the default primary — overridden
+       inline when the user picks a custom primary colour.    */
+    --oa-login-primary-shadow-sm:  rgba(79, 142, 247, 0.25);
+    --oa-login-primary-shadow-lg:  rgba(79, 142, 247, 0.40);
+    --oa-login-primary-focus-ring: rgba(79, 142, 247, 0.20);
+}
+
+/* --- Page body — flexbox centres the card ------------------- */
+
+html,
+body.login {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body.login {
+    background-color: var(--oa-login-bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 32px 16px;
+    box-sizing: border-box;
+}
+
+/* --- Container --------------------------------------------- */
+
+#login {
+    width: 420px;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* --- Logo -------------------------------------------------- */
+
+#login h1 {
+    margin-bottom: 0;
+}
+
+#login h1 a {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 64px;
+    transition: opacity 0.15s;
+}
+
+#login h1 a:hover,
+#login h1 a:focus {
+    opacity: 0.75;
+    outline: none;
+}
+
+/* --- Card -------------------------------------------------- */
+
+#loginform,
+.login .wp-login-lost-password-form,
+.login .wp-login-register-form {
+    background: var(--oa-login-card-bg);
+    border: 1px solid var(--oa-login-border);
+    border-radius: var(--oa-login-radius);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+    padding: 32px;
+    margin-top: 16px;
+}
+
+/* --- Form field rows --------------------------------------- */
+
+#loginform {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#loginform p {
+    margin: 0;
+}
+
+/* --- Labels ------------------------------------------------ */
+
+.login label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--oa-login-text);
+    letter-spacing: 0.01em;
+}
+
+/* --- Inputs ------------------------------------------------ */
+
+.login input[type="text"],
+.login input[type="password"],
+.login input[type="email"] {
+    background: var(--oa-login-input-bg);
+    border: 1.5px solid var(--oa-login-border);
+    border-radius: 7px;
+    color: var(--oa-login-text);
+    font-size: 14px;
+    height: 44px;
+    padding: 0 14px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    font-family: inherit;
+}
+
+.login input[type="text"]:focus,
+.login input[type="password"]:focus,
+.login input[type="email"]:focus {
+    border-color: var(--oa-login-primary);
+    box-shadow: 0 0 0 3px var(--oa-login-primary-focus-ring);
+    outline: none;
+    background: #fff;
+}
+
+/* --- Remember me ------------------------------------------ */
+
+.login .forgetmenot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.login .forgetmenot label {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--oa-login-muted);
+}
+
+/* --- Submit button ---------------------------------------- */
+
+.login p.submit {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.login .button-primary,
+#wp-submit {
+    background: var(--oa-login-primary) !important;
+    border: none !important;
+    border-radius: 7px !important;
+    color: #fff !important;
+    font-size: 14px;
+    font-weight: 600;
+    height: 44px;
+    width: 100%;
+    cursor: pointer;
+    box-shadow: 0 2px 12px var(--oa-login-primary-shadow-sm) !important;
+    transition: filter 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.02em;
+    font-family: inherit;
+    text-shadow: none !important;
+}
+
+.login .button-primary:hover,
+#wp-submit:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 20px var(--oa-login-primary-shadow-lg) !important;
+    color: #fff !important;
+}
+
+.login .button-primary:focus,
+#wp-submit:focus {
+    outline: 3px solid var(--oa-login-primary-focus-ring) !important;
+    outline-offset: 2px;
+}
+
+/* --- Navigation links (sit on the page background) --------- */
+
+#nav,
+#backtoblog {
+    margin-top: 16px;
+    text-align: center;
+}
+
+#nav a,
+#backtoblog a {
+    color: var(--oa-login-page-link);
+    font-size: 13px;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+#nav a:hover,
+#backtoblog a:hover {
+    color: var(--oa-login-page-link-hover);
+    text-decoration: underline;
+}
+
+/* --- Notices ---------------------------------------------- */
+
+.login .message,
+.login .success {
+    border-left: 3px solid var(--oa-login-primary);
+    background: #ffffff;
+    color: var(--oa-login-text);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    box-shadow: none;
+}
+
+.login .error,
+#login_error {
+    border-left: 3px solid var(--oa-login-error);
+    background: #ffffff;
+    color: var(--oa-login-text);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    box-shadow: none;
+}
+
+/* --- Privacy policy link ---------------------------------- */
+
+.login #login_privacy_policy_link {
+    font-size: 12px;
+    color: var(--oa-login-page-link);
+    text-align: center;
+    margin-top: 12px;
+}

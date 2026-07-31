@@ -1,0 +1,940 @@
+/* =========================================================
+   Octave Addons – admin UI (dark)
+   ========================================================= */
+
+/* --- Palette (tokens) ------------------------------------ */
+
+:root {
+    --oa-bg:           #0f1117;
+    --oa-surface:      #181b23;
+    --oa-surface-2:    #1f2330;
+    --oa-border:       #2a2f3d;
+    --oa-border-light: #242838;
+    --oa-accent:       #4f8ef7;
+    --oa-accent-bg:    rgba(79, 142, 247, 0.08);
+    --oa-green:        #22c55e;
+    --oa-green-bg:     rgba(34, 197, 94, 0.12);
+    --oa-text:         #e8eaf0;
+    --oa-text-muted:   #7a8099;
+    --oa-text-dim:     #4a5068;
+}
+
+/* --- Outer wrap ------------------------------------------ */
+
+.octave-addons-wrap {
+    margin-right: 0 !important;
+}
+
+.octave-addons-wrap > h1 {
+    display: none;
+}
+
+/* --- App shell ------------------------------------------- */
+
+.oa-app {
+    display: flex;
+    align-items: stretch;
+    min-height: calc(100vh - 100px);
+    margin-top: 16px;
+    background: var(--oa-bg);
+    border: 1px solid var(--oa-border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Sidebar --------------------------------------------- */
+
+.oa-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--oa-surface);
+    border-right: 1px solid var(--oa-border);
+    display: flex;
+    flex-direction: column;
+}
+
+.oa-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--oa-border-light);
+}
+
+.oa-brand-icon {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+}
+
+.oa-brand-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.oa-brand-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--oa-text);
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.oa-brand-version {
+    font-size: 11px;
+    color: var(--oa-text-dim);
+    line-height: 1.3;
+}
+
+/* --- Responsive nav dropdown (hidden on desktop) --------- */
+
+.oa-nav-select {
+    display: none;
+}
+
+/* --- Nav ------------------------------------------------- */
+
+.oa-nav {
+    padding: 8px 0;
+    flex: 1;
+}
+
+.oa-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 16px;
+    color: var(--oa-text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    border-left: 2px solid transparent;
+    line-height: 1.4;
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.oa-nav-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--oa-text);
+}
+
+.oa-nav-item:focus-visible {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: -2px;
+}
+
+.oa-nav-item.is-active {
+    background: var(--oa-accent-bg);
+    border-left-color: var(--oa-accent);
+    color: var(--oa-text);
+    font-weight: 600;
+}
+
+/* --- Status dot ------------------------------------------ */
+
+.oa-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.oa-dot.is-on {
+    background: var(--oa-green);
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.oa-dot.is-off {
+    background: var(--oa-text-dim);
+}
+
+/* --- Content area ---------------------------------------- */
+
+.oa-content {
+    flex: 1;
+    min-width: 0;
+    padding: 28px 32px 32px;
+    background: var(--oa-bg);
+}
+
+/* --- WordPress notices in dark context ------------------- */
+
+.oa-content .notice {
+    background: var(--oa-surface-2);
+    border-left-color: var(--oa-accent);
+    color: var(--oa-text);
+}
+
+/* --- Panel card ------------------------------------------ */
+
+.oa-panel {
+    background: var(--oa-surface);
+    border: 1px solid var(--oa-border);
+    border-radius: 8px;
+    padding: 24px 28px 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.oa-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--oa-border-light);
+}
+
+.oa-settings-body,
+.oa-settings-locked {
+    margin-top: 20px;
+}
+
+.oa-settings-body > :first-child {
+    margin-top: 0;
+}
+
+.oa-panel-head-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.oa-enable-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--oa-border);
+    border-radius: 14px;
+}
+
+.oa-enable-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--oa-text);
+    white-space: nowrap;
+}
+
+.oa-panel-title {
+    margin: 0 0 5px 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--oa-text);
+}
+
+.oa-panel-desc {
+    margin: 0;
+    color: var(--oa-text-muted);
+    font-size: 13px;
+    max-width: 580px;
+    line-height: 1.6;
+}
+
+/* --- Form table ------------------------------------------ */
+
+.oa-form-table .oa-section-heading {
+    padding-top: 28px;
+    padding-bottom: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--oa-text-muted);
+    border-top: 1px solid var(--oa-border-light);
+}
+
+.oa-form-table .oa-section-heading--first {
+    border-top: none;
+    padding-top: 6px;
+}
+
+.oa-form-table th {
+    width: 200px;
+    padding: 14px 10px 14px 0;
+    font-weight: 500;
+    color: var(--oa-text);
+    font-size: 13px;
+}
+
+.oa-form-table td {
+    padding: 12px 0;
+    color: var(--oa-text);
+}
+
+.oa-form-table label {
+    color: var(--oa-text);
+}
+
+.oa-settings-body .oa-form-table {
+    margin-top: 0;
+}
+
+/* --- Save bar -------------------------------------------- */
+
+.oa-save-bar {
+    margin-top: 20px;
+}
+
+.oa-save-bar .button-primary {
+    height: 36px;
+    line-height: 34px;
+    padding: 0 18px;
+    font-size: 13px;
+    background: var(--oa-accent);
+    border-color: var(--oa-accent);
+    color: #fff;
+    box-shadow: 0 0 16px rgba(79, 142, 247, 0.25);
+    transition: filter 0.15s;
+}
+
+.oa-save-bar .button-primary:hover {
+    background: var(--oa-accent);
+    border-color: var(--oa-accent);
+    filter: brightness(1.1);
+}
+
+/* --- iOS-style toggle ------------------------------------ */
+
+.oa-switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.oa-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.oa-switch-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--oa-border);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.oa-switch-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.oa-switch input:checked + .oa-switch-slider {
+    background: var(--oa-green);
+    box-shadow: 0 0 10px var(--oa-green-bg);
+}
+
+.oa-switch input:checked + .oa-switch-slider::before {
+    transform: translateX(22px);
+}
+
+/* --- Code editors ---------------------------------------- */
+
+.oa-code-editor {
+    width: 100%;
+    min-height: 220px;
+    font-family: Menlo, Consolas, "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    background: #0d0f14;
+    color: #c9d1e0;
+    border: 1px solid var(--oa-border);
+    border-radius: 6px;
+    padding: 12px;
+    tab-size: 2;
+    resize: vertical;
+}
+
+.oa-code-editor:focus {
+    outline: none;
+    border-color: var(--oa-accent);
+    box-shadow: 0 0 0 2px rgba(79, 142, 247, 0.2);
+}
+
+/* --- Settings locked notice ------------------------------ */
+
+.oa-settings-locked {
+    padding: 0 0 16px;
+    color: var(--oa-text-muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.oa-settings-locked p {
+    margin: 0;
+}
+
+/* --- Help text ------------------------------------------- */
+
+.oa-help {
+    font-size: 12px;
+    color: var(--oa-text-dim);
+    margin-top: 5px;
+    display: block;
+    line-height: 1.5;
+}
+
+.oa-help--intro {
+    margin: 0 0 16px;
+}
+
+.oa-help--inline {
+    display: inline-block;
+    margin: 0;
+}
+
+/* --- Hidden utility (JS-toggled visibility) -------------- */
+
+.oa-hidden {
+    display: none;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+/* Prevent inputs/textareas overflowing their cell at any width */
+.oa-form-table .regular-text,
+.oa-form-table input[type="text"],
+.oa-form-table input[type="email"],
+.oa-form-table input[type="url"],
+.oa-form-table textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   Icon picker — field widget
+   ========================================================= */
+
+.oa-icon-picker-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.oa-icon-preview {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--oa-surface-2);
+    border: 1px solid var(--oa-border);
+    border-radius: 6px;
+    color: var(--oa-text);
+    flex-shrink: 0;
+}
+
+.oa-icon-preview svg {
+    width: 20px;
+    height: 20px;
+}
+
+.oa-icon-preview.is-default {
+    color: var(--oa-text-dim);
+    font-size: 10px;
+    font-style: italic;
+    padding: 4px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.oa-icon-preview.is-default::after {
+    content: 'Default';
+}
+
+.oa-icon-picker-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* =========================================================
+   Icon picker — modal
+   ========================================================= */
+
+#oaIconPickerModal {
+    display: none;
+}
+
+#oaIconPickerModal.is-open {
+    display: block;
+}
+
+.oa-ipm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100000;
+}
+
+.oa-ipm-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100001;
+    width: min(720px, 94vw);
+    height: min(620px, 90vh);
+    background: var(--oa-bg);
+    border: 1px solid var(--oa-border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 16px 60px rgba(0, 0, 0, 0.7);
+}
+
+.oa-ipm-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--oa-border);
+    flex-shrink: 0;
+}
+
+.oa-ipm-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--oa-text);
+}
+
+.oa-ipm-close {
+    background: none;
+    border: none;
+    color: var(--oa-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+}
+
+.oa-ipm-close:hover {
+    color: var(--oa-text);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.oa-ipm-bar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--oa-border);
+    background: var(--oa-surface-2);
+    flex-shrink: 0;
+}
+
+.oa-ipm-set-select,
+.oa-ipm-search {
+    background: var(--oa-bg);
+    border: 1px solid var(--oa-border);
+    border-radius: 6px;
+    color: var(--oa-text);
+    font-size: 13px;
+    padding: 7px 10px;
+    font-family: inherit;
+    height: 36px;
+    box-sizing: border-box;
+}
+
+.oa-ipm-set-select {
+    flex-shrink: 0;
+    max-width: 180px;
+}
+
+.oa-ipm-search {
+    flex: 1;
+    min-width: 0;
+}
+
+.oa-ipm-set-select:focus,
+.oa-ipm-search:focus {
+    outline: none;
+    border-color: var(--oa-accent);
+    box-shadow: 0 0 0 2px rgba(79, 142, 247, 0.2);
+}
+
+.oa-ipm-grid {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 6px;
+    align-content: start;
+}
+
+.oa-ipm-icon-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 8px 10px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--oa-text-muted);
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: center;
+    transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+
+.oa-ipm-icon-btn:hover {
+    background: var(--oa-surface-2);
+    border-color: var(--oa-border);
+    color: var(--oa-text);
+}
+
+.oa-ipm-icon-btn:active {
+    background: var(--oa-accent-bg);
+    border-color: var(--oa-accent);
+    color: var(--oa-text);
+}
+
+.oa-ipm-icon-btn svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+/* Fill-based icons (FA, IcoMoon) — no fill="none" on root SVG */
+.oa-ipm-icon-btn svg:not([fill="none"]) {
+    fill: currentColor;
+}
+
+/* Stroke-based icons (Feather etc.) — preserve existing stroke/fill */
+.oa-ipm-icon-btn svg[fill="none"] {
+    stroke: currentColor;
+    fill: none;
+}
+
+.oa-ipm-icon-btn span {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.oa-ipm-empty {
+    grid-column: 1 / -1;
+    color: var(--oa-text-muted);
+    font-size: 13px;
+    padding: 40px 0;
+    text-align: center;
+}
+
+.oa-ipm-foot {
+    padding: 10px 16px;
+    border-top: 1px solid var(--oa-border);
+    background: var(--oa-surface-2);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+}
+
+.oa-ipm-loading {
+    font-size: 12px;
+    color: var(--oa-text-muted);
+    font-style: italic;
+}
+
+.oa-ipm-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 20px;
+    height: 34px;
+    background: var(--oa-surface);
+    border: 1px solid var(--oa-border);
+    border-radius: 6px;
+    color: var(--oa-text);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.oa-ipm-more:hover {
+    background: var(--oa-accent-bg);
+    border-color: var(--oa-accent);
+    color: var(--oa-accent);
+}
+
+.oa-ipm-more:active {
+    filter: brightness(0.9);
+}
+
+/* ---- 960 px: sidebar collapses to a horizontal tab strip ---- */
+
+@media (max-width: 960px) {
+
+    .oa-app {
+        flex-direction: column;
+        min-height: 0;
+        overflow: visible; /* allow sidebar to be position:sticky */
+    }
+
+    .oa-sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        border-right: none;
+        border-bottom: 1px solid var(--oa-border);
+        position: sticky;
+        top: var(--wp-admin--admin-bar--height, 32px);
+        z-index: 100;
+        background: var(--oa-surface);
+    }
+
+    .oa-sidebar-brand {
+        padding: 10px 16px;
+        border-bottom: none;
+        border-right: 1px solid var(--oa-border-light);
+        flex-shrink: 0;
+    }
+
+    .oa-nav {
+        display: none;
+    }
+
+    .oa-nav-select {
+        display: block;
+        flex: 1;
+        min-width: 0;
+        margin: 8px 12px;
+        padding: 7px 32px 7px 10px;
+        background-color: var(--oa-surface-2);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a8099' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        color: var(--oa-text);
+        border: 1px solid var(--oa-border);
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        outline: none;
+    }
+
+    .oa-nav-select:focus {
+        border-color: var(--oa-accent);
+        box-shadow: 0 0 0 2px rgba(79, 142, 247, 0.2);
+    }
+
+    .oa-content {
+        padding: 20px 20px 24px;
+        overflow-x: hidden;
+    }
+
+    .oa-panel {
+        padding: 18px 18px 8px;
+    }
+
+    .oa-panel-head {
+        gap: 16px;
+    }
+}
+
+/* ---- 782 px: form table stacks, WP admin sidebar folds ---- */
+
+@media (max-width: 782px) {
+
+    .oa-content {
+        padding: 14px 14px 20px;
+    }
+
+    .oa-panel {
+        padding: 14px 14px 8px;
+    }
+
+    .oa-panel-head {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .oa-panel-title {
+        font-size: 15px;
+    }
+
+    .oa-enable-wrap {
+        flex-direction: row;
+        align-self: flex-start;
+        padding: 7px 12px;
+        gap: 8px;
+    }
+
+    .oa-form-table th,
+    .oa-form-table td {
+        display: block;
+        width: auto;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .oa-form-table th {
+        padding-top: 16px;
+        padding-bottom: 4px;
+        font-size: 12px;
+    }
+
+    .oa-form-table td {
+        padding-top: 0;
+        padding-bottom: 12px;
+    }
+
+    .oa-form-table tr:first-child th {
+        padding-top: 6px;
+    }
+
+    .oa-form-table .regular-text,
+    .oa-form-table input[type="text"],
+    .oa-form-table input[type="email"],
+    .oa-form-table textarea {
+        width: 100%;
+    }
+
+    .oa-code-editor {
+        min-height: 160px;
+    }
+}
+
+/* ---- 600 px: hide brand text, compress further ---- */
+
+@media (max-width: 600px) {
+
+    .oa-app {
+        border-radius: 6px;
+        margin-top: 8px;
+    }
+
+    .oa-brand-info {
+        display: none;
+    }
+
+    .oa-sidebar-brand {
+        padding: 10px 12px;
+    }
+
+    .oa-content {
+        padding: 12px 12px 16px;
+    }
+
+    .oa-panel {
+        padding: 12px 12px 8px;
+        border-radius: 6px;
+    }
+
+    .oa-save-bar .button-primary {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+}
+
+/* =========================================================
+   Colour picker
+   ========================================================= */
+
+.oa-color-picker-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.oa-color-input {
+    width: 44px;
+    height: 34px;
+    padding: 2px 3px;
+    background: var(--oa-surface-2);
+    border: 1px solid var(--oa-border);
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.oa-color-input::-webkit-color-swatch-wrapper {
+    padding: 2px;
+    border-radius: 4px;
+}
+
+.oa-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px;
+}
+
+.oa-color-value {
+    font-size: 12px;
+    font-family: Menlo, Consolas, monospace;
+    color: var(--oa-text-muted);
+    user-select: all;
+}
+
+/* =========================================================
+   URL prefix widget
+   ========================================================= */
+
+.oa-url-prefix-wrap {
+    display: flex;
+    align-items: stretch;
+    max-width: 520px;
+}
+
+.oa-url-prefix {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    background: var(--oa-surface-2);
+    border: 1px solid var(--oa-border);
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    color: var(--oa-text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: Menlo, Consolas, monospace;
+}
+
+.oa-url-slug-input {
+    border-radius: 0 4px 4px 0 !important;
+    flex: 1;
+    min-width: 0;
+}

@@ -1,0 +1,146 @@
+/*
+BASE ANIMATION
+-------------------------------------------------------- */
+
+.bde-column,
+.bde-grid > div,
+.swiper-slide,
+.bde-section ul > li,
+.bde-section ol > li,
+.bde-loop:not(.ee-posts-isotope) > .bde-loop-item,
+.oa_anim {
+    opacity: 0;
+    transform: translateY(32px) scale(0.985);
+
+    transition:
+        opacity 0.5s ease-out,
+        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+        filter 0.5s ease-out;
+}
+
+/* Visible state */
+.bde-column.visible,
+.bde-grid > div.visible,
+.swiper-slide.visible,
+.bde-section ul > li.visible,
+.bde-section ol > li.visible,
+.bde-loop:not(.ee-posts-isotope) .bde-loop-item.visible,
+.oa_anim.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+
+/*
+COLUMN TWEAK (slightly more weight)
+-------------------------------------------------------- */
+
+.bde-column {
+    transform: translateY(40px) scale(0.98);
+}
+
+
+/*
+GRID ITEMS (snappier feel)
+-------------------------------------------------------- */
+
+.bde-grid > div {
+    transform: translateY(28px) scale(0.99);
+}
+
+
+/*
+HEADING WORD SPLIT ANIMATION
+-------------------------------------------------------- */
+
+.bde-heading {
+    display: block;
+}
+
+.bde-heading .word {
+    display: inline-flex;
+    position: relative;
+    overflow: hidden;
+    align-items: center;
+}
+
+.bde-heading .word span {
+    display: inline-block;
+    transform: translateY(115%) skewY(6deg);
+
+    transition:
+        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Trigger */
+.bde-heading.visible .word span {
+    transform: translateY(0) skewY(0);
+}
+
+/* Performance */
+.bde-heading .word span {
+    will-change: transform;
+}
+
+/* Inline element words (e.g. spans with SVG backgrounds) */
+.bde-heading .word--inline {
+    overflow: visible;
+}
+
+.bde-heading .word--inline > span {
+    opacity: 0;
+    transform: translateY(25%) skewY(4deg);
+    transition:
+        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--word-delay, 0s),
+        opacity 0.4s ease-out var(--word-delay, 0s);
+    will-change: transform, opacity;
+}
+
+.bde-heading.visible .word--inline > span {
+    opacity: 1;
+    transform: translateY(0) skewY(0);
+}
+
+
+/*
+FAQ ITEM (lighter + faster)
+-------------------------------------------------------- */
+
+.bde-faq__item {
+    opacity: 0;
+    transform: translateY(20px);
+
+    transition:
+        opacity 0.45s ease-out,
+        transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.45s ease-out;
+}
+
+.bde-faq__item.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/*
+GENERIC ANIMATION HOOK (for manual use)
+-------------------------------------------------------- */
+
+.oa_anim {
+    transform: translateY(36px) scale(0.985);
+}
+
+
+/*
+PERFORMANCE OPTIMISATION
+-------------------------------------------------------- */
+
+.bde-column,
+.bde-grid > div,
+.swiper-slide,
+.oa_anim,
+.bde-faq__item,
+.bde-section ul > li,
+.bde-section ol > li {
+    will-change: opacity, transform, filter;
+}
