@@ -1,0 +1,47 @@
+name: Publish plugin release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate tag against plugin version
+        shell: bash
+        run: |
+          plugin_version="$(sed -n 's/^ \* Version:[[:space:]]*//p' octave-addons.php)"
+          tag_version="${GITHUB_REF_NAME#v}"
+
+          if [[ "$plugin_version" != "$tag_version" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match plugin version $plugin_version."
+            exit 1
+          fi
+
+      - name: Build WordPress plugin ZIP
+        shell: bash
+        run: |
+          mkdir -p dist/octave-addons
+          rsync -a ./ dist/octave-addons/ \
+            --exclude ".git/" \
+            --exclude ".github/" \
+            --exclude "dist/" \
+            --exclude ".DS_Store" \
+            --exclude "README.md"
+          cd dist
+          zip -r octave-addons.zip octave-addons
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh release create "$GITHUB_REF_NAME" dist/octave-addons.zip --generate-notes --verify-tag

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        1.0.0
+Stable tag:        1.0.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -28,14 +28,11 @@ admin. Adding a new add-on later is a drop-in operation — create a
 folder under `/modules/` containing a `class-module.php` file that
 extends `Octave_Addons_Module`, and it will appear automatically.
 
-== External updates ==
+== GitHub updates ==
 
-This plugin is designed to be hosted outside of wordpress.org. It checks
-a remote JSON manifest for updates and will notify WordPress whenever
-the hosted zip changes, even without a version bump — see
-`update.json.example` in the plugin folder for the manifest format.
-
-Point the `OCTAVE_ADDONS_UPDATE_URL` constant at your hosted manifest.
+This plugin uses its published GitHub Releases as a native WordPress update
+source. A release with a tag newer than the installed plugin version appears
+in the standard Plugins and Dashboard Updates screens.
 
 == Installation ==
 
@@ -45,5 +42,8 @@ Point the `OCTAVE_ADDONS_UPDATE_URL` constant at your hosted manifest.
 
 == Changelog ==
 
+= 1.0.1 =
+* Replaced the legacy manifest updater with GitHub Releases integration.
+
 = 1.0.0 =
-* Initial release — Empty Link Highlighter, Disable Comments, Scroll Animations, modular architecture and external updater.
+* Initial release — Empty Link Highlighter, Disable Comments, Scroll Animations, modular architecture and GitHub updater.

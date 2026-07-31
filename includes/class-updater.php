@@ -1,136 +1,102 @@
 <?php
 
 /*
-EXTERNAL UPDATE CHECKER
--- Hosts the plugin anywhere that can serve two things:
--- 1. A JSON manifest (the "info" endpoint) — see /update.json.example.
--- 2. A zip archive of the plugin folder.
--- How the "zip date" trigger works
--- --------------------------------
--- The manifest has a `last_updated` field (ISO-8601 date string). The
--- updater stores the value we last installed in a WP option. On every
--- check it fetches the manifest, and if `last_updated` is newer than the
--- stored value, it registers an update with WordPress.
--- That means you don't even have to bump the plugin version to trigger an
--- update — just replace the zip and update `last_updated`. (Version is
--- still bumped automatically to satisfy WP's internal comparison.)
--- Manifest format
--- ---------------
--- {
--- "name":          "Octave Addons",
--- "slug":          "octave-addons",
--- "version":       "1.0.1",
--- "last_updated":  "2026-04-23 10:00:00",
--- "download_url":  "https://.../octave-addons.zip",
--- "requires":      "5.8",
--- "tested":        "6.5",
--- "requires_php":  "7.4",
--- "author":        "Octave Agency",
--- "homepage":      "https://octaveagency.com",
--- "sections": {
--- "description": "A modular collection of Octave site add-ons.",
--- "changelog":   "= 1.0.1 =\n* Bug fixes.\n"
--- }
--- }
+GITHUB RELEASE UPDATER
+-- Connects published GitHub releases to WordPress plugin update checks.
+-- Preserves locally saved Breakdance custom elements during upgrades.
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
+
 	exit;
 
 }
 
 class Octave_Addons_Updater {
 
-
 	protected string $plugin_file;
 	protected string $plugin_basename;
 	protected string $plugin_slug;
 	protected string $current_version;
-	protected string $manifest_url;
-
-	/** @var array|null In-memory cache of the fetched manifest. */
-	protected ?array $manifest = null;
-
-	/** Cache manifest fetches for this many seconds. */
+	protected string $repository;
+	protected string $repository_url;
+	protected string $api_url;
 	protected int $cache_ttl = 6 * HOUR_IN_SECONDS;
-
-	/** Temp path where custom elements are backed up before an update overwrites the plugin folder. */
 	protected ?string $custom_backup_path = null;
 
-	public function __construct( string $plugin_file, string $manifest_url, string $current_version ) {
+	/** @var array|null|false In-memory cache of the GitHub release response. */
+	protected $release = null;
+
+	/*
+	CONSTRUCTOR
+	-- Registers WordPress update, plugin details, and upgrade lifecycle hooks.
+	---------------------------------------------------------- */
+
+	public function __construct( string $plugin_file, string $repository, string $current_version ) {
 
 		$this->plugin_file     = $plugin_file;
 		$this->plugin_basename = plugin_basename( $plugin_file );
-		$this->plugin_slug     = dirname( $this->plugin_basename ); // "octave-addons"
-		$this->manifest_url    = $manifest_url;
+		$this->plugin_slug     = dirname( $this->plugin_basename );
 		$this->current_version = $current_version;
+		$this->repository      = trim( $repository, '/' );
+		$this->repository_url  = 'https://github.com/' . $this->repository;
+		$this->api_url         = 'https://api.github.com/repos/' . $this->repository . '/releases/latest';
 
-		add_filter( 'pre_set_site_transient_update_plugins', [ $this, 'inject_update' ] );
-		add_filter( 'plugins_api',                          [ $this, 'plugins_api' ], 10, 3 );
-		add_filter( 'upgrader_pre_install',                 [ $this, 'before_update' ], 10, 2 );
-		add_action( 'upgrader_process_complete',            [ $this, 'after_update' ], 10, 2 );
-
-		// Admin action to force a fresh check: /wp-admin/?octave_addons_check_update=1
+		add_filter( 'update_plugins_github.com', [ $this, 'check_update' ], 10, 4 );
+		add_filter( 'plugins_api', [ $this, 'plugins_api' ], 10, 3 );
+		add_filter( 'upgrader_source_selection', [ $this, 'normalise_source_directory' ], 10, 4 );
+		add_filter( 'upgrader_pre_install', [ $this, 'before_update' ], 10, 2 );
+		add_action( 'upgrader_process_complete', [ $this, 'after_update' ], 10, 2 );
 		add_action( 'admin_init', [ $this, 'maybe_force_check' ] );
 
 	}
 
-	// ---------------------------------------------------------------------
-	// Core update injection
-	// ---------------------------------------------------------------------
+	/*
+	CHECK UPDATE
+	-- Returns release data to WordPress when the latest GitHub tag is newer.
+	---------------------------------------------------------- */
 
-	public function inject_update( $transient ) {
+	public function check_update( $update, array $plugin_data, string $plugin_file, array $locales ) {
 
-		if ( empty( $transient->checked ) ) {
-			return $transient;
+		if ( $this->plugin_basename !== $plugin_file ) {
 
-		}
-
-		$manifest = $this->fetch_manifest();
-		if ( ! $manifest ) {
-
-			return $transient;
+			return $update;
 
 		}
 
-		$remote_version = $this->effective_version( $manifest );
+		$release = $this->fetch_release();
 
-		if ( version_compare( $remote_version, $this->current_version, '>' ) ) {
+		if ( ! $release ) {
 
-			$transient->response[ $this->plugin_basename ] = (object) [
-				'id'            => $this->plugin_basename,
-				'slug'          => $this->plugin_slug,
-				'plugin'        => $this->plugin_basename,
-				'new_version'   => $remote_version,
-				'url'           => $manifest['homepage']    ?? '',
-				'package'       => $manifest['download_url'] ?? '',
-				'tested'        => $manifest['tested']       ?? '',
-				'requires'      => $manifest['requires']     ?? '',
-				'requires_php'  => $manifest['requires_php'] ?? '',
-			];
-
-		} else {
-			// Make sure we appear in the "no update" list so WP caches the check.
-			$transient->no_update[ $this->plugin_basename ] = (object) [
-				'id'            => $this->plugin_basename,
-				'slug'          => $this->plugin_slug,
-				'plugin'        => $this->plugin_basename,
-				'new_version'   => $this->current_version,
-				'url'           => $manifest['homepage'] ?? '',
-				'package'       => '',
-				'requires'      => $manifest['requires']     ?? '',
-				'requires_php'  => $manifest['requires_php'] ?? '',
-			];
+			return false;
 
 		}
 
-		return $transient;
+		$remote_version = $this->get_release_version( $release );
+
+		if ( ! $remote_version || ! version_compare( $remote_version, $this->current_version, '>' ) ) {
+
+			return false;
+
+		}
+
+		return [
+			'id'           => $this->repository_url,
+			'slug'         => $this->plugin_slug,
+			'version'      => $remote_version,
+			'url'          => $release['html_url'] ?? $this->repository_url,
+			'package'      => $this->get_download_url( $release ),
+			'requires'     => $plugin_data['RequiresWP'] ?? '',
+			'requires_php' => $plugin_data['RequiresPHP'] ?? '',
+		];
 
 	}
 
-	/**
-	 * Provide info for the "View details" modal in wp-admin → Plugins.
-	 */
+	/*
+	PLUGIN DETAILS
+	-- Supplies the Plugins screen details modal from the latest release.
+	---------------------------------------------------------- */
+
 	public function plugins_api( $result, string $action, $args ) {
 
 		if ( 'plugin_information' !== $action ) {
@@ -138,61 +104,100 @@ class Octave_Addons_Updater {
 			return $result;
 
 		}
-		if ( empty( $args->slug ) || $args->slug !== $this->plugin_slug ) {
+
+		if ( empty( $args->slug ) || $this->plugin_slug !== $args->slug ) {
 
 			return $result;
 
 		}
 
-		$manifest = $this->fetch_manifest();
-		if ( ! $manifest ) {
+		$release = $this->fetch_release();
+
+		if ( ! $release ) {
+
 			return $result;
 
 		}
+
+		$release_notes = isset( $release['body'] ) ? (string) $release['body'] : '';
 
 		return (object) [
-			'name'          => $manifest['name']          ?? 'Octave Addons',
+			'name'          => 'Octave Addons',
 			'slug'          => $this->plugin_slug,
-			'version'       => $this->effective_version( $manifest ),
-			'author'        => $manifest['author']        ?? '',
-			'homepage'      => $manifest['homepage']      ?? '',
-			'requires'      => $manifest['requires']      ?? '',
-			'tested'        => $manifest['tested']        ?? '',
-			'requires_php'  => $manifest['requires_php']  ?? '',
-			'last_updated'  => $manifest['last_updated']  ?? '',
-			'download_link' => $manifest['download_url']  ?? '',
-			'sections'      => (array) ( $manifest['sections'] ?? [
-				'description' => $manifest['description'] ?? '',
-			] ),
+			'version'       => $this->get_release_version( $release ),
+			'author'        => '<a href="https://octaveagency.com">Octave Agency</a>',
+			'homepage'      => $this->repository_url,
+			'requires'      => '5.8',
+			'requires_php'  => '7.4',
+			'last_updated'  => $release['published_at'] ?? '',
+			'download_link' => $this->get_download_url( $release ),
+			'sections'      => [
+				'description' => 'A modular collection of Octave site add-ons.',
+				'changelog'   => nl2br( esc_html( $release_notes ) ),
+			],
 		];
 
 	}
 
-	/**
-	 * Back up the custom elements folder before WordPress deletes the plugin directory.
-	 *
-	 * Fires on the `upgrader_pre_install` filter, which runs before the destination
-	 * is cleared. The backup is restored in after_update().
-	 *
-	 * @param mixed $response Pass-through filter value.
-	 * @param array $hook_extra Upgrader context.
-	 * @return mixed Unchanged $response.
-	 */
+	/*
+	NORMALISE SOURCE DIRECTORY
+	-- Renames GitHub's generated ZIP folder when no packaged release asset exists.
+	---------------------------------------------------------- */
+
+	public function normalise_source_directory( $source, string $remote_source, $upgrader, array $hook_extra ) {
+
+		if ( empty( $hook_extra['plugin'] ) || $this->plugin_basename !== $hook_extra['plugin'] ) {
+
+			return $source;
+
+		}
+
+		if ( $this->plugin_slug === basename( untrailingslashit( $source ) ) ) {
+
+			return $source;
+
+		}
+
+		global $wp_filesystem;
+
+		$normalised_source = trailingslashit( $remote_source ) . $this->plugin_slug . '/';
+
+		if ( $wp_filesystem->move( $source, $normalised_source, true ) ) {
+
+			return $normalised_source;
+
+		}
+
+		return new WP_Error(
+			'octave_addons_source_directory',
+			__( 'The GitHub release could not be prepared for installation.', 'octave-addons' )
+		);
+
+	}
+
+	/*
+	BEFORE UPDATE
+	-- Backs up locally saved Breakdance custom elements before replacement.
+	---------------------------------------------------------- */
+
 	public function before_update( $response, array $hook_extra ) {
 
-		if ( empty( $hook_extra['plugin'] ) || $hook_extra['plugin'] !== $this->plugin_basename ) {
+		if ( empty( $hook_extra['plugin'] ) || $this->plugin_basename !== $hook_extra['plugin'] ) {
 
 			return $response;
 
 		}
 
 		$custom_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug . '/modules/breakdance-custom-elements/elements';
+
 		if ( ! is_dir( $custom_dir ) ) {
+
 			return $response;
 
 		}
 
 		$backup = get_temp_dir() . 'octave_custom_elements_' . time();
+
 		if ( $this->recursive_copy( $custom_dir, $backup ) ) {
 
 			$this->custom_backup_path = $backup;
@@ -203,153 +208,153 @@ class Octave_Addons_Updater {
 
 	}
 
-	/**
-	 * Record the remote last_updated value so we can detect future changes.
-	 * Also restores custom elements backed up by before_update().
-	 */
+	/*
+	AFTER UPDATE
+	-- Restores custom elements and clears cached GitHub release data.
+	---------------------------------------------------------- */
+
 	public function after_update( $upgrader, array $hook_extra ): void {
 
-		// WordPress passes 'plugin' (string) for single updates and 'plugins' (array) for bulk/auto updates.
 		$is_this_plugin = (
-			( ! empty( $hook_extra['plugin'] ) && $hook_extra['plugin'] === $this->plugin_basename )
+			( ! empty( $hook_extra['plugin'] ) && $this->plugin_basename === $hook_extra['plugin'] )
 			|| ( ! empty( $hook_extra['plugins'] ) && is_array( $hook_extra['plugins'] ) && in_array( $this->plugin_basename, $hook_extra['plugins'], true ) )
 		);
+
 		if ( ! $is_this_plugin ) {
 
 			return;
 
 		}
 
-		// Restore custom elements that were backed up before the update.
 		if ( ! empty( $this->custom_backup_path ) && is_dir( $this->custom_backup_path ) ) {
 
 			$custom_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug . '/modules/breakdance-custom-elements/elements';
+
 			$this->recursive_copy( $this->custom_backup_path, $custom_dir );
 			$this->recursive_delete( $this->custom_backup_path );
+
 			$this->custom_backup_path = null;
 
 		}
 
-		$manifest = $this->fetch_manifest( true );
-		if ( $manifest && ! empty( $manifest['last_updated'] ) ) {
-
-			update_option( 'octave_addons_installed_last_updated', $manifest['last_updated'] );
-
-		}
-
-		// Flush caches.
-		delete_transient( 'octave_addons_remote_manifest' );
-		delete_site_transient( 'update_plugins' );
+		$this->clear_cache();
 
 	}
 
-	// ---------------------------------------------------------------------
-	// Version logic
-	// ---------------------------------------------------------------------
+	/*
+	FETCH RELEASE
+	-- Retrieves and caches the latest published, non-prerelease GitHub release.
+	---------------------------------------------------------- */
 
-	/**
-	 * Compute the effective "remote" version WordPress should compare against.
-	 *
-	 * - If manifest version > installed version → use manifest version directly.
-	 * - Else if manifest.last_updated > stored last_updated → bump the
-	 *   PATCH component of the installed version so WP sees an update,
-	 *   even though the manifest author forgot to bump the version.
-	 *   This is how we honour "check for updates as and when the zip
-	 *   date is changed".
-	 */
-	protected function effective_version( array $manifest ): string {
+	protected function fetch_release( bool $force = false ): ?array {
 
-		$manifest_version = isset( $manifest['version'] ) ? (string) $manifest['version'] : $this->current_version;
+		if ( ! $force && false === $this->release ) {
 
-		if ( version_compare( $manifest_version, $this->current_version, '>' ) ) {
-
-			return $manifest_version;
+			return null;
 
 		}
 
-		$remote_last_updated    = isset( $manifest['last_updated'] ) ? strtotime( (string) $manifest['last_updated'] ) : 0;
-		$installed_last_updated = strtotime( (string) get_option( 'octave_addons_installed_last_updated', '' ) );
+		if ( ! $force && is_array( $this->release ) ) {
 
-		if ( $remote_last_updated && $remote_last_updated > $installed_last_updated ) {
-
-			return $this->bump_patch( $this->current_version );
-
-		}
-
-		return $manifest_version;
-
-	}
-
-	protected function bump_patch( string $version ): string {
-
-		$parts = array_map( 'intval', explode( '.', $version ) );
-		while ( count( $parts ) < 3 ) {
-
-			$parts[] = 0;
-
-		}
-		$parts[2] = $parts[2] + 1;
-		return implode( '.', $parts );
-
-	}
-
-	// ---------------------------------------------------------------------
-	// Fetching
-	// ---------------------------------------------------------------------
-
-	protected function fetch_manifest( bool $force = false ): ?array {
-
-		if ( ! $force && null !== $this->manifest ) {
-			return $this->manifest;
+			return $this->release;
 
 		}
 
 		if ( ! $force ) {
 
-			$cached = get_transient( 'octave_addons_remote_manifest' );
+			$cached = get_site_transient( 'octave_addons_github_release' );
+
 			if ( is_array( $cached ) ) {
 
-				$this->manifest = $cached;
-				return $cached;
+				$this->release = $cached ?: false;
+
+				return $cached ?: null;
 
 			}
 
 		}
 
-		if ( empty( $this->manifest_url ) ) {
+		$headers = [
+			'Accept'              => 'application/vnd.github+json',
+			'Cache-Control'        => 'no-cache',
+			'User-Agent'           => 'Octave-Addons/' . $this->current_version,
+			'X-GitHub-Api-Version' => '2026-03-10',
+		];
 
-			return null;
-
-		}
-
-		$response = wp_remote_get( $this->manifest_url, [
+		$response = wp_remote_get( $this->api_url, [
 			'timeout' => 12,
-			'headers' => [
-				'Accept'        => 'application/json',
-				'Cache-Control' => 'no-cache',
-			],
+			'headers' => $headers,
 		] );
 
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
 
-			return null;
-
-		}
-
-		$body    = wp_remote_retrieve_body( $response );
-		$decoded = json_decode( $body, true );
-
-		if ( ! is_array( $decoded ) ) {
+			$this->release = false;
+			set_site_transient( 'octave_addons_github_release', [], $this->cache_ttl );
 
 			return null;
 
 		}
 
-		set_transient( 'octave_addons_remote_manifest', $decoded, $this->cache_ttl );
-		$this->manifest = $decoded;
-		return $decoded;
+		$release = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( ! is_array( $release ) || empty( $release['tag_name'] ) ) {
+
+			$this->release = false;
+			set_site_transient( 'octave_addons_github_release', [], $this->cache_ttl );
+
+			return null;
+
+		}
+
+		$this->release = $release;
+		set_site_transient( 'octave_addons_github_release', $release, $this->cache_ttl );
+
+		return $release;
 
 	}
+
+	/*
+	GET RELEASE VERSION
+	-- Converts a release tag such as v1.2.3 into a comparable version.
+	---------------------------------------------------------- */
+
+	protected function get_release_version( array $release ): string {
+
+		$version = isset( $release['tag_name'] ) ? (string) $release['tag_name'] : '';
+
+		return preg_replace( '/^[vV]/', '', trim( $version ) );
+
+	}
+
+	/*
+	GET DOWNLOAD URL
+	-- Prefers the packaged plugin asset and falls back to GitHub's source ZIP.
+	---------------------------------------------------------- */
+
+	protected function get_download_url( array $release ): string {
+
+		$assets = isset( $release['assets'] ) && is_array( $release['assets'] ) ? $release['assets'] : [];
+
+		foreach ( $assets as $asset ) {
+
+			if ( 'octave-addons.zip' !== ( $asset['name'] ?? '' ) ) {
+
+				continue;
+
+			}
+
+			return esc_url_raw( $asset['browser_download_url'] ?? '' );
+
+		}
+
+		return esc_url_raw( $release['zipball_url'] ?? '' );
+
+	}
+
+	/*
+	FORCE CHECK
+	-- Clears cached release data from the existing authenticated admin action.
+	---------------------------------------------------------- */
 
 	public function maybe_force_check(): void {
 
@@ -358,43 +363,64 @@ class Octave_Addons_Updater {
 			return;
 
 		}
+
 		if ( empty( $_GET['octave_addons_check_update'] ) ) {
 
 			return;
 
 		}
+
 		check_admin_referer( 'octave_addons_check_update' );
 
-		delete_transient( 'octave_addons_remote_manifest' );
-		delete_site_transient( 'update_plugins' );
+		$this->clear_cache();
+
 		wp_safe_redirect( admin_url( 'plugins.php' ) );
 		exit;
 
 	}
 
-	// ---------------------------------------------------------------------
-	// Filesystem helpers
-	// ---------------------------------------------------------------------
+	/*
+	CLEAR CACHE
+	-- Resets GitHub and WordPress plugin update cache values.
+	---------------------------------------------------------- */
 
-	protected function recursive_copy( string $src, string $dst ): bool {
+	protected function clear_cache(): void {
 
-		if ( ! is_dir( $src ) ) {
+		$this->release = null;
+
+		delete_site_transient( 'octave_addons_github_release' );
+		delete_site_transient( 'update_plugins' );
+
+	}
+
+	/*
+	RECURSIVE COPY
+	-- Copies custom element files to or from the temporary backup folder.
+	---------------------------------------------------------- */
+
+	protected function recursive_copy( string $source, string $destination ): bool {
+
+		if ( ! is_dir( $source ) ) {
 
 			return false;
 
 		}
-		if ( ! wp_mkdir_p( $dst ) ) {
+
+		if ( ! wp_mkdir_p( $destination ) ) {
 
 			return false;
 
 		}
+
 		$iterator = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator( $src, RecursiveDirectoryIterator::SKIP_DOTS ),
+			new RecursiveDirectoryIterator( $source, RecursiveDirectoryIterator::SKIP_DOTS ),
 			RecursiveIteratorIterator::SELF_FIRST
 		);
+
 		foreach ( $iterator as $item ) {
 
-			$target = $dst . '/' . $iterator->getSubPathname();
+			$target = $destination . '/' . $iterator->getSubPathname();
+
 			if ( $item->isDir() ) {
 
 				wp_mkdir_p( $target );
@@ -406,27 +432,44 @@ class Octave_Addons_Updater {
 			}
 
 		}
+
 		return true;
 
 	}
 
-	protected function recursive_delete( string $dir ): void {
+	/*
+	RECURSIVE DELETE
+	-- Removes the temporary custom element backup after restoration.
+	---------------------------------------------------------- */
 
-		if ( ! is_dir( $dir ) ) {
+	protected function recursive_delete( string $directory ): void {
+
+		if ( ! is_dir( $directory ) ) {
 
 			return;
 
 		}
+
 		$iterator = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator( $dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+			new RecursiveDirectoryIterator( $directory, RecursiveDirectoryIterator::SKIP_DOTS ),
 			RecursiveIteratorIterator::CHILD_FIRST
 		);
+
 		foreach ( $iterator as $item ) {
 
-			$item->isDir() ? rmdir( $item->getPathname() ) : unlink( $item->getPathname() );
+			if ( $item->isDir() ) {
+
+				rmdir( $item->getPathname() );
+
+			} else {
+
+				unlink( $item->getPathname() );
+
+			}
 
 		}
-		rmdir( $dir );
+
+		rmdir( $directory );
 
 	}
 

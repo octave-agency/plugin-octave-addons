@@ -1,113 +1,67 @@
 # Octave Addons
 
 A modular WordPress plugin by Octave Agency. One settings screen, many
-toggleable add-ons, and an external update channel that picks up new
-builds as soon as you publish a new zip.
+toggleable add-ons, and native WordPress updates powered by GitHub Releases.
 
-## What's inside (v1.0.0)
+## What's inside (v1.0.1)
 
 | Add-on | Description |
 | --- | --- |
-| **Empty Link Highlighter** | Flags frontend `<a>` tags with empty / `#` hrefs. Style, colour, visibility and admin-bar counter are all configurable. |
-| **Disable Comments** | Removes comment support from every post type, kills the comments REST endpoint, hides the admin menu and admin-bar icon, and force-closes comments on every post. Each piece is individually toggleable. |
-| **Scroll Animations** | Enqueues the Octave fade/slide-in CSS and IntersectionObserver JS on the frontend. The CSS *and* the JS can each be overridden per-site via a textarea in the admin. |
+| **Empty Link Highlighter** | Flags frontend `<a>` tags with empty / `#` hrefs. Style, colour, visibility and admin-bar counter are configurable. |
+| **Disable Comments** | Removes comment support, the comments REST endpoint, admin menus, and the admin-bar icon. |
+| **Scroll Animations** | Enqueues fade/slide-in CSS and IntersectionObserver JS, with per-site overrides. |
+| **Custom Login** | Provides a configurable branded WordPress login screen. |
+| **Mobile Contact Popup** | Adds a configurable contact popup for mobile visitors. |
+| **Breakdance Custom Elements** | Provides a persistent location for locally saved Breakdance elements. |
 
 ## Folder layout
 
-```
+```text
 octave-addons/
-├── octave-addons.php              Plugin bootstrap + constants
+├── octave-addons.php              Plugin bootstrap and constants
 ├── readme.txt                     WordPress-style readme
-├── update.json.example            Manifest format for external updates
-├── README.md                      (this file)
-├── assets/
-│   └── admin.css                  Admin UI styling
+├── assets/                        Shared admin assets
 ├── includes/
-│   ├── class-module.php           Abstract base class for modules
-│   ├── class-module-manager.php   Auto-discovery + dispatch
-│   ├── class-admin.php            Menu, tabs, settings API wiring
-│   ├── class-updater.php          External update checker
+│   ├── class-module.php           Abstract module base class
+│   ├── class-module-manager.php   Module discovery and dispatch
+│   ├── class-admin.php            Settings interface
+│   ├── class-updater.php          GitHub Releases update checker
 │   └── class-octave-addons.php    Main singleton
-└── modules/
-    ├── README.md                  How to add a new module
-    ├── empty-link-highlighter/
-    │   └── class-module.php
-    ├── disable-comments/
-    │   └── class-module.php
-    └── animations/
-        ├── class-module.php
-        └── assets/
-            ├── animation.css       ← your uploaded CSS
-            └── animation.js        ← your uploaded JS
+└── modules/                       Self-contained add-ons
 ```
 
-## External hosting + auto-updates
+## GitHub-powered WordPress updates
 
-The plugin is hosted on **octaveagency.com**. Two files live there:
+WordPress checks the latest published release from
+`octave-agency/plugin-octave-addons`. If its tag version is newer than
+`OCTAVE_ADDONS_VERSION`, the release appears in the standard Plugins and
+Dashboard Updates screens.
 
-| File | Public URL |
-| --- | --- |
-| The plugin zip | `https://octaveagency.com/plugins/octave-addons/octave-addons.zip` |
-| The update manifest | `https://octaveagency.com/plugins/octave-addons/update.json` |
+The release workflow packages the plugin as `octave-addons.zip`, publishes the
+GitHub release, and makes that ZIP the preferred WordPress update download.
 
-The plugin's `OCTAVE_ADDONS_UPDATE_URL` constant points at
-`update.json` and WordPress polls it on the normal update cron.
+### Publishing a release
 
-### The "just overwrite the zip" workflow
+1. Update the `Version` plugin header in `octave-addons.php`.
+2. Update `Stable tag` and the changelog in `readme.txt`.
+3. Commit and push the changes to `main`.
+4. Create and push a matching tag, such as `v1.1.0`.
 
-The hosted side ships with a small `update.php` + `.htaccess` pair
-(see the `octaveagency-hosting/` folder that came with this plugin).
-The `.htaccess` rewrites `update.json` → `update.php`, and `update.php`
-reads the zip's filemtime on every request and returns a manifest
-whose `last_updated` and version reflect that timestamp.
-
-That means your release workflow is:
-
-1. Build a new `octave-addons.zip`.
-2. Upload it to `https://octaveagency.com/plugins/octave-addons/`, overwriting the old zip.
-3. Wait up to one WP cron cycle on the target site, or click *Dashboard → Updates → Check again* for an instant update.
-
-No JSON to edit. No version to bump. Changing the file is enough.
-
-### If you prefer a static manifest
-
-Delete `update.php` and `.htaccess` on the server and drop a static
-`update.json` next to the zip instead (copy
-`update.json.example` from this plugin). In that case you'll need to
-manually bump `last_updated` (and/or `version`) every time you replace
-the zip.
-
-### Manifest format (see `update.json.example`)
-
-```json
-{
-  "name":          "Octave Addons",
-  "slug":          "octave-addons",
-  "version":       "1.0.0",
-  "last_updated":  "2026-04-23 10:00:00",
-  "download_url":  "https://octaveagency.com/plugins/octave-addons/octave-addons.zip",
-  "requires":      "5.8",
-  "tested":        "6.5",
-  "requires_php":  "7.4",
-  "author":        "Octave Agency",
-  "homepage":      "https://octaveagency.com",
-  "sections": {
-    "description": "...",
-    "changelog":   "= 1.0.0 =\n* ..."
-  }
-}
+```bash
+git tag v1.1.0
+git push origin v1.1.0
 ```
+
+The GitHub Actions workflow validates that the tag matches the plugin version,
+builds an installable ZIP, and publishes a GitHub Release. Draft releases and
+prereleases are ignored by GitHub's latest-release endpoint.
 
 ### Forcing an immediate check
 
-Any admin can trigger a re-check by hitting *Dashboard → Updates →
-Check again*, or visiting:
-
-```
-/wp-admin/?octave_addons_check_update=1&_wpnonce=<nonce>
-```
+Use **Dashboard → Updates → Check again**. The updater caches GitHub responses
+for six hours during normal WordPress update checks.
 
 ## Adding new modules
 
-See `modules/README.md` — drop a folder in, ship a class that extends
-`Octave_Addons_Module`, done. No registry edits, no bootstrap changes.
+See `modules/README.md`. Add a folder containing a `class-module.php` class that
+extends `Octave_Addons_Module`; the module manager discovers it automatically.

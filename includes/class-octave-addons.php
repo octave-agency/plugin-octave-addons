@@ -36,7 +36,7 @@ final class Octave_Addons {
 		$this->admin   = new Octave_Addons_Admin( $this->modules );
 		$this->updater = new Octave_Addons_Updater(
 			OCTAVE_ADDONS_FILE,
-			OCTAVE_ADDONS_UPDATE_URL,
+			OCTAVE_ADDONS_GITHUB_REPOSITORY,
 			OCTAVE_ADDONS_VERSION
 		);
 

@@ -2,9 +2,9 @@
 
 /**
  * Plugin Name:       Octave Addons
- * Plugin URI:        https://github.com/octaveagency/octave-addons
+ * Plugin URI:        https://github.com/octave-agency/plugin-octave-addons
  * Description:       A modular collection of Octave site add-ons.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Octave Agency
  * Author URI:        https://octaveagency.com
  * License:           GPL-2.0+
@@ -13,7 +13,7 @@
  * Requires at least: 5.8
  * Requires PHP:      7.4
  *
- * Update URI:        https://octaveagency.com/plugins/octave-addons/update.json
+ * Update URI:        https://github.com/octave-agency/plugin-octave-addons
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,7 +26,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Constants
 // -------------------------------------------------------------------------
 
-define( 'OCTAVE_ADDONS_VERSION',      '1.0.0' );
+$octave_addons_plugin_data = get_file_data( __FILE__, [ 'version' => 'Version' ], 'plugin' );
+
+define( 'OCTAVE_ADDONS_VERSION',      $octave_addons_plugin_data['version'] );
 define( 'OCTAVE_ADDONS_FILE',         __FILE__ );
 define( 'OCTAVE_ADDONS_BASENAME',     plugin_basename( __FILE__ ) );
 define( 'OCTAVE_ADDONS_DIR',          plugin_dir_path( __FILE__ ) );
@@ -35,15 +37,9 @@ define( 'OCTAVE_ADDONS_MODULES_DIR',  OCTAVE_ADDONS_DIR . 'modules/' );
 define( 'OCTAVE_ADDONS_OPTION_KEY',   'octave_addons_settings' );
 define( 'OCTAVE_ADDONS_SLUG',         'octave-addons' );
 
-/**
- * Remote update manifest.
- *
- * Point this at a JSON file that describes the latest release. See
- * /update.json.example for the expected format. The updater checks the
- * "last_updated" timestamp on this file so it will pick up a new build
- * any time the hosted zip changes, even without a version bump.
- */
-define( 'OCTAVE_ADDONS_UPDATE_URL',   'https://octaveagency.com/plugins/octave-addons/update.json' );
+define( 'OCTAVE_ADDONS_GITHUB_REPOSITORY', 'octave-agency/plugin-octave-addons' );
+
+unset( $octave_addons_plugin_data );
 
 // -------------------------------------------------------------------------
 // Autoload core classes
@@ -78,5 +74,5 @@ register_activation_hook( __FILE__, function () {
 register_deactivation_hook( __FILE__, function () {
 	// Clear update caches so any future re-activation forces a fresh check.
 	delete_site_transient( 'update_plugins' );
-	delete_transient( 'octave_addons_remote_manifest' );
+	delete_site_transient( 'octave_addons_github_release' );
 } );
