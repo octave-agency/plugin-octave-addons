@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        1.4.1
+Stable tag:        1.4.3
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -45,6 +45,12 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 1.4.3 =
+* Prevented WordPress core styles from overriding admin notice paragraphs.
+
+= 1.4.2 =
+* Reduced the admin hero to a compact, responsive summary header.
 
 = 1.4.1 =
 * Packaged WordPress releases from the dedicated `octave-addons` plugin directory.

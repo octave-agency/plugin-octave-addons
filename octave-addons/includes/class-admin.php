@@ -318,11 +318,6 @@ class Octave_Addons_Admin {
 							<h1><?php esc_html_e( 'Shape a better WordPress experience.', 'octave-addons' ); ?></h1>
 							<p><?php esc_html_e( 'Activate focused enhancements, tune their behaviour, and keep every site capability organised in one place.', 'octave-addons' ); ?></p>
 						</div>
-						<div class="oa-hero-visual" aria-hidden="true">
-							<span class="oa-orbit oa-orbit-one"></span>
-							<span class="oa-orbit oa-orbit-two"></span>
-							<span class="oa-hero-core"><?= esc_html( (string) count( $all ) ); ?></span>
-						</div>
 						<div class="oa-hero-stats">
 							<div class="oa-stat">
 								<strong class="oa-enabled-count"><?= esc_html( (string) $enabled_count ); ?></strong>
