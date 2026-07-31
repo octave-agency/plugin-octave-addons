@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        1.4.4
+Stable tag:        1.4.5
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -45,6 +45,9 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 1.4.5 =
+* Reduced GitHub release caching from six hours to five minutes for faster update detection.
 
 = 1.4.4 =
 * Automated GitHub release publishing when a new plugin version is synced to the main branch.

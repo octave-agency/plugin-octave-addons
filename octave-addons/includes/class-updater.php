@@ -21,7 +21,7 @@ class Octave_Addons_Updater {
 	protected string $repository;
 	protected string $repository_url;
 	protected string $api_url;
-	protected int $cache_ttl = 6 * HOUR_IN_SECONDS;
+	protected int $cache_ttl = 5 * MINUTE_IN_SECONDS;
 	protected ?string $custom_backup_path = null;
 
 	/** @var array|null|false In-memory cache of the GitHub release response. */
