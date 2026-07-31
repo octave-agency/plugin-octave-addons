@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        1.4.0
+Stable tag:        1.4.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -45,6 +45,9 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 1.4.1 =
+* Packaged WordPress releases from the dedicated `octave-addons` plugin directory.
 
 = 1.4.0 =
 * Added an optional Landing Page URL slug while retaining root-level URLs by default.

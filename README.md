@@ -3,7 +3,7 @@
 A modular WordPress plugin by Octave Agency. One settings screen, many
 toggleable add-ons, and native WordPress updates powered by GitHub Releases.
 
-## What's inside (v1.4.0)
+## What's inside (v1.4.1)
 
 | Add-on | Description |
 | --- | --- |
@@ -16,20 +16,18 @@ toggleable add-ons, and native WordPress updates powered by GitHub Releases.
 | **Breakdance AJAX Filtering** | Adds server-backed filtering and pagination to every Breakdance loop with a Filter Bar. |
 | **Custom Post Types** | Adds root-level Landing Pages and configurable Case Studies with optional categories. |
 
-## Folder layout
+## Repository layout
 
 ```text
-octave-addons/
-├── octave-addons.php              Plugin bootstrap and constants
-├── readme.txt                     WordPress-style readme
-├── assets/                        Shared admin assets
-├── includes/
-│   ├── class-module.php           Abstract module base class
-│   ├── class-module-manager.php   Module discovery and dispatch
-│   ├── class-admin.php            Settings interface
-│   ├── class-updater.php          GitHub Releases update checker
-│   └── class-octave-addons.php    Main singleton
-└── modules/                       Self-contained add-ons
+plugin-octave-addons/
+├── .github/workflows/release.yml  Release packaging workflow
+├── README.md                      Repository documentation
+└── octave-addons/                 Installable WordPress plugin
+    ├── octave-addons.php          Plugin bootstrap and constants
+    ├── readme.txt                 WordPress-style readme
+    ├── assets/                    Shared admin assets
+    ├── includes/                  Core plugin classes
+    └── modules/                   Self-contained add-ons
 ```
 
 ## GitHub-powered WordPress updates
@@ -39,13 +37,14 @@ WordPress checks the latest published release from
 `OCTAVE_ADDONS_VERSION`, the release appears in the standard Plugins and
 Dashboard Updates screens.
 
-The release workflow packages the plugin as `octave-addons.zip`, publishes the
-GitHub release, and makes that ZIP the preferred WordPress update download.
+The release workflow packages only the `octave-addons/` plugin directory. It
+publishes both `octave-addons_VERSION.zip` and the stable `octave-addons.zip`
+asset used by the WordPress updater.
 
 ### Publishing a release
 
-1. Update the `Version` plugin header in `octave-addons.php`.
-2. Update `Stable tag` and the changelog in `readme.txt`.
+1. Update the `Version` plugin header in `octave-addons/octave-addons.php`.
+2. Update `Stable tag` and the changelog in `octave-addons/readme.txt`.
 3. Commit and push the changes to `main`.
 4. Create and push a matching tag, such as `v1.1.0`.
 
