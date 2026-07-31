@@ -3,7 +3,7 @@
 A modular WordPress plugin by Octave Agency. One settings screen, many
 toggleable add-ons, and native WordPress updates powered by GitHub Releases.
 
-## What's inside (v1.4.0)
+## What's inside (v1.4.1)
 
 | Add-on | Description |
 | --- | --- |
