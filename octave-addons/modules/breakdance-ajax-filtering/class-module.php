@@ -64,7 +64,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	public function get_defaults(): array {
 
 		return [
-			'enabled'           => true,
+			'enabled'           => false,
 			'schema'            => 3,
 			'all_archives'      => true,
 			'page_path'         => '',

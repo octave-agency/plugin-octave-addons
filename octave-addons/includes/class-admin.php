@@ -2,7 +2,7 @@
 
 /*
 ADMIN UI
--- Adds a top-level "Octave Addons" menu entry with one tab per module.
+-- Adds a top-level dashboard with quick links and one settings view per module.
 -- Each module owns its own tab, its own settings section, and is toggled
 -- on/off independently. The UI is generated dynamically from whatever
 -- modules are discovered, so new modules appear automatically.
@@ -177,12 +177,6 @@ class Octave_Addons_Admin {
 	protected function current_tab(): string {
 
 		$all = $this->modules->visible_in_admin();
-		if ( empty( $all ) ) {
-
-			return '';
-
-		}
-
 		$requested = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
 		if ( $requested && isset( $all[ $requested ] ) ) {
 
@@ -190,7 +184,29 @@ class Octave_Addons_Admin {
 
 		}
 
-		return (string) array_key_first( $all );
+		return 'dashboard';
+
+	}
+
+	/*
+	MODULE ICON
+	-- Returns the Dashicons class used for a module on the dashboard.
+	---------------------------------------------------------- */
+
+	protected function module_icon( string $id ): string {
+
+		$icons = [
+			'animations'                    => 'dashicons-image-rotate',
+			'breakdance-ajax-filtering'     => 'dashicons-filter',
+			'breakdance-custom-elements'    => 'dashicons-layout',
+			'custom-login'                  => 'dashicons-lock',
+			'custom-post-types'             => 'dashicons-admin-post',
+			'disable-comments'              => 'dashicons-no-alt',
+			'empty-link-highlighter'        => 'dashicons-warning',
+			'mobile-contact-popup'          => 'dashicons-smartphone',
+		];
+
+		return $icons[ $id ] ?? 'dashicons-admin-generic';
 
 	}
 
@@ -202,9 +218,10 @@ class Octave_Addons_Admin {
 
 		}
 
-		$all        = $this->modules->visible_in_admin();
-		$active_tab = $this->current_tab();
-		$icon_url   = OCTAVE_ADDONS_URL . 'assets/admin-icon.png';
+		$all           = $this->modules->visible_in_admin();
+		$active_tab    = $this->current_tab();
+		$icon_url      = OCTAVE_ADDONS_URL . 'assets/admin-icon.png';
+		$dashboard_url = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG ], admin_url( 'admin.php' ) );
 
 		$module_settings = [];
 		$enabled_count   = 0;
@@ -238,13 +255,13 @@ class Octave_Addons_Admin {
 						</div>
 					</div>
 
-					<?php
+					<nav class="oa-nav" aria-label="<?php esc_attr_e( 'Octave Addons navigation', 'octave-addons' ); ?>">
+						<a href="<?= esc_url( $dashboard_url ); ?>"
+						   class="oa-nav-item oa-dashboard-nav-item<?= 'dashboard' === $active_tab ? ' is-active' : ''; ?>">
+							<span class="dashicons dashicons-dashboard oa-nav-icon" aria-hidden="true"></span>
+							<span class="oa-nav-label"><?php esc_html_e( 'Dashboard', 'octave-addons' ); ?></span>
+						</a>
 
-					if ( ! empty( $all ) ) :
-
-					?>
-
-					<nav class="oa-nav" aria-label="<?php esc_attr_e( 'Modules', 'octave-addons' ); ?>">
 						<span class="oa-nav-heading"><?php esc_html_e( 'Modules', 'octave-addons' ); ?></span>
 						<?php
 
@@ -270,6 +287,9 @@ class Octave_Addons_Admin {
 					</nav>
 
 					<select class="oa-nav-select" aria-label="<?php esc_attr_e( 'Navigate modules', 'octave-addons' ); ?>">
+						<option value="<?= esc_url( $dashboard_url ); ?>"<?php selected( 'dashboard' === $active_tab ); ?>>
+							<?php esc_html_e( 'Dashboard', 'octave-addons' ); ?>
+						</option>
 						<?php
 
 						foreach ( $all as $id => $module ) :
@@ -287,11 +307,6 @@ class Octave_Addons_Admin {
 						?>
 
 					</select>
-					<?php
-
-					endif;
-
-					?>
 
 					<div class="oa-sidebar-footer">
 						<span class="oa-sidebar-status" aria-hidden="true"></span>
@@ -312,11 +327,22 @@ class Octave_Addons_Admin {
 				</aside>
 
 				<div class="oa-content">
+					<?php
+
+					if ( 'dashboard' === $active_tab ) :
+
+					?>
+
 					<section class="oa-hero">
 						<div class="oa-hero-copy">
 							<span class="oa-eyebrow"><?php esc_html_e( 'Octave site toolkit', 'octave-addons' ); ?></span>
 							<h1><?php esc_html_e( 'Shape a better WordPress experience.', 'octave-addons' ); ?></h1>
 							<p><?php esc_html_e( 'Activate focused enhancements, tune their behaviour, and keep every site capability organised in one place.', 'octave-addons' ); ?></p>
+						</div>
+						<div class="oa-hero-visual" aria-hidden="true">
+							<span class="oa-orbit oa-orbit-one"></span>
+							<span class="oa-orbit oa-orbit-two"></span>
+							<span class="oa-hero-core"><?= esc_html( (string) count( $all ) ); ?></span>
 						</div>
 						<div class="oa-hero-stats">
 							<div class="oa-stat">
@@ -334,8 +360,75 @@ class Octave_Addons_Admin {
 						</div>
 					</section>
 
-					<?php settings_errors(); ?>
+					<div class="oa-dashboard-heading">
+						<div>
+							<span class="oa-panel-kicker"><?php esc_html_e( 'Quick access', 'octave-addons' ); ?></span>
+							<h2><?php esc_html_e( 'Addon settings', 'octave-addons' ); ?></h2>
+						</div>
+						<p><?php esc_html_e( 'Choose an addon to review its status and configuration.', 'octave-addons' ); ?></p>
+					</div>
+
 					<?php
+
+					if ( empty( $all ) ) :
+
+					?>
+
+						<div class="notice notice-warning inline">
+							<p><?php esc_html_e( 'No modules found. Drop a folder into /modules/ with a class-module.php file to add one.', 'octave-addons' ); ?></p>
+						</div>
+
+					<?php
+
+					else :
+
+					?>
+
+					<div class="oa-module-grid">
+						<?php
+
+						foreach ( $all as $id => $module ) :
+
+							$settings = $module_settings[ $id ];
+							$enabled  = ! empty( $settings['enabled'] );
+							$url      = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG, 'tab' => $id ], admin_url( 'admin.php' ) );
+
+						?>
+
+						<a href="<?= esc_url( $url ); ?>" class="oa-module-card">
+							<span class="oa-module-card-icon" aria-hidden="true">
+								<span class="dashicons <?= esc_attr( $this->module_icon( $id ) ); ?>"></span>
+							</span>
+							<span class="oa-module-card-copy">
+								<strong><?= esc_html( $module->get_title() ); ?></strong>
+								<span><?= esc_html( $module->get_description() ); ?></span>
+							</span>
+							<span class="oa-module-card-footer">
+								<span class="oa-module-card-status <?= $enabled ? 'is-on' : 'is-off'; ?>">
+									<span class="oa-dot <?= $enabled ? 'is-on' : 'is-off'; ?>" aria-hidden="true"></span>
+									<?= $enabled ? esc_html__( 'Enabled', 'octave-addons' ) : esc_html__( 'Disabled', 'octave-addons' ); ?>
+								</span>
+								<span class="oa-module-card-link">
+									<?php esc_html_e( 'Open settings', 'octave-addons' ); ?>
+									<span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+								</span>
+							</span>
+						</a>
+
+						<?php
+
+						endforeach;
+
+						?>
+					</div>
+
+					<?php
+
+					endif;
+
+					else :
+
+						settings_errors();
 
 					if ( empty( $all ) ) :
 
@@ -409,6 +502,8 @@ class Octave_Addons_Admin {
 					</form>
 
 					<?php
+
+					endif;
 
 					endif;
 
