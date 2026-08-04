@@ -203,7 +203,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					<p><?php esc_html_e( 'Add multiple content types and drag them into the order they should appear in the WordPress admin menu.', 'octave-addons' ); ?></p>
 				</div>
 				<button type="button" class="button oa-cpt-add">
-					<span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+					<span class="oa-cpt-add-icon" aria-hidden="true">+</span>
 					<?php esc_html_e( 'Add post type', 'octave-addons' ); ?>
 				</button>
 			</div>
@@ -265,15 +265,28 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				<button type="button" class="oa-cpt-move oa-cpt-move-down" aria-label="<?php esc_attr_e( 'Move this post type down', 'octave-addons' ); ?>">
 					<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
 				</button>
-				<strong class="oa-cpt-item-title"><?= esc_html( '' !== $name ? $name : __( 'New post type', 'octave-addons' ) ); ?></strong>
-				<span class="oa-cpt-key-preview"><?= esc_html( $key ); ?></span>
+				<button type="button" class="oa-cpt-expand" aria-expanded="false">
+					<span class="oa-cpt-expand-copy">
+						<strong class="oa-cpt-item-title"><?= esc_html( '' !== $name ? $name : __( 'New post type', 'octave-addons' ) ); ?></strong>
+						<span class="oa-cpt-key-preview"><?= esc_html( $key ); ?></span>
+					</span>
+					<span class="dashicons dashicons-arrow-down-alt2 oa-cpt-expand-icon" aria-hidden="true"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Toggle post type settings', 'octave-addons' ); ?></span>
+				</button>
+				<div class="oa-cpt-enabled-summary">
+					<span><?php esc_html_e( 'Enabled', 'octave-addons' ); ?></span>
+					<label class="oa-switch">
+						<input type="checkbox" class="oa-cpt-enabled-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'enabled' ) ); ?>" value="1"<?= checked( $enabled, true, false ); ?>>
+						<span class="oa-switch-slider"></span>
+					</label>
+				</div>
 				<button type="button" class="oa-cpt-remove" aria-label="<?php esc_attr_e( 'Remove this post type', 'octave-addons' ); ?>">
 					<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 				</button>
 			</div>
 
-			<div class="oa-cpt-groups">
-				<fieldset class="oa-cpt-group">
+			<div class="oa-cpt-groups oa-hidden">
+				<fieldset class="oa-cpt-group oa-cpt-group--visibility">
 					<legend><?php esc_html_e( 'Identity', 'octave-addons' ); ?></legend>
 					<p class="oa-cpt-group-description"><?php esc_html_e( 'The labels editors see and the permanent key WordPress stores.', 'octave-addons' ); ?></p>
 					<div class="oa-cpt-fields">
@@ -301,15 +314,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					<legend><?php esc_html_e( 'Visibility', 'octave-addons' ); ?></legend>
 					<p class="oa-cpt-group-description"><?php esc_html_e( 'Control whether the type is registered and available publicly.', 'octave-addons' ); ?></p>
 					<div class="oa-cpt-fields oa-cpt-fields--switches">
-						<div class="oa-cpt-field oa-cpt-switch-field">
-							<span><?php esc_html_e( 'Enabled', 'octave-addons' ); ?></span>
-							<label class="oa-switch">
-								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'enabled' ) ); ?>" value="1"<?= checked( $enabled, true, false ); ?>>
-								<span class="oa-switch-slider"></span>
-							</label>
-							<small><?php esc_html_e( 'Register this content type.', 'octave-addons' ); ?></small>
-						</div>
-
 						<div class="oa-cpt-field oa-cpt-switch-field">
 							<span><?php esc_html_e( 'Public', 'octave-addons' ); ?></span>
 							<label class="oa-switch">

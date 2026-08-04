@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.3.1
+Stable tag:        2.3.3
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -48,6 +48,15 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.3.3 =
+* Added a reusable accessible confirmation dialog for destructive or confirmable admin actions.
+* Replaced the browser confirmation used when removing a saved custom post type with the new styled dialog.
+
+= 2.3.2 =
+* Collapsed custom post type settings by default and added an accessible top-bar disclosure control.
+* Moved Enabled into the card header so disabling a type immediately hides and locks its remaining options.
+* Replaced the Add post type Dashicon with a plugin-scoped icon to prevent WordPress core button styles from misaligning it.
 
 = 2.3.1 =
 * Reorganised each custom post type into clear Identity, Visibility, URLs and Taxonomy groups.

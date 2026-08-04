@@ -1058,6 +1058,151 @@ ADMIN INTERACTIONS
 	} );
 
 	/*
+	CONFIRMATION DIALOG
+	-- Shared Promise-based replacement for browser confirm dialogs throughout
+	-- the plugin admin. Supports safe and destructive confirmation variants.
+	---------------------------------------------------------- */
+
+	window.oaConfirm = function ( options ) {
+
+		options = Object.assign( {
+			title: oaAdmin.confirmTitleText,
+			message: '',
+			confirmText: oaAdmin.confirmActionText,
+			cancelText: oaAdmin.cancelActionText,
+			destructive: false
+		}, options || {} );
+
+		return new Promise( function ( resolve ) {
+
+			var activeElement = document.activeElement;
+			var modal = document.createElement( 'div' );
+			var overlay = document.createElement( 'div' );
+			var dialog = document.createElement( 'div' );
+			var heading = document.createElement( 'h2' );
+			var message = document.createElement( 'p' );
+			var actions = document.createElement( 'div' );
+			var cancelButton = document.createElement( 'button' );
+			var confirmButton = document.createElement( 'button' );
+			var titleId = 'oa-confirm-title-' + Date.now();
+			var messageId = 'oa-confirm-message-' + Date.now();
+			var isClosed = false;
+
+			modal.className = 'oa-confirm-modal';
+			overlay.className = 'oa-confirm-overlay';
+			dialog.className = 'oa-confirm-dialog';
+			dialog.setAttribute( 'role', 'alertdialog' );
+			dialog.setAttribute( 'aria-modal', 'true' );
+			dialog.setAttribute( 'aria-labelledby', titleId );
+			dialog.setAttribute( 'aria-describedby', messageId );
+			heading.id = titleId;
+			heading.className = 'oa-confirm-title';
+			heading.textContent = options.title;
+			message.id = messageId;
+			message.className = 'oa-confirm-message';
+			message.textContent = options.message;
+			actions.className = 'oa-confirm-actions';
+			cancelButton.type = 'button';
+			cancelButton.className = 'oa-confirm-button oa-confirm-cancel';
+			cancelButton.textContent = options.cancelText;
+			confirmButton.type = 'button';
+			confirmButton.className = 'oa-confirm-button oa-confirm-submit' + ( options.destructive ? ' is-destructive' : '' );
+			confirmButton.textContent = options.confirmText;
+
+			actions.appendChild( cancelButton );
+			actions.appendChild( confirmButton );
+			dialog.appendChild( heading );
+			dialog.appendChild( message );
+			dialog.appendChild( actions );
+			modal.appendChild( overlay );
+			modal.appendChild( dialog );
+			document.body.appendChild( modal );
+			document.body.classList.add( 'oa-confirm-open' );
+
+			function closeDialog( confirmed ) {
+
+				if ( isClosed ) {
+
+					return;
+
+				}
+
+				isClosed = true;
+				document.removeEventListener( 'keydown', handleKeydown );
+				document.body.classList.remove( 'oa-confirm-open' );
+				modal.remove();
+
+				if ( activeElement && document.contains( activeElement ) ) {
+
+					activeElement.focus();
+
+				}
+
+				resolve( confirmed );
+
+			}
+
+			function handleKeydown( event ) {
+
+				if ( 'Escape' === event.key ) {
+
+					event.preventDefault();
+					closeDialog( false );
+					return;
+
+				}
+
+				if ( 'Tab' !== event.key ) {
+
+					return;
+
+				}
+
+				var focusable = [ cancelButton, confirmButton ];
+				var currentIndex = focusable.indexOf( document.activeElement );
+				var nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
+
+				if ( nextIndex < 0 ) {
+
+					nextIndex = focusable.length - 1;
+
+				} else if ( nextIndex >= focusable.length ) {
+
+					nextIndex = 0;
+
+				}
+
+				event.preventDefault();
+				focusable[ nextIndex ].focus();
+
+			}
+
+			overlay.addEventListener( 'click', function () {
+
+				closeDialog( false );
+
+			} );
+
+			cancelButton.addEventListener( 'click', function () {
+
+				closeDialog( false );
+
+			} );
+
+			confirmButton.addEventListener( 'click', function () {
+
+				closeDialog( true );
+
+			} );
+
+			document.addEventListener( 'keydown', handleKeydown );
+			cancelButton.focus();
+
+		} );
+
+	};
+
+	/*
 	CUSTOM POST TYPE EDITOR
 	-- Adds, removes and accessibly reorders the repeatable post type cards.
 	---------------------------------------------------------- */
@@ -1135,6 +1280,9 @@ ADMIN INTERACTIONS
 			var handle = item.querySelector( '.oa-cpt-drag-handle' );
 			var moveUpButton = item.querySelector( '.oa-cpt-move-up' );
 			var moveDownButton = item.querySelector( '.oa-cpt-move-down' );
+			var expandButton = item.querySelector( '.oa-cpt-expand' );
+			var groups = item.querySelector( '.oa-cpt-groups' );
+			var enabledToggle = item.querySelector( '.oa-cpt-enabled-toggle' );
 			var removeButton = item.querySelector( '.oa-cpt-remove' );
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
 			var taxonomyToggle = item.querySelector( '.oa-cpt-taxonomy-toggle' );
@@ -1150,6 +1298,33 @@ ADMIN INTERACTIONS
 			var keyPreview = item.querySelector( '.oa-cpt-key-preview' );
 			var isNew = 'false' === item.dataset.saved;
 			var keyIsAutomatic = isNew;
+
+			function syncEnabledState() {
+
+				var isEnabled = enabledToggle.checked;
+
+				item.classList.toggle( 'is-disabled', ! isEnabled );
+				expandButton.disabled = ! isEnabled;
+
+				if ( ! isEnabled ) {
+
+					groups.classList.add( 'oa-hidden' );
+					expandButton.setAttribute( 'aria-expanded', 'false' );
+
+				}
+
+			}
+
+			expandButton.addEventListener( 'click', function () {
+
+				var willOpen = groups.classList.contains( 'oa-hidden' );
+
+				groups.classList.toggle( 'oa-hidden', ! willOpen );
+				expandButton.setAttribute( 'aria-expanded', willOpen ? 'true' : 'false' );
+
+			} );
+
+			enabledToggle.addEventListener( 'change', syncEnabledState );
 
 			archiveToggle.addEventListener( 'change', function () {
 
@@ -1241,18 +1416,38 @@ ADMIN INTERACTIONS
 
 			} );
 
-			removeButton.addEventListener( 'click', function () {
-
-				if ( 'true' === item.dataset.saved && ! window.confirm( oaAdmin.removePostTypeText ) ) {
-
-					return;
-
-				}
+			function removeItem() {
 
 				item.remove();
 				reindexItems();
 				announceOrderChange();
 				addButton.focus();
+
+			}
+
+			removeButton.addEventListener( 'click', function () {
+
+				if ( 'true' !== item.dataset.saved ) {
+
+					removeItem();
+					return;
+
+				}
+
+				window.oaConfirm( {
+					title: oaAdmin.removePostTypeTitle,
+					message: oaAdmin.removePostTypeText,
+					confirmText: oaAdmin.removeActionText,
+					destructive: true
+				} ).then( function ( confirmed ) {
+
+					if ( confirmed ) {
+
+						removeItem();
+
+					}
+
+				} );
 
 			} );
 
@@ -1355,6 +1550,7 @@ ADMIN INTERACTIONS
 			} );
 
 			syncConditionalFields( item );
+			syncEnabledState();
 
 		}
 
@@ -1395,6 +1591,8 @@ ADMIN INTERACTIONS
 			item.querySelector( '.oa-cpt-key-preview' ).textContent = keyInput.value;
 			list.appendChild( item );
 			wireItem( item );
+			item.querySelector( '.oa-cpt-groups' ).classList.remove( 'oa-hidden' );
+			item.querySelector( '.oa-cpt-expand' ).setAttribute( 'aria-expanded', 'true' );
 			reindexItems();
 			announceOrderChange();
 			item.querySelector( '[data-cpt-field="name"]' ).focus();
