@@ -74,7 +74,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		return [
 			'enabled'                 => true,
 			'page_categories'         => true,
-			'page_category_slug'      => 'page-category',
 			'case_studies'            => true,
 			'case_study_post_slug'    => 'case-study',
 			'case_study_archive_slug' => 'case-studies',
@@ -93,7 +92,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		return [
 			'enabled'                 => ! empty( $input['enabled'] ),
 			'page_categories'         => ! empty( $input['page_categories'] ),
-			'page_category_slug'      => self::sanitize_rewrite_slug( $input['page_category_slug'] ?? '', 'page-category' ),
 			'case_studies'            => ! empty( $input['case_studies'] ),
 			'case_study_post_slug'    => self::sanitize_rewrite_slug( $input['case_study_post_slug'] ?? '', 'case-study' ),
 			'case_study_archive_slug' => self::sanitize_rewrite_slug( $input['case_study_archive_slug'] ?? '', 'case-studies' ),
@@ -109,10 +107,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	public function render_settings( array $settings ): void {
 
-		$page_category_slug = self::sanitize_rewrite_slug( $settings['page_category_slug'] ?? '', 'page-category' );
-		$page_category_path = user_trailingslashit( $page_category_slug . '/ppc', 'category' );
-		$page_category_url  = home_url( '/' . ltrim( $page_category_path, '/' ) );
-		$page_terms_url     = admin_url( 'edit-tags.php?taxonomy=' . self::PAGE_TAXONOMY . '&post_type=page' );
+		$page_terms_url = admin_url( 'edit-tags.php?taxonomy=' . self::PAGE_TAXONOMY . '&post_type=page' );
 
 		$case_study_post_slug    = self::sanitize_rewrite_slug( $settings['case_study_post_slug'] ?? '', 'case-study' );
 		$case_study_archive_slug = self::sanitize_rewrite_slug( $settings['case_study_archive_slug'] ?? '', 'case-studies' );
@@ -150,8 +145,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 							[
 								'name'    => $this->field_name( 'page_categories' ),
 								'checked' => ! empty( $settings['page_categories'] ),
-								'data'    => [ 'controls-row' => 'oaCptPageCategorySlug' ],
-								'help'    => __( 'Adds a hierarchical category taxonomy to the built-in Pages post type.', 'octave-addons' ),
+								'help'    => __( 'Adds a hierarchical category taxonomy to the built-in Pages post type. Admin only — categories have no public archives or links.', 'octave-addons' ),
 							]
 						);
 
@@ -165,36 +159,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 						<span class="oa-help">
 							<a href="<?= esc_url( $page_terms_url ); ?>"><?php esc_html_e( 'Manage page categories', 'octave-addons' ); ?></a>
-						</span>
-
-						<?php
-
-					},
-				]
-			);
-
-			Octave_Addons_Fields::row(
-				[
-					'id'    => 'oaCptPageCategorySlug',
-					'for'   => $this->field_id( 'page_category_slug' ),
-					'label' => __( 'Category slug', 'octave-addons' ),
-					'field' => function () use ( $page_category_slug, $page_category_url ) {
-
-						Octave_Addons_Fields::text(
-							[
-								'id'          => $this->field_id( 'page_category_slug' ),
-								'name'        => $this->field_name( 'page_category_slug' ),
-								'value'       => $page_category_slug,
-								'placeholder' => 'page-category',
-								'help'        => __( 'URL prefix used for category archives listing the pages in a campaign.', 'octave-addons' ),
-							]
-						);
-
-						?>
-
-						<span class="oa-help">
-							<?php esc_html_e( 'Example URL:', 'octave-addons' ); ?>
-							<code><?= esc_html( $page_category_url ); ?></code>
 						</span>
 
 						<?php
@@ -338,14 +302,13 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	/*
 	REGISTER PAGE CATEGORIES
 	-- Adds a hierarchical taxonomy to the built-in Pages post type.
-	-- Registered as publicly queryable with a query var so WordPress's own
-	-- filtering, REST, and builder query loops all understand it without any
-	-- extra glue.
+	-- Admin-only: no public archives, rewrite rules, or nav menu entries, so
+	-- visitors never get a category link. WordPress keeps the query var
+	-- registered inside wp-admin, so list table filtering, REST, and builder
+	-- query loops still work without any extra glue.
 	---------------------------------------------------------- */
 
 	protected function register_page_categories( array $settings ): void {
-
-		$slug = self::sanitize_rewrite_slug( $settings['page_category_slug'] ?? '', 'page-category' );
 
 		$labels = [
 			'name'              => __( 'Page Categories', 'octave-addons' ),
@@ -369,22 +332,18 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			[
 				'labels'             => $labels,
 				'description'        => __( 'Campaign groupings for Pages, such as PPC or Landing.', 'octave-addons' ),
-				'public'             => true,
-				'publicly_queryable' => true,
+				'public'             => false,
+				'publicly_queryable' => false,
 				'hierarchical'       => true,
 				'show_ui'            => true,
 				'show_in_menu'       => true,
 				'show_admin_column'  => true,
 				'show_in_quick_edit' => true,
-				'show_in_nav_menus'  => true,
+				'show_in_nav_menus'  => false,
 				'show_tagcloud'      => false,
 				'show_in_rest'       => true,
 				'query_var'          => true,
-				'rewrite'            => [
-					'slug'         => $slug,
-					'with_front'   => false,
-					'hierarchical' => true,
-				],
+				'rewrite'            => false,
 			]
 		);
 
@@ -478,11 +437,20 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		}
 
+		?>
+
+		<label class="screen-reader-text" for="<?= esc_attr( self::PAGE_TAXONOMY ); ?>">
+			<?php esc_html_e( 'Filter by page category', 'octave-addons' ); ?>
+		</label>
+
+		<?php
+
 		wp_dropdown_categories(
 			[
 				'show_option_all' => __( 'All page categories', 'octave-addons' ),
 				'taxonomy'        => self::PAGE_TAXONOMY,
 				'name'            => self::PAGE_TAXONOMY,
+				'id'              => self::PAGE_TAXONOMY,
 				'value_field'     => 'slug',
 				'selected'        => $this->get_current_page_category(),
 				'hierarchical'    => true,
@@ -653,7 +621,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$rewrite_settings = [
 			'enabled'                 => ! empty( $settings['enabled'] ),
 			'page_categories'         => ! empty( $settings['page_categories'] ),
-			'page_category_slug'      => self::sanitize_rewrite_slug( $settings['page_category_slug'] ?? '', 'page-category' ),
 			'case_studies'            => ! empty( $settings['case_studies'] ),
 			'case_study_post_slug'    => self::sanitize_rewrite_slug( $settings['case_study_post_slug'] ?? '', 'case-study' ),
 			'case_study_archive_slug' => self::sanitize_rewrite_slug( $settings['case_study_archive_slug'] ?? '', 'case-studies' ),
