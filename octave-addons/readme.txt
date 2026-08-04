@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        1.8.1
+Stable tag:        2.0.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -24,8 +24,8 @@ Octave Addons ships with a growing collection of focused modules:
     IntersectionObserver JS, with an editable override for each file.
 *   **Breakdance AJAX Filtering** – adds server-backed filtering and
     pagination to Breakdance loops with a Filter Bar.
-*   **Custom Post Types** – adds configurable content types, beginning
-    with Landing Pages at clean root-level URLs.
+*   **Custom Post Types** – groups Pages into campaign categories such as
+    PPC or Landing, and adds configurable content types like Case Studies.
 
 Each add-on has its own tab under *Octave Addons* in the WordPress
 admin. Adding a new add-on later is a drop-in operation — create a
@@ -45,6 +45,11 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.0.0 =
+* Added Page Categories: a hierarchical taxonomy on the built-in Pages post type for grouping campaigns such as PPC or Landing, with its own on/off switch and configurable archive slug.
+* Page categories appear as one-click filter links above the Pages list, as a toolbar dropdown, as a list column, in Quick Edit, and in the block editor, all driven by standard WordPress filtering.
+* Breaking: removed the Landing Pages post type. Existing landing page content stays in the database but is no longer registered, so it will not appear in the admin.
 
 = 1.8.1 =
 * Recoloured the admin to the Octave brand palette, replacing the violet and sky accents with brand green on near-black.
