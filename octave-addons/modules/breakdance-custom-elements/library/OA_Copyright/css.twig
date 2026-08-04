@@ -1,0 +1,20 @@
+%%SELECTOR%% {
+  {{ macros.spacing_margin_y( design.spacing ) }}
+}
+
+%%SELECTOR%% .oa_copyright-text {
+  {{ macros.typography( design.typography, globalSettings ) }}
+}
+
+%%SELECTOR%% .oa_copyright-link {
+  {% if design.link.color %}color: {{ design.link.color }};{% endif %}
+  text-decoration: {{ design.link.underline ? 'underline' : 'none' }};
+}
+
+{% if design.link.color_hover %}
+
+  %%SELECTOR%% .oa_copyright-link:hover {
+    color: {{ design.link.color_hover }};
+  }
+
+{% endif %}

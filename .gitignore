@@ -1,4 +1,10 @@
 AGENTS.md
 
-# Site-specific Breakdance elements
-/octave-addons/modules/breakdance-elements/
+.DS_Store
+
+# Third-party plugin source kept locally for reference only
+/Breakdance Plugins/
+
+# Site-specific Breakdance elements — the shared library in
+# modules/breakdance-custom-elements/library/ is tracked; the per-site save
+# location keeps its own .gitignore in modules/breakdance-custom-elements/elements/

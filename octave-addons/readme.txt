@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        1.5.1
+Stable tag:        1.8.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -45,6 +45,26 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 1.8.1 =
+* Recoloured the admin to the Octave brand palette, replacing the violet and sky accents with brand green on near-black.
+* Regenerated the plugin banner and icon artwork in brand colours.
+
+= 1.8.0 =
+* Renamed the Breakdance Custom Elements module to Breakdance Elements and gave it its own admin screen.
+* Added an on/off switch for every custom element, listed automatically with its builder icon, so new elements appear with no code changes.
+* Switching an element off hides it from the builder's add panel without affecting pages that already use it.
+* Elements edited on a site are now detected and carried across plugin updates instead of being overwritten.
+* Added plugin banner and icon artwork for the WordPress update and details screens.
+
+= 1.7.0 =
+* Added a shared Breakdance element library with OA Countdown, OA Copy Text, OA Copyright, OA Logo Marquee and OA Reading Time.
+* Split element storage: the shipped library is read-only in Element Studio, and site-specific elements save to wp-content/plugins/octave-elements/ when that folder exists.
+* Added the `octave_addons_breakdance_save_locations` filter for registering extra Element Studio save locations.
+
+= 1.6.0 =
+* Added a confirmation dialog on the Plugins screen warning that deactivating Octave Addons disables every module and can break the site.
+* Covered both the row "Deactivate" link and the bulk deactivate action.
 
 = 1.5.0 =
 * Added a dedicated addon dashboard with the full hero, status cards, icons, and quick links to every settings area.

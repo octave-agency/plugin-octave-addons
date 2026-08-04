@@ -1,0 +1,87 @@
+/*
+OA LOGO MARQUEE
+-- Two identical tracks scroll side by side; when the first has moved its own
+-- width the second sits exactly where it started, so the loop is seamless
+---------------------------------------------------------- */
+
+.oa_logo_marquee-viewport {
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+}
+
+/*
+Track
+---------------------------------------------------------- */
+
+.oa_logo_marquee-track {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 48px;
+    padding-right: 48px;
+    animation-name: oa-logo-marquee;
+    animation-duration: 30s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes oa-logo-marquee {
+
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-100%);
+    }
+
+}
+
+/*
+Items
+---------------------------------------------------------- */
+
+.oa_logo_marquee-item {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+.oa_logo_marquee-item img {
+    display: block;
+    width: auto;
+    height: 40px;
+    max-width: none;
+    object-fit: contain;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/*
+States
+---------------------------------------------------------- */
+
+.oa_logo_marquee-viewport.is-pausable:hover .oa_logo_marquee-track {
+    animation-play-state: paused;
+}
+
+.oa_logo_marquee-empty {
+    padding: 16px 0;
+    opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .oa_logo_marquee-track {
+        animation: none;
+    }
+
+    .oa_logo_marquee-track[aria-hidden="true"] {
+        display: none;
+    }
+
+    .oa_logo_marquee-viewport {
+        overflow-x: auto;
+    }
+
+}

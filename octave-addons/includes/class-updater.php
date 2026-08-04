@@ -23,6 +23,8 @@ class Octave_Addons_Updater {
 	protected string $api_url;
 	protected int $cache_ttl = 5 * MINUTE_IN_SECONDS;
 	protected ?string $custom_backup_path = null;
+	protected ?string $library_backup_path = null;
+	protected array $library_backup_slugs = [];
 
 	/** @var array|null|false In-memory cache of the GitHub release response. */
 	protected $release = null;
@@ -88,6 +90,8 @@ class Octave_Addons_Updater {
 			'package'      => $this->get_download_url( $release ),
 			'requires'     => $plugin_data['RequiresWP'] ?? '',
 			'requires_php' => $plugin_data['RequiresPHP'] ?? '',
+			'icons'        => $this->get_icons(),
+			'banners'      => $this->get_banners(),
 		];
 
 	}
@@ -131,6 +135,8 @@ class Octave_Addons_Updater {
 			'requires_php'  => '7.4',
 			'last_updated'  => $release['published_at'] ?? '',
 			'download_link' => $this->get_download_url( $release ),
+			'banners'       => $this->get_banners(),
+			'icons'         => $this->get_icons(),
 			'sections'      => [
 				'description' => 'A modular collection of Octave site add-ons.',
 				'changelog'   => nl2br( esc_html( $release_notes ) ),
@@ -177,7 +183,9 @@ class Octave_Addons_Updater {
 
 	/*
 	BEFORE UPDATE
-	-- Backs up locally saved Breakdance custom elements before replacement.
+	-- Backs up locally saved Breakdance custom elements before replacement,
+	-- plus any shipped library element that has been edited on this site so
+	-- the update cannot overwrite local work.
 	---------------------------------------------------------- */
 
 	public function before_update( $response, array $hook_extra ) {
@@ -187,6 +195,8 @@ class Octave_Addons_Updater {
 			return $response;
 
 		}
+
+		$this->backup_customised_elements();
 
 		$custom_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug . '/modules/breakdance-custom-elements/elements';
 
@@ -209,8 +219,59 @@ class Octave_Addons_Updater {
 	}
 
 	/*
+	BACKUP CUSTOMISED ELEMENTS
+	-- Copies every library element whose files no longer match the shipped
+	-- fingerprint into a temporary folder, ready to be put back afterwards.
+	---------------------------------------------------------- */
+
+	protected function backup_customised_elements(): void {
+
+		if ( ! class_exists( 'Octave_Addons_Elements_Manifest' ) ) {
+
+			return;
+
+		}
+
+		$customised = Octave_Addons_Elements_Manifest::customised_slugs();
+
+		if ( empty( $customised ) ) {
+
+			return;
+
+		}
+
+		$library = Octave_Addons_Elements_Manifest::library_dir();
+		$backup  = get_temp_dir() . 'octave_library_elements_' . time();
+
+		$saved = [];
+
+		foreach ( $customised as $slug ) {
+
+			if ( $this->recursive_copy( $library . '/' . $slug, $backup . '/' . $slug ) ) {
+
+				$saved[] = $slug;
+
+			}
+
+		}
+
+		if ( empty( $saved ) ) {
+
+			return;
+
+		}
+
+		$this->library_backup_path = $backup;
+		$this->library_backup_slugs = $saved;
+
+	}
+
+	/*
 	AFTER UPDATE
 	-- Restores custom elements and clears cached GitHub release data.
+	-- The manifest is rebuilt first, while the freshly installed library is
+	-- still pristine, so the edited copies restored on top stay recognisable
+	-- as customised and keep their protection on the next update.
 	---------------------------------------------------------- */
 
 	public function after_update( $upgrader, array $hook_extra ): void {
@@ -226,6 +287,8 @@ class Octave_Addons_Updater {
 
 		}
 
+		$this->restore_customised_elements();
+
 		if ( ! empty( $this->custom_backup_path ) && is_dir( $this->custom_backup_path ) ) {
 
 			$custom_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug . '/modules/breakdance-custom-elements/elements';
@@ -238,6 +301,91 @@ class Octave_Addons_Updater {
 		}
 
 		$this->clear_cache();
+
+	}
+
+	/*
+	RESTORE CUSTOMISED ELEMENTS
+	-- Rebuilds the shipped fingerprints, then puts the edited element folders
+	-- back over the top of the newly installed ones.
+	---------------------------------------------------------- */
+
+	protected function restore_customised_elements(): void {
+
+		if ( ! class_exists( 'Octave_Addons_Elements_Manifest' ) ) {
+
+			return;
+
+		}
+
+		Octave_Addons_Elements_Manifest::build();
+
+		if ( empty( $this->library_backup_path ) || ! is_dir( $this->library_backup_path ) ) {
+
+			return;
+
+		}
+
+		$library = Octave_Addons_Elements_Manifest::library_dir();
+
+		foreach ( $this->library_backup_slugs as $slug ) {
+
+			$source = $this->library_backup_path . '/' . $slug;
+
+			if ( ! is_dir( $source ) ) {
+
+				continue;
+
+			}
+
+			$this->recursive_copy( $source, $library . '/' . $slug );
+
+		}
+
+		$this->recursive_delete( $this->library_backup_path );
+
+		$this->library_backup_path  = null;
+		$this->library_backup_slugs = [];
+
+	}
+
+	/*
+	ASSET URL
+	-- Absolute URL for a packaged image, used for the update banners and icons.
+	---------------------------------------------------------- */
+
+	protected function asset_url( string $file ): string {
+
+		return plugins_url( 'assets/' . $file, $this->plugin_file );
+
+	}
+
+	/*
+	BANNERS
+	-- Header artwork shown in the plugin details modal.
+	---------------------------------------------------------- */
+
+	protected function get_banners(): array {
+
+		return [
+			'low'  => $this->asset_url( 'banner-772x250.png' ),
+			'high' => $this->asset_url( 'banner-1544x500.png' ),
+		];
+
+	}
+
+	/*
+	ICONS
+	-- Square mark shown beside the plugin on update screens.
+	---------------------------------------------------------- */
+
+	protected function get_icons(): array {
+
+		return [
+			'1x'      => $this->asset_url( 'icon-128x128.png' ),
+			'2x'      => $this->asset_url( 'icon-256x256.png' ),
+			'default' => $this->asset_url( 'icon-256x256.png' ),
+		];
 
 	}
 

@@ -1,0 +1,31 @@
+%%SELECTOR%% {
+  {{ macros.spacing_margin_y( design.spacing ) }}
+}
+
+%%SELECTOR%% .oa_logo_marquee-track {
+  gap: {{ design.logos.gap.style|default('48px') }};
+  padding-right: {{ design.logos.gap.style|default('48px') }};
+  animation-duration: {{ content.marquee.speed|default(30) }}s;
+  animation-direction: {{ content.marquee.direction == 'right' ? 'reverse' : 'normal' }};
+}
+
+%%SELECTOR%% .oa_logo_marquee-item img {
+  height: {{ design.logos.height.style|default('40px') }};
+  opacity: {{ design.logos.opacity|default(1) }};
+  {% if design.logos.grayscale %}filter: grayscale(1);{% endif %}
+}
+
+%%SELECTOR%% .oa_logo_marquee-item:hover img {
+  opacity: {{ design.logos.opacity_hover|default( design.logos.opacity|default(1) ) }};
+  {% if design.logos.grayscale %}filter: grayscale(0);{% endif %}
+}
+
+{% if content.marquee.fade_edges %}
+
+  %%SELECTOR%% .oa_logo_marquee-viewport.has-fade {
+    --oa-fade: {{ design.fade.width.style|default('80px') }};
+    mask-image: linear-gradient(to right, transparent, #000 var(--oa-fade), #000 calc(100% - var(--oa-fade)), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--oa-fade), #000 calc(100% - var(--oa-fade)), transparent);
+  }
+
+{% endif %}

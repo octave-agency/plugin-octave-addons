@@ -1,0 +1,24 @@
+%%SELECTOR%% {
+  {{ macros.spacing_margin_y( design.spacing ) }}
+}
+
+%%SELECTOR%% .oa_reading_time-wrap {
+  gap: {{ design.icon.gap.style|default('6px') }};
+}
+
+%%SELECTOR%% .oa_reading_time-text {
+  {{ macros.typography( design.typography, globalSettings ) }}
+}
+
+%%SELECTOR%% .oa_reading_time-icon {
+  {% if design.icon.color %}color: {{ design.icon.color }};{% endif %}
+}
+
+{% if design.icon.size.style %}
+
+  %%SELECTOR%% .oa_reading_time-icon svg {
+    width: {{ design.icon.size.style }};
+    height: {{ design.icon.size.style }};
+  }
+
+{% endif %}

@@ -1,0 +1,38 @@
+%%SELECTOR%% {
+  {{ macros.spacing_margin_y( design.spacing ) }}
+}
+
+%%SELECTOR%% .oa_copy_text-wrap {
+  flex-direction: {{ design.layout.direction|default('row') }};
+  align-items: {{ design.layout.align|default('flex-start') }};
+  gap: {{ design.layout.gap.style|default('12px') }};
+}
+
+%%SELECTOR%% .oa_copy_text-value {
+  {{ macros.typography( design.value_typography, globalSettings ) }}
+}
+
+%%SELECTOR%% .oa_copy_text-button {
+  {{ macros.typography( design.button_typography, globalSettings ) }}
+  {{ macros.spacing_complex( design.button.padding, 'padding' ) }}
+  {% if design.button.background %}background: {{ design.button.background }};{% endif %}
+  {% if design.button.border_color %}border-color: {{ design.button.border_color }};{% endif %}
+  {% if design.button.radius.style %}border-radius: {{ design.button.radius.style }};{% endif %}
+}
+
+{% if design.button.background_hover %}
+
+  %%SELECTOR%% .oa_copy_text-button:hover {
+    background: {{ design.button.background_hover }};
+  }
+
+{% endif %}
+
+{% if design.button.icon_size.style %}
+
+  %%SELECTOR%% .oa_copy_text-icon svg {
+    width: {{ design.button.icon_size.style }};
+    height: {{ design.button.icon_size.style }};
+  }
+
+{% endif %}

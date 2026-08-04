@@ -25,6 +25,7 @@ class Octave_Addons_Admin {
 		add_action( 'admin_menu',            [ $this, 'register_menu' ] );
 		add_action( 'admin_init',            [ $this, 'register_settings' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_deactivation_guard' ] );
 		add_action( 'admin_head',            [ $this, 'print_global_admin_icon_css' ] );
 		add_filter( 'plugin_action_links_' . OCTAVE_ADDONS_BASENAME, [ $this, 'plugin_action_links' ] );
 		add_action( 'wp_ajax_oa_icon_sets',    [ $this, 'ajax_icon_sets' ] );
@@ -95,6 +96,50 @@ class Octave_Addons_Admin {
 			'savedText'        => __( 'All changes saved', 'octave-addons' ),
 			'unsavedText'      => __( 'Unsaved changes', 'octave-addons' ),
 			'savingText'       => __( 'Saving changes…', 'octave-addons' ),
+		] );
+
+	}
+
+	/*
+	DEACTIVATION GUARD
+	-- Loads the confirmation dialog on the Plugins screen so the plugin
+	-- cannot be deactivated by a single stray click.
+	---------------------------------------------------------- */
+
+	public function enqueue_deactivation_guard( string $hook ): void {
+
+		if ( 'plugins.php' !== $hook || ! current_user_can( 'deactivate_plugin', OCTAVE_ADDONS_BASENAME ) ) {
+
+			return;
+
+		}
+
+		$assets_dir = OCTAVE_ADDONS_DIR . 'assets/';
+		$css_path   = $assets_dir . 'deactivate.css';
+		$js_path    = $assets_dir . 'deactivate.js';
+
+		wp_enqueue_style(
+			'octave-addons-deactivate',
+			OCTAVE_ADDONS_URL . 'assets/deactivate.css',
+			[],
+			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
+		);
+
+		wp_enqueue_script(
+			'octave-addons-deactivate',
+			OCTAVE_ADDONS_URL . 'assets/deactivate.js',
+			[],
+			file_exists( $js_path ) ? (string) filemtime( $js_path ) : OCTAVE_ADDONS_VERSION,
+			true
+		);
+
+		wp_localize_script( 'octave-addons-deactivate', 'oaDeactivate', [
+			'basename'    => OCTAVE_ADDONS_BASENAME,
+			'title'       => __( 'Are you sure?', 'octave-addons' ),
+			'message'     => __( 'Deactivating Octave Addons turns off every enabled module at once. Custom post types, elements, filtering and animations will stop working, and this can break the site. Are you sure you want to deactivate it?', 'octave-addons' ),
+			'bulkMessage' => __( 'Your selection includes Octave Addons. Deactivating it turns off every enabled module at once, and this can break the site. Are you sure you want to continue?', 'octave-addons' ),
+			'confirmText' => __( 'Yes, deactivate', 'octave-addons' ),
+			'cancelText'  => __( 'Keep it active', 'octave-addons' ),
 		] );
 
 	}

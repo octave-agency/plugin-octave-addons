@@ -1,0 +1,61 @@
+/*
+OA COUNTDOWN
+-- Base layout for the timer, its units and the expired message
+---------------------------------------------------------- */
+
+.oa_countdown-units {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+/*
+Unit
+---------------------------------------------------------- */
+
+.oa_countdown-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.oa_countdown-value {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.oa_countdown-label {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/*
+Separator
+---------------------------------------------------------- */
+
+.oa_countdown-separator {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0.5;
+}
+
+/*
+Expired state
+---------------------------------------------------------- */
+
+.oa_countdown-expired[hidden] {
+    display: none;
+}
+
+.oa_countdown-timer.is-expired .oa_countdown-units {
+    display: none;
+}

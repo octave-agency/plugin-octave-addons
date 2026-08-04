@@ -1,0 +1,20 @@
+/*
+OA READING TIME
+-- Inline icon and text pairing
+---------------------------------------------------------- */
+
+.oa_reading_time-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.oa_reading_time-icon {
+    display: inline-flex;
+    align-items: center;
+}
+
+.oa_reading_time-icon svg {
+    width: 16px;
+    height: 16px;
+}

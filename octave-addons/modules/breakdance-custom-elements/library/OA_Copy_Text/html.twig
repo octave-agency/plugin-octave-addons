@@ -1,0 +1,36 @@
+{% set copy = content.copy %}
+{% set button = content.button %}
+{% set value = copy.value|default('') %}
+
+<div class="oa_copy_text-wrap"
+     data-oa-copy
+     data-source="{{ copy.source|default('value')|e('html_attr') }}"
+     data-selector="{{ copy.selector|default('')|e('html_attr') }}"
+     data-value="{{ value|e('html_attr') }}"
+     data-label="{{ button.label|default('Copy')|e('html_attr') }}"
+     data-label-copied="{{ button.label_copied|default('Copied!')|e('html_attr') }}"
+     data-reset-after="{{ button.reset_after|default(2)|e('html_attr') }}">
+
+  {% if copy.source != 'selector' and copy.show_value %}
+    <span class="oa_copy_text-value">{{ value }}</span>
+  {% endif %}
+
+  <button type="button" class="oa_copy_text-button" data-oa-copy-button>
+
+    {% if button.show_icon %}
+      <span class="oa_copy_text-icon" aria-hidden="true">
+        {% if button.icon.svgCode %}
+          {{ button.icon.svgCode }}
+        {% else %}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        {% endif %}
+      </span>
+    {% endif %}
+
+    <span class="oa_copy_text-label" data-oa-copy-label>{{ button.label|default('Copy') }}</span>
+
+  </button>
+
+  <span class="oa_copy_text-live" role="status" aria-live="polite"></span>
+
+</div>

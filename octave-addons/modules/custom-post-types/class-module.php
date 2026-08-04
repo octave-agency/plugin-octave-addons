@@ -3,7 +3,9 @@
 /*
 MODULE: CUSTOM POST TYPES
 -- Registers optional content types managed from the Octave Addons dashboard
--- Landing Pages behave like pages and use root-level site URLs
+-- Page Categories group ordinary Pages into campaigns (ppc, landing, and so
+-- on) and plug straight into WordPress's own filtering rather than adding a
+-- separate post type
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,11 +16,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
-	protected const LANDING_PAGE_POST_TYPE = 'octave_landing_page';
-	protected const CASE_STUDY_POST_TYPE    = 'octave_case_study';
-	protected const CASE_STUDY_TAXONOMY     = 'octave_case_category';
-
-	protected string $landing_page_slug = '';
+	protected const PAGE_TAXONOMY        = 'octave_page_category';
+	protected const CASE_STUDY_POST_TYPE = 'octave_case_study';
+	protected const CASE_STUDY_TAXONOMY  = 'octave_case_category';
 
 	/*
 	CONSTRUCTOR
@@ -60,21 +60,21 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Create purpose-built content areas with clean URLs and the familiar WordPress editing experience.', 'octave-addons' );
+		return __( 'Group Pages into campaign categories and add purpose-built content areas with clean URLs.', 'octave-addons' );
 
 	}
 
 	/*
 	GET DEFAULTS
-	-- Enables the settings area and Landing Pages for new installations
+	-- Enables the settings area and Page Categories for new installations
 	---------------------------------------------------------- */
 
 	public function get_defaults(): array {
 
 		return [
 			'enabled'                 => true,
-			'landing_pages'           => true,
-			'landing_page_slug'       => '',
+			'page_categories'         => true,
+			'page_category_slug'      => 'page-category',
 			'case_studies'            => true,
 			'case_study_post_slug'    => 'case-study',
 			'case_study_archive_slug' => 'case-studies',
@@ -92,8 +92,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		return [
 			'enabled'                 => ! empty( $input['enabled'] ),
-			'landing_pages'           => ! empty( $input['landing_pages'] ),
-			'landing_page_slug'       => sanitize_title( wp_unslash( (string) ( $input['landing_page_slug'] ?? '' ) ) ),
+			'page_categories'         => ! empty( $input['page_categories'] ),
+			'page_category_slug'      => self::sanitize_rewrite_slug( $input['page_category_slug'] ?? '', 'page-category' ),
 			'case_studies'            => ! empty( $input['case_studies'] ),
 			'case_study_post_slug'    => self::sanitize_rewrite_slug( $input['case_study_post_slug'] ?? '', 'case-study' ),
 			'case_study_archive_slug' => self::sanitize_rewrite_slug( $input['case_study_archive_slug'] ?? '', 'case-studies' ),
@@ -109,10 +109,10 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	public function render_settings( array $settings ): void {
 
-		$landing_page_slug = sanitize_title( (string) ( $settings['landing_page_slug'] ?? '' ) );
-		$landing_page_path = '' !== $landing_page_slug ? $landing_page_slug . '/campaign-name' : 'campaign-name';
-		$example_path      = user_trailingslashit( $landing_page_path, 'single' );
-		$example_url       = home_url( '/' . ltrim( $example_path, '/' ) );
+		$page_category_slug = self::sanitize_rewrite_slug( $settings['page_category_slug'] ?? '', 'page-category' );
+		$page_category_path = user_trailingslashit( $page_category_slug . '/ppc', 'category' );
+		$page_category_url  = home_url( '/' . ltrim( $page_category_path, '/' ) );
+		$page_terms_url     = admin_url( 'edit-tags.php?taxonomy=' . self::PAGE_TAXONOMY . '&post_type=page' );
 
 		$case_study_post_slug    = self::sanitize_rewrite_slug( $settings['case_study_post_slug'] ?? '', 'case-study' );
 		$case_study_archive_slug = self::sanitize_rewrite_slug( $settings['case_study_archive_slug'] ?? '', 'case-studies' );
@@ -124,9 +124,9 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		?>
 
 			<div class="notice notice-info inline oa-inline-notice">
-				<p><strong><?php esc_html_e( 'Flexible Landing Page URLs', 'octave-addons' ); ?></strong></p>
+				<p><strong><?php esc_html_e( 'Campaign categories for Pages', 'octave-addons' ); ?></strong></p>
 			<p>
-				<?php esc_html_e( 'Landing Pages use the same editor capabilities as Pages and are available to visual builders such as Breakdance.', 'octave-addons' ); ?>
+				<?php esc_html_e( 'Group ordinary Pages into campaigns such as PPC or Landing. Categories appear as one-click filters above the Pages list, as a column, in Quick Edit, and in the block editor — all using standard WordPress filtering, so builders and query loops pick them up automatically.', 'octave-addons' ); ?>
 			</p>
 		</div>
 
@@ -136,30 +136,35 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			Octave_Addons_Fields::section(
 				[
-					'label' => __( 'Available post types', 'octave-addons' ),
+					'label' => __( 'Pages', 'octave-addons' ),
 					'first' => true,
 				]
 			);
 
 			Octave_Addons_Fields::row(
 				[
-					'label' => __( 'Landing Pages', 'octave-addons' ),
-					'field' => function () use ( $settings, $example_url ) {
+					'label' => __( 'Page Categories', 'octave-addons' ),
+					'field' => function () use ( $settings, $page_terms_url ) {
 
 						Octave_Addons_Fields::switch_field(
 							[
-								'name'    => $this->field_name( 'landing_pages' ),
-								'checked' => ! empty( $settings['landing_pages'] ),
-								'data'    => [ 'controls-row' => 'oaCptLandingPageSlug' ],
-								'help'    => __( 'Adds a page-style content area for campaign and conversion-focused pages.', 'octave-addons' ),
+								'name'    => $this->field_name( 'page_categories' ),
+								'checked' => ! empty( $settings['page_categories'] ),
+								'data'    => [ 'controls-row' => 'oaCptPageCategorySlug' ],
+								'help'    => __( 'Adds a hierarchical category taxonomy to the built-in Pages post type.', 'octave-addons' ),
 							]
 						);
+
+						if ( empty( $settings['page_categories'] ) ) {
+
+							return;
+
+						}
 
 						?>
 
 						<span class="oa-help">
-							<?php esc_html_e( 'Example URL:', 'octave-addons' ); ?>
-							<code><?= esc_html( $example_url ); ?></code>
+							<a href="<?= esc_url( $page_terms_url ); ?>"><?php esc_html_e( 'Manage page categories', 'octave-addons' ); ?></a>
 						</span>
 
 						<?php
@@ -170,18 +175,18 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			Octave_Addons_Fields::row(
 				[
-					'id'    => 'oaCptLandingPageSlug',
-					'for'   => $this->field_id( 'landing_page_slug' ),
-					'label' => __( 'Landing Page slug', 'octave-addons' ),
-					'field' => function () use ( $landing_page_slug, $example_url ) {
+					'id'    => 'oaCptPageCategorySlug',
+					'for'   => $this->field_id( 'page_category_slug' ),
+					'label' => __( 'Category slug', 'octave-addons' ),
+					'field' => function () use ( $page_category_slug, $page_category_url ) {
 
 						Octave_Addons_Fields::text(
 							[
-								'id'          => $this->field_id( 'landing_page_slug' ),
-								'name'        => $this->field_name( 'landing_page_slug' ),
-								'value'       => $landing_page_slug,
-								'placeholder' => __( 'Leave blank for root-level URLs', 'octave-addons' ),
-								'help'        => __( 'Optional URL prefix. Landing Pages do not use a category taxonomy.', 'octave-addons' ),
+								'id'          => $this->field_id( 'page_category_slug' ),
+								'name'        => $this->field_name( 'page_category_slug' ),
+								'value'       => $page_category_slug,
+								'placeholder' => 'page-category',
+								'help'        => __( 'URL prefix used for category archives listing the pages in a campaign.', 'octave-addons' ),
 							]
 						);
 
@@ -189,7 +194,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 						<span class="oa-help">
 							<?php esc_html_e( 'Example URL:', 'octave-addons' ); ?>
-							<code><?= esc_html( $example_url ); ?></code>
+							<code><?= esc_html( $page_category_url ); ?></code>
 						</span>
 
 						<?php
@@ -313,14 +318,12 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	public function run( array $settings ): void {
 
-		if ( ! empty( $settings['landing_pages'] ) ) {
+		if ( ! empty( $settings['page_categories'] ) ) {
 
-			$this->landing_page_slug = sanitize_title( (string) ( $settings['landing_page_slug'] ?? '' ) );
+			$this->register_page_categories( $settings );
 
-			$this->register_landing_pages( $settings );
-
-			add_filter( 'post_type_link', [ $this, 'filter_landing_page_link' ], 10, 4 );
-			add_filter( 'request', [ $this, 'resolve_landing_page_request' ] );
+			add_filter( 'views_edit-page', [ $this, 'add_page_category_views' ] );
+			add_action( 'restrict_manage_posts', [ $this, 'render_page_category_filter' ], 10, 2 );
 
 		}
 
@@ -329,6 +332,186 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			$this->register_case_studies( $settings );
 
 		}
+
+	}
+
+	/*
+	REGISTER PAGE CATEGORIES
+	-- Adds a hierarchical taxonomy to the built-in Pages post type.
+	-- Registered as publicly queryable with a query var so WordPress's own
+	-- filtering, REST, and builder query loops all understand it without any
+	-- extra glue.
+	---------------------------------------------------------- */
+
+	protected function register_page_categories( array $settings ): void {
+
+		$slug = self::sanitize_rewrite_slug( $settings['page_category_slug'] ?? '', 'page-category' );
+
+		$labels = [
+			'name'              => __( 'Page Categories', 'octave-addons' ),
+			'singular_name'     => __( 'Page Category', 'octave-addons' ),
+			'search_items'      => __( 'Search Page Categories', 'octave-addons' ),
+			'all_items'         => __( 'All Page Categories', 'octave-addons' ),
+			'parent_item'       => __( 'Parent Page Category', 'octave-addons' ),
+			'parent_item_colon' => __( 'Parent Page Category:', 'octave-addons' ),
+			'edit_item'         => __( 'Edit Page Category', 'octave-addons' ),
+			'update_item'       => __( 'Update Page Category', 'octave-addons' ),
+			'add_new_item'      => __( 'Add New Page Category', 'octave-addons' ),
+			'new_item_name'     => __( 'New Page Category Name', 'octave-addons' ),
+			'not_found'         => __( 'No page categories found.', 'octave-addons' ),
+			'back_to_items'     => __( 'Back to Page Categories', 'octave-addons' ),
+			'menu_name'         => __( 'Categories', 'octave-addons' ),
+		];
+
+		register_taxonomy(
+			self::PAGE_TAXONOMY,
+			[ 'page' ],
+			[
+				'labels'             => $labels,
+				'description'        => __( 'Campaign groupings for Pages, such as PPC or Landing.', 'octave-addons' ),
+				'public'             => true,
+				'publicly_queryable' => true,
+				'hierarchical'       => true,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_admin_column'  => true,
+				'show_in_quick_edit' => true,
+				'show_in_nav_menus'  => true,
+				'show_tagcloud'      => false,
+				'show_in_rest'       => true,
+				'query_var'          => true,
+				'rewrite'            => [
+					'slug'         => $slug,
+					'with_front'   => false,
+					'hierarchical' => true,
+				],
+			]
+		);
+
+	}
+
+	/*
+	ADD PAGE CATEGORY VIEWS
+	-- Puts every category alongside All / Published / Draft at the top of the
+	-- Pages list, so switching campaign is a single click rather than a
+	-- dropdown and a Filter button.
+	---------------------------------------------------------- */
+
+	public function add_page_category_views( $views ): array {
+
+		$views = is_array( $views ) ? $views : [];
+
+		$terms = get_terms(
+			[
+				'taxonomy'   => self::PAGE_TAXONOMY,
+				'hide_empty' => false,
+				'orderby'    => 'name',
+			]
+		);
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+
+			return $views;
+
+		}
+
+		$current = $this->get_current_page_category();
+
+		// WordPress leaves "All" highlighted whenever no post_status is set, so
+		// clear it while a category is doing the filtering.
+		if ( '' !== $current && isset( $views['all'] ) ) {
+
+			$views['all'] = str_replace( ' class="current"', '', $views['all'] );
+			$views['all'] = str_replace( ' aria-current="page"', '', $views['all'] );
+
+		}
+
+		foreach ( $terms as $term ) {
+
+			if ( ! $term instanceof WP_Term ) {
+
+				continue;
+
+			}
+
+			$url = add_query_arg(
+				[
+					'post_type'          => 'page',
+					self::PAGE_TAXONOMY => $term->slug,
+				],
+				admin_url( 'edit.php' )
+			);
+
+			$is_current = ( $current === $term->slug );
+
+			$views[ 'oa_page_category_' . $term->slug ] = sprintf(
+				'<a href="%1$s"%2$s>%3$s <span class="count">(%4$s)</span></a>',
+				esc_url( $url ),
+				$is_current ? ' class="current" aria-current="page"' : '',
+				esc_html( $term->name ),
+				esc_html( number_format_i18n( $term->count ) )
+			);
+
+		}
+
+		return $views;
+
+	}
+
+	/*
+	RENDER PAGE CATEGORY FILTER
+	-- Standard taxonomy dropdown in the Pages toolbar. Values are slugs so the
+	-- submitted query var is the one WP_Query already parses.
+	---------------------------------------------------------- */
+
+	public function render_page_category_filter( $post_type, $which = 'top' ): void {
+
+		if ( 'page' !== $post_type || 'top' !== $which ) {
+
+			return;
+
+		}
+
+		if ( ! taxonomy_exists( self::PAGE_TAXONOMY ) ) {
+
+			return;
+
+		}
+
+		wp_dropdown_categories(
+			[
+				'show_option_all' => __( 'All page categories', 'octave-addons' ),
+				'taxonomy'        => self::PAGE_TAXONOMY,
+				'name'            => self::PAGE_TAXONOMY,
+				'value_field'     => 'slug',
+				'selected'        => $this->get_current_page_category(),
+				'hierarchical'    => true,
+				'depth'           => 3,
+				'orderby'         => 'name',
+				'show_count'      => true,
+				'hide_empty'      => false,
+				'hide_if_empty'   => true,
+			]
+		);
+
+	}
+
+	/*
+	GET CURRENT PAGE CATEGORY
+	-- The category slug the Pages list is currently filtered by, if any.
+	---------------------------------------------------------- */
+
+	protected function get_current_page_category(): string {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list table filter.
+		if ( empty( $_GET[ self::PAGE_TAXONOMY ] ) ) {
+
+			return '';
+
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list table filter.
+		return sanitize_title( wp_unslash( (string) $_GET[ self::PAGE_TAXONOMY ] ) );
 
 	}
 
@@ -455,192 +638,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
-	REGISTER LANDING PAGES
-	-- Creates a public page-style post type without a prefixed rewrite slug
-	---------------------------------------------------------- */
-
-	protected function register_landing_pages( array $settings ): void {
-
-		$landing_page_slug = sanitize_title( (string) ( $settings['landing_page_slug'] ?? '' ) );
-		$rewrite           = false;
-
-		if ( '' !== $landing_page_slug ) {
-
-			$rewrite = [
-				'slug'       => $landing_page_slug,
-				'with_front' => false,
-			];
-
-		}
-
-		$labels = [
-			'name'                  => __( 'Landing Pages', 'octave-addons' ),
-			'singular_name'         => __( 'Landing Page', 'octave-addons' ),
-			'menu_name'             => __( 'Landing Pages', 'octave-addons' ),
-			'name_admin_bar'        => __( 'Landing Page', 'octave-addons' ),
-			'add_new'               => __( 'Add New', 'octave-addons' ),
-			'add_new_item'          => __( 'Add New Landing Page', 'octave-addons' ),
-			'new_item'              => __( 'New Landing Page', 'octave-addons' ),
-			'edit_item'             => __( 'Edit Landing Page', 'octave-addons' ),
-			'view_item'             => __( 'View Landing Page', 'octave-addons' ),
-			'all_items'             => __( 'All Landing Pages', 'octave-addons' ),
-			'search_items'          => __( 'Search Landing Pages', 'octave-addons' ),
-			'not_found'             => __( 'No landing pages found.', 'octave-addons' ),
-			'not_found_in_trash'    => __( 'No landing pages found in Trash.', 'octave-addons' ),
-			'featured_image'        => __( 'Featured image', 'octave-addons' ),
-			'set_featured_image'    => __( 'Set featured image', 'octave-addons' ),
-			'remove_featured_image' => __( 'Remove featured image', 'octave-addons' ),
-			'use_featured_image'    => __( 'Use as featured image', 'octave-addons' ),
-		];
-
-		register_post_type(
-			self::LANDING_PAGE_POST_TYPE,
-			[
-				'labels'              => $labels,
-				'description'         => __( 'Campaign and conversion-focused pages with configurable clean URLs.', 'octave-addons' ),
-				'public'              => true,
-				'hierarchical'        => false,
-				'exclude_from_search' => false,
-				'publicly_queryable'  => true,
-				'show_ui'             => true,
-				'show_in_menu'        => true,
-				'show_in_admin_bar'   => true,
-				'show_in_nav_menus'   => true,
-				'show_in_rest'        => true,
-				'menu_position'       => 21,
-				'menu_icon'           => 'dashicons-layout',
-				'capability_type'     => 'page',
-				'map_meta_cap'        => true,
-				'query_var'           => true,
-				'rewrite'             => $rewrite,
-				'has_archive'         => false,
-				'supports'            => [
-					'title',
-					'editor',
-					'author',
-					'thumbnail',
-					'excerpt',
-					'revisions',
-					'custom-fields',
-					'page-attributes',
-				],
-			]
-		);
-
-	}
-
-	/*
-	FILTER LANDING PAGE LINK
-	-- Builds domain/post-name URLs using the site's trailing-slash preference
-	---------------------------------------------------------- */
-
-	public function filter_landing_page_link( string $post_link, WP_Post $post, bool $leave_name, bool $sample ): string {
-
-		if ( self::LANDING_PAGE_POST_TYPE !== $post->post_type ) {
-
-			return $post_link;
-
-		}
-
-		$slug = $leave_name ? '%postname%' : $post->post_name;
-
-		if ( '' === $slug ) {
-
-			$slug = sanitize_title( $post->post_title );
-
-		}
-
-		$path_parts = array_filter( [ $this->landing_page_slug, $slug ] );
-		$path       = user_trailingslashit( implode( '/', $path_parts ), 'single' );
-
-		return home_url( '/' . ltrim( $path, '/' ) );
-
-	}
-
-	/*
-	RESOLVE LANDING PAGE REQUEST
-	-- Maps an otherwise unused root slug to a published Landing Page
-	-- Existing Pages, Posts, and attachments keep priority on collisions
-	---------------------------------------------------------- */
-
-	public function resolve_landing_page_request( array $query_vars ): array {
-
-		if ( is_admin() || '' !== $this->landing_page_slug ) {
-
-			return $query_vars;
-
-		}
-
-		$slug = $this->get_requested_root_slug( $query_vars );
-
-		if ( '' === $slug || $this->has_existing_content( $slug ) ) {
-
-			return $query_vars;
-
-		}
-
-		$landing_page = get_page_by_path( $slug, OBJECT, self::LANDING_PAGE_POST_TYPE );
-
-		if ( ! $landing_page instanceof WP_Post || 'publish' !== $landing_page->post_status ) {
-
-			return $query_vars;
-
-		}
-
-		unset( $query_vars['pagename'], $query_vars['page_id'] );
-
-		$query_vars['post_type'] = self::LANDING_PAGE_POST_TYPE;
-		$query_vars['name']      = $slug;
-
-		return $query_vars;
-
-	}
-
-	/*
-	GET REQUESTED ROOT SLUG
-	-- Extracts only single-segment page or post requests
-	---------------------------------------------------------- */
-
-	protected function get_requested_root_slug( array $query_vars ): string {
-
-		$slug = '';
-
-		if ( ! empty( $query_vars['pagename'] ) ) {
-
-			$slug = (string) $query_vars['pagename'];
-
-		} elseif ( ! empty( $query_vars['name'] ) && empty( $query_vars['post_type'] ) ) {
-
-			$slug = (string) $query_vars['name'];
-
-		}
-
-		$slug = trim( $slug, '/' );
-
-		if ( '' === $slug || false !== strpos( $slug, '/' ) ) {
-
-			return '';
-
-		}
-
-		return sanitize_title( $slug );
-
-	}
-
-	/*
-	HAS EXISTING CONTENT
-	-- Prevents Landing Pages from taking over established root URLs
-	---------------------------------------------------------- */
-
-	protected function has_existing_content( string $slug ): bool {
-
-		$existing = get_page_by_path( $slug, OBJECT, [ 'post', 'page', 'attachment' ] );
-
-		return $existing instanceof WP_Post;
-
-	}
-
-	/*
 	MAYBE REFRESH REWRITE RULES
 	-- Flushes once when post type routing settings or module state change
 	---------------------------------------------------------- */
@@ -655,8 +652,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		$rewrite_settings = [
 			'enabled'                 => ! empty( $settings['enabled'] ),
-			'landing_pages'           => ! empty( $settings['landing_pages'] ),
-			'landing_page_slug'       => sanitize_title( (string) ( $settings['landing_page_slug'] ?? '' ) ),
+			'page_categories'         => ! empty( $settings['page_categories'] ),
+			'page_category_slug'      => self::sanitize_rewrite_slug( $settings['page_category_slug'] ?? '', 'page-category' ),
 			'case_studies'            => ! empty( $settings['case_studies'] ),
 			'case_study_post_slug'    => self::sanitize_rewrite_slug( $settings['case_study_post_slug'] ?? '', 'case-study' ),
 			'case_study_archive_slug' => self::sanitize_rewrite_slug( $settings['case_study_archive_slug'] ?? '', 'case-studies' ),

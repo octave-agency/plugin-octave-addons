@@ -1,0 +1,48 @@
+{% set timer = content.timer %}
+{% set units = content.units %}
+{% set expiry = content.expiry %}
+
+{% set active = [] %}
+{% if units.show_days %}{% set active = active|merge([{'key': 'days', 'label': units.label_days|default('Days')}]) %}{% endif %}
+{% if units.show_hours %}{% set active = active|merge([{'key': 'hours', 'label': units.label_hours|default('Hours')}]) %}{% endif %}
+{% if units.show_minutes %}{% set active = active|merge([{'key': 'minutes', 'label': units.label_minutes|default('Minutes')}]) %}{% endif %}
+{% if units.show_seconds %}{% set active = active|merge([{'key': 'seconds', 'label': units.label_seconds|default('Seconds')}]) %}{% endif %}
+
+{% set separators = {'colon': ':', 'slash': '/', 'dot': '·'} %}
+{% set separator = separators[design.layout.separator]|default('') %}
+
+<div class="oa_countdown-timer"
+     data-oa-countdown
+     data-mode="{{ timer.mode|default('fixed')|e('html_attr') }}"
+     data-datetime="{{ timer.datetime|default('')|e('html_attr') }}"
+     data-timezone="{{ timer.timezone|default('local')|e('html_attr') }}"
+     data-utc-offset="{{ timer.utc_offset|default(0)|e('html_attr') }}"
+     data-evergreen-hours="{{ timer.evergreen_hours|default(0)|e('html_attr') }}"
+     data-evergreen-minutes="{{ timer.evergreen_minutes|default(0)|e('html_attr') }}"
+     data-evergreen-restart="{{ timer.evergreen_restart ? '1' : '0' }}"
+     data-recur-every="{{ timer.recur_every|default('day')|e('html_attr') }}"
+     data-recur-weekday="{{ timer.recur_weekday|default('1')|e('html_attr') }}"
+     data-recur-time="{{ timer.recur_time|default('09:00')|e('html_attr') }}"
+     data-pad="{{ units.pad ? '1' : '0' }}"
+     data-expiry="{{ expiry.action|default('message')|e('html_attr') }}"
+     data-redirect="{{ expiry.redirect_url|default('')|e('html_attr') }}">
+
+  <div class="oa_countdown-units" data-oa-countdown-units>
+    {% for unit in active %}
+      {% if not loop.first and separator %}
+        <span class="oa_countdown-separator" aria-hidden="true">{{ separator }}</span>
+      {% endif %}
+      <div class="oa_countdown-unit">
+        <span class="oa_countdown-value" data-oa-countdown-value="{{ unit.key }}">00</span>
+        {% if units.show_labels %}
+          <span class="oa_countdown-label">{{ unit.label }}</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if expiry.action == 'message' %}
+    <div class="oa_countdown-expired" data-oa-countdown-expired hidden>{{ expiry.message|default('') }}</div>
+  {% endif %}
+
+</div>

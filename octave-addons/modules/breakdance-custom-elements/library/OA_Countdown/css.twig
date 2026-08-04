@@ -1,0 +1,37 @@
+%%SELECTOR%% {
+  {{ macros.spacing_margin_y( design.spacing ) }}
+}
+
+%%SELECTOR%% .oa_countdown-units {
+  justify-content: {{ design.layout.align|default('center') }};
+  gap: {{ design.layout.gap.style|default('16px') }};
+}
+
+%%SELECTOR%% .oa_countdown-value {
+  {{ macros.typography( design.digits, globalSettings ) }}
+}
+
+%%SELECTOR%% .oa_countdown-label {
+  {{ macros.typography( design.labels, globalSettings ) }}
+  margin-top: {{ design.layout.label_gap.style|default('4px') }};
+}
+
+{% if design.layout.separator_color %}
+
+  %%SELECTOR%% .oa_countdown-separator {
+    color: {{ design.layout.separator_color }};
+  }
+
+{% endif %}
+
+%%SELECTOR%% .oa_countdown-unit {
+  {% if design.box.background %}background: {{ design.box.background }};{% endif %}
+  {% if design.box.padding.style %}padding: {{ design.box.padding.style }};{% endif %}
+  {% if design.box.radius.style %}border-radius: {{ design.box.radius.style }};{% endif %}
+  {% if design.box.min_width.style %}min-width: {{ design.box.min_width.style }};{% endif %}
+}
+
+%%SELECTOR%% .oa_countdown-expired {
+  {{ macros.typography( design.digits, globalSettings ) }}
+  text-align: {{ design.layout.align == 'flex-start' ? 'left' : ( design.layout.align == 'flex-end' ? 'right' : 'center' ) }};
+}

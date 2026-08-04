@@ -1,0 +1,14 @@
+/*
+OA COPYRIGHT
+-- Single line of text; the link inherits colour unless it is styled
+---------------------------------------------------------- */
+
+.oa_copyright-text {
+    display: inline-block;
+}
+
+.oa_copyright-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}

@@ -1,0 +1,36 @@
+{% set items = content.logos.items|default([]) %}
+{% set marquee = content.marquee %}
+
+<div class="oa_logo_marquee-viewport{% if marquee.pause_on_hover %} is-pausable{% endif %}{% if marquee.fade_edges %} has-fade{% endif %}">
+
+  {% if items|length %}
+
+    {% for pass in [1, 2] %}
+
+      <div class="oa_logo_marquee-track"{% if pass == 2 %} aria-hidden="true"{% endif %}>
+
+        {% for item in items %}
+
+          {% if item.link.url %}
+            {{ macros.linkStart( item.link, 'oa_logo_marquee-item' ) }}
+              {{ macros.image( item.image, item.size, item.alt, true ) }}
+            {{ macros.linkEnd() }}
+          {% else %}
+            <div class="oa_logo_marquee-item">
+              {{ macros.image( item.image, item.size, item.alt, true ) }}
+            </div>
+          {% endif %}
+
+        {% endfor %}
+
+      </div>
+
+    {% endfor %}
+
+  {% else %}
+
+    <div class="oa_logo_marquee-empty">Add logos to build the marquee.</div>
+
+  {% endif %}
+
+</div>
