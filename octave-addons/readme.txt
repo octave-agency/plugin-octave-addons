@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.0.0
+Stable tag:        2.2.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -28,9 +28,12 @@ Octave Addons ships with a growing collection of focused modules:
     PPC or Landing, and adds configurable content types like Case Studies.
 
 Each add-on has its own tab under *Octave Addons* in the WordPress
-admin. Adding a new add-on later is a drop-in operation — create a
-folder under `/modules/` containing a `class-module.php` file that
-extends `Octave_Addons_Module`, and it will appear automatically.
+admin, and closely related add-ons share one page — the Breakdance
+modules sit together on a single Breakdance screen. Adding a new add-on
+later is a drop-in operation — create a folder under `/modules/`
+containing a `class-module.php` file that extends
+`Octave_Addons_Module`, and it will appear automatically. Return a group
+id from `get_group()` to place it on a shared page.
 
 == GitHub updates ==
 
@@ -45,6 +48,22 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.2.1 =
+* Removed the "OA" prefix from Breakdance element display names while retaining their unique internal identifiers and classes.
+
+= 2.2.0 =
+* Replaced native settings selects with accessible custom dropdowns, including option search when a list contains more than five items.
+* Added consistent green focus states and a disabled spinner state while settings are being saved.
+* Replaced native colour inputs with a custom saturation, brightness, hue and hex colour picker.
+* Replaced the custom login logo URL field with a WordPress Media Library picker, including preview, replace and remove actions.
+
+= 2.1.0 =
+* Breakdance AJAX Filtering and Breakdance Elements now share a single **Breakdance** page in the admin, one navigation item and one dashboard card, while keeping their own switches and settings.
+* The Breakdance page checks once whether the builder is active: if it is not, the whole page is locked behind a single notice instead of each module warning separately. Saved values are left untouched.
+* Links to the old per-module tabs redirect to the Breakdance page.
+* Page Categories are now admin-only: removed the category slug option, and the taxonomy no longer has public archives, rewrite rules, or nav menu entries, so visitors never see a category link. Admin filtering, Quick Edit, the block editor and builder query loops are unaffected.
+* Added a screen-reader label to the page category filter in the Pages toolbar.
 
 = 2.0.0 =
 * Added Page Categories: a hierarchical taxonomy on the built-in Pages post type for grouping campaigns such as PPC or Landing, with its own on/off switch and configurable archive slug.

@@ -1,5 +1,42 @@
+/*
+ADMIN INTERACTIONS
+-- Powers module settings controls, custom fields and save feedback.
+---------------------------------------------------------- */
+
 (function () {
 	'use strict';
+
+	/*
+	NAV DOTS
+	-- A nav item stands for one entry, which may hold several modules, so its
+	-- dot is on whenever any toggle belonging to that entry is on.
+	---------------------------------------------------------- */
+
+	function syncNavDots() {
+
+		document.querySelectorAll('.oa-nav-item[data-entry]').forEach(function (navItem) {
+
+			var dot = navItem.querySelector('.oa-dot');
+
+			if (!dot) {
+
+				return;
+
+			}
+
+			var toggles = document.querySelectorAll('.oa-enable-toggle[data-entry="' + navItem.dataset.entry + '"]');
+			var on = Array.prototype.some.call(toggles, function (toggle) {
+
+				return toggle.checked;
+
+			});
+
+			dot.classList.toggle('is-on', on);
+			dot.classList.toggle('is-off', !on);
+
+		});
+
+	}
 
 	/* Enable toggle → show/hide settings body + update sidebar dot */
 	document.querySelectorAll('.oa-enable-toggle').forEach(function (toggle) {
@@ -9,20 +46,12 @@
 
 		var body     = panel.querySelector('.oa-settings-body');
 		var locked   = panel.querySelector('.oa-settings-locked');
-		var moduleId = toggle.dataset.module;
-		var navItem  = moduleId
-			? document.querySelector('.oa-nav-item[data-module="' + moduleId + '"]')
-			: null;
-		var dot = navItem ? navItem.querySelector('.oa-dot') : null;
 
 		function sync() {
 			var on = toggle.checked;
 			if (body)   body.classList.toggle('oa-hidden', !on);
 			if (locked) locked.classList.toggle('oa-hidden', on);
-			if (dot) {
-				dot.classList.toggle('is-on',  on);
-				dot.classList.toggle('is-off', !on);
-			}
+			syncNavDots();
 		}
 
 		toggle.addEventListener('change', sync);
@@ -54,6 +83,7 @@
 	var settingsForm = document.querySelector( '.oa-form' );
 	var saveBar = document.querySelector( '.oa-save-bar' );
 	var saveStateText = document.querySelector( '.oa-save-state-text' );
+	var saveButton = document.querySelector( '.oa-save-button' );
 
 	function setSaveState( state ) {
 
@@ -84,7 +114,25 @@
 
 	function syncEnabledCounts() {
 
-		var enabledCount = document.querySelectorAll( '.oa-enable-toggle:checked' ).length;
+		// Counted per navigation entry so a grouped page adds one, not one per
+		// module hidden inside it.
+		var counted = {};
+		var enabledCount = 0;
+
+		document.querySelectorAll( '.oa-enable-toggle:checked' ).forEach( function ( toggle ) {
+
+			var key = toggle.dataset.entry || toggle.dataset.module;
+
+			if ( ! key || counted[ key ] ) {
+
+				return;
+
+			}
+
+			counted[ key ] = true;
+			enabledCount++;
+
+		} );
 
 		document.querySelectorAll( '.oa-enabled-count' ).forEach( function ( count ) {
 
@@ -112,6 +160,23 @@
 		settingsForm.addEventListener( 'submit', function () {
 
 			setSaveState( 'saving' );
+
+			if ( saveButton ) {
+
+				var spinner = document.createElement( 'span' );
+				var savingLabel = document.createElement( 'span' );
+
+				spinner.className = 'oa-button-spinner';
+				spinner.setAttribute( 'aria-hidden', 'true' );
+				savingLabel.className = 'screen-reader-text';
+				savingLabel.textContent = oaAdmin.savingText;
+				saveButton.disabled = true;
+				saveButton.setAttribute( 'aria-disabled', 'true' );
+				saveButton.textContent = '';
+				saveButton.appendChild( spinner );
+				saveButton.appendChild( savingLabel );
+
+			}
 
 		} );
 
@@ -165,6 +230,8 @@
 			ipmGrid    = modal.querySelector('.oa-ipm-grid');
 			ipmMore    = modal.querySelector('.oa-ipm-more');
 			ipmLoading = modal.querySelector('.oa-ipm-loading');
+
+			enhanceSelect( ipmSetSel );
 
 			modal.querySelector('.oa-ipm-overlay').addEventListener('click', closeModal);
 			modal.querySelector('.oa-ipm-close').addEventListener('click', closeModal);
@@ -287,6 +354,7 @@
 			offset = 0;
 			ipmSearch.value = '';
 			ipmSetSel.value = '';
+			ipmSetSel.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 			ipmGrid.innerHTML = '';
 			modal.setAttribute('aria-hidden', 'false');
 			modal.classList.add('is-open');
@@ -343,13 +411,649 @@
 		}
 	}());
 
-	/* Native colour pickers — keep the hex display in sync */
-	document.querySelectorAll('.oa-color-input').forEach(function (input) {
-		var wrap    = input.closest('.oa-color-picker-wrap');
-		var display = wrap ? wrap.querySelector('.oa-color-value') : null;
-		if (!display) return;
-		input.addEventListener('input', function () {
-			display.textContent = input.value;
-		});
-	});
+
+	/*
+	CUSTOM SELECTS
+	-- Keeps the native select as the submitted source of truth while providing
+	-- a keyboard-friendly listbox and search for lists longer than five items.
+	---------------------------------------------------------- */
+
+	var selectIndex = 0;
+
+	function enhanceSelect( select ) {
+
+		if ( select.dataset.oaSelectEnhanced ) {
+
+			return;
+
+		}
+
+		select.dataset.oaSelectEnhanced = 'true';
+		selectIndex++;
+
+		var wrapper = document.createElement( 'div' );
+		var trigger = document.createElement( 'button' );
+		var value = document.createElement( 'span' );
+		var arrow = document.createElement( 'span' );
+		var dropdown = document.createElement( 'div' );
+		var list = document.createElement( 'div' );
+		var listId = 'oa-select-list-' + selectIndex;
+		var fieldLabel = select.getAttribute( 'aria-label' );
+		var fieldLabelElement = select.id ? document.querySelector( 'label[for="' + select.id + '"]' ) : null;
+
+		if ( ! fieldLabel && fieldLabelElement ) {
+
+			fieldLabel = fieldLabelElement.textContent.trim();
+
+		}
+
+		wrapper.className = 'oa-custom-select' + ( select.classList.contains( 'oa-nav-select' ) ? ' oa-nav-custom-select' : '' ) + ( select.classList.contains( 'oa-ipm-set-select' ) ? ' oa-ipm-set-custom-select' : '' );
+		trigger.type = 'button';
+		trigger.className = 'oa-custom-select-trigger';
+		trigger.setAttribute( 'aria-haspopup', 'listbox' );
+		trigger.setAttribute( 'aria-expanded', 'false' );
+		trigger.setAttribute( 'aria-controls', listId );
+
+		if ( fieldLabelElement ) {
+
+			trigger.id = select.id + '-custom';
+			fieldLabelElement.htmlFor = trigger.id;
+
+		}
+
+		value.className = 'oa-custom-select-value';
+		arrow.className = 'dashicons dashicons-arrow-down-alt2';
+		arrow.setAttribute( 'aria-hidden', 'true' );
+		dropdown.className = 'oa-custom-select-dropdown';
+		dropdown.hidden = true;
+		list.className = 'oa-custom-select-options';
+		list.id = listId;
+		list.setAttribute( 'role', 'listbox' );
+
+		trigger.appendChild( value );
+		trigger.appendChild( arrow );
+		dropdown.appendChild( list );
+		wrapper.appendChild( trigger );
+		wrapper.appendChild( dropdown );
+		select.classList.add( 'oa-native-select' );
+		select.insertAdjacentElement( 'afterend', wrapper );
+
+		function selectedOption() {
+
+			return select.options[ select.selectedIndex ] || select.options[0];
+
+		}
+
+		function syncValue() {
+
+			var selected = selectedOption();
+
+			value.textContent = selected ? selected.textContent.trim() : '';
+			trigger.disabled = select.disabled;
+
+			if ( fieldLabel ) {
+
+				trigger.setAttribute( 'aria-label', fieldLabel + ': ' + value.textContent );
+
+			}
+
+			list.querySelectorAll( '[role="option"]' ).forEach( function ( optionButton ) {
+
+				var isSelected = optionButton.dataset.value === select.value;
+
+				optionButton.classList.toggle( 'is-selected', isSelected );
+				optionButton.setAttribute( 'aria-selected', isSelected ? 'true' : 'false' );
+
+			} );
+
+		}
+
+		function closeSelect( restoreFocus ) {
+
+			dropdown.hidden = true;
+			trigger.setAttribute( 'aria-expanded', 'false' );
+			wrapper.classList.remove( 'is-open' );
+
+			if ( restoreFocus ) {
+
+				trigger.focus();
+
+			}
+
+		}
+
+		function focusFirstOption() {
+
+			var selected = list.querySelector( '.is-selected:not([hidden])' );
+			var first = list.querySelector( '[role="option"]:not([hidden])' );
+
+			( selected || first || trigger ).focus();
+
+		}
+
+		function openSelect() {
+
+			document.querySelectorAll( '.oa-custom-select.is-open' ).forEach( function ( openWrapper ) {
+
+				if ( openWrapper !== wrapper ) {
+
+					openWrapper.querySelector( '.oa-custom-select-trigger' ).click();
+
+				}
+
+			} );
+
+			dropdown.hidden = false;
+			trigger.setAttribute( 'aria-expanded', 'true' );
+			wrapper.classList.add( 'is-open' );
+
+			var search = dropdown.querySelector( '.oa-custom-select-search' );
+
+			if ( search ) {
+
+				search.value = '';
+				search.dispatchEvent( new Event( 'input' ) );
+				search.focus();
+
+			} else {
+
+				focusFirstOption();
+
+			}
+
+		}
+
+		function chooseOption( option ) {
+
+			select.value = option.value;
+			select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+			syncValue();
+			closeSelect( true );
+
+		}
+
+		function buildOptions() {
+
+			list.innerHTML = '';
+
+			var oldSearch = dropdown.querySelector( '.oa-custom-select-search-wrap' );
+
+			if ( oldSearch ) {
+
+				oldSearch.remove();
+
+			}
+
+			var options = Array.prototype.slice.call( select.options );
+
+			if ( options.length > 5 ) {
+
+				var searchWrap = document.createElement( 'div' );
+				var search = document.createElement( 'input' );
+
+				searchWrap.className = 'oa-custom-select-search-wrap';
+				search.type = 'search';
+				search.className = 'oa-custom-select-search';
+				search.placeholder = oaAdmin.searchOptionsText;
+				search.setAttribute( 'aria-label', oaAdmin.searchOptionsText );
+				searchWrap.appendChild( search );
+				dropdown.insertBefore( searchWrap, list );
+
+				search.addEventListener( 'input', function () {
+
+					var query = search.value.trim().toLowerCase();
+
+					list.querySelectorAll( '[role="option"]' ).forEach( function ( optionButton ) {
+
+						optionButton.hidden = -1 === optionButton.textContent.toLowerCase().indexOf( query );
+
+					} );
+
+				} );
+
+			}
+
+			options.forEach( function ( option ) {
+
+				var optionButton = document.createElement( 'button' );
+
+				optionButton.type = 'button';
+				optionButton.className = 'oa-custom-select-option';
+				optionButton.dataset.value = option.value;
+				optionButton.textContent = option.textContent.trim();
+				optionButton.disabled = option.disabled;
+				optionButton.setAttribute( 'role', 'option' );
+				optionButton.addEventListener( 'click', function () {
+
+					chooseOption( option );
+
+				} );
+				list.appendChild( optionButton );
+
+			} );
+
+			syncValue();
+
+		}
+
+		trigger.addEventListener( 'click', function () {
+
+			if ( dropdown.hidden ) {
+
+				openSelect();
+
+			} else {
+
+				closeSelect( false );
+
+			}
+
+		} );
+
+		trigger.addEventListener( 'keydown', function ( event ) {
+
+			if ( 'ArrowDown' === event.key || 'ArrowUp' === event.key ) {
+
+				event.preventDefault();
+				openSelect();
+
+			}
+
+		} );
+
+		dropdown.addEventListener( 'keydown', function ( event ) {
+
+			if ( 'Escape' === event.key ) {
+
+				event.preventDefault();
+				closeSelect( true );
+				return;
+
+			}
+
+			if ( 'ArrowDown' !== event.key && 'ArrowUp' !== event.key ) {
+
+				return;
+
+			}
+
+			var visibleOptions = Array.prototype.slice.call( list.querySelectorAll( '[role="option"]:not([hidden]):not(:disabled)' ) );
+			var currentIndex = visibleOptions.indexOf( document.activeElement );
+			var direction = 'ArrowDown' === event.key ? 1 : -1;
+			var nextIndex = Math.max( 0, Math.min( visibleOptions.length - 1, currentIndex + direction ) );
+
+			if ( visibleOptions[ nextIndex ] ) {
+
+				event.preventDefault();
+				visibleOptions[ nextIndex ].focus();
+
+			}
+
+		} );
+
+		document.addEventListener( 'click', function ( event ) {
+
+			if ( ! wrapper.contains( event.target ) ) {
+
+				closeSelect( false );
+
+			}
+
+		} );
+
+		select.addEventListener( 'change', syncValue );
+		select.addEventListener( 'input', syncValue );
+
+		new MutationObserver( buildOptions ).observe( select, { childList: true, subtree: true } );
+		buildOptions();
+
+	}
+
+	document.querySelectorAll( '.oa-app select' ).forEach( enhanceSelect );
+
+	new MutationObserver( function ( mutations ) {
+
+		mutations.forEach( function ( mutation ) {
+
+			mutation.addedNodes.forEach( function ( node ) {
+
+				if ( Node.ELEMENT_NODE !== node.nodeType ) {
+
+					return;
+
+				}
+
+				if ( node.matches( 'select' ) ) {
+
+					enhanceSelect( node );
+
+				}
+
+				node.querySelectorAll( 'select' ).forEach( enhanceSelect );
+
+			} );
+
+		} );
+
+	} ).observe( document.querySelector( '.oa-app' ), { childList: true, subtree: true } );
+
+	/*
+	MEDIA IMAGE FIELDS
+	-- Uses the WordPress Media Library and maintains the existing URL setting.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '.oa-media-field' ).forEach( function ( field ) {
+
+		var input = field.querySelector( '.oa-media-url' );
+		var image = field.querySelector( '.oa-media-preview img' );
+		var placeholder = field.querySelector( '.oa-media-placeholder' );
+		var selectButton = field.querySelector( '.oa-media-select' );
+		var removeButton = field.querySelector( '.oa-media-remove' );
+		var frame;
+
+		function syncMediaField( url ) {
+
+			input.value = url;
+			field.classList.toggle( 'has-image', Boolean( url ) );
+			image.hidden = ! url;
+			placeholder.hidden = Boolean( url );
+			removeButton.hidden = ! url;
+			selectButton.textContent = url ? oaAdmin.replaceImageText : oaAdmin.selectImageText;
+
+			if ( url ) {
+
+				image.src = url;
+
+			} else {
+
+				image.removeAttribute( 'src' );
+
+			}
+
+			input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		}
+
+		selectButton.addEventListener( 'click', function () {
+
+			if ( frame ) {
+
+				frame.open();
+				return;
+
+			}
+
+			frame = wp.media( {
+				title: oaAdmin.selectImageTitle,
+				button: { text: oaAdmin.useImageText },
+				library: { type: 'image' },
+				multiple: false
+			} );
+
+			frame.on( 'select', function () {
+
+				var attachment = frame.state().get( 'selection' ).first().toJSON();
+
+				syncMediaField( attachment.url );
+
+			} );
+
+			frame.open();
+
+		} );
+
+		removeButton.addEventListener( 'click', function () {
+
+			syncMediaField( '' );
+			selectButton.focus();
+
+		} );
+
+	} );
+
+	/*
+	CUSTOM COLOUR PICKERS
+	-- Provides direct saturation, brightness, hue and validated hex controls.
+	---------------------------------------------------------- */
+
+	function hexToHsv( hex ) {
+
+		var value = hex.replace( '#', '' );
+		var red = parseInt( value.substring( 0, 2 ), 16 ) / 255;
+		var green = parseInt( value.substring( 2, 4 ), 16 ) / 255;
+		var blue = parseInt( value.substring( 4, 6 ), 16 ) / 255;
+		var max = Math.max( red, green, blue );
+		var min = Math.min( red, green, blue );
+		var delta = max - min;
+		var hue = 0;
+
+		if ( delta ) {
+
+			if ( max === red ) {
+
+				hue = 60 * ( ( ( green - blue ) / delta ) % 6 );
+
+			} else if ( max === green ) {
+
+				hue = 60 * ( ( blue - red ) / delta + 2 );
+
+			} else {
+
+				hue = 60 * ( ( red - green ) / delta + 4 );
+
+			}
+
+		}
+
+		return {
+			h: Math.round( hue < 0 ? hue + 360 : hue ),
+			s: max ? delta / max : 0,
+			v: max
+		};
+
+	}
+
+	function hsvToHex( hue, saturation, brightness ) {
+
+		var chroma = brightness * saturation;
+		var section = hue / 60;
+		var x = chroma * ( 1 - Math.abs( section % 2 - 1 ) );
+		var rgb = [ [ chroma, x, 0 ], [ x, chroma, 0 ], [ 0, chroma, x ], [ 0, x, chroma ], [ x, 0, chroma ], [ chroma, 0, x ] ][ Math.floor( section ) % 6 ];
+		var match = brightness - chroma;
+
+		return '#' + rgb.map( function ( channel ) {
+
+			return Math.round( ( channel + match ) * 255 ).toString( 16 ).padStart( 2, '0' );
+
+		} ).join( '' ).toUpperCase();
+
+	}
+
+	document.querySelectorAll( '.oa-color-picker-wrap' ).forEach( function ( wrap ) {
+
+		var input = wrap.querySelector( '.oa-color-input' );
+		var trigger = wrap.querySelector( '.oa-color-trigger' );
+		var swatch = wrap.querySelector( '.oa-color-swatch' );
+		var display = wrap.querySelector( '.oa-color-value' );
+		var popover = wrap.querySelector( '.oa-color-popover' );
+		var saturation = wrap.querySelector( '.oa-color-saturation' );
+		var thumb = wrap.querySelector( '.oa-color-thumb' );
+		var hueInput = wrap.querySelector( '.oa-color-hue' );
+		var hexInput = wrap.querySelector( '.oa-color-hex' );
+		var hsv = hexToHsv( input.value );
+		var dragging = false;
+
+		function renderColour( emitChange ) {
+
+			var hex = hsvToHex( hsv.h, hsv.s, hsv.v );
+
+			input.value = hex;
+			display.textContent = hex;
+			hexInput.value = hex;
+			swatch.style.backgroundColor = hex;
+			saturation.style.backgroundColor = 'hsl(' + hsv.h + ', 100%, 50%)';
+			thumb.style.left = ( hsv.s * 100 ) + '%';
+			thumb.style.top = ( ( 1 - hsv.v ) * 100 ) + '%';
+			hueInput.value = Math.round( hsv.h );
+			saturation.setAttribute( 'aria-valuetext', hex );
+
+			if ( emitChange ) {
+
+				input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+			}
+
+		}
+
+		function updateSaturation( event ) {
+
+			var rect = saturation.getBoundingClientRect();
+
+			hsv.s = Math.max( 0, Math.min( 1, ( event.clientX - rect.left ) / rect.width ) );
+			hsv.v = 1 - Math.max( 0, Math.min( 1, ( event.clientY - rect.top ) / rect.height ) );
+			renderColour( true );
+
+		}
+
+		trigger.addEventListener( 'click', function () {
+
+			var willOpen = popover.hidden;
+
+			document.querySelectorAll( '.oa-color-popover:not([hidden])' ).forEach( function ( openPopover ) {
+
+				openPopover.hidden = true;
+				openPopover.previousElementSibling.setAttribute( 'aria-expanded', 'false' );
+
+			} );
+
+			popover.hidden = ! willOpen;
+			trigger.setAttribute( 'aria-expanded', willOpen ? 'true' : 'false' );
+
+			if ( willOpen ) {
+
+				saturation.focus();
+
+			}
+
+		} );
+
+		saturation.addEventListener( 'pointerdown', function ( event ) {
+
+			dragging = true;
+			saturation.setPointerCapture( event.pointerId );
+			updateSaturation( event );
+
+		} );
+
+		saturation.addEventListener( 'pointermove', function ( event ) {
+
+			if ( dragging ) {
+
+				updateSaturation( event );
+
+			}
+
+		} );
+
+		saturation.addEventListener( 'pointerup', function () {
+
+			dragging = false;
+
+		} );
+
+		saturation.addEventListener( 'pointercancel', function () {
+
+			dragging = false;
+
+		} );
+
+		saturation.addEventListener( 'keydown', function ( event ) {
+
+			var handled = true;
+
+			if ( 'ArrowLeft' === event.key ) {
+
+				hsv.s -= 0.01;
+
+			} else if ( 'ArrowRight' === event.key ) {
+
+				hsv.s += 0.01;
+
+			} else if ( 'ArrowUp' === event.key ) {
+
+				hsv.v += 0.01;
+
+			} else if ( 'ArrowDown' === event.key ) {
+
+				hsv.v -= 0.01;
+
+			} else {
+
+				handled = false;
+
+			}
+
+			if ( handled ) {
+
+				event.preventDefault();
+				hsv.s = Math.max( 0, Math.min( 1, hsv.s ) );
+				hsv.v = Math.max( 0, Math.min( 1, hsv.v ) );
+				renderColour( true );
+
+			}
+
+		} );
+
+		hueInput.addEventListener( 'input', function () {
+
+			hsv.h = Number( hueInput.value );
+			renderColour( true );
+
+		} );
+
+		hexInput.addEventListener( 'input', function () {
+
+			var candidate = hexInput.value.trim();
+
+			if ( /^#?[0-9a-f]{6}$/i.test( candidate ) ) {
+
+				hsv = hexToHsv( '#' + candidate.replace( '#', '' ) );
+				renderColour( true );
+
+			}
+
+		} );
+
+		hexInput.addEventListener( 'blur', function () {
+
+			hexInput.value = input.value;
+
+		} );
+
+		popover.addEventListener( 'keydown', function ( event ) {
+
+			if ( 'Escape' === event.key ) {
+
+				popover.hidden = true;
+				trigger.setAttribute( 'aria-expanded', 'false' );
+				trigger.focus();
+
+			}
+
+		} );
+
+		document.addEventListener( 'click', function ( event ) {
+
+			if ( ! wrap.contains( event.target ) ) {
+
+				popover.hidden = true;
+				trigger.setAttribute( 'aria-expanded', 'false' );
+
+			}
+
+		} );
+
+		renderColour( false );
+
+	} );
 })();

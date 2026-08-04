@@ -35,6 +35,17 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	}
 
 	/*
+	GET GROUP
+	-- Shares the Breakdance page with the other builder-facing modules.
+	---------------------------------------------------------- */
+
+	public function get_group(): string {
+
+		return 'breakdance';
+
+	}
+
+	/*
 	GET TITLE
 	-- Returns the admin navigation label
 	---------------------------------------------------------- */
@@ -150,18 +161,8 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 	public function render_settings( array $settings ): void {
 
-		if ( ! self::is_breakdance_available() ) :
-
-		?>
-
-		<div class="notice notice-error inline oa-inline-notice">
-			<p><strong><?php esc_html_e( 'Breakdance is not installed or active.', 'octave-addons' ); ?></strong></p>
-			<p><?php esc_html_e( 'This module will remain inactive until Breakdance is available.', 'octave-addons' ); ?></p>
-		</div>
-
-		<?php
-
-		endif;
+		// The "Breakdance is not active" warning belongs to the group page that
+		// hosts this panel, so it is not repeated here.
 
 		?>
 
@@ -399,11 +400,12 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	/*
 	IS BREAKDANCE AVAILABLE
 	-- Confirms Breakdance completed its load lifecycle before integration starts
+	-- Defers to the plugin-wide check so every module answers this the same way
 	---------------------------------------------------------- */
 
 	protected static function is_breakdance_available(): bool {
 
-		return did_action( 'breakdance_loaded' ) > 0 || class_exists( '\\Breakdance\\Elements\\Element' );
+		return Octave_Addons::is_breakdance_active();
 
 	}
 

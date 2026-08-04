@@ -60,6 +60,32 @@ PALETTE (TOKENS)
     box-shadow: var(--oa-shadow), 0 0 0 1px rgba(255, 255, 255, 0.025) inset;
 }
 
+/*
+FOCUS STATES
+-- Keeps interactive controls aligned with the Octave green palette.
+---------------------------------------------------------- */
+
+.oa-app button:focus,
+.oa-app .button:focus,
+#oaIconPickerModal button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.oa-app button:focus-visible,
+.oa-app .button:focus-visible,
+#oaIconPickerModal button:focus-visible {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: 2px;
+    border-color: var(--oa-accent);
+    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.16);
+}
+
+.oa-switch input:focus-visible + .oa-switch-slider {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: 3px;
+}
+
 /* --- Sidebar --------------------------------------------- */
 
 .oa-sidebar {
@@ -633,6 +659,41 @@ DASHBOARD MODULES
     font-size: 13px;
 }
 
+/*
+Navigation entry
+-- Wraps the panels shown on one page, so a group can stack several
+---------------------------------------------------------- */
+
+.oa-entry:not(.oa-hidden) {
+    display: grid;
+    gap: 22px;
+}
+
+.oa-entry-head {
+    margin-bottom: 2px;
+}
+
+.oa-entry-title {
+    margin: 10px 0 6px;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--oa-text);
+}
+
+.oa-entry-desc {
+    margin: 0;
+    max-width: 720px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--oa-text-muted);
+}
+
+.oa-locked {
+    opacity: 0.5;
+    filter: grayscale(0.4);
+}
+
 /* --- Panel card ------------------------------------------ */
 
 .oa-panel {
@@ -850,6 +911,164 @@ DASHBOARD MODULES
     box-shadow: 0 12px 30px rgba(43, 255, 134, 0.34);
 }
 
+.oa-save-bar .button-primary:disabled,
+.oa-save-bar .button-primary[aria-disabled="true"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 128px;
+    color: var(--oa-on-accent) !important;
+    background: linear-gradient(135deg, var(--oa-accent), #00D084) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    opacity: 0.72;
+    cursor: wait;
+    transform: none;
+}
+
+.oa-button-spinner {
+    width: 17px;
+    height: 17px;
+    border: 2px solid rgba(9, 11, 12, 0.3);
+    border-top-color: var(--oa-on-accent);
+    border-radius: 50%;
+    animation: oa-spin 0.7s linear infinite;
+}
+
+@keyframes oa-spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+/*
+CUSTOM SELECTS
+-- Searchable listboxes layered over native selects after JavaScript loads.
+---------------------------------------------------------- */
+
+.oa-native-select {
+    display: none !important;
+}
+
+.oa-custom-select {
+    position: relative;
+    display: inline-block;
+    width: min(100%, 320px);
+    min-width: 220px;
+    vertical-align: middle;
+}
+
+.oa-custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 10px 7px 12px;
+    color: var(--oa-text);
+    border: 1px solid var(--oa-border);
+    border-radius: 9px;
+    background: rgba(8, 11, 12, 0.58);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    text-align: left;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.oa-custom-select-trigger .dashicons {
+    width: 16px;
+    height: 16px;
+    color: var(--oa-text-dim);
+    font-size: 16px;
+    transition: transform 0.15s ease;
+}
+
+.oa-custom-select.is-open .oa-custom-select-trigger {
+    border-color: var(--oa-accent);
+    background: rgba(11, 14, 15, 0.96);
+    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.15);
+}
+
+.oa-custom-select.is-open .oa-custom-select-trigger .dashicons {
+    transform: rotate(180deg);
+}
+
+.oa-custom-select-dropdown {
+    position: absolute;
+    z-index: 1000;
+    top: calc(100% + 6px);
+    right: 0;
+    left: 0;
+    overflow: hidden;
+    border: 1px solid rgba(43, 255, 134, 0.25);
+    border-radius: 11px;
+    background: #111516;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5);
+}
+
+.oa-custom-select-search-wrap {
+    padding: 9px;
+    border-bottom: 1px solid var(--oa-border-light);
+}
+
+.oa-custom-select-search {
+    width: 100%;
+    min-height: 36px !important;
+    margin: 0;
+}
+
+.oa-custom-select-options {
+    overflow-y: auto;
+    max-height: 260px;
+    padding: 5px;
+}
+
+.oa-custom-select-option {
+    display: block;
+    width: 100%;
+    padding: 9px 10px;
+    color: var(--oa-text-muted);
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.oa-custom-select-option:hover,
+.oa-custom-select-option.is-selected {
+    color: var(--oa-text);
+    background: var(--oa-accent-bg);
+}
+
+.oa-custom-select-option.is-selected::after {
+    content: '\2713';
+    float: right;
+    color: var(--oa-accent);
+    font-weight: 700;
+}
+
+.oa-nav-custom-select {
+    display: none;
+}
+
+.oa-ipm-set-custom-select {
+    flex: 0 1 180px;
+    min-width: 145px;
+}
+
+.oa-ipm-set-custom-select .oa-custom-select-trigger {
+    min-height: 36px;
+    border-radius: 6px;
+}
+
 /* --- iOS-style toggle ------------------------------------ */
 
 .oa-switch {
@@ -895,6 +1114,11 @@ DASHBOARD MODULES
 
 .oa-switch input:checked + .oa-switch-slider::before {
     transform: translateX(22px);
+}
+
+.oa-switch input:disabled + .oa-switch-slider {
+    cursor: default;
+    opacity: 0.65;
 }
 
 /* --- Code editors ---------------------------------------- */
@@ -1307,6 +1531,19 @@ DASHBOARD MODULES
         outline: none;
     }
 
+    .oa-nav-custom-select {
+        display: block;
+        flex: 1;
+        width: auto;
+        min-width: 0;
+        margin: 8px 12px;
+    }
+
+    .oa-nav-custom-select .oa-custom-select-dropdown {
+        right: 0;
+        left: 0;
+    }
+
     .oa-nav-select:focus {
         border-color: var(--oa-accent);
         box-shadow: 0 0 0 2px rgba(43, 255, 134, 0.2);
@@ -1482,7 +1719,8 @@ DASHBOARD MODULES
 @media (prefers-reduced-motion: reduce) {
 
     .oa-orbit,
-    .oa-save-bar.is-saving .oa-save-state-dot {
+    .oa-save-bar.is-saving .oa-save-state-dot,
+    .oa-button-spinner {
         animation: none;
     }
 
@@ -1494,42 +1732,221 @@ DASHBOARD MODULES
 
 }
 
-/* =========================================================
-   Colour picker
-   ========================================================= */
+/*
+COLOUR PICKER
+-- Compact trigger with a modern HSV colour popover.
+---------------------------------------------------------- */
 
 .oa-color-picker-wrap {
-    display: flex;
+    position: relative;
+    display: inline-block;
+}
+
+.oa-color-trigger {
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-}
-
-.oa-color-input {
-    width: 44px;
-    height: 34px;
-    padding: 2px 3px;
-    background: var(--oa-surface-2);
+    gap: 9px;
+    min-height: 38px;
+    padding: 5px 9px 5px 6px;
+    color: var(--oa-text-muted);
     border: 1px solid var(--oa-border);
-    border-radius: 6px;
+    border-radius: 9px;
+    background: rgba(8, 11, 12, 0.58);
     cursor: pointer;
-    flex-shrink: 0;
+    font-family: inherit;
 }
 
-.oa-color-input::-webkit-color-swatch-wrapper {
-    padding: 2px;
-    border-radius: 4px;
+.oa-color-trigger[aria-expanded="true"] {
+    border-color: var(--oa-accent);
+    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.15);
 }
 
-.oa-color-input::-webkit-color-swatch {
-    border: none;
-    border-radius: 3px;
+.oa-color-swatch {
+    width: 29px;
+    height: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
 }
 
 .oa-color-value {
+    min-width: 58px;
     font-size: 12px;
     font-family: Menlo, Consolas, monospace;
     color: var(--oa-text-muted);
     user-select: all;
+}
+
+.oa-color-trigger .dashicons {
+    width: 15px;
+    height: 15px;
+    font-size: 15px;
+}
+
+.oa-color-popover {
+    position: absolute;
+    z-index: 1100;
+    top: calc(100% + 7px);
+    left: 0;
+    width: 250px;
+    padding: 11px;
+    border: 1px solid rgba(43, 255, 134, 0.25);
+    border-radius: 12px;
+    background: #111516;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5);
+}
+
+.oa-color-saturation {
+    position: relative;
+    height: 150px;
+    overflow: hidden;
+    border-radius: 8px;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.oa-color-saturation:focus-visible {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: 2px;
+}
+
+.oa-color-picker-wrap [hidden],
+.oa-media-field [hidden],
+.oa-custom-select [hidden] {
+    display: none !important;
+}
+
+.oa-color-saturation-white,
+.oa-color-saturation-black {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.oa-color-saturation-white {
+    background: linear-gradient(90deg, #fff, transparent);
+}
+
+.oa-color-saturation-black {
+    background: linear-gradient(0deg, #000, transparent);
+}
+
+.oa-color-thumb {
+    position: absolute;
+    z-index: 2;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.oa-color-control {
+    display: grid !important;
+    grid-template-columns: 32px minmax(0, 1fr);
+    align-items: center;
+    gap: 9px;
+    margin-top: 10px;
+    color: var(--oa-text-dim) !important;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.oa-color-hue {
+    width: 100%;
+    height: 14px;
+    margin: 0;
+    border: 0;
+    border-radius: 100px;
+    background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+    appearance: none;
+}
+
+.oa-color-hue::-webkit-slider-thumb {
+    width: 15px;
+    height: 15px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+    appearance: none;
+}
+
+.oa-color-hue::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+}
+
+.oa-color-hex-control input {
+    min-height: 34px !important;
+    width: 100%;
+    padding: 5px 8px !important;
+    font-family: Menlo, Consolas, monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/*
+MEDIA IMAGE FIELD
+-- WordPress Media Library selection with preview and clear actions.
+---------------------------------------------------------- */
+
+.oa-media-field {
+    width: min(100%, 420px);
+}
+
+.oa-media-preview {
+    display: grid;
+    place-items: center;
+    min-height: 128px;
+    padding: 16px;
+    overflow: hidden;
+    border: 1px dashed var(--oa-border);
+    border-radius: 11px;
+    background-color: rgba(8, 11, 12, 0.58);
+    background-image:
+        linear-gradient(45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.035) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.035) 75%);
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    background-size: 16px 16px;
+}
+
+.oa-media-preview img {
+    display: block;
+    max-width: 100%;
+    max-height: 150px;
+    object-fit: contain;
+}
+
+.oa-media-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    color: var(--oa-text-dim);
+    font-size: 12px;
+}
+
+.oa-media-placeholder .dashicons {
+    width: 28px;
+    height: 28px;
+    font-size: 28px;
+}
+
+.oa-media-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 /* =========================================================

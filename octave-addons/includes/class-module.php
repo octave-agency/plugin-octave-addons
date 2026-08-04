@@ -46,6 +46,19 @@ abstract class Octave_Addons_Module {
 	}
 
 	/**
+	 * Group id this module belongs to, or '' for a standalone tab.
+	 *
+	 * Modules sharing a group id are collapsed into one navigation entry and
+	 * rendered on the same page, each keeping its own settings key, its own
+	 * enable switch, and its own sanitize().
+	 */
+	public function get_group(): string {
+
+		return '';
+
+	}
+
+	/**
 	 * Whether this module should appear in the Octave Addons admin UI.
 	 */
 	public function show_in_admin(): bool {

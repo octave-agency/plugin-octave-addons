@@ -97,6 +97,73 @@ class Octave_Addons_Module_Manager {
 
 	}
 
+	/*
+	ADMIN ENTRIES
+	-- One entry per navigation item. Modules that declare the same group id
+	-- collapse into a single entry and share one page, while ungrouped modules
+	-- stay one entry each. Discovery order is preserved, so a group takes the
+	-- position of its first module.
+	--
+	-- @return array<string, array{id: string, group: string, modules: Octave_Addons_Module[]}>
+	---------------------------------------------------------- */
+
+	public function admin_entries(): array {
+
+		$entries = [];
+
+		foreach ( $this->visible_in_admin() as $id => $module ) {
+
+			$group = $module->get_group();
+			$key   = '' !== $group ? $group : $id;
+
+			if ( ! isset( $entries[ $key ] ) ) {
+
+				$entries[ $key ] = [
+					'id'      => $key,
+					'group'   => $group,
+					'modules' => [],
+				];
+
+			}
+
+			$entries[ $key ]['modules'][ $id ] = $module;
+
+		}
+
+		return $entries;
+
+	}
+
+	/*
+	ENTRY ID FOR
+	-- Resolves a tab request to the entry that owns it, so links and bookmarks
+	-- pointing at a module that has since joined a group still land somewhere.
+	---------------------------------------------------------- */
+
+	public function entry_id_for( string $requested ): string {
+
+		$entries = $this->admin_entries();
+
+		if ( isset( $entries[ $requested ] ) ) {
+
+			return $requested;
+
+		}
+
+		foreach ( $entries as $key => $entry ) {
+
+			if ( isset( $entry['modules'][ $requested ] ) ) {
+
+				return $key;
+
+			}
+
+		}
+
+		return '';
+
+	}
+
 	public function get( string $id ): ?Octave_Addons_Module {
 
 		return $this->modules[ $id ] ?? null;

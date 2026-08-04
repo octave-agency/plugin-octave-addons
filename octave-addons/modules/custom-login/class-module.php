@@ -139,16 +139,15 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
                 'label' => __( 'Login Page Appearance', 'octave-addons' ),
             ] ); ?>
             <?php Octave_Addons_Fields::row( [
-                'for'   => $this->field_id( 'custom_logo_url' ),
-                'label' => __( 'Custom logo URL', 'octave-addons' ),
+                'for'   => $this->field_id( 'custom_logo_url' ) . '-select',
+                'label' => __( 'Custom logo', 'octave-addons' ),
                 'field' => function () use ( $s ) {
 
-                    Octave_Addons_Fields::url( [
-                        'id'          => $this->field_id( 'custom_logo_url' ),
-                        'name'        => $this->field_name( 'custom_logo_url' ),
-                        'value'       => $s['custom_logo_url'],
-                        'placeholder' => 'https://example.com/logo.svg',
-                        'help'        => __( 'Add the brand logo URL.', 'octave-addons' ),
+                    Octave_Addons_Fields::media_image( [
+                        'id'    => $this->field_id( 'custom_logo_url' ),
+                        'name'  => $this->field_name( 'custom_logo_url' ),
+                        'value' => $s['custom_logo_url'],
+                        'help'  => __( 'Choose the brand logo from the WordPress Media Library.', 'octave-addons' ),
                     ] );
 
                 },

@@ -50,7 +50,7 @@ class OaReadingTime extends \Breakdance\Elements\Element
     static function name()
     {
 
-        return 'OA Reading Time';
+        return 'Reading Time';
 
     }
 

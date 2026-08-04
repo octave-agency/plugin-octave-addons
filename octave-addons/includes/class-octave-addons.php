@@ -58,6 +58,21 @@ final class Octave_Addons {
 
 	}
 
+	/*
+	IS BREAKDANCE ACTIVE
+	-- Single source of truth for "is the builder on this site at all".
+	-- Checks the boot action first and falls back to the core element class so
+	-- the answer is right whether or not breakdance_loaded has fired yet.
+	---------------------------------------------------------- */
+
+	public static function is_breakdance_active(): bool {
+
+		return did_action( 'breakdance_loaded' ) > 0
+			|| class_exists( '\Breakdance\Elements\Element' )
+			|| defined( '__BREAKDANCE_VERSION' );
+
+	}
+
 	/** Prevent cloning / serialization — this is a singleton. */
 	protected function __clone() {}
 	public function __wakeup() {

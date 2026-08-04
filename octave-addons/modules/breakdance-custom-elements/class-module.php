@@ -57,6 +57,17 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 
 	}
 
+	/*
+	GET GROUP
+	-- Shares the Breakdance page with the other builder-facing modules.
+	---------------------------------------------------------- */
+
+	public function get_group(): string {
+
+		return 'breakdance';
+
+	}
+
 	public function get_title(): string {
 
 		return __( 'Breakdance Elements', 'octave-addons' );
@@ -405,13 +416,13 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 		$elements = $this->discover_elements();
 		$saved    = isset( $settings['elements'] ) && is_array( $settings['elements'] ) ? $settings['elements'] : [];
 
+		// The "Breakdance is not active" warning belongs to the group page that
+		// hosts this panel — only the empty list is explained here.
 		if ( ! class_exists( '\Breakdance\Elements\Element' ) ) :
 
 		?>
 
-		<div class="notice notice-warning inline">
-			<p><?php esc_html_e( 'Breakdance is not active, so no elements can be listed.', 'octave-addons' ); ?></p>
-		</div>
+		<p class="description"><?php esc_html_e( 'Elements can be listed once Breakdance is active.', 'octave-addons' ); ?></p>
 
 		<?php
 

@@ -50,7 +50,7 @@ class OaCopyright extends \Breakdance\Elements\Element
     static function name()
     {
 
-        return 'OA Copyright';
+        return 'Copyright';
 
     }
 

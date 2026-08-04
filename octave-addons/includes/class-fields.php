@@ -348,7 +348,7 @@ class Octave_Addons_Fields {
     }
 
     /**
-     * Native HTML5 colour picker with hex value display.
+     * Custom colour picker with a swatch, saturation control and hex input.
      *
      * @param array $args {
 
@@ -364,14 +364,91 @@ class Octave_Addons_Fields {
         $id    = $args['id']    ?? '';
         $value = $args['value'] ?? '#000000';
         $help  = $args['help']  ?? '';
+
+        $value = sanitize_hex_color( $value ) ?: '#000000';
         ?>
 
-        <div class="oa-color-picker-wrap">
-            <input type="color"<?= $id ? ' id="' . esc_attr( $id ) . '"' : ''; ?>
+        <div class="oa-color-picker-wrap" data-value="<?= esc_attr( $value ); ?>">
+            <input type="hidden"<?= $id ? ' id="' . esc_attr( $id . '-value' ) . '"' : ''; ?>
                    name="<?= esc_attr( $name ); ?>"
                    value="<?= esc_attr( $value ); ?>"
                    class="oa-color-input">
-            <code class="oa-color-value"><?= esc_html( $value ); ?></code>
+            <button type="button"<?= $id ? ' id="' . esc_attr( $id ) . '"' : ''; ?> class="oa-color-trigger" aria-haspopup="dialog" aria-expanded="false">
+                <span class="oa-color-swatch" style="background-color: <?= esc_attr( $value ); ?>;"></span>
+                <code class="oa-color-value"><?= esc_html( strtoupper( $value ) ); ?></code>
+                <span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+                <span class="screen-reader-text"><?php esc_html_e( 'Choose colour', 'octave-addons' ); ?></span>
+            </button>
+            <div class="oa-color-popover" role="dialog" aria-label="<?php esc_attr_e( 'Colour picker', 'octave-addons' ); ?>" hidden>
+                <div class="oa-color-saturation" role="slider" tabindex="0" aria-label="<?php esc_attr_e( 'Colour saturation and brightness', 'octave-addons' ); ?>">
+                    <span class="oa-color-saturation-white" aria-hidden="true"></span>
+                    <span class="oa-color-saturation-black" aria-hidden="true"></span>
+                    <span class="oa-color-thumb" aria-hidden="true"></span>
+                </div>
+                <label class="oa-color-control">
+                    <span><?php esc_html_e( 'Hue', 'octave-addons' ); ?></span>
+                    <input type="range" class="oa-color-hue" min="0" max="359" step="1">
+                </label>
+                <label class="oa-color-control oa-color-hex-control">
+                    <span><?php esc_html_e( 'Hex', 'octave-addons' ); ?></span>
+                    <input type="text" class="oa-color-hex" value="<?= esc_attr( strtoupper( $value ) ); ?>" maxlength="7" spellcheck="false">
+                </label>
+            </div>
+        </div>
+        <?php
+
+        if ( $help ) :
+
+        ?>
+
+        <span class="oa-help"><?= esc_html( $help ); ?></span>
+        <?php
+
+        endif;
+
+    }
+
+    /**
+     * WordPress Media Library image field with preview and replace/remove actions.
+     *
+     * @param array $args {
+     *
+     *     @type string $name   Field name (required).
+     *     @type string $id     Field id (required).
+     *     @type string $value  Current image URL.
+     *     @type string $help   Optional description as .oa-help span.
+     * }
+     */
+    public static function media_image( array $args ): void {
+
+        $name      = $args['name']  ?? '';
+        $id        = $args['id']    ?? '';
+        $value     = $args['value'] ?? '';
+        $help      = $args['help']  ?? '';
+        $has_image = '' !== $value;
+        ?>
+
+        <div class="oa-media-field<?= $has_image ? ' has-image' : ''; ?>">
+            <input type="hidden"
+                   id="<?= esc_attr( $id ); ?>"
+                   name="<?= esc_attr( $name ); ?>"
+                   value="<?= esc_attr( $value ); ?>"
+                   class="oa-media-url">
+            <div class="oa-media-preview">
+                <img src="<?= esc_url( $value ); ?>" alt=""<?= $has_image ? '' : ' hidden'; ?>>
+                <span class="oa-media-placeholder"<?= $has_image ? ' hidden' : ''; ?>>
+                    <span class="dashicons dashicons-format-image" aria-hidden="true"></span>
+                    <?php esc_html_e( 'No image selected', 'octave-addons' ); ?>
+                </span>
+            </div>
+            <div class="oa-media-actions">
+                <button type="button" id="<?= esc_attr( $id . '-select' ); ?>" class="button oa-media-select">
+                    <?= $has_image ? esc_html__( 'Replace image', 'octave-addons' ) : esc_html__( 'Select image', 'octave-addons' ); ?>
+                </button>
+                <button type="button" class="button oa-media-remove"<?= $has_image ? '' : ' hidden'; ?>>
+                    <?php esc_html_e( 'Remove', 'octave-addons' ); ?>
+                </button>
+            </div>
         </div>
         <?php
 

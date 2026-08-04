@@ -50,7 +50,7 @@ class OaLogoMarquee extends \Breakdance\Elements\Element
     static function name()
     {
 
-        return 'OA Logo Marquee';
+        return 'Logo Marquee';
 
     }
 

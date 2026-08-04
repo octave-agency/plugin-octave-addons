@@ -51,7 +51,7 @@ class OaCountdown extends \Breakdance\Elements\Element
     static function name()
     {
 
-        return 'OA Countdown';
+        return 'Countdown';
 
     }
 

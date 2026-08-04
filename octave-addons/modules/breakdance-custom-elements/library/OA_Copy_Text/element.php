@@ -50,7 +50,7 @@ class OaCopyText extends \Breakdance\Elements\Element
     static function name()
     {
 
-        return 'OA Copy Text';
+        return 'Copy Text';
 
     }
 
