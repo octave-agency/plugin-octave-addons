@@ -43,6 +43,36 @@ PALETTE (TOKENS)
     display: none;
 }
 
+/*
+TEXT LINKS
+-- Overrides WordPress admin blue while leaving navigation and cards alone.
+---------------------------------------------------------- */
+
+.oa-app a:not(.oa-nav-item):not(.oa-module-card),
+.oa-app a:not(.oa-nav-item):not(.oa-module-card):visited {
+    color: var(--oa-accent);
+    text-decoration-color: rgba(43, 255, 134, 0.48);
+    text-underline-offset: 2px;
+}
+
+.oa-app a:not(.oa-nav-item):not(.oa-module-card):hover {
+    color: #8CFFC0;
+    text-decoration-color: currentColor;
+}
+
+.oa-app a:not(.oa-nav-item):not(.oa-module-card):focus {
+    color: var(--oa-accent);
+    outline: none;
+    box-shadow: none;
+}
+
+.oa-app a:not(.oa-nav-item):not(.oa-module-card):focus-visible {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.16);
+}
+
 /* --- App shell ------------------------------------------- */
 
 .oa-app {
