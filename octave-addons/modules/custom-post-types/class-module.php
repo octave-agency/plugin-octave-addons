@@ -272,90 +272,114 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				</button>
 			</div>
 
-			<div class="oa-cpt-fields">
-				<label class="oa-cpt-field">
-					<span><?php esc_html_e( 'Name', 'octave-addons' ); ?></span>
-					<input type="text" data-cpt-field="name" name="<?= esc_attr( $this->cpt_field_name( $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" placeholder="<?php esc_attr_e( 'Projects', 'octave-addons' ); ?>" required>
-					<small><?php esc_html_e( 'Plural name shown in the admin menu.', 'octave-addons' ); ?></small>
-				</label>
+			<div class="oa-cpt-groups">
+				<fieldset class="oa-cpt-group">
+					<legend><?php esc_html_e( 'Identity', 'octave-addons' ); ?></legend>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'The labels editors see and the permanent key WordPress stores.', 'octave-addons' ); ?></p>
+					<div class="oa-cpt-fields">
+						<label class="oa-cpt-field">
+							<span><?php esc_html_e( 'Name', 'octave-addons' ); ?></span>
+							<input type="text" data-cpt-field="name" name="<?= esc_attr( $this->cpt_field_name( $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" placeholder="<?php esc_attr_e( 'Projects', 'octave-addons' ); ?>" required>
+							<small><?php esc_html_e( 'Plural name shown in the admin menu.', 'octave-addons' ); ?></small>
+						</label>
 
-				<label class="oa-cpt-field">
-					<span><?php esc_html_e( 'Singular name', 'octave-addons' ); ?></span>
-					<input type="text" data-cpt-field="singular_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'singular_name' ) ); ?>" value="<?= esc_attr( $singular_name ); ?>" placeholder="<?php esc_attr_e( 'Project', 'octave-addons' ); ?>" required>
-					<small><?php esc_html_e( 'Used for Add New and Edit labels.', 'octave-addons' ); ?></small>
-				</label>
+						<label class="oa-cpt-field">
+							<span><?php esc_html_e( 'Singular name', 'octave-addons' ); ?></span>
+							<input type="text" data-cpt-field="singular_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'singular_name' ) ); ?>" value="<?= esc_attr( $singular_name ); ?>" placeholder="<?php esc_attr_e( 'Project', 'octave-addons' ); ?>" required>
+							<small><?php esc_html_e( 'Used for Add New and Edit labels.', 'octave-addons' ); ?></small>
+						</label>
 
-				<label class="oa-cpt-field">
-					<span><?php esc_html_e( 'Post type key', 'octave-addons' ); ?></span>
-					<input type="text" data-cpt-field="post_type" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_type' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="20" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>>
-					<small><?= $saved ? esc_html__( 'Permanent after saving to protect existing content.', 'octave-addons' ) : esc_html__( 'Use an oa_ prefix; maximum 20 characters.', 'octave-addons' ); ?></small>
-				</label>
+						<label class="oa-cpt-field oa-cpt-field--full">
+							<span><?php esc_html_e( 'Post type key', 'octave-addons' ); ?></span>
+							<input type="text" data-cpt-field="post_type" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_type' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="20" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>>
+							<small><?= $saved ? esc_html__( 'Permanent after saving to protect existing content.', 'octave-addons' ) : esc_html__( 'Use an oa_ prefix; maximum 20 characters.', 'octave-addons' ); ?></small>
+						</label>
+					</div>
+				</fieldset>
 
-				<label class="oa-cpt-field">
-					<span><?php esc_html_e( 'Single URL slug', 'octave-addons' ); ?></span>
-					<input type="text" data-cpt-field="post_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_slug' ) ); ?>" value="<?= esc_attr( $post_slug ); ?>" placeholder="project" required>
-					<small><?php esc_html_e( 'Used before an individual item’s URL.', 'octave-addons' ); ?></small>
-				</label>
+				<fieldset class="oa-cpt-group">
+					<legend><?php esc_html_e( 'Visibility', 'octave-addons' ); ?></legend>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'Control whether the type is registered and available publicly.', 'octave-addons' ); ?></p>
+					<div class="oa-cpt-fields oa-cpt-fields--switches">
+						<div class="oa-cpt-field oa-cpt-switch-field">
+							<span><?php esc_html_e( 'Enabled', 'octave-addons' ); ?></span>
+							<label class="oa-switch">
+								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'enabled' ) ); ?>" value="1"<?= checked( $enabled, true, false ); ?>>
+								<span class="oa-switch-slider"></span>
+							</label>
+							<small><?php esc_html_e( 'Register this content type.', 'octave-addons' ); ?></small>
+						</div>
 
-				<div class="oa-cpt-field oa-cpt-switch-field">
-					<span><?php esc_html_e( 'Enabled', 'octave-addons' ); ?></span>
-					<label class="oa-switch">
-						<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'enabled' ) ); ?>" value="1"<?= checked( $enabled, true, false ); ?>>
-						<span class="oa-switch-slider"></span>
-					</label>
-					<small><?php esc_html_e( 'Register this content type.', 'octave-addons' ); ?></small>
-				</div>
+						<div class="oa-cpt-field oa-cpt-switch-field">
+							<span><?php esc_html_e( 'Public', 'octave-addons' ); ?></span>
+							<label class="oa-switch">
+								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'public' ) ); ?>" value="1"<?= checked( $public, true, false ); ?>>
+								<span class="oa-switch-slider"></span>
+							</label>
+							<small><?php esc_html_e( 'Allow frontend URLs, searches and navigation use.', 'octave-addons' ); ?></small>
+						</div>
+					</div>
+				</fieldset>
 
-				<div class="oa-cpt-field oa-cpt-switch-field">
-					<span><?php esc_html_e( 'Public', 'octave-addons' ); ?></span>
-					<label class="oa-switch">
-						<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'public' ) ); ?>" value="1"<?= checked( $public, true, false ); ?>>
-						<span class="oa-switch-slider"></span>
-					</label>
-					<small><?php esc_html_e( 'Allow frontend URLs, searches and navigation use.', 'octave-addons' ); ?></small>
-				</div>
+				<fieldset class="oa-cpt-group">
+					<legend><?php esc_html_e( 'URLs', 'octave-addons' ); ?></legend>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'Set the individual item path and optionally expose a listing archive.', 'octave-addons' ); ?></p>
+					<div class="oa-cpt-fields">
+						<label class="oa-cpt-field">
+							<span><?php esc_html_e( 'Single URL slug', 'octave-addons' ); ?></span>
+							<input type="text" data-cpt-field="post_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_slug' ) ); ?>" value="<?= esc_attr( $post_slug ); ?>" placeholder="project" required>
+							<small><?php esc_html_e( 'Used before an individual item’s URL.', 'octave-addons' ); ?></small>
+						</label>
 
-				<div class="oa-cpt-field oa-cpt-switch-field">
-					<span><?php esc_html_e( 'Archive URL', 'octave-addons' ); ?></span>
-					<label class="oa-switch">
-						<input type="checkbox" class="oa-cpt-archive-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'has_archive' ) ); ?>" value="1"<?= checked( $has_archive, true, false ); ?>>
-						<span class="oa-switch-slider"></span>
-					</label>
-					<small><?php esc_html_e( 'Enable a public listing page.', 'octave-addons' ); ?></small>
-				</div>
+						<div class="oa-cpt-field oa-cpt-switch-field">
+							<span><?php esc_html_e( 'Has Archive', 'octave-addons' ); ?></span>
+							<label class="oa-switch">
+								<input type="checkbox" class="oa-cpt-archive-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'has_archive' ) ); ?>" value="1"<?= checked( $has_archive, true, false ); ?>>
+								<span class="oa-switch-slider"></span>
+							</label>
+							<small><?php esc_html_e( 'Enable a public listing page.', 'octave-addons' ); ?></small>
+						</div>
 
-				<label class="oa-cpt-field oa-cpt-archive-field<?= $has_archive ? '' : ' oa-hidden'; ?>">
-					<span><?php esc_html_e( 'Archive slug', 'octave-addons' ); ?></span>
-					<input type="text" data-cpt-field="archive_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'archive_slug' ) ); ?>" value="<?= esc_attr( $archive_slug ); ?>" placeholder="projects">
-					<small><?php esc_html_e( 'The archive URL path, without slashes.', 'octave-addons' ); ?></small>
-				</label>
+						<label class="oa-cpt-field oa-cpt-field--full oa-cpt-archive-field<?= $has_archive ? '' : ' oa-hidden'; ?>">
+							<span><?php esc_html_e( 'Archive slug', 'octave-addons' ); ?></span>
+							<input type="text" data-cpt-field="archive_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'archive_slug' ) ); ?>" value="<?= esc_attr( $archive_slug ); ?>" placeholder="projects">
+							<small><?php esc_html_e( 'The archive URL path, without slashes.', 'octave-addons' ); ?></small>
+						</label>
+					</div>
+				</fieldset>
 
-				<div class="oa-cpt-field oa-cpt-switch-field">
-					<span><?php esc_html_e( 'Custom taxonomy', 'octave-addons' ); ?></span>
-					<label class="oa-switch">
-						<input type="checkbox" class="oa-cpt-taxonomy-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'categories' ) ); ?>" value="1"<?= checked( $categories, true, false ); ?>>
-						<span class="oa-switch-slider"></span>
-					</label>
-					<small><?php esc_html_e( 'Add one hierarchical taxonomy to this type.', 'octave-addons' ); ?></small>
-				</div>
+				<fieldset class="oa-cpt-group">
+					<legend><?php esc_html_e( 'Taxonomy', 'octave-addons' ); ?></legend>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'Optionally add one hierarchical taxonomy for organising this content.', 'octave-addons' ); ?></p>
+					<div class="oa-cpt-fields">
+						<div class="oa-cpt-field oa-cpt-field--full oa-cpt-switch-field">
+							<span><?php esc_html_e( 'Has Taxonomy', 'octave-addons' ); ?></span>
+							<label class="oa-switch">
+								<input type="checkbox" class="oa-cpt-taxonomy-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'categories' ) ); ?>" value="1"<?= checked( $categories, true, false ); ?>>
+								<span class="oa-switch-slider"></span>
+							</label>
+							<small><?php esc_html_e( 'Add one hierarchical taxonomy to this type.', 'octave-addons' ); ?></small>
+						</div>
 
-				<label class="oa-cpt-field oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
-					<span><?php esc_html_e( 'Taxonomy name', 'octave-addons' ); ?></span>
-					<input type="text" data-cpt-field="taxonomy_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_name' ) ); ?>" value="<?= esc_attr( $taxonomy_name ); ?>" placeholder="<?php esc_attr_e( 'Project Categories', 'octave-addons' ); ?>">
-					<small><?php esc_html_e( 'Plural taxonomy label.', 'octave-addons' ); ?></small>
-				</label>
+						<label class="oa-cpt-field oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
+							<span><?php esc_html_e( 'Taxonomy name', 'octave-addons' ); ?></span>
+							<input type="text" data-cpt-field="taxonomy_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_name' ) ); ?>" value="<?= esc_attr( $taxonomy_name ); ?>" placeholder="<?php esc_attr_e( 'Project Categories', 'octave-addons' ); ?>">
+							<small><?php esc_html_e( 'Plural taxonomy label.', 'octave-addons' ); ?></small>
+						</label>
 
-				<label class="oa-cpt-field oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
-					<span><?php esc_html_e( 'Taxonomy singular name', 'octave-addons' ); ?></span>
-					<input type="text" data-cpt-field="taxonomy_singular_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_singular_name' ) ); ?>" value="<?= esc_attr( $taxonomy_singular_name ); ?>" placeholder="<?php esc_attr_e( 'Project Category', 'octave-addons' ); ?>">
-					<small><?php esc_html_e( 'Singular taxonomy label.', 'octave-addons' ); ?></small>
-				</label>
+						<label class="oa-cpt-field oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
+							<span><?php esc_html_e( 'Taxonomy singular name', 'octave-addons' ); ?></span>
+							<input type="text" data-cpt-field="taxonomy_singular_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_singular_name' ) ); ?>" value="<?= esc_attr( $taxonomy_singular_name ); ?>" placeholder="<?php esc_attr_e( 'Project Category', 'octave-addons' ); ?>">
+							<small><?php esc_html_e( 'Singular taxonomy label.', 'octave-addons' ); ?></small>
+						</label>
 
-				<label class="oa-cpt-field oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
-					<span><?php esc_html_e( 'Taxonomy URL slug', 'octave-addons' ); ?></span>
-					<input type="text" data-cpt-field="taxonomy_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_slug' ) ); ?>" value="<?= esc_attr( $taxonomy_slug ); ?>" placeholder="project-category">
-					<small><?php esc_html_e( 'Public URL path for taxonomy terms.', 'octave-addons' ); ?></small>
-				</label>
+						<label class="oa-cpt-field oa-cpt-field--full oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
+							<span><?php esc_html_e( 'Taxonomy URL slug', 'octave-addons' ); ?></span>
+							<input type="text" data-cpt-field="taxonomy_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_slug' ) ); ?>" value="<?= esc_attr( $taxonomy_slug ); ?>" placeholder="project-category">
+							<small><?php esc_html_e( 'Public URL path for taxonomy terms.', 'octave-addons' ); ?></small>
+						</label>
+					</div>
+				</fieldset>
 			</div>
 		</article>
 

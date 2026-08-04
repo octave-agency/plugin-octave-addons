@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.3.0
+Stable tag:        2.3.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -48,6 +48,10 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.3.1 =
+* Reorganised each custom post type into clear Identity, Visibility, URLs and Taxonomy groups.
+* Restyled the Add post type button and fixed the Has Archive and Has Taxonomy toggles so their related fields hide when disabled.
 
 = 2.3.0 =
 * Renamed the built-in Posts area to Blogs without changing its underlying `post` database key.
