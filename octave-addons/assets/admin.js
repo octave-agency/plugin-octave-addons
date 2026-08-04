@@ -1056,4 +1056,353 @@ ADMIN INTERACTIONS
 		renderColour( false );
 
 	} );
+
+	/*
+	CUSTOM POST TYPE EDITOR
+	-- Adds, removes and accessibly reorders the repeatable post type cards.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '.oa-cpt-section' ).forEach( function ( section ) {
+
+		var list = section.querySelector( '.oa-cpt-list' );
+		var template = section.querySelector( '.oa-cpt-template' );
+		var addButton = section.querySelector( '.oa-cpt-add' );
+		var orderStatus = section.querySelector( '.oa-cpt-order-status' );
+		var nextIndex = list.children.length;
+		var draggedItem = null;
+
+		function slugify( value, separator ) {
+
+			return value.toLowerCase()
+				.trim()
+				.replace( /[^a-z0-9]+/g, separator )
+				.replace( new RegExp( '^' + separator + '+|' + separator + '+$', 'g' ), '' );
+
+		}
+
+		function reindexItems() {
+
+			var items = list.querySelectorAll( '.oa-cpt-item' );
+
+			items.forEach( function ( item, index ) {
+
+				item.querySelectorAll( '[name]' ).forEach( function ( field ) {
+
+					field.name = field.name.replace( /\[custom_post_types\]\[[^\]]+\]/, '[custom_post_types][' + index + ']' );
+
+				} );
+
+				item.querySelector( '.oa-cpt-move-up' ).disabled = 0 === index;
+				item.querySelector( '.oa-cpt-move-down' ).disabled = items.length - 1 === index;
+
+			} );
+
+		}
+
+		function announceOrderChange() {
+
+			orderStatus.textContent = '';
+			window.requestAnimationFrame( function () {
+
+				orderStatus.textContent = oaAdmin.postTypeMovedText;
+
+			} );
+			list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		}
+
+		function syncConditionalFields( item ) {
+
+			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
+			var taxonomyToggle = item.querySelector( '.oa-cpt-taxonomy-toggle' );
+
+			item.querySelectorAll( '.oa-cpt-archive-field' ).forEach( function ( field ) {
+
+				field.classList.toggle( 'oa-hidden', ! archiveToggle.checked );
+
+			} );
+
+			item.querySelectorAll( '.oa-cpt-taxonomy-field' ).forEach( function ( field ) {
+
+				field.classList.toggle( 'oa-hidden', ! taxonomyToggle.checked );
+
+			} );
+
+		}
+
+		function wireItem( item ) {
+
+			var handle = item.querySelector( '.oa-cpt-drag-handle' );
+			var moveUpButton = item.querySelector( '.oa-cpt-move-up' );
+			var moveDownButton = item.querySelector( '.oa-cpt-move-down' );
+			var removeButton = item.querySelector( '.oa-cpt-remove' );
+			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
+			var taxonomyToggle = item.querySelector( '.oa-cpt-taxonomy-toggle' );
+			var nameInput = item.querySelector( '[data-cpt-field="name"]' );
+			var singularInput = item.querySelector( '[data-cpt-field="singular_name"]' );
+			var keyInput = item.querySelector( '[data-cpt-field="post_type"]' );
+			var postSlugInput = item.querySelector( '[data-cpt-field="post_slug"]' );
+			var archiveSlugInput = item.querySelector( '[data-cpt-field="archive_slug"]' );
+			var taxonomyNameInput = item.querySelector( '[data-cpt-field="taxonomy_name"]' );
+			var taxonomySingularInput = item.querySelector( '[data-cpt-field="taxonomy_singular_name"]' );
+			var taxonomySlugInput = item.querySelector( '[data-cpt-field="taxonomy_slug"]' );
+			var title = item.querySelector( '.oa-cpt-item-title' );
+			var keyPreview = item.querySelector( '.oa-cpt-key-preview' );
+			var isNew = 'false' === item.dataset.saved;
+			var keyIsAutomatic = isNew;
+
+			archiveToggle.addEventListener( 'change', function () {
+
+				syncConditionalFields( item );
+
+			} );
+
+			taxonomyToggle.addEventListener( 'change', function () {
+
+				syncConditionalFields( item );
+
+			} );
+
+			nameInput.addEventListener( 'input', function () {
+
+				var pluralSlug = slugify( nameInput.value, '-' );
+
+				title.textContent = nameInput.value.trim() || oaAdmin.newPostTypeText;
+
+				if ( isNew && keyIsAutomatic ) {
+
+					keyInput.value = ( 'oa_' + slugify( nameInput.value, '_' ) ).substring( 0, 20 );
+					keyPreview.textContent = keyInput.value;
+
+				}
+
+				if ( isNew && ! archiveSlugInput.dataset.edited ) {
+
+					archiveSlugInput.value = pluralSlug;
+
+				}
+
+				if ( isNew && ! taxonomyNameInput.dataset.edited ) {
+
+					taxonomyNameInput.value = nameInput.value.trim() ? nameInput.value.trim() + ' Categories' : '';
+
+				}
+
+			} );
+
+			singularInput.addEventListener( 'input', function () {
+
+				var singularSlug = slugify( singularInput.value, '-' );
+
+				if ( isNew && ! postSlugInput.dataset.edited ) {
+
+					postSlugInput.value = singularSlug;
+
+				}
+
+				if ( isNew && ! taxonomySingularInput.dataset.edited ) {
+
+					taxonomySingularInput.value = singularInput.value.trim() ? singularInput.value.trim() + ' Category' : '';
+
+				}
+
+				if ( isNew && ! taxonomySlugInput.dataset.edited ) {
+
+					taxonomySlugInput.value = singularSlug ? singularSlug + '-category' : '';
+
+				}
+
+			} );
+
+			keyInput.addEventListener( 'input', function ( event ) {
+
+				if ( event.isTrusted ) {
+
+					keyIsAutomatic = false;
+
+				}
+
+				keyInput.value = slugify( keyInput.value, '_' ).substring( 0, 20 );
+				keyPreview.textContent = keyInput.value;
+
+			} );
+
+			[ postSlugInput, archiveSlugInput, taxonomyNameInput, taxonomySingularInput, taxonomySlugInput ].forEach( function ( input ) {
+
+				input.addEventListener( 'input', function ( event ) {
+
+					if ( event.isTrusted ) {
+
+						input.dataset.edited = 'true';
+
+					}
+
+				} );
+
+			} );
+
+			removeButton.addEventListener( 'click', function () {
+
+				if ( 'true' === item.dataset.saved && ! window.confirm( oaAdmin.removePostTypeText ) ) {
+
+					return;
+
+				}
+
+				item.remove();
+				reindexItems();
+				announceOrderChange();
+				addButton.focus();
+
+			} );
+
+			handle.addEventListener( 'pointerdown', function () {
+
+				item.draggable = true;
+
+			} );
+
+			handle.addEventListener( 'pointerup', function () {
+
+				item.draggable = false;
+
+			} );
+
+			handle.addEventListener( 'keydown', function ( event ) {
+
+				var sibling;
+
+				if ( 'ArrowUp' === event.key ) {
+
+					sibling = item.previousElementSibling;
+
+					if ( sibling ) {
+
+						list.insertBefore( item, sibling );
+
+					}
+
+				} else if ( 'ArrowDown' === event.key ) {
+
+					sibling = item.nextElementSibling;
+
+					if ( sibling ) {
+
+						list.insertBefore( sibling, item );
+
+					}
+
+				} else {
+
+					return;
+
+				}
+
+				event.preventDefault();
+				reindexItems();
+				announceOrderChange();
+				handle.focus();
+
+			} );
+
+			moveUpButton.addEventListener( 'click', function () {
+
+				var previous = item.previousElementSibling;
+
+				if ( previous ) {
+
+					list.insertBefore( item, previous );
+					reindexItems();
+					announceOrderChange();
+					moveUpButton.focus();
+
+				}
+
+			} );
+
+			moveDownButton.addEventListener( 'click', function () {
+
+				var next = item.nextElementSibling;
+
+				if ( next ) {
+
+					list.insertBefore( next, item );
+					reindexItems();
+					announceOrderChange();
+					moveDownButton.focus();
+
+				}
+
+			} );
+
+			item.addEventListener( 'dragstart', function ( event ) {
+
+				draggedItem = item;
+				item.classList.add( 'is-dragging' );
+				event.dataTransfer.effectAllowed = 'move';
+				event.dataTransfer.setData( 'text/plain', '' );
+
+			} );
+
+			item.addEventListener( 'dragend', function () {
+
+				item.classList.remove( 'is-dragging' );
+				item.draggable = false;
+				draggedItem = null;
+				reindexItems();
+				announceOrderChange();
+
+			} );
+
+			syncConditionalFields( item );
+
+		}
+
+		list.addEventListener( 'dragover', function ( event ) {
+
+			if ( ! draggedItem ) {
+
+				return;
+
+			}
+
+			event.preventDefault();
+
+			var target = Array.prototype.find.call( list.querySelectorAll( '.oa-cpt-item:not(.is-dragging)' ), function ( item ) {
+
+				var box = item.getBoundingClientRect();
+
+				return event.clientY < box.top + box.height / 2;
+
+			} );
+
+			list.insertBefore( draggedItem, target || null );
+
+		} );
+
+		addButton.addEventListener( 'click', function () {
+
+			var html = template.innerHTML.split( '__INDEX__' ).join( 'new_' + nextIndex );
+			var holder = document.createElement( 'div' );
+
+			nextIndex++;
+			holder.innerHTML = html.trim();
+
+			var item = holder.firstElementChild;
+			var keyInput = item.querySelector( '[data-cpt-field="post_type"]' );
+
+			keyInput.value = ( 'oa_content_' + nextIndex ).substring( 0, 20 );
+			item.querySelector( '.oa-cpt-key-preview' ).textContent = keyInput.value;
+			list.appendChild( item );
+			wireItem( item );
+			reindexItems();
+			announceOrderChange();
+			item.querySelector( '[data-cpt-field="name"]' ).focus();
+
+		} );
+
+		list.querySelectorAll( '.oa-cpt-item' ).forEach( wireItem );
+		reindexItems();
+
+	} );
 })();

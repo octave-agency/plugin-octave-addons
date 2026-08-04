@@ -4,7 +4,7 @@
  * Plugin Name:       Octave Addons
  * Plugin URI:        https://github.com/octave-agency/plugin-octave-addons
  * Description:       A modular collection of Octave site add-ons.
- * Version:           2.2.1
+ * Version:           2.3.0
  * Author:            Octave Agency
  * Author URI:        https://octaveagency.com
  * License:           GPL-2.0+
@@ -67,6 +67,7 @@ register_activation_hook( __FILE__, function () {
 
 	// Ensure defaults exist so the admin screen isn't blank on first load.
 	if ( false === get_option( OCTAVE_ADDONS_OPTION_KEY ) ) {
+
 		add_option( OCTAVE_ADDONS_OPTION_KEY, [] );
 
 	}
@@ -81,5 +82,5 @@ register_deactivation_hook( __FILE__, function () {
 	// Clear update caches so any future re-activation forces a fresh check.
 	delete_site_transient( 'update_plugins' );
 	delete_site_transient( 'octave_addons_github_release' );
-	
+
 } );

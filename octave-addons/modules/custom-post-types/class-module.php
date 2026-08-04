@@ -2,10 +2,9 @@
 
 /*
 MODULE: CUSTOM POST TYPES
--- Registers optional content types managed from the Octave Addons dashboard
--- Page Categories group ordinary Pages into campaigns (ppc, landing, and so
--- on) and plug straight into WordPress's own filtering rather than adding a
--- separate post type
+-- Renames the built-in Posts area to Blogs and manages an ordered collection
+-- of public custom post types with optional archives and categories.
+-- Existing Case Studies settings retain their original database identifiers.
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -22,7 +21,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	CONSTRUCTOR
-	-- Refreshes rewrite rules only when custom post type routing changes
+	-- Refreshes rewrite rules only when custom routing changes.
 	---------------------------------------------------------- */
 
 	public function __construct() {
@@ -33,7 +32,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	GET ID
-	-- Returns the module settings key
+	-- Returns the module settings key.
 	---------------------------------------------------------- */
 
 	public function get_id(): string {
@@ -44,7 +43,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	GET TITLE
-	-- Returns the admin navigation label
+	-- Returns the admin navigation label.
 	---------------------------------------------------------- */
 
 	public function get_title(): string {
@@ -55,74 +54,99 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	GET DESCRIPTION
-	-- Describes the optional site content types
+	-- Describes the managed WordPress content areas.
 	---------------------------------------------------------- */
 
 	public function get_description(): string {
 
-		return __( 'Group Pages into campaign categories and add purpose-built content areas with clean URLs.', 'octave-addons' );
+		return __( 'Rename Posts to Blogs, group Pages into categories, and manage ordered custom content types.', 'octave-addons' );
 
 	}
 
 	/*
 	GET DEFAULTS
-	-- Enables the settings area and Page Categories for new installations
+	-- Starts new installations with an empty custom post type collection.
 	---------------------------------------------------------- */
 
 	public function get_defaults(): array {
 
 		return [
-			'enabled'                 => true,
-			'page_categories'         => true,
-			'case_studies'            => true,
-			'case_study_post_slug'    => 'case-study',
-			'case_study_archive_slug' => 'case-studies',
-			'case_study_categories'   => true,
+			'enabled'           => true,
+			'page_categories'   => true,
+			'custom_post_types' => [],
 		];
 
 	}
 
 	/*
+	GET SETTINGS
+	-- Converts the former single Case Studies fields into the repeatable schema
+	-- without changing the post type or taxonomy stored in the database.
+	---------------------------------------------------------- */
+
+	public function get_settings( array $saved ): array {
+
+		$settings = wp_parse_args( $saved, $this->get_defaults() );
+
+		if ( ! array_key_exists( 'custom_post_types', $saved ) && $this->has_legacy_case_study_settings( $saved ) ) {
+
+			$settings['custom_post_types'] = [ $this->legacy_case_study( $saved ) ];
+
+		}
+
+		$settings['custom_post_types'] = $this->normalise_post_types( $settings['custom_post_types'] ?? [] );
+
+		return $settings;
+
+	}
+
+	/*
 	SANITIZE
-	-- Converts the module switches into stored booleans
+	-- Validates ordered post type definitions and prevents duplicate keys.
 	---------------------------------------------------------- */
 
 	public function sanitize( $input ): array {
 
+		$input = is_array( $input ) ? $input : [];
+
 		return [
-			'enabled'                 => ! empty( $input['enabled'] ),
-			'page_categories'         => ! empty( $input['page_categories'] ),
-			'case_studies'            => ! empty( $input['case_studies'] ),
-			'case_study_post_slug'    => self::sanitize_rewrite_slug( $input['case_study_post_slug'] ?? '', 'case-study' ),
-			'case_study_archive_slug' => self::sanitize_rewrite_slug( $input['case_study_archive_slug'] ?? '', 'case-studies' ),
-			'case_study_categories'   => ! empty( $input['case_study_categories'] ),
+			'enabled'           => ! empty( $input['enabled'] ),
+			'page_categories'   => ! empty( $input['page_categories'] ),
+			'custom_post_types' => $this->normalise_post_types( $input['custom_post_types'] ?? [] ),
 		];
 
 	}
 
 	/*
 	RENDER SETTINGS
-	-- Displays the available custom post types and their URL behaviour
+	-- Displays Blog naming, Page Categories, and the sortable post type editor.
 	---------------------------------------------------------- */
 
 	public function render_settings( array $settings ): void {
 
-		$page_terms_url = admin_url( 'edit-tags.php?taxonomy=' . self::PAGE_TAXONOMY . '&post_type=page' );
-
-		$case_study_post_slug    = self::sanitize_rewrite_slug( $settings['case_study_post_slug'] ?? '', 'case-study' );
-		$case_study_archive_slug = self::sanitize_rewrite_slug( $settings['case_study_archive_slug'] ?? '', 'case-studies' );
-		$case_study_path         = user_trailingslashit( $case_study_post_slug . '/example-project', 'single' );
-		$case_study_archive_path = user_trailingslashit( $case_study_archive_slug, 'post_type_archive' );
-		$case_study_url          = home_url( '/' . ltrim( $case_study_path, '/' ) );
-		$case_study_archive_url  = home_url( '/' . ltrim( $case_study_archive_path, '/' ) );
+		$page_terms_url  = admin_url( 'edit-tags.php?taxonomy=' . self::PAGE_TAXONOMY . '&post_type=page' );
+		$custom_types    = $this->normalise_post_types( $settings['custom_post_types'] ?? [] );
+		$template_values = [
+			'enabled'                => true,
+			'name'                   => '',
+			'singular_name'          => '',
+			'post_type'              => 'oa_content',
+			'post_slug'              => '',
+			'public'                 => true,
+			'has_archive'            => true,
+			'archive_slug'           => '',
+			'categories'             => true,
+			'taxonomy'               => '',
+			'taxonomy_name'          => '',
+			'taxonomy_singular_name' => '',
+			'taxonomy_slug'          => '',
+		];
 
 		?>
 
-			<div class="notice notice-info inline oa-inline-notice">
-				<p><strong><?php esc_html_e( 'Campaign categories for Pages', 'octave-addons' ); ?></strong></p>
-			<p>
-				<?php esc_html_e( 'Group ordinary Pages into campaigns such as PPC or Landing. Categories appear as one-click filters above the Pages list, as a column, in Quick Edit, and in the block editor — all using standard WordPress filtering, so builders and query loops pick them up automatically.', 'octave-addons' ); ?>
-			</p>
+		<div class="notice notice-info inline oa-inline-notice">
+			<p><strong><?php esc_html_e( 'Built-in content naming', 'octave-addons' ); ?></strong></p>
+			<p><?php esc_html_e( 'WordPress Posts are displayed as Blogs in the admin. The underlying post type remains “post”, so existing content, queries, templates and URLs continue to work.', 'octave-addons' ); ?></p>
 		</div>
 
 		<table class="form-table oa-form-table" role="presentation">
@@ -145,7 +169,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 							[
 								'name'    => $this->field_name( 'page_categories' ),
 								'checked' => ! empty( $settings['page_categories'] ),
-								'help'    => __( 'Adds a hierarchical category taxonomy to the built-in Pages post type. Admin only — categories have no public archives or links.', 'octave-addons' ),
+								'help'    => __( 'Adds an admin-only hierarchical category taxonomy to Pages.', 'octave-addons' ),
 							]
 						);
 
@@ -167,109 +191,173 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				]
 			);
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Case studies', 'octave-addons' ) ] );
-
-			Octave_Addons_Fields::row(
-				[
-					'label' => __( 'Case Studies', 'octave-addons' ),
-					'field' => function () use ( $settings ) {
-
-						Octave_Addons_Fields::switch_field(
-							[
-								'name'    => $this->field_name( 'case_studies' ),
-								'checked' => ! empty( $settings['case_studies'] ),
-								'data'    => [
-									'controls-row' => 'oaCptCaseStudyPostSlug,oaCptCaseStudyArchiveSlug,oaCptCaseStudyCategories',
-								],
-								'help'    => __( 'Adds a public Case Studies content area with configurable single and archive URLs.', 'octave-addons' ),
-							]
-						);
-
-					},
-				]
-			);
-
-			Octave_Addons_Fields::row(
-				[
-					'id'    => 'oaCptCaseStudyPostSlug',
-					'for'   => $this->field_id( 'case_study_post_slug' ),
-					'label' => __( 'Post slug', 'octave-addons' ),
-					'field' => function () use ( $case_study_post_slug, $case_study_url ) {
-
-						Octave_Addons_Fields::text(
-							[
-								'id'          => $this->field_id( 'case_study_post_slug' ),
-								'name'        => $this->field_name( 'case_study_post_slug' ),
-								'value'       => $case_study_post_slug,
-								'placeholder' => 'case-study',
-								'help'        => __( 'URL prefix used before an individual Case Study name.', 'octave-addons' ),
-							]
-						);
-
-						?>
-
-						<span class="oa-help">
-							<?php esc_html_e( 'Example URL:', 'octave-addons' ); ?>
-							<code><?= esc_html( $case_study_url ); ?></code>
-						</span>
-
-						<?php
-
-					},
-				]
-			);
-
-			Octave_Addons_Fields::row(
-				[
-					'id'    => 'oaCptCaseStudyArchiveSlug',
-					'for'   => $this->field_id( 'case_study_archive_slug' ),
-					'label' => __( 'Archive slug', 'octave-addons' ),
-					'field' => function () use ( $case_study_archive_slug, $case_study_archive_url ) {
-
-						Octave_Addons_Fields::text(
-							[
-								'id'          => $this->field_id( 'case_study_archive_slug' ),
-								'name'        => $this->field_name( 'case_study_archive_slug' ),
-								'value'       => $case_study_archive_slug,
-								'placeholder' => 'case-studies',
-								'help'        => __( 'URL used for the Case Studies archive and its pagination.', 'octave-addons' ),
-							]
-						);
-
-						?>
-
-						<span class="oa-help">
-							<?php esc_html_e( 'Archive URL:', 'octave-addons' ); ?>
-							<code><?= esc_html( $case_study_archive_url ); ?></code>
-						</span>
-
-						<?php
-
-					},
-				]
-			);
-
-			Octave_Addons_Fields::row(
-				[
-					'id'    => 'oaCptCaseStudyCategories',
-					'label' => __( 'Case Study Categories', 'octave-addons' ),
-					'field' => function () use ( $settings ) {
-
-						Octave_Addons_Fields::switch_field(
-							[
-								'name'    => $this->field_name( 'case_study_categories' ),
-								'checked' => ! empty( $settings['case_study_categories'] ),
-								'help'    => __( 'Adds a hierarchical category taxonomy to Case Studies.', 'octave-addons' ),
-							]
-						);
-
-					},
-				]
-			);
-
 			?>
 
 		</table>
+
+		<div class="oa-cpt-section">
+			<div class="oa-cpt-section-head">
+				<div>
+					<span class="oa-panel-kicker"><?php esc_html_e( 'Content structure', 'octave-addons' ); ?></span>
+					<h3><?php esc_html_e( 'Custom Post Types', 'octave-addons' ); ?></h3>
+					<p><?php esc_html_e( 'Add multiple content types and drag them into the order they should appear in the WordPress admin menu.', 'octave-addons' ); ?></p>
+				</div>
+				<button type="button" class="button oa-cpt-add">
+					<span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+					<?php esc_html_e( 'Add post type', 'octave-addons' ); ?>
+				</button>
+			</div>
+
+			<div class="oa-cpt-list" data-empty-text="<?php esc_attr_e( 'No custom post types have been added.', 'octave-addons' ); ?>">
+
+				<?php
+
+				foreach ( $custom_types as $index => $post_type ) {
+
+					$this->render_post_type_card( (string) $index, $post_type, true );
+
+				}
+
+				?>
+
+			</div>
+			<div class="oa-cpt-order-status screen-reader-text" role="status" aria-live="polite"></div>
+
+			<template class="oa-cpt-template">
+				<?php $this->render_post_type_card( '__INDEX__', $template_values, false ); ?>
+			</template>
+		</div>
+
+		<?php
+
+	}
+
+	/*
+	RENDER POST TYPE CARD
+	-- Outputs one sortable custom post type definition.
+	---------------------------------------------------------- */
+
+	protected function render_post_type_card( string $index, array $post_type, bool $saved ): void {
+
+		$name                   = (string) ( $post_type['name'] ?? '' );
+		$singular_name          = (string) ( $post_type['singular_name'] ?? '' );
+		$key                    = (string) ( $post_type['post_type'] ?? '' );
+		$post_slug              = (string) ( $post_type['post_slug'] ?? '' );
+		$archive_slug           = (string) ( $post_type['archive_slug'] ?? '' );
+		$public                 = ! empty( $post_type['public'] );
+		$has_archive            = ! empty( $post_type['has_archive'] );
+		$categories             = ! empty( $post_type['categories'] );
+		$enabled                = ! empty( $post_type['enabled'] );
+		$taxonomy_name          = (string) ( $post_type['taxonomy_name'] ?? '' );
+		$taxonomy_singular_name = (string) ( $post_type['taxonomy_singular_name'] ?? '' );
+		$taxonomy_slug          = (string) ( $post_type['taxonomy_slug'] ?? '' );
+
+		?>
+
+		<article class="oa-cpt-item" draggable="false" data-saved="<?= $saved ? 'true' : 'false'; ?>">
+			<div class="oa-cpt-item-head">
+				<button type="button" class="oa-cpt-drag-handle" aria-label="<?php esc_attr_e( 'Drag to reorder this post type, or use the move buttons', 'octave-addons' ); ?>">
+					<span class="dashicons dashicons-menu" aria-hidden="true"></span>
+				</button>
+				<button type="button" class="oa-cpt-move oa-cpt-move-up" aria-label="<?php esc_attr_e( 'Move this post type up', 'octave-addons' ); ?>">
+					<span class="dashicons dashicons-arrow-up-alt2" aria-hidden="true"></span>
+				</button>
+				<button type="button" class="oa-cpt-move oa-cpt-move-down" aria-label="<?php esc_attr_e( 'Move this post type down', 'octave-addons' ); ?>">
+					<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+				</button>
+				<strong class="oa-cpt-item-title"><?= esc_html( '' !== $name ? $name : __( 'New post type', 'octave-addons' ) ); ?></strong>
+				<span class="oa-cpt-key-preview"><?= esc_html( $key ); ?></span>
+				<button type="button" class="oa-cpt-remove" aria-label="<?php esc_attr_e( 'Remove this post type', 'octave-addons' ); ?>">
+					<span class="dashicons dashicons-trash" aria-hidden="true"></span>
+				</button>
+			</div>
+
+			<div class="oa-cpt-fields">
+				<label class="oa-cpt-field">
+					<span><?php esc_html_e( 'Name', 'octave-addons' ); ?></span>
+					<input type="text" data-cpt-field="name" name="<?= esc_attr( $this->cpt_field_name( $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" placeholder="<?php esc_attr_e( 'Projects', 'octave-addons' ); ?>" required>
+					<small><?php esc_html_e( 'Plural name shown in the admin menu.', 'octave-addons' ); ?></small>
+				</label>
+
+				<label class="oa-cpt-field">
+					<span><?php esc_html_e( 'Singular name', 'octave-addons' ); ?></span>
+					<input type="text" data-cpt-field="singular_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'singular_name' ) ); ?>" value="<?= esc_attr( $singular_name ); ?>" placeholder="<?php esc_attr_e( 'Project', 'octave-addons' ); ?>" required>
+					<small><?php esc_html_e( 'Used for Add New and Edit labels.', 'octave-addons' ); ?></small>
+				</label>
+
+				<label class="oa-cpt-field">
+					<span><?php esc_html_e( 'Post type key', 'octave-addons' ); ?></span>
+					<input type="text" data-cpt-field="post_type" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_type' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="20" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>>
+					<small><?= $saved ? esc_html__( 'Permanent after saving to protect existing content.', 'octave-addons' ) : esc_html__( 'Use an oa_ prefix; maximum 20 characters.', 'octave-addons' ); ?></small>
+				</label>
+
+				<label class="oa-cpt-field">
+					<span><?php esc_html_e( 'Single URL slug', 'octave-addons' ); ?></span>
+					<input type="text" data-cpt-field="post_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_slug' ) ); ?>" value="<?= esc_attr( $post_slug ); ?>" placeholder="project" required>
+					<small><?php esc_html_e( 'Used before an individual item’s URL.', 'octave-addons' ); ?></small>
+				</label>
+
+				<div class="oa-cpt-field oa-cpt-switch-field">
+					<span><?php esc_html_e( 'Enabled', 'octave-addons' ); ?></span>
+					<label class="oa-switch">
+						<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'enabled' ) ); ?>" value="1"<?= checked( $enabled, true, false ); ?>>
+						<span class="oa-switch-slider"></span>
+					</label>
+					<small><?php esc_html_e( 'Register this content type.', 'octave-addons' ); ?></small>
+				</div>
+
+				<div class="oa-cpt-field oa-cpt-switch-field">
+					<span><?php esc_html_e( 'Public', 'octave-addons' ); ?></span>
+					<label class="oa-switch">
+						<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'public' ) ); ?>" value="1"<?= checked( $public, true, false ); ?>>
+						<span class="oa-switch-slider"></span>
+					</label>
+					<small><?php esc_html_e( 'Allow frontend URLs, searches and navigation use.', 'octave-addons' ); ?></small>
+				</div>
+
+				<div class="oa-cpt-field oa-cpt-switch-field">
+					<span><?php esc_html_e( 'Archive URL', 'octave-addons' ); ?></span>
+					<label class="oa-switch">
+						<input type="checkbox" class="oa-cpt-archive-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'has_archive' ) ); ?>" value="1"<?= checked( $has_archive, true, false ); ?>>
+						<span class="oa-switch-slider"></span>
+					</label>
+					<small><?php esc_html_e( 'Enable a public listing page.', 'octave-addons' ); ?></small>
+				</div>
+
+				<label class="oa-cpt-field oa-cpt-archive-field<?= $has_archive ? '' : ' oa-hidden'; ?>">
+					<span><?php esc_html_e( 'Archive slug', 'octave-addons' ); ?></span>
+					<input type="text" data-cpt-field="archive_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'archive_slug' ) ); ?>" value="<?= esc_attr( $archive_slug ); ?>" placeholder="projects">
+					<small><?php esc_html_e( 'The archive URL path, without slashes.', 'octave-addons' ); ?></small>
+				</label>
+
+				<div class="oa-cpt-field oa-cpt-switch-field">
+					<span><?php esc_html_e( 'Custom taxonomy', 'octave-addons' ); ?></span>
+					<label class="oa-switch">
+						<input type="checkbox" class="oa-cpt-taxonomy-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'categories' ) ); ?>" value="1"<?= checked( $categories, true, false ); ?>>
+						<span class="oa-switch-slider"></span>
+					</label>
+					<small><?php esc_html_e( 'Add one hierarchical taxonomy to this type.', 'octave-addons' ); ?></small>
+				</div>
+
+				<label class="oa-cpt-field oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
+					<span><?php esc_html_e( 'Taxonomy name', 'octave-addons' ); ?></span>
+					<input type="text" data-cpt-field="taxonomy_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_name' ) ); ?>" value="<?= esc_attr( $taxonomy_name ); ?>" placeholder="<?php esc_attr_e( 'Project Categories', 'octave-addons' ); ?>">
+					<small><?php esc_html_e( 'Plural taxonomy label.', 'octave-addons' ); ?></small>
+				</label>
+
+				<label class="oa-cpt-field oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
+					<span><?php esc_html_e( 'Taxonomy singular name', 'octave-addons' ); ?></span>
+					<input type="text" data-cpt-field="taxonomy_singular_name" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_singular_name' ) ); ?>" value="<?= esc_attr( $taxonomy_singular_name ); ?>" placeholder="<?php esc_attr_e( 'Project Category', 'octave-addons' ); ?>">
+					<small><?php esc_html_e( 'Singular taxonomy label.', 'octave-addons' ); ?></small>
+				</label>
+
+				<label class="oa-cpt-field oa-cpt-taxonomy-field<?= $categories ? '' : ' oa-hidden'; ?>">
+					<span><?php esc_html_e( 'Taxonomy URL slug', 'octave-addons' ); ?></span>
+					<input type="text" data-cpt-field="taxonomy_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'taxonomy_slug' ) ); ?>" value="<?= esc_attr( $taxonomy_slug ); ?>" placeholder="project-category">
+					<small><?php esc_html_e( 'Public URL path for taxonomy terms.', 'octave-addons' ); ?></small>
+				</label>
+			</div>
+		</article>
 
 		<?php
 
@@ -277,38 +365,83 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	RUN
-	-- Registers enabled content types during WordPress initialization
+	-- Renames Posts and registers enabled content types in saved order.
 	---------------------------------------------------------- */
 
 	public function run( array $settings ): void {
 
+		add_filter( 'post_type_labels_post', [ $this, 'rename_post_labels' ] );
+
+		$post_type_object = get_post_type_object( 'post' );
+
+		if ( $post_type_object ) {
+
+			$post_type_object->labels = $this->rename_post_labels( $post_type_object->labels );
+			$post_type_object->label  = __( 'Blogs', 'octave-addons' );
+
+		}
+
 		if ( ! empty( $settings['page_categories'] ) ) {
 
-			$this->register_page_categories( $settings );
+			$this->register_page_categories();
 
 			add_filter( 'views_edit-page', [ $this, 'add_page_category_views' ] );
 			add_action( 'restrict_manage_posts', [ $this, 'render_page_category_filter' ], 10, 2 );
 
 		}
 
-		if ( ! empty( $settings['case_studies'] ) ) {
+		foreach ( $this->normalise_post_types( $settings['custom_post_types'] ?? [] ) as $index => $post_type ) {
 
-			$this->register_case_studies( $settings );
+			if ( empty( $post_type['enabled'] ) ) {
+
+				continue;
+
+			}
+
+			$this->register_custom_post_type( $post_type, $this->menu_position_for_index( (int) $index ) );
 
 		}
 
 	}
 
 	/*
-	REGISTER PAGE CATEGORIES
-	-- Adds a hierarchical taxonomy to the built-in Pages post type.
-	-- Admin-only: no public archives, rewrite rules, or nav menu entries, so
-	-- visitors never get a category link. WordPress keeps the query var
-	-- registered inside wp-admin, so list table filtering, REST, and builder
-	-- query loops still work without any extra glue.
+	RENAME POST LABELS
+	-- Changes admin-facing labels only; the built-in database key stays post.
 	---------------------------------------------------------- */
 
-	protected function register_page_categories( array $settings ): void {
+	public function rename_post_labels( $labels ) {
+
+		$labels->name                  = __( 'Blogs', 'octave-addons' );
+		$labels->singular_name         = __( 'Blog', 'octave-addons' );
+		$labels->menu_name             = __( 'Blogs', 'octave-addons' );
+		$labels->name_admin_bar        = __( 'Blog', 'octave-addons' );
+		$labels->add_new_item          = __( 'Add New Blog', 'octave-addons' );
+		$labels->new_item              = __( 'New Blog', 'octave-addons' );
+		$labels->edit_item             = __( 'Edit Blog', 'octave-addons' );
+		$labels->view_item             = __( 'View Blog', 'octave-addons' );
+		$labels->all_items             = __( 'All Blogs', 'octave-addons' );
+		$labels->search_items          = __( 'Search Blogs', 'octave-addons' );
+		$labels->parent_item_colon     = __( 'Parent Blogs:', 'octave-addons' );
+		$labels->not_found             = __( 'No blogs found.', 'octave-addons' );
+		$labels->not_found_in_trash    = __( 'No blogs found in Trash.', 'octave-addons' );
+		$labels->archives              = __( 'Blog archives', 'octave-addons' );
+		$labels->attributes            = __( 'Blog attributes', 'octave-addons' );
+		$labels->insert_into_item      = __( 'Insert into blog', 'octave-addons' );
+		$labels->uploaded_to_this_item = __( 'Uploaded to this blog', 'octave-addons' );
+		$labels->filter_items_list     = __( 'Filter blogs list', 'octave-addons' );
+		$labels->items_list_navigation = __( 'Blogs list navigation', 'octave-addons' );
+		$labels->items_list            = __( 'Blogs list', 'octave-addons' );
+
+		return $labels;
+
+	}
+
+	/*
+	REGISTER PAGE CATEGORIES
+	-- Adds an admin-only hierarchical taxonomy to Pages.
+	---------------------------------------------------------- */
+
+	protected function register_page_categories(): void {
 
 		$labels = [
 			'name'              => __( 'Page Categories', 'octave-addons' ),
@@ -323,7 +456,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'new_item_name'     => __( 'New Page Category Name', 'octave-addons' ),
 			'not_found'         => __( 'No page categories found.', 'octave-addons' ),
 			'back_to_items'     => __( 'Back to Page Categories', 'octave-addons' ),
-			'menu_name'         => __( 'Categories', 'octave-addons' ),
+			'menu_name'         => $name,
 		];
 
 		register_taxonomy(
@@ -351,15 +484,12 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	ADD PAGE CATEGORY VIEWS
-	-- Puts every category alongside All / Published / Draft at the top of the
-	-- Pages list, so switching campaign is a single click rather than a
-	-- dropdown and a Filter button.
+	-- Adds category shortcuts above the Pages list.
 	---------------------------------------------------------- */
 
 	public function add_page_category_views( $views ): array {
 
 		$views = is_array( $views ) ? $views : [];
-
 		$terms = get_terms(
 			[
 				'taxonomy'   => self::PAGE_TAXONOMY,
@@ -376,8 +506,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		$current = $this->get_current_page_category();
 
-		// WordPress leaves "All" highlighted whenever no post_status is set, so
-		// clear it while a category is doing the filtering.
 		if ( '' !== $current && isset( $views['all'] ) ) {
 
 			$views['all'] = str_replace( ' class="current"', '', $views['all'] );
@@ -419,19 +547,12 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	RENDER PAGE CATEGORY FILTER
-	-- Standard taxonomy dropdown in the Pages toolbar. Values are slugs so the
-	-- submitted query var is the one WP_Query already parses.
+	-- Adds a standard category dropdown to the Pages list toolbar.
 	---------------------------------------------------------- */
 
 	public function render_page_category_filter( $post_type, $which = 'top' ): void {
 
-		if ( 'page' !== $post_type || 'top' !== $which ) {
-
-			return;
-
-		}
-
-		if ( ! taxonomy_exists( self::PAGE_TAXONOMY ) ) {
+		if ( 'page' !== $post_type || 'top' !== $which || ! taxonomy_exists( self::PAGE_TAXONOMY ) ) {
 
 			return;
 
@@ -466,7 +587,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	GET CURRENT PAGE CATEGORY
-	-- The category slug the Pages list is currently filtered by, if any.
+	-- Returns the category slug currently filtering the Pages list.
 	---------------------------------------------------------- */
 
 	protected function get_current_page_category(): string {
@@ -484,68 +605,80 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
-	REGISTER CASE STUDIES
-	-- Creates the public Case Studies post type and its optional taxonomy
+	REGISTER CUSTOM POST TYPE
+	-- Registers one user-defined type and its optional category taxonomy.
 	---------------------------------------------------------- */
 
-	protected function register_case_studies( array $settings ): void {
+	protected function register_custom_post_type( array $post_type, int $menu_position ): void {
 
-		$post_slug    = self::sanitize_rewrite_slug( $settings['case_study_post_slug'] ?? '', 'case-study' );
-		$archive_slug = self::sanitize_rewrite_slug( $settings['case_study_archive_slug'] ?? '', 'case-studies' );
+		$key          = $post_type['post_type'];
+		$name         = $post_type['name'];
+		$singular     = $post_type['singular_name'];
+		$post_slug    = $post_type['post_slug'];
+		$archive_slug = $post_type['archive_slug'];
+		$taxonomy     = $post_type['taxonomy'];
+		$is_public    = ! empty( $post_type['public'] );
 		$taxonomies   = [];
 
-		if ( ! empty( $settings['case_study_categories'] ) ) {
+		if ( post_type_exists( $key ) ) {
 
-			$this->register_case_study_categories( $archive_slug );
-			$taxonomies[] = self::CASE_STUDY_TAXONOMY;
+			return;
+
+		}
+
+		if ( ! empty( $post_type['categories'] ) ) {
+
+			$this->register_custom_taxonomy( $post_type, $key );
+			$taxonomies[] = $taxonomy;
 
 		}
 
 		$labels = [
-			'name'                  => __( 'Case Studies', 'octave-addons' ),
-			'singular_name'         => __( 'Case Study', 'octave-addons' ),
-			'menu_name'             => __( 'Case Studies', 'octave-addons' ),
-			'name_admin_bar'        => __( 'Case Study', 'octave-addons' ),
+			'name'                  => $name,
+			'singular_name'         => $singular,
+			'menu_name'             => $name,
+			'name_admin_bar'        => $singular,
 			'add_new'               => __( 'Add New', 'octave-addons' ),
-			'add_new_item'          => __( 'Add New Case Study', 'octave-addons' ),
-			'new_item'              => __( 'New Case Study', 'octave-addons' ),
-			'edit_item'             => __( 'Edit Case Study', 'octave-addons' ),
-			'view_item'             => __( 'View Case Study', 'octave-addons' ),
-			'all_items'             => __( 'All Case Studies', 'octave-addons' ),
-			'search_items'          => __( 'Search Case Studies', 'octave-addons' ),
-			'not_found'             => __( 'No case studies found.', 'octave-addons' ),
-			'not_found_in_trash'    => __( 'No case studies found in Trash.', 'octave-addons' ),
-			'featured_image'        => __( 'Case Study image', 'octave-addons' ),
-			'set_featured_image'    => __( 'Set Case Study image', 'octave-addons' ),
-			'remove_featured_image' => __( 'Remove Case Study image', 'octave-addons' ),
-			'use_featured_image'    => __( 'Use as Case Study image', 'octave-addons' ),
-			'archives'              => __( 'Case Study archives', 'octave-addons' ),
+			'add_new_item'          => sprintf( __( 'Add New %s', 'octave-addons' ), $singular ),
+			'new_item'              => sprintf( __( 'New %s', 'octave-addons' ), $singular ),
+			'edit_item'             => sprintf( __( 'Edit %s', 'octave-addons' ), $singular ),
+			'view_item'             => sprintf( __( 'View %s', 'octave-addons' ), $singular ),
+			'all_items'             => sprintf( __( 'All %s', 'octave-addons' ), $name ),
+			'search_items'          => sprintf( __( 'Search %s', 'octave-addons' ), $name ),
+			'not_found'             => sprintf( __( 'No %s found.', 'octave-addons' ), strtolower( $name ) ),
+			'not_found_in_trash'    => sprintf( __( 'No %s found in Trash.', 'octave-addons' ), strtolower( $name ) ),
+			'featured_image'        => sprintf( __( '%s image', 'octave-addons' ), $singular ),
+			'set_featured_image'    => sprintf( __( 'Set %s image', 'octave-addons' ), $singular ),
+			'remove_featured_image' => sprintf( __( 'Remove %s image', 'octave-addons' ), $singular ),
+			'use_featured_image'    => sprintf( __( 'Use as %s image', 'octave-addons' ), $singular ),
+			'archives'              => sprintf( __( '%s archives', 'octave-addons' ), $singular ),
 		];
 
 		register_post_type(
-			self::CASE_STUDY_POST_TYPE,
+			$key,
 			[
 				'labels'              => $labels,
-				'description'         => __( 'Project outcomes, client stories, and completed work.', 'octave-addons' ),
-				'public'              => true,
+				'public'              => $is_public,
 				'hierarchical'        => false,
-				'exclude_from_search' => false,
-				'publicly_queryable'  => true,
+				'exclude_from_search' => ! $is_public,
+				'publicly_queryable'  => $is_public,
 				'show_ui'             => true,
 				'show_in_menu'        => true,
 				'show_in_admin_bar'   => true,
-				'show_in_nav_menus'   => true,
+				'show_in_nav_menus'   => $is_public,
 				'show_in_rest'        => true,
-				'menu_position'       => 22,
-				'menu_icon'           => 'dashicons-portfolio',
+				'menu_position'       => $menu_position,
+				'menu_icon'           => 'dashicons-admin-post',
 				'capability_type'     => 'post',
 				'map_meta_cap'        => true,
-				'query_var'           => true,
-				'rewrite'             => [
-					'slug'       => $post_slug,
-					'with_front' => false,
-				],
-				'has_archive'         => $archive_slug,
+				'query_var'           => $is_public,
+				'rewrite'             => $is_public
+					? [
+						'slug'       => $post_slug,
+						'with_front' => false,
+					]
+					: false,
+				'has_archive'         => $is_public && ! empty( $post_type['has_archive'] ) ? $archive_slug : false,
 				'taxonomies'          => $taxonomies,
 				'supports'            => [
 					'title',
@@ -562,44 +695,50 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
-	REGISTER CASE STUDY CATEGORIES
-	-- Adds hierarchical categories under the configured archive URL
+	REGISTER CUSTOM TAXONOMY
+	-- Adds the single configured hierarchical taxonomy for one post type.
 	---------------------------------------------------------- */
 
-	protected function register_case_study_categories( string $archive_slug ): void {
+	protected function register_custom_taxonomy( array $definition, string $post_type ): void {
 
-		$labels = [
-			'name'              => __( 'Case Study Categories', 'octave-addons' ),
-			'singular_name'     => __( 'Case Study Category', 'octave-addons' ),
-			'search_items'      => __( 'Search Case Study Categories', 'octave-addons' ),
-			'all_items'         => __( 'All Case Study Categories', 'octave-addons' ),
-			'parent_item'       => __( 'Parent Case Study Category', 'octave-addons' ),
-			'parent_item_colon' => __( 'Parent Case Study Category:', 'octave-addons' ),
-			'edit_item'         => __( 'Edit Case Study Category', 'octave-addons' ),
-			'update_item'       => __( 'Update Case Study Category', 'octave-addons' ),
-			'add_new_item'      => __( 'Add New Case Study Category', 'octave-addons' ),
-			'new_item_name'     => __( 'New Case Study Category Name', 'octave-addons' ),
+		$taxonomy = $definition['taxonomy'];
+		$name     = $definition['taxonomy_name'];
+		$singular = $definition['taxonomy_singular_name'];
+		$labels   = [
+			'name'              => $name,
+			'singular_name'     => $singular,
+			'search_items'      => sprintf( __( 'Search %s', 'octave-addons' ), $name ),
+			'all_items'         => sprintf( __( 'All %s', 'octave-addons' ), $name ),
+			'parent_item'       => sprintf( __( 'Parent %s', 'octave-addons' ), $singular ),
+			'parent_item_colon' => sprintf( __( 'Parent %s:', 'octave-addons' ), $singular ),
+			'edit_item'         => sprintf( __( 'Edit %s', 'octave-addons' ), $singular ),
+			'update_item'       => sprintf( __( 'Update %s', 'octave-addons' ), $singular ),
+			'add_new_item'      => sprintf( __( 'Add New %s', 'octave-addons' ), $singular ),
+			'new_item_name'     => sprintf( __( 'New %s Name', 'octave-addons' ), $singular ),
 			'menu_name'         => __( 'Categories', 'octave-addons' ),
 		];
 
 		register_taxonomy(
-			self::CASE_STUDY_TAXONOMY,
-			[ self::CASE_STUDY_POST_TYPE ],
+			$taxonomy,
+			[ $post_type ],
 			[
 				'labels'            => $labels,
-				'public'            => true,
+				'description'       => sprintf( __( '%s for %s.', 'octave-addons' ), $name, $definition['name'] ),
+				'public'            => ! empty( $definition['public'] ),
 				'hierarchical'      => true,
 				'show_ui'           => true,
 				'show_admin_column' => true,
-				'show_in_nav_menus' => true,
+				'show_in_nav_menus' => ! empty( $definition['public'] ),
 				'show_tagcloud'     => false,
 				'show_in_rest'      => true,
-				'query_var'         => true,
-				'rewrite'           => [
-					'slug'         => $archive_slug . '/category',
-					'with_front'   => false,
-					'hierarchical' => true,
-				],
+				'query_var'         => ! empty( $definition['public'] ),
+				'rewrite'           => ! empty( $definition['public'] )
+					? [
+						'slug'         => $definition['taxonomy_slug'],
+						'with_front'   => false,
+						'hierarchical' => true,
+					]
+					: false,
 			]
 		);
 
@@ -607,7 +746,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	MAYBE REFRESH REWRITE RULES
-	-- Flushes once when post type routing settings or module state change
+	-- Flushes once when post type routing or taxonomy settings change.
 	---------------------------------------------------------- */
 
 	public function maybe_refresh_rewrite_rules(): void {
@@ -619,12 +758,9 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$settings     = $this->get_settings( $saved );
 
 		$rewrite_settings = [
-			'enabled'                 => ! empty( $settings['enabled'] ),
-			'page_categories'         => ! empty( $settings['page_categories'] ),
-			'case_studies'            => ! empty( $settings['case_studies'] ),
-			'case_study_post_slug'    => self::sanitize_rewrite_slug( $settings['case_study_post_slug'] ?? '', 'case-study' ),
-			'case_study_archive_slug' => self::sanitize_rewrite_slug( $settings['case_study_archive_slug'] ?? '', 'case-studies' ),
-			'case_study_categories'   => ! empty( $settings['case_study_categories'] ),
+			'enabled'           => ! empty( $settings['enabled'] ),
+			'page_categories'   => ! empty( $settings['page_categories'] ),
+			'custom_post_types' => $settings['custom_post_types'],
 		];
 
 		$signature        = md5( wp_json_encode( $rewrite_settings ) );
@@ -642,8 +778,196 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
+	NORMALISE POST TYPES
+	-- Produces safe, unique definitions while preserving submitted order.
+	---------------------------------------------------------- */
+
+	protected function normalise_post_types( $post_types ): array {
+
+		if ( ! is_array( $post_types ) ) {
+
+			return [];
+
+		}
+
+		$clean = [];
+		$used  = [];
+
+		foreach ( array_slice( $post_types, 0, 20 ) as $index => $post_type ) {
+
+			if ( ! is_array( $post_type ) ) {
+
+				continue;
+
+			}
+
+			$name          = sanitize_text_field( wp_unslash( (string) ( $post_type['name'] ?? '' ) ) );
+			$singular_name = sanitize_text_field( wp_unslash( (string) ( $post_type['singular_name'] ?? '' ) ) );
+			$key           = $this->sanitize_post_type_key( $post_type['post_type'] ?? '', (int) $index );
+
+			if ( '' === $name || '' === $singular_name || isset( $used[ $key ] ) ) {
+
+				continue;
+
+			}
+
+			$used[ $key ] = true;
+
+			$post_slug    = self::sanitize_rewrite_slug( $post_type['post_slug'] ?? '', sanitize_title( $singular_name ) );
+			$archive_slug = self::sanitize_rewrite_slug( $post_type['archive_slug'] ?? '', sanitize_title( $name ) );
+			$taxonomy     = self::CASE_STUDY_POST_TYPE === $key
+				? self::CASE_STUDY_TAXONOMY
+				: substr( $key . '_category', 0, 32 );
+			$taxonomy_name          = sanitize_text_field( wp_unslash( (string) ( $post_type['taxonomy_name'] ?? '' ) ) );
+			$taxonomy_singular_name = sanitize_text_field( wp_unslash( (string) ( $post_type['taxonomy_singular_name'] ?? '' ) ) );
+			$taxonomy_slug          = self::sanitize_rewrite_path( $post_type['taxonomy_slug'] ?? '', $post_slug . '-category' );
+
+			if ( '' === $taxonomy_name ) {
+
+				$taxonomy_name = sprintf( __( '%s Categories', 'octave-addons' ), $singular_name );
+
+			}
+
+			if ( '' === $taxonomy_singular_name ) {
+
+				$taxonomy_singular_name = sprintf( __( '%s Category', 'octave-addons' ), $singular_name );
+
+			}
+
+			$clean[] = [
+				'enabled'                => ! empty( $post_type['enabled'] ),
+				'name'                   => $name,
+				'singular_name'          => $singular_name,
+				'post_type'              => $key,
+				'post_slug'              => $post_slug,
+				'public'                 => ! empty( $post_type['public'] ),
+				'has_archive'            => ! empty( $post_type['has_archive'] ),
+				'archive_slug'           => $archive_slug,
+				'categories'             => ! empty( $post_type['categories'] ),
+				'taxonomy'               => $taxonomy,
+				'taxonomy_name'          => $taxonomy_name,
+				'taxonomy_singular_name' => $taxonomy_singular_name,
+				'taxonomy_slug'          => $taxonomy_slug,
+			];
+
+		}
+
+		return $clean;
+
+	}
+
+	/*
+	SANITIZE POST TYPE KEY
+	-- Allows the legacy Case Studies key and prefixes new keys with oa_.
+	---------------------------------------------------------- */
+
+	protected function sanitize_post_type_key( $value, int $index ): string {
+
+		$key = substr( sanitize_key( wp_unslash( (string) $value ) ), 0, 20 );
+
+		if ( self::CASE_STUDY_POST_TYPE === $key ) {
+
+			return $key;
+
+		}
+
+		$key = preg_replace( '/^oa_+/', '', $key );
+		$key = 'oa_' . ltrim( (string) $key, '_' );
+
+		if ( 'oa_' === $key ) {
+
+			$key = 'oa_content_' . ( $index + 1 );
+
+		}
+
+		return substr( $key, 0, 20 );
+
+	}
+
+	/*
+	DEFAULT CASE STUDY
+	-- Defines the original type using its existing database identifiers.
+	---------------------------------------------------------- */
+
+	protected function default_case_study(): array {
+
+		return [
+			'enabled'                => true,
+			'name'                   => __( 'Case Studies', 'octave-addons' ),
+			'singular_name'          => __( 'Case Study', 'octave-addons' ),
+			'post_type'              => self::CASE_STUDY_POST_TYPE,
+			'post_slug'              => 'case-study',
+			'public'                 => true,
+			'has_archive'            => true,
+			'archive_slug'           => 'case-studies',
+			'categories'             => true,
+			'taxonomy'               => self::CASE_STUDY_TAXONOMY,
+			'taxonomy_name'          => __( 'Case Study Categories', 'octave-addons' ),
+			'taxonomy_singular_name' => __( 'Case Study Category', 'octave-addons' ),
+			'taxonomy_slug'          => 'case-studies/category',
+		];
+
+	}
+
+	/*
+	LEGACY CASE STUDY
+	-- Maps the former flat settings keys into one collection entry.
+	---------------------------------------------------------- */
+
+	protected function legacy_case_study( array $saved ): array {
+
+		$case_study = $this->default_case_study();
+
+		$case_study['enabled']      = ! empty( $saved['case_studies'] );
+		$case_study['post_slug']    = self::sanitize_rewrite_slug( $saved['case_study_post_slug'] ?? '', 'case-study' );
+		$case_study['archive_slug'] = self::sanitize_rewrite_slug( $saved['case_study_archive_slug'] ?? '', 'case-studies' );
+		$case_study['categories']   = ! empty( $saved['case_study_categories'] );
+
+		return $case_study;
+
+	}
+
+	/*
+	HAS LEGACY CASE STUDY SETTINGS
+	-- Detects saved settings created before the repeatable editor existed.
+	---------------------------------------------------------- */
+
+	protected function has_legacy_case_study_settings( array $saved ): bool {
+
+		return array_key_exists( 'case_studies', $saved )
+			|| array_key_exists( 'case_study_post_slug', $saved )
+			|| array_key_exists( 'case_study_archive_slug', $saved )
+			|| array_key_exists( 'case_study_categories', $saved );
+
+	}
+
+	/*
+	MENU POSITION FOR INDEX
+	-- Places managed types after Pages while skipping WordPress Comments.
+	---------------------------------------------------------- */
+
+	protected function menu_position_for_index( int $index ): int {
+
+		$position = 21 + $index;
+
+		return $position >= 25 ? $position + 1 : $position;
+
+	}
+
+	/*
+	CPT FIELD NAME
+	-- Produces a nested Settings API field name for one repeatable entry.
+	---------------------------------------------------------- */
+
+	protected function cpt_field_name( string $index, string $key ): string {
+
+		return sprintf( '%s[%s][custom_post_types][%s][%s]', OCTAVE_ADDONS_OPTION_KEY, $this->get_id(), $index, $key );
+
+	}
+
+	/*
 	SANITIZE REWRITE SLUG
-	-- Converts a user-entered URL segment into a safe non-empty slug
+	-- Converts a URL path into a safe non-empty slug.
 	---------------------------------------------------------- */
 
 	protected static function sanitize_rewrite_slug( $value, string $fallback ): string {
@@ -651,6 +975,21 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$slug = sanitize_title( wp_unslash( (string) $value ) );
 
 		return '' !== $slug ? $slug : $fallback;
+
+	}
+
+	/*
+	SANITIZE REWRITE PATH
+	-- Sanitizes each segment while allowing an intentional nested URL path.
+	---------------------------------------------------------- */
+
+	protected static function sanitize_rewrite_path( $value, string $fallback ): string {
+
+		$segments = array_filter( explode( '/', wp_unslash( (string) $value ) ) );
+		$segments = array_filter( array_map( 'sanitize_title', $segments ) );
+		$path     = implode( '/', $segments );
+
+		return '' !== $path ? $path : $fallback;
 
 	}
 

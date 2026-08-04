@@ -103,6 +103,9 @@ class Octave_Addons_Admin {
 			'selectImageText'   => __( 'Select image', 'octave-addons' ),
 			'replaceImageText'  => __( 'Replace image', 'octave-addons' ),
 			'searchOptionsText' => __( 'Search options…', 'octave-addons' ),
+			'removePostTypeText' => __( 'Remove this custom post type? Existing content will remain in the database but will be hidden until its post type is registered again.', 'octave-addons' ),
+			'postTypeMovedText' => __( 'Post type order updated.', 'octave-addons' ),
+			'newPostTypeText'   => __( 'New post type', 'octave-addons' ),
 		] );
 
 	}

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.2.1
+Stable tag:        2.3.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -24,8 +24,8 @@ Octave Addons ships with a growing collection of focused modules:
     IntersectionObserver JS, with an editable override for each file.
 *   **Breakdance AJAX Filtering** – adds server-backed filtering and
     pagination to Breakdance loops with a Filter Bar.
-*   **Custom Post Types** – groups Pages into campaign categories such as
-    PPC or Landing, and adds configurable content types like Case Studies.
+*   **Custom Post Types** – renames Posts to Blogs, groups Pages into campaign
+    categories, and manages sortable custom content types and taxonomies.
 
 Each add-on has its own tab under *Octave Addons* in the WordPress
 admin, and closely related add-ons share one page — the Breakdance
@@ -48,6 +48,12 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.3.0 =
+* Renamed the built-in Posts area to Blogs without changing its underlying `post` database key.
+* Replaced the fixed Case Studies option with a sortable custom post type manager for names, keys, public visibility, single and archive URLs, and one optional custom taxonomy.
+* Added drag-and-drop and keyboard ordering for custom post types so their order controls their placement in the WordPress admin menu.
+* Existing saved Case Studies settings migrate to the new format without changing their post type or taxonomy identifiers; new installations start with no predefined custom post types.
 
 = 2.2.1 =
 * Removed the "OA" prefix from Breakdance element display names while retaining their unique internal identifiers and classes.
