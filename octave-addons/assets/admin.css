@@ -55,7 +55,8 @@ TEXT LINKS
     text-underline-offset: 2px;
 }
 
-.oa-app a:not(.oa-nav-item):not(.oa-module-card):hover {
+.oa-app a:not(.oa-nav-item):not(.oa-module-card):hover,
+.oa-app a:not(.oa-nav-item):not(.oa-module-card):active {
     color: #8CFFC0;
     text-decoration-color: currentColor;
 }
@@ -100,6 +101,20 @@ FOCUS STATES
 #oaIconPickerModal button:focus {
     outline: none;
     box-shadow: none;
+}
+
+.octave-addons-wrap .oa-app .oa-nav-item:focus:not(:focus-visible) {
+    color: var(--oa-text);
+    border-radius: 10px;
+    outline: none;
+    box-shadow: none;
+}
+
+.octave-addons-wrap .oa-app .oa-module-card:focus:not(:focus-visible) {
+    color: var(--oa-text);
+    border-radius: 15px;
+    outline: none;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
 }
 
 .oa-app button:focus-visible,
@@ -229,15 +244,20 @@ FOCUS STATES
     transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
-.oa-nav-item:hover {
+.octave-addons-wrap .oa-app .oa-nav-item:hover {
     background: rgba(255, 255, 255, 0.045);
     color: var(--oa-text);
     transform: translateX(2px);
 }
 
-.oa-nav-item:focus-visible {
+.octave-addons-wrap .oa-app .oa-nav-item:active {
+    color: var(--oa-text);
+}
+
+.octave-addons-wrap .oa-app .oa-nav-item:focus-visible {
     outline: 2px solid var(--oa-accent);
     outline-offset: -2px;
+    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.16);
 }
 
 .oa-nav-item.is-active {
@@ -595,20 +615,24 @@ DASHBOARD MODULES
     transition: opacity 0.18s ease;
 }
 
-.oa-module-card:hover,
-.oa-module-card:focus-visible {
+.octave-addons-wrap .oa-app .oa-module-card:hover,
+.octave-addons-wrap .oa-app .oa-module-card:focus-visible {
     border-color: rgba(43, 255, 134, 0.38);
     color: var(--oa-text);
     box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
     transform: translateY(-2px);
 }
 
-.oa-module-card:hover::before,
-.oa-module-card:focus-visible::before {
+.octave-addons-wrap .oa-app .oa-module-card:hover::before,
+.octave-addons-wrap .oa-app .oa-module-card:focus-visible::before {
     opacity: 1;
 }
 
-.oa-module-card:focus-visible {
+.octave-addons-wrap .oa-app .oa-module-card:active {
+    color: var(--oa-text);
+}
+
+.octave-addons-wrap .oa-app .oa-module-card:focus-visible {
     outline: 2px solid var(--oa-accent);
     outline-offset: 2px;
 }
