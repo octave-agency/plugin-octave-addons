@@ -4,7 +4,7 @@
  * Plugin Name:       Octave Addons
  * Plugin URI:        https://github.com/octave-agency/plugin-octave-addons
  * Description:       A modular collection of Octave site add-ons.
- * Version:           2.3.5
+ * Version:           2.4.0
  * Author:            Octave Agency
  * Author URI:        https://octaveagency.com
  * License:           GPL-2.0+
@@ -50,6 +50,7 @@ require_once OCTAVE_ADDONS_DIR . 'includes/class-module-manager.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-admin.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-elements-manifest.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-updater.php';
+require_once OCTAVE_ADDONS_DIR . 'includes/class-site-status.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-octave-addons.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-fields.php';
 
@@ -75,6 +76,9 @@ register_activation_hook( __FILE__, function () {
 	// Fingerprint the shipped elements while they are still pristine.
 	Octave_Addons_Elements_Manifest::build();
 
+	Octave_Addons_Site_Status::install_maintenance_drop_in();
+	Octave_Addons_Site_Status::install_php_error_drop_in();
+
 } );
 
 register_deactivation_hook( __FILE__, function () {
@@ -82,5 +86,7 @@ register_deactivation_hook( __FILE__, function () {
 	// Clear update caches so any future re-activation forces a fresh check.
 	delete_site_transient( 'update_plugins' );
 	delete_site_transient( 'octave_addons_github_release' );
+
+	Octave_Addons_Site_Status::remove_status_drop_ins();
 
 } );

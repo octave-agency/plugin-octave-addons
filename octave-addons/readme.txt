@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.3.5
+Stable tag:        2.4.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -41,6 +41,14 @@ This plugin uses its published GitHub Releases as a native WordPress update
 source. A release with a tag newer than the installed plugin version appears
 in the standard Plugins and Dashboard Updates screens.
 
+== Branded status pages ==
+
+Octave Addons installs self-contained WordPress maintenance and PHP error
+drop-ins. They use the site's custom logo when available, fall back to the
+Octave mark, and do not replace drop-ins managed elsewhere. Administrators can
+preview them on the front end with `?octave-status-preview=maintenance` and
+`?octave-status-preview=critical-error`.
+
 == Installation ==
 
 1. Upload the `octave-addons` folder to `/wp-content/plugins/`.
@@ -48,6 +56,10 @@ in the standard Plugins and Dashboard Updates screens.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.4.0 =
+* Added branded, responsive maintenance and critical-error pages using the Octave colour palette and the site logo when available.
+* Added administrator-only previews at `?octave-status-preview=maintenance` and `?octave-status-preview=critical-error`.
 
 = 2.3.5 =
 * Prevented WordPress core anchor focus styles from overriding Octave navigation items and module cards while retaining the branded keyboard focus ring.
