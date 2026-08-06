@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.4.0
+Stable tag:        2.4.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -44,10 +44,11 @@ in the standard Plugins and Dashboard Updates screens.
 == Branded status pages ==
 
 Octave Addons installs self-contained WordPress maintenance and PHP error
-drop-ins. They use the site's custom logo when available, fall back to the
-Octave mark, and do not replace drop-ins managed elsewhere. Administrators can
-preview them on the front end with `?octave-status-preview=maintenance` and
-`?octave-status-preview=critical-error`.
+drop-ins. When Custom Login URL is enabled, they use its configured logo,
+background colour and primary colour; otherwise they use a neutral generic
+scheme. Drop-ins managed elsewhere are never replaced. Administrators can
+preview the pages on the front end with `?octave-status-preview=maintenance`
+and `?octave-status-preview=critical-error`.
 
 == Installation ==
 
@@ -56,6 +57,10 @@ preview them on the front end with `?octave-status-preview=maintenance` and
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.4.1 =
+* Changed branded status pages to inherit the enabled Custom Login URL module's logo, background colour and primary colour.
+* Added an adaptive generic light scheme with no Octave branding when Custom Login URL is disabled.
 
 = 2.4.0 =
 * Added branded, responsive maintenance and critical-error pages using the Octave colour palette and the site logo when available.

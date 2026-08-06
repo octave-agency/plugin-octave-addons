@@ -25,6 +25,7 @@ final class Octave_Addons_Site_Status {
 		add_action( 'template_redirect', [ $this, 'maybe_render_preview' ], 0 );
 		add_action( 'admin_init', [ $this, 'sync_status_drop_ins' ] );
 		add_action( 'admin_notices', [ $this, 'render_drop_in_notice' ] );
+		add_action( 'update_option_' . OCTAVE_ADDONS_OPTION_KEY, [ $this, 'sync_status_drop_ins_after_settings_update' ], 10, 0 );
 
 	}
 
@@ -153,6 +154,18 @@ final class Octave_Addons_Site_Status {
 
 		}
 
+		$this->refresh_status_drop_ins();
+
+	}
+
+	public function sync_status_drop_ins_after_settings_update(): void {
+
+		$this->refresh_status_drop_ins();
+
+	}
+
+	private function refresh_status_drop_ins(): void {
+
 		$results = [
 			self::install_maintenance_drop_in(),
 			self::install_php_error_drop_in(),
@@ -215,11 +228,23 @@ final class Octave_Addons_Site_Status {
 
 	private function render_status_page( string $type, bool $is_preview = false ): void {
 
-		$octave_status_type      = $type;
-		$octave_status_site_name = self::site_name();
-		$octave_status_home_url  = home_url( '/' );
-		$octave_status_logo      = self::logo_data_uri();
-		$octave_status_preview   = $is_preview;
+		$appearance = self::appearance();
+
+		$octave_status_type         = $type;
+		$octave_status_site_name    = self::site_name();
+		$octave_status_home_url     = home_url( '/' );
+		$octave_status_preview      = $is_preview;
+		$octave_status_logo         = $appearance['logo'];
+		$octave_status_background   = $appearance['background'];
+		$octave_status_surface      = $appearance['surface'];
+		$octave_status_border       = $appearance['border'];
+		$octave_status_primary      = $appearance['primary'];
+		$octave_status_primary_rgb  = $appearance['primary_rgb'];
+		$octave_status_on_primary   = $appearance['on_primary'];
+		$octave_status_text         = $appearance['text'];
+		$octave_status_muted        = $appearance['muted'];
+		$octave_status_shadow       = $appearance['shadow'];
+		$octave_status_color_scheme = $appearance['color_scheme'];
 
 		include OCTAVE_ADDONS_DIR . 'templates/site-status.php';
 
@@ -229,6 +254,7 @@ final class Octave_Addons_Site_Status {
 
 		$template_path = OCTAVE_ADDONS_DIR . 'templates/site-status.php';
 		$template      = @file_get_contents( $template_path );
+		$appearance    = self::appearance();
 
 		if ( false === $template ) {
 
@@ -243,7 +269,17 @@ final class Octave_Addons_Site_Status {
 		$variables .= '$octave_status_type = ' . var_export( $type, true ) . ";\n";
 		$variables .= '$octave_status_site_name = ' . var_export( self::site_name(), true ) . ";\n";
 		$variables .= '$octave_status_home_url = ' . var_export( home_url( '/' ), true ) . ";\n";
-		$variables .= '$octave_status_logo = ' . var_export( self::logo_data_uri(), true ) . ";\n";
+		$variables .= '$octave_status_logo = ' . var_export( $appearance['logo'], true ) . ";\n";
+		$variables .= '$octave_status_background = ' . var_export( $appearance['background'], true ) . ";\n";
+		$variables .= '$octave_status_surface = ' . var_export( $appearance['surface'], true ) . ";\n";
+		$variables .= '$octave_status_border = ' . var_export( $appearance['border'], true ) . ";\n";
+		$variables .= '$octave_status_primary = ' . var_export( $appearance['primary'], true ) . ";\n";
+		$variables .= '$octave_status_primary_rgb = ' . var_export( $appearance['primary_rgb'], true ) . ";\n";
+		$variables .= '$octave_status_on_primary = ' . var_export( $appearance['on_primary'], true ) . ";\n";
+		$variables .= '$octave_status_text = ' . var_export( $appearance['text'], true ) . ";\n";
+		$variables .= '$octave_status_muted = ' . var_export( $appearance['muted'], true ) . ";\n";
+		$variables .= '$octave_status_shadow = ' . var_export( $appearance['shadow'], true ) . ";\n";
+		$variables .= '$octave_status_color_scheme = ' . var_export( $appearance['color_scheme'], true ) . ";\n";
 		$variables .= '$octave_status_preview = false;' . "\n\n?>\n\n";
 
 		return $variables . $template;
@@ -259,33 +295,70 @@ final class Octave_Addons_Site_Status {
 	}
 
 	/*
-	LOGO DATA URI
-	-- Embeds a reasonably sized custom logo so it remains available while the
-	-- plugin directory is temporarily moved during an update.
+	STATUS APPEARANCE
+	-- Uses the enabled Custom Login module as the site-branding source.
+	-- Disabled or incomplete settings resolve to a neutral generic scheme.
 	---------------------------------------------------------- */
 
-	private static function logo_data_uri(): string {
+	private static function appearance(): array {
 
-		$logo_path = '';
-		$logo_id   = (int) get_theme_mod( 'custom_logo', 0 );
+		$all_settings = get_option( OCTAVE_ADDONS_OPTION_KEY, [] );
+		$login        = is_array( $all_settings ) && isset( $all_settings['custom-login'] ) && is_array( $all_settings['custom-login'] )
+			? $all_settings['custom-login']
+			: [];
+		$is_enabled   = ! empty( $login['enabled'] );
 
-		if ( $logo_id ) {
+		$background = $is_enabled && ! empty( $login['bg_color'] )
+			? sanitize_hex_color( $login['bg_color'] )
+			: '#f0f2f5';
+		$primary    = $is_enabled && ! empty( $login['primary_color'] )
+			? sanitize_hex_color( $login['primary_color'] )
+			: '#4f8ef7';
 
-			$attached_file = get_attached_file( $logo_id );
+		$background = $background ?: '#f0f2f5';
+		$primary    = $primary ?: '#4f8ef7';
+		$is_dark    = self::is_dark_color( $background );
+		$logo_url   = $is_enabled && ! empty( $login['custom_logo_url'] )
+			? esc_url_raw( $login['custom_logo_url'] )
+			: '';
 
-			if ( is_string( $attached_file ) ) {
+		return [
+			'background'   => $background,
+			'surface'      => $is_dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.94)',
+			'border'       => $is_dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(17, 24, 39, 0.10)',
+			'primary'      => $primary,
+			'primary_rgb'  => self::hex_to_rgb( $primary ),
+			'on_primary'   => self::is_dark_color( $primary ) ? '#ffffff' : '#111827',
+			'text'         => $is_dark ? '#f8fafc' : '#111827',
+			'muted'        => $is_dark ? '#c2c8ce' : '#5f6673',
+			'shadow'       => $is_dark ? '0 28px 80px rgba(0, 0, 0, 0.34)' : '0 28px 80px rgba(17, 24, 39, 0.14)',
+			'color_scheme' => $is_dark ? 'dark' : 'light',
+			'logo'         => self::logo_source( $logo_url ),
+		];
 
-				$logo_path = $attached_file;
+	}
 
-			}
+	/*
+	CUSTOM LOGIN LOGO SOURCE
+	-- Embeds Media Library logos when small enough and otherwise retains the
+	-- configured URL. No Octave or theme logo is substituted.
+	---------------------------------------------------------- */
+
+	private static function logo_source( string $logo_url ): string {
+
+		if ( '' === $logo_url ) {
+
+			return '';
 
 		}
 
-		$logo_size = '' !== $logo_path && is_readable( $logo_path ) ? @filesize( $logo_path ) : false;
+		$logo_id   = attachment_url_to_postid( $logo_url );
+		$logo_path = $logo_id ? get_attached_file( $logo_id ) : '';
+		$logo_size = is_string( $logo_path ) && is_readable( $logo_path ) ? @filesize( $logo_path ) : false;
 
 		if ( false === $logo_size || $logo_size > self::MAX_LOGO_BYTES ) {
 
-			$logo_path = OCTAVE_ADDONS_DIR . 'assets/admin-icon.png';
+			return $logo_url;
 
 		}
 
@@ -303,14 +376,45 @@ final class Octave_Addons_Site_Status {
 
 		if ( '' === $mime_type ) {
 
-			$logo_path = OCTAVE_ADDONS_DIR . 'assets/admin-icon.png';
-			$mime_type = 'image/png';
+			return $logo_url;
 
 		}
 
 		$image = @file_get_contents( $logo_path );
 
-		return false !== $image ? 'data:' . $mime_type . ';base64,' . base64_encode( $image ) : '';
+		return false !== $image ? 'data:' . $mime_type . ';base64,' . base64_encode( $image ) : $logo_url;
+
+	}
+
+	private static function is_dark_color( string $hex ): bool {
+
+		$rgb = self::hex_to_rgb_values( $hex );
+
+		return ( ( 0.299 * $rgb[0] + 0.587 * $rgb[1] + 0.114 * $rgb[2] ) / 255 ) < 0.5;
+
+	}
+
+	private static function hex_to_rgb( string $hex ): string {
+
+		return implode( ', ', self::hex_to_rgb_values( $hex ) );
+
+	}
+
+	private static function hex_to_rgb_values( string $hex ): array {
+
+		$hex = ltrim( $hex, '#' );
+
+		if ( 3 === strlen( $hex ) ) {
+
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+
+		}
+
+		return [
+			hexdec( substr( $hex, 0, 2 ) ),
+			hexdec( substr( $hex, 2, 2 ) ),
+			hexdec( substr( $hex, 4, 2 ) ),
+		];
 
 	}
 
