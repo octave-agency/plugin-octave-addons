@@ -14,15 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Octave_Addons_Site_Status {
 
-	private const PREVIEW_PARAMETER = 'octave-status-preview';
-	private const DROP_IN_MARKER    = 'OCTAVE ADDONS MANAGED STATUS PAGE';
-	private const MAX_LOGO_BYTES    = 524288;
+	private const DROP_IN_MARKER = 'OCTAVE ADDONS MANAGED STATUS PAGE';
+	private const MAX_LOGO_BYTES = 524288;
 
 	private array $drop_in_errors = [];
 
 	public function __construct() {
 
-		add_action( 'template_redirect', [ $this, 'maybe_render_preview' ], 0 );
 		add_action( 'admin_init', [ $this, 'sync_status_drop_ins' ] );
 		add_action( 'admin_notices', [ $this, 'render_drop_in_notice' ] );
 		add_action( 'update_option_' . OCTAVE_ADDONS_OPTION_KEY, [ $this, 'sync_status_drop_ins_after_settings_update' ], 10, 0 );
@@ -197,59 +195,6 @@ final class Octave_Addons_Site_Status {
 
 	}
 
-	/*
-	STATUS PREVIEW
-	-- Shows either page to administrators without changing site state.
-	-- Example: ?octave-status-preview=maintenance
-	---------------------------------------------------------- */
-
-	public function maybe_render_preview(): void {
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only administrator preview.
-		$preview = isset( $_GET[ self::PREVIEW_PARAMETER ] )
-			? sanitize_key( wp_unslash( $_GET[ self::PREVIEW_PARAMETER ] ) )
-			: '';
-
-		if ( ! in_array( $preview, [ 'maintenance', 'critical-error' ], true ) || ! current_user_can( 'manage_options' ) ) {
-
-			return;
-
-		}
-
-		status_header( 200 );
-		nocache_headers();
-		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
-		header( 'X-Robots-Tag: noindex, nofollow', true );
-
-		$this->render_status_page( $preview, true );
-		exit;
-
-	}
-
-	private function render_status_page( string $type, bool $is_preview = false ): void {
-
-		$appearance = self::appearance();
-
-		$octave_status_type         = $type;
-		$octave_status_site_name    = self::site_name();
-		$octave_status_home_url     = home_url( '/' );
-		$octave_status_preview      = $is_preview;
-		$octave_status_logo         = $appearance['logo'];
-		$octave_status_background   = $appearance['background'];
-		$octave_status_surface      = $appearance['surface'];
-		$octave_status_border       = $appearance['border'];
-		$octave_status_primary      = $appearance['primary'];
-		$octave_status_primary_rgb  = $appearance['primary_rgb'];
-		$octave_status_on_primary   = $appearance['on_primary'];
-		$octave_status_text         = $appearance['text'];
-		$octave_status_muted        = $appearance['muted'];
-		$octave_status_shadow       = $appearance['shadow'];
-		$octave_status_color_scheme = $appearance['color_scheme'];
-
-		include OCTAVE_ADDONS_DIR . 'templates/site-status.php';
-
-	}
-
 	private static function build_drop_in( string $type ) {
 
 		$template_path = OCTAVE_ADDONS_DIR . 'templates/site-status.php';
@@ -279,8 +224,7 @@ final class Octave_Addons_Site_Status {
 		$variables .= '$octave_status_text = ' . var_export( $appearance['text'], true ) . ";\n";
 		$variables .= '$octave_status_muted = ' . var_export( $appearance['muted'], true ) . ";\n";
 		$variables .= '$octave_status_shadow = ' . var_export( $appearance['shadow'], true ) . ";\n";
-		$variables .= '$octave_status_color_scheme = ' . var_export( $appearance['color_scheme'], true ) . ";\n";
-		$variables .= '$octave_status_preview = false;' . "\n\n?>\n\n";
+		$variables .= '$octave_status_color_scheme = ' . var_export( $appearance['color_scheme'], true ) . ";\n\n?>\n\n";
 
 		return $variables . $template;
 

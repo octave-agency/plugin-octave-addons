@@ -30,7 +30,7 @@ $octave_status_safe_muted        = htmlspecialchars( $octave_status_muted, ENT_Q
 $octave_status_safe_shadow       = htmlspecialchars( $octave_status_shadow, ENT_QUOTES, 'UTF-8' );
 $octave_status_safe_color_scheme = htmlspecialchars( $octave_status_color_scheme, ENT_QUOTES, 'UTF-8' );
 
-if ( ! $octave_status_preview && ! headers_sent() ) {
+if ( ! headers_sent() ) {
 
 	http_response_code( $octave_status_is_maintenance ? 503 : 500 );
 	header( 'Content-Type: text/html; charset=UTF-8' );
