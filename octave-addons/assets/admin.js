@@ -1207,7 +1207,7 @@ ADMIN INTERACTIONS
 	-- Adds, removes and accessibly reorders the repeatable post type cards.
 	---------------------------------------------------------- */
 
-	document.querySelectorAll( '.oa-cpt-section' ).forEach( function ( section ) {
+	document.querySelectorAll( '.oa-cpt-section:not(.oa-collection)' ).forEach( function ( section ) {
 
 		var list = section.querySelector( '.oa-cpt-list' );
 		var template = section.querySelector( '.oa-cpt-template' );
@@ -1259,17 +1259,10 @@ ADMIN INTERACTIONS
 		function syncConditionalFields( item ) {
 
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
-			var taxonomyToggle = item.querySelector( '.oa-cpt-taxonomy-toggle' );
 
 			item.querySelectorAll( '.oa-cpt-archive-field' ).forEach( function ( field ) {
 
 				field.classList.toggle( 'oa-hidden', ! archiveToggle.checked );
-
-			} );
-
-			item.querySelectorAll( '.oa-cpt-taxonomy-field' ).forEach( function ( field ) {
-
-				field.classList.toggle( 'oa-hidden', ! taxonomyToggle.checked );
 
 			} );
 
@@ -1285,15 +1278,11 @@ ADMIN INTERACTIONS
 			var enabledToggle = item.querySelector( '.oa-cpt-enabled-toggle' );
 			var removeButton = item.querySelector( '.oa-cpt-remove' );
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
-			var taxonomyToggle = item.querySelector( '.oa-cpt-taxonomy-toggle' );
 			var nameInput = item.querySelector( '[data-cpt-field="name"]' );
 			var singularInput = item.querySelector( '[data-cpt-field="singular_name"]' );
 			var keyInput = item.querySelector( '[data-cpt-field="post_type"]' );
 			var postSlugInput = item.querySelector( '[data-cpt-field="post_slug"]' );
 			var archiveSlugInput = item.querySelector( '[data-cpt-field="archive_slug"]' );
-			var taxonomyNameInput = item.querySelector( '[data-cpt-field="taxonomy_name"]' );
-			var taxonomySingularInput = item.querySelector( '[data-cpt-field="taxonomy_singular_name"]' );
-			var taxonomySlugInput = item.querySelector( '[data-cpt-field="taxonomy_slug"]' );
 			var title = item.querySelector( '.oa-cpt-item-title' );
 			var keyPreview = item.querySelector( '.oa-cpt-key-preview' );
 			var isNew = 'false' === item.dataset.saved;
@@ -1332,12 +1321,6 @@ ADMIN INTERACTIONS
 
 			} );
 
-			taxonomyToggle.addEventListener( 'change', function () {
-
-				syncConditionalFields( item );
-
-			} );
-
 			nameInput.addEventListener( 'input', function () {
 
 				var pluralSlug = slugify( nameInput.value, '-' );
@@ -1357,12 +1340,6 @@ ADMIN INTERACTIONS
 
 				}
 
-				if ( isNew && ! taxonomyNameInput.dataset.edited ) {
-
-					taxonomyNameInput.value = nameInput.value.trim() ? nameInput.value.trim() + ' Categories' : '';
-
-				}
-
 			} );
 
 			singularInput.addEventListener( 'input', function () {
@@ -1372,18 +1349,6 @@ ADMIN INTERACTIONS
 				if ( isNew && ! postSlugInput.dataset.edited ) {
 
 					postSlugInput.value = singularSlug;
-
-				}
-
-				if ( isNew && ! taxonomySingularInput.dataset.edited ) {
-
-					taxonomySingularInput.value = singularInput.value.trim() ? singularInput.value.trim() + ' Category' : '';
-
-				}
-
-				if ( isNew && ! taxonomySlugInput.dataset.edited ) {
-
-					taxonomySlugInput.value = singularSlug ? singularSlug + '-category' : '';
 
 				}
 
@@ -1402,7 +1367,7 @@ ADMIN INTERACTIONS
 
 			} );
 
-			[ postSlugInput, archiveSlugInput, taxonomyNameInput, taxonomySingularInput, taxonomySlugInput ].forEach( function ( input ) {
+			[ postSlugInput, archiveSlugInput ].forEach( function ( input ) {
 
 				input.addEventListener( 'input', function ( event ) {
 
@@ -1601,6 +1566,187 @@ ADMIN INTERACTIONS
 
 		list.querySelectorAll( '.oa-cpt-item' ).forEach( wireItem );
 		reindexItems();
+
+	} );
+
+	/*
+	CUSTOM POST COLLECTIONS
+	-- Powers the independent taxonomy and custom-field definition cards.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '.oa-collection' ).forEach( function ( collection ) {
+
+		var list = collection.querySelector( '.oa-collection-list' );
+		var template = collection.querySelector( '.oa-collection-template' );
+		var addButton = collection.querySelector( '.oa-collection-add' );
+		var collectionKey = collection.dataset.collection;
+		var nextIndex = list.children.length;
+
+		function slugify( value ) {
+
+			return value.toLowerCase().trim().replace( /[^a-z0-9]+/g, '_' ).replace( /^_+|_+$/g, '' );
+
+		}
+
+		function reindex() {
+
+			list.querySelectorAll( '.oa-collection-item' ).forEach( function ( item, index ) {
+
+				item.querySelectorAll( '[name]' ).forEach( function ( input ) {
+
+					var pattern = new RegExp( '\\[' + collectionKey + '\\]\\[[^\\]]+\\]' );
+
+					input.name = input.name.replace( pattern, '[' + collectionKey + '][' + index + ']' );
+
+				} );
+
+			} );
+
+		}
+
+		function wireItem( item ) {
+
+			var expandButton = item.querySelector( '.oa-collection-expand' );
+			var body = item.querySelector( '.oa-collection-body' );
+			var removeButton = item.querySelector( '.oa-collection-remove' );
+			var enabled = item.querySelector( '[data-role="enabled"]' );
+			var titleInput = item.querySelector( '[data-role="title"]' );
+			var keyInput = item.querySelector( '[data-role="key"]' );
+			var title = item.querySelector( '.oa-cpt-item-title' );
+			var keyPreview = item.querySelector( '.oa-cpt-key-preview' );
+			var typeInput = item.querySelector( '[data-field-type]' );
+			var keyIsAutomatic = 'false' === item.dataset.saved;
+
+			function syncEnabled() {
+
+				item.classList.toggle( 'is-disabled', ! enabled.checked );
+
+			}
+
+			function syncFieldType() {
+
+				if ( ! typeInput ) {
+
+					return;
+
+				}
+
+				var choices = item.querySelector( '.oa-field-choices' );
+				var needsChoices = [ 'select', 'multiselect', 'radio' ].indexOf( typeInput.value ) !== -1;
+
+				choices.classList.toggle( 'oa-hidden', ! needsChoices );
+
+			}
+
+			expandButton.addEventListener( 'click', function () {
+
+				var opening = body.classList.contains( 'oa-hidden' );
+
+				body.classList.toggle( 'oa-hidden', ! opening );
+				expandButton.setAttribute( 'aria-expanded', opening ? 'true' : 'false' );
+
+			} );
+
+			enabled.addEventListener( 'change', syncEnabled );
+
+			titleInput.addEventListener( 'input', function () {
+
+				title.textContent = titleInput.value.trim() || collection.dataset.newLabel;
+
+				if ( keyIsAutomatic ) {
+
+					keyInput.value = slugify( titleInput.value ).substring( 0, 'custom_taxonomies' === collectionKey ? 29 : 40 );
+
+					if ( 'custom_taxonomies' === collectionKey ) {
+
+						keyInput.value = 'oa_' + keyInput.value.replace( /^oa_+/, '' );
+
+					}
+
+					keyPreview.textContent = keyInput.value;
+
+				}
+
+			} );
+
+			keyInput.addEventListener( 'input', function ( event ) {
+
+				if ( event.isTrusted ) {
+
+					keyIsAutomatic = false;
+
+				}
+
+				keyInput.value = slugify( keyInput.value ).substring( 0, 'custom_taxonomies' === collectionKey ? 32 : 40 );
+				keyPreview.textContent = keyInput.value;
+
+			} );
+
+			if ( typeInput ) {
+
+				typeInput.addEventListener( 'change', syncFieldType );
+
+			}
+
+			removeButton.addEventListener( 'click', function () {
+
+				function remove() {
+
+					item.remove();
+					reindex();
+					list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+				}
+
+				if ( 'false' === item.dataset.saved ) {
+
+					remove();
+					return;
+
+				}
+
+				window.oaConfirm( {
+					title: oaAdmin.removeDefinitionTitle,
+					message: oaAdmin.removeDefinitionText,
+					confirmText: oaAdmin.removeDefinitionAction,
+					destructive: true
+				} ).then( function ( confirmed ) {
+
+					if ( confirmed ) {
+
+						remove();
+
+					}
+
+				} );
+
+			} );
+
+			syncEnabled();
+			syncFieldType();
+
+		}
+
+		addButton.addEventListener( 'click', function () {
+
+			var html = template.innerHTML.split( '__INDEX__' ).join( 'new_' + nextIndex );
+			var holder = document.createElement( 'div' );
+
+			nextIndex++;
+			holder.innerHTML = html.trim();
+
+			var item = holder.firstElementChild;
+
+			list.appendChild( item );
+			wireItem( item );
+			reindex();
+			item.querySelector( '[data-role="title"]' ).focus();
+			list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		} );
+
+		list.querySelectorAll( '.oa-collection-item' ).forEach( wireItem );
+		reindex();
 
 	} );
 })();

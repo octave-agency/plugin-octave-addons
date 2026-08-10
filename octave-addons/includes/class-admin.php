@@ -111,6 +111,9 @@ class Octave_Addons_Admin {
 			'removeActionText'    => __( 'Remove post type', 'octave-addons' ),
 			'postTypeMovedText'   => __( 'Post type order updated.', 'octave-addons' ),
 			'newPostTypeText'     => __( 'New post type', 'octave-addons' ),
+			'removeDefinitionTitle'  => __( 'Remove definition?', 'octave-addons' ),
+			'removeDefinitionText'   => __( 'Saved content values and terms will remain in the database, but this definition will no longer be registered.', 'octave-addons' ),
+			'removeDefinitionAction' => __( 'Remove', 'octave-addons' ),
 		] );
 
 	}
@@ -151,7 +154,7 @@ class Octave_Addons_Admin {
 		wp_localize_script( 'octave-addons-deactivate', 'oaDeactivate', [
 			'basename'    => OCTAVE_ADDONS_BASENAME,
 			'title'       => __( 'Are you sure?', 'octave-addons' ),
-			'message'     => __( 'Deactivating Octave Addons turns off every enabled module at once. Custom post types, elements, filtering and animations will stop working, and this can break the site. Are you sure you want to deactivate it?', 'octave-addons' ),
+			'message'     => __( 'Deactivating Octave Addons turns off every enabled module at once. Custom posts, elements, filtering and animations will stop working, and this can break the site. Are you sure you want to deactivate it?', 'octave-addons' ),
 			'bulkMessage' => __( 'Your selection includes Octave Addons. Deactivating it turns off every enabled module at once, and this can break the site. Are you sure you want to continue?', 'octave-addons' ),
 			'confirmText' => __( 'Yes, deactivate', 'octave-addons' ),
 			'cancelText'  => __( 'Keep it active', 'octave-addons' ),

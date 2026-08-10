@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.5.0
+Stable tag:        2.6.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -27,8 +27,9 @@ Octave Addons ships with a growing collection of focused modules:
 *   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
     every Breakdance Lazy Load toggle off so images, backgrounds and
     embeds are left to the site's third-party performance plugin.
-*   **Custom Post Types** – renames Posts to Blogs, groups Pages into campaign
-    categories, and manages sortable custom content types and taxonomies.
+*   **Custom Posts** – renames Posts to Blogs and provides separate managers for
+    post types, reusable taxonomies, and typed post fields. Fields use registered
+    WordPress post meta and are available in Breakdance Dynamic Data.
 
 Each add-on has its own tab under *Octave Addons* in the WordPress
 admin, and closely related add-ons share one page — the Breakdance
@@ -59,6 +60,13 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.6.0 =
+* Renamed Custom Post Types to Custom Posts and split its settings into Post Types, Post Categories, and Post Fields.
+* Added reusable hierarchical or tag-style taxonomies assignable to multiple built-in and custom post types.
+* Added typed custom post fields with a polished post-editor meta box, Media Library controls, WYSIWYG editing, defaults, choices, instructions, and required indicators.
+* Registered custom values as namespaced WordPress post meta and exposed typed fields under Octave in Breakdance Dynamic Data.
+* Existing embedded custom post type taxonomies migrate without changing their stored identifiers or terms.
 
 = 2.5.0 =
 * Added the always-on Breakdance Lazy Load module, which keeps every Breakdance Lazy Load toggle off so lazy loading stays with the site's third-party performance plugin.
