@@ -6,7 +6,20 @@ POST FIELDS EDITOR
 (function ( $ ) {
     'use strict';
 
-    document.querySelectorAll( '.oa-post-field-media' ).forEach( function ( field ) {
+	/*
+	WIRE MEDIA FIELD
+	-- Connects one existing or dynamically inserted Media Library control.
+	---------------------------------------------------------- */
+
+	function wireMediaField( field ) {
+
+		if ( 'true' === field.dataset.wired ) {
+
+			return;
+
+		}
+
+		field.dataset.wired = 'true';
 
         var selectButton = field.querySelector( '.oa-post-field-media-select' );
         var removeButton = field.querySelector( '.oa-post-field-media-remove' );
@@ -77,6 +90,161 @@ POST FIELDS EDITOR
 
         } );
 
-    } );
+	}
+
+	/*
+	INITIALIZE WYSIWYG
+	-- Turns nested textareas into WordPress editors after unique IDs exist.
+	---------------------------------------------------------- */
+
+	function initializeWysiwyg( scope ) {
+
+		scope.querySelectorAll( '.oa-nested-wysiwyg' ).forEach( function ( textarea ) {
+
+			if ( 'true' === textarea.dataset.editorReady || ! window.wp || ! wp.editor ) {
+
+				return;
+
+			}
+
+			textarea.dataset.editorReady = 'true';
+			wp.editor.initialize( textarea.id, {
+				tinymce: { wpautop: true },
+				quicktags: true,
+				mediaButtons: true
+			} );
+
+		} );
+
+	}
+
+	/*
+	WIRE REPEATER
+	-- Adds, removes, reorders, and reindexes rows without changing meta shape.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '.oa-post-field-repeater' ).forEach( function ( repeater ) {
+
+		var list = repeater.querySelector( '.oa-repeater-rows' );
+		var template = repeater.querySelector( '.oa-repeater-template' );
+		var addButton = repeater.querySelector( '.oa-repeater-add' );
+		var nextIndex = list.children.length;
+
+		function destroyEditors( row ) {
+
+			row.querySelectorAll( '.oa-nested-wysiwyg[data-editor-ready="true"]' ).forEach( function ( textarea ) {
+
+				if ( window.wp && wp.editor ) {
+
+					wp.editor.remove( textarea.id );
+
+				}
+
+			} );
+
+		}
+
+		function reindexRows() {
+
+			list.querySelectorAll( '.oa-repeater-row' ).forEach( function ( row, index ) {
+
+				row.querySelectorAll( '[name]' ).forEach( function ( input ) {
+
+					input.name = input.name.replace( /(octave_post_fields\[[^\]]+\])\[[^\]]+\]/, '$1[' + index + ']' );
+
+				} );
+
+				row.querySelector( '.oa-repeater-row-number' ).textContent = octavePostFields.itemLabel.replace( '%d', index + 1 );
+				row.querySelector( '.oa-repeater-move-up' ).disabled = 0 === index;
+				row.querySelector( '.oa-repeater-move-down' ).disabled = list.children.length - 1 === index;
+
+			} );
+
+		}
+
+		function wireRow( row ) {
+
+			var up = row.querySelector( '.oa-repeater-move-up' );
+			var down = row.querySelector( '.oa-repeater-move-down' );
+			var remove = row.querySelector( '.oa-repeater-remove' );
+
+			row.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
+			initializeWysiwyg( row );
+
+			up.addEventListener( 'click', function () {
+
+				if ( row.previousElementSibling ) {
+
+					list.insertBefore( row, row.previousElementSibling );
+					reindexRows();
+
+				}
+
+			} );
+
+			down.addEventListener( 'click', function () {
+
+				if ( row.nextElementSibling ) {
+
+					list.insertBefore( row.nextElementSibling, row );
+					reindexRows();
+
+				}
+
+			} );
+
+			remove.addEventListener( 'click', function () {
+
+				destroyEditors( row );
+				row.remove();
+				reindexRows();
+
+			} );
+
+		}
+
+		addButton.addEventListener( 'click', function () {
+
+			var holder = document.createElement( 'div' );
+			var html = template.innerHTML.split( '__ROW__' ).join( 'new_' + nextIndex );
+
+			nextIndex++;
+			holder.innerHTML = html.trim();
+
+			var row = holder.firstElementChild;
+
+			row.querySelectorAll( '[id]' ).forEach( function ( element ) {
+
+				element.id = element.id.replace( /new_\d+/, 'row_' + nextIndex );
+
+			} );
+
+			row.querySelectorAll( '[for]' ).forEach( function ( label ) {
+
+				label.htmlFor = label.htmlFor.replace( /new_\d+/, 'row_' + nextIndex );
+
+			} );
+
+			list.appendChild( row );
+			wireRow( row );
+			reindexRows();
+
+			var firstInput = row.querySelector( 'input:not([type="hidden"]), select, textarea' );
+
+			if ( firstInput ) {
+
+				firstInput.focus();
+
+			}
+
+		} );
+
+		list.querySelectorAll( '.oa-repeater-row' ).forEach( wireRow );
+		reindexRows();
+
+	} );
+
+	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
+	initializeWysiwyg( document );
 
 })( jQuery );

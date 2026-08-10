@@ -127,6 +127,7 @@ class Octave_Addons_Admin {
 			'removeActionText'    => __( 'Remove post type', 'octave-addons' ),
 			'postTypeMovedText'   => __( 'Post type order updated.', 'octave-addons' ),
 			'newPostTypeText'     => __( 'New post type', 'octave-addons' ),
+			'newSubFieldText'     => __( 'New item field', 'octave-addons' ),
 			'removeDefinitionTitle'  => __( 'Remove definition?', 'octave-addons' ),
 			'removeDefinitionText'   => __( 'Saved content values and terms will remain in the database, but this definition will no longer be registered.', 'octave-addons' ),
 			'removeDefinitionAction' => __( 'Remove', 'octave-addons' ),
@@ -671,8 +672,7 @@ class Octave_Addons_Admin {
 
 								$settings      = $module_settings[ $id ];
 								$always        = $module->is_always_enabled();
-								$configurable  = 'custom-post-types' === $id;
-								$show_settings = ! empty( $settings['enabled'] ) || $configurable;
+								$show_settings = $always || ! empty( $settings['enabled'] );
 
 							?>
 
@@ -694,10 +694,9 @@ class Octave_Addons_Admin {
 											       name="<?= esc_attr( OCTAVE_ADDONS_OPTION_KEY . '[' . $id . '][enabled]' ); ?>"
 											       value="1"
 											       data-panel="oa-panel-<?= esc_attr( $id ); ?>"
-										       data-module="<?= esc_attr( $id ); ?>"
-										       data-entry="<?= esc_attr( $entry_id ); ?>"
-										       data-settings-always-visible="<?= $configurable ? 'true' : 'false'; ?>"
-											       <?php checked( ! empty( $settings['enabled'] ) ); ?>
+									       data-module="<?= esc_attr( $id ); ?>"
+									       data-entry="<?= esc_attr( $entry_id ); ?>"
+										       <?php checked( $always || ! empty( $settings['enabled'] ) ); ?>
 											       <?php disabled( $always ); ?>>
 											<span class="oa-switch-slider"></span>
 										</label>

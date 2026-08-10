@@ -52,22 +52,20 @@ ADMIN INTERACTIONS
 
 		var body = panel.querySelector( '.oa-settings-body' );
 		var locked = panel.querySelector( '.oa-settings-locked' );
-		var alwaysVisible = 'true' === toggle.dataset.settingsAlwaysVisible;
 
 		function sync() {
 
 			var on = toggle.checked;
-			var showSettings = on || alwaysVisible;
 
 			if ( body ) {
 
-				body.classList.toggle( 'oa-hidden', ! showSettings );
+				body.classList.toggle( 'oa-hidden', ! on );
 
 			}
 
 			if ( locked ) {
 
-				locked.classList.toggle( 'oa-hidden', showSettings );
+				locked.classList.toggle( 'oa-hidden', on );
 
 			}
 
@@ -1655,9 +1653,145 @@ ADMIN INTERACTIONS
 				}
 
 				var choices = item.querySelector( '.oa-field-choices' );
+				var defaultField = item.querySelector( '.oa-field-default' );
+				var subFieldEditor = item.querySelector( '.oa-sub-field-editor' );
 				var needsChoices = [ 'select', 'multiselect', 'radio' ].indexOf( typeInput.value ) !== -1;
+				var isContainer = [ 'group', 'repeater' ].indexOf( typeInput.value ) !== -1;
 
 				choices.classList.toggle( 'oa-hidden', ! needsChoices );
+
+				if ( defaultField ) {
+
+					defaultField.classList.toggle( 'oa-hidden', isContainer );
+
+				}
+
+				if ( subFieldEditor ) {
+
+					subFieldEditor.classList.toggle( 'oa-hidden', ! isContainer );
+
+				}
+
+			}
+
+			function wireSubFields() {
+
+				var editor = item.querySelector( '.oa-sub-field-editor' );
+
+				if ( ! editor ) {
+
+					return;
+
+				}
+
+				var subList = editor.querySelector( '.oa-sub-field-list' );
+				var subTemplate = editor.querySelector( '.oa-sub-field-template' );
+				var subAdd = editor.querySelector( '.oa-sub-field-add' );
+				var nextSubIndex = subList.children.length;
+
+				function reindexSubFields() {
+
+					subList.querySelectorAll( '.oa-sub-field-item' ).forEach( function ( subItem, index ) {
+
+						subItem.querySelectorAll( '[name]' ).forEach( function ( input ) {
+
+							input.name = input.name.replace( /\[sub_fields\]\[[^\]]+\]/, '[sub_fields][' + index + ']' );
+
+						} );
+
+					} );
+
+				}
+
+				function wireSubItem( subItem ) {
+
+					var toggle = subItem.querySelector( '.oa-sub-field-toggle' );
+					var remove = subItem.querySelector( '.oa-sub-field-remove' );
+					var body = subItem.querySelector( '.oa-sub-field-body' );
+					var titleInput = subItem.querySelector( '[data-sub-role="title"]' );
+					var keyInput = subItem.querySelector( '[data-sub-role="key"]' );
+					var typeSelect = subItem.querySelector( '[data-sub-field-type]' );
+					var title = subItem.querySelector( '.oa-sub-field-title' );
+					var key = subItem.querySelector( '.oa-sub-field-key' );
+					var automaticKey = 'false' === subItem.dataset.saved;
+
+					function syncSubType() {
+
+						var choices = subItem.querySelector( '.oa-sub-field-choices' );
+						var visible = [ 'select', 'multiselect', 'radio' ].indexOf( typeSelect.value ) !== -1;
+
+						choices.classList.toggle( 'oa-hidden', ! visible );
+
+					}
+
+					toggle.addEventListener( 'click', function () {
+
+						var opening = body.classList.contains( 'oa-hidden' );
+
+						body.classList.toggle( 'oa-hidden', ! opening );
+						toggle.setAttribute( 'aria-expanded', opening ? 'true' : 'false' );
+
+					} );
+
+					titleInput.addEventListener( 'input', function () {
+
+						title.textContent = titleInput.value.trim() || oaAdmin.newSubFieldText;
+
+						if ( automaticKey ) {
+
+							keyInput.value = slugify( titleInput.value ).substring( 0, 40 );
+							key.textContent = keyInput.value;
+
+						}
+
+					} );
+
+					keyInput.addEventListener( 'input', function ( event ) {
+
+						if ( event.isTrusted ) {
+
+							automaticKey = false;
+
+						}
+
+						keyInput.value = slugify( keyInput.value ).substring( 0, 40 );
+						key.textContent = keyInput.value;
+
+					} );
+
+					typeSelect.addEventListener( 'change', syncSubType );
+					remove.addEventListener( 'click', function () {
+
+						subItem.remove();
+						reindexSubFields();
+						subList.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+					} );
+
+					syncSubType();
+
+				}
+
+				subAdd.addEventListener( 'click', function () {
+
+					var html = subTemplate.innerHTML.split( '__SUB_INDEX__' ).join( 'new_' + nextSubIndex );
+					var holder = document.createElement( 'div' );
+
+					nextSubIndex++;
+					holder.innerHTML = html.trim();
+
+					var subItem = holder.firstElementChild;
+
+					subList.appendChild( subItem );
+					wireSubItem( subItem );
+					reindexSubFields();
+					subItem.querySelector( '[data-sub-role="title"]' ).focus();
+					subList.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+				} );
+
+				subList.querySelectorAll( '.oa-sub-field-item' ).forEach( wireSubItem );
+				reindexSubFields();
 
 			}
 
@@ -1708,8 +1842,19 @@ ADMIN INTERACTIONS
 			if ( typeInput ) {
 
 				typeInput.addEventListener( 'change', syncFieldType );
+				wireSubFields();
 
 			}
+
+			item.querySelectorAll( '[data-primary-assignment="true"]' ).forEach( function ( assignment ) {
+
+				assignment.addEventListener( 'change', function () {
+
+					assignment.checked = true;
+
+				} );
+
+			} );
 
 			removeButton.addEventListener( 'click', function () {
 

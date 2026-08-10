@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.6.4
+Stable tag:        2.7.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -60,6 +60,14 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.7.1 =
+* Restored the standard disabled-module state for Custom Posts so every configurable module displays the enable prompt before exposing its settings.
+
+= 2.7.0 =
+* Replaced the long Custom Posts setup page with a post type overview and focused category and content-field editors for each saved post type.
+* Added Group and Repeater content fields with nested typed controls, polished repeatable rows in the post editor, and one structured meta value per top-level field.
+* Added native Breakdance repeater data and group/repeater child fields under Octave Dynamic Data while retaining existing scalar and image field support.
 
 = 2.6.4 =
 * Fixed a PHP boundary error that caused the Custom Posts settings page to fail before rendering its editor and save controls.

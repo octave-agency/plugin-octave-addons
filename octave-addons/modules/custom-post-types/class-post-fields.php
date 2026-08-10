@@ -72,14 +72,26 @@ class Octave_Addons_Custom_Post_Fields {
 					},
 				];
 
-				if ( 'multiselect' === $field['type'] ) {
+				if ( in_array( $field['type'], [ 'multiselect', 'repeater' ], true ) ) {
 
 					$args['single']       = true;
 					$args['type']         = 'array';
 					$args['show_in_rest'] = [
 						'schema' => [
 							'type'  => 'array',
-							'items' => [ 'type' => 'string' ],
+							'items' => 'repeater' === $field['type']
+								? [ 'type' => 'object', 'additionalProperties' => true ]
+								: [ 'type' => 'string' ],
+						],
+					];
+
+				} elseif ( 'group' === $field['type'] ) {
+
+					$args['type']         = 'object';
+					$args['show_in_rest'] = [
+						'schema' => [
+							'type'                 => 'object',
+							'additionalProperties' => true,
 						],
 					];
 
@@ -178,6 +190,14 @@ class Octave_Addons_Custom_Post_Fields {
 		$is_wide     = in_array( $type, [ 'textarea', 'wysiwyg' ], true );
 		$choices     = $this->parse_choices( $field['choices'] );
 		$description = (string) $field['description'];
+
+		if ( in_array( $type, [ 'group', 'repeater' ], true ) ) {
+
+			$this->render_container_field( $field, is_array( $value ) ? $value : [] );
+
+			return;
+
+		}
 
 		?>
 
@@ -310,6 +330,172 @@ class Octave_Addons_Custom_Post_Fields {
 	}
 
 	/*
+	RENDER CONTAINER FIELD
+	-- Displays a group once or a repeater with editor-controlled rows.
+	---------------------------------------------------------- */
+
+	protected function render_container_field( array $field, array $value ): void {
+
+		$is_repeater = 'repeater' === $field['type'];
+		$rows        = $is_repeater ? array_values( array_filter( $value, 'is_array' ) ) : [ $value ];
+
+		?>
+
+		<section class="oa-post-field oa-post-field--wide oa-post-field-container<?= $is_repeater ? ' oa-post-field-repeater' : ' oa-post-field-group'; ?>" data-field-name="<?= esc_attr( $field['name'] ); ?>">
+			<div class="oa-post-field-container-head">
+				<div>
+					<strong><?= esc_html( $field['label'] ); ?></strong>
+					<?php if ( ! empty( $field['required'] ) ) : ?>
+					<span class="oa-post-field-required"><?php esc_html_e( 'Required', 'octave-addons' ); ?></span>
+					<?php endif; ?>
+					<?php if ( '' !== $field['description'] ) : ?>
+					<p><?= esc_html( $field['description'] ); ?></p>
+					<?php endif; ?>
+				</div>
+				<?php if ( $is_repeater ) : ?>
+				<button type="button" class="button button-secondary oa-repeater-add"><span aria-hidden="true">+</span><?php esc_html_e( 'Add item', 'octave-addons' ); ?></button>
+				<?php endif; ?>
+			</div>
+
+			<div class="oa-repeater-rows" data-empty-text="<?php esc_attr_e( 'No items yet. Use “Add item” to begin.', 'octave-addons' ); ?>">
+
+				<?php
+
+				foreach ( $rows as $row_index => $row ) {
+
+					$this->render_container_row( $field, $row, $is_repeater ? (string) $row_index : '' );
+
+				}
+
+				?>
+
+			</div>
+
+			<?php if ( $is_repeater ) : ?>
+			<template class="oa-repeater-template"><?php $this->render_container_row( $field, [], '__ROW__' ); ?></template>
+			<?php endif; ?>
+		</section>
+
+		<?php
+
+	}
+
+	/*
+	RENDER CONTAINER ROW
+	-- Outputs one group or repeatable item with all configured child controls.
+	---------------------------------------------------------- */
+
+	protected function render_container_row( array $field, array $row, string $row_index ): void {
+
+		$is_repeater = 'repeater' === $field['type'];
+		$row_label   = $is_repeater && '__ROW__' !== $row_index ? sprintf( __( 'Item %d', 'octave-addons' ), (int) $row_index + 1 ) : __( 'Item', 'octave-addons' );
+
+		?>
+
+		<div class="oa-repeater-row">
+			<?php if ( $is_repeater ) : ?>
+			<div class="oa-repeater-row-head">
+				<span class="oa-repeater-row-number"><?= esc_html( $row_label ); ?></span>
+				<div class="oa-repeater-row-actions">
+					<button type="button" class="oa-repeater-move-up" aria-label="<?php esc_attr_e( 'Move item up', 'octave-addons' ); ?>"><span class="dashicons dashicons-arrow-up-alt2" aria-hidden="true"></span></button>
+					<button type="button" class="oa-repeater-move-down" aria-label="<?php esc_attr_e( 'Move item down', 'octave-addons' ); ?>"><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button>
+					<button type="button" class="oa-repeater-remove" aria-label="<?php esc_attr_e( 'Remove item', 'octave-addons' ); ?>"><span class="dashicons dashicons-trash" aria-hidden="true"></span></button>
+				</div>
+			</div>
+			<?php endif; ?>
+
+			<div class="oa-repeater-row-fields">
+
+				<?php
+
+				foreach ( $field['sub_fields'] as $sub_field ) {
+
+					$name = 'octave_post_fields[' . $field['name'] . ']';
+
+					if ( $is_repeater ) {
+
+						$name .= '[' . $row_index . ']';
+
+					}
+
+					$name .= '[' . $sub_field['name'] . ']';
+					$id    = 'octave_post_field_' . $field['name'] . '_' . ( '' !== $row_index ? $row_index . '_' : '' ) . $sub_field['name'];
+					$value = array_key_exists( $sub_field['name'], $row ) ? $row[ $sub_field['name'] ] : $sub_field['default_value'];
+
+					$this->render_sub_field_control( $sub_field, $value, $name, $id );
+
+				}
+
+				?>
+
+			</div>
+		</div>
+
+		<?php
+
+	}
+
+	/*
+	RENDER SUB FIELD CONTROL
+	-- Renders a typed child control without creating another meta value.
+	---------------------------------------------------------- */
+
+	protected function render_sub_field_control( array $field, $value, string $name, string $id ): void {
+
+		$type    = $field['type'];
+		$choices = $this->parse_choices( $field['choices'] );
+		$is_wide = in_array( $type, [ 'textarea', 'wysiwyg' ], true );
+
+		?>
+
+		<div class="oa-post-field<?= $is_wide ? ' oa-post-field--wide' : ''; ?>">
+			<label class="oa-post-field-label" for="<?= esc_attr( $id ); ?>"><?= esc_html( $field['label'] ); ?><?php if ( ! empty( $field['required'] ) ) : ?><span class="oa-post-field-required"><?php esc_html_e( 'Required', 'octave-addons' ); ?></span><?php endif; ?></label>
+
+			<?php if ( 'textarea' === $type ) : ?>
+			<textarea id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>" rows="4"<?= ! empty( $field['required'] ) ? ' required' : ''; ?>><?= esc_textarea( (string) $value ); ?></textarea>
+			<?php elseif ( 'wysiwyg' === $type ) : ?>
+			<textarea class="oa-nested-wysiwyg" id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>" rows="6"><?= esc_textarea( (string) $value ); ?></textarea>
+			<?php elseif ( in_array( $type, [ 'select', 'multiselect' ], true ) ) :
+
+				$selected_values = is_array( $value ) ? $value : [ (string) $value ];
+
+			?>
+			<select id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?><?= 'multiselect' === $type ? '[]' : ''; ?>"<?= 'multiselect' === $type ? ' multiple size="5"' : ''; ?><?= ! empty( $field['required'] ) ? ' required' : ''; ?>>
+				<?php if ( 'select' === $type ) : ?><option value=""><?php esc_html_e( 'Select an option', 'octave-addons' ); ?></option><?php endif; ?>
+				<?php foreach ( $choices as $choice_value => $choice_label ) : ?><option value="<?= esc_attr( $choice_value ); ?>"<?= selected( in_array( $choice_value, $selected_values, true ), true, false ); ?>><?= esc_html( $choice_label ); ?></option><?php endforeach; ?>
+			</select>
+			<?php elseif ( 'radio' === $type ) : ?>
+			<div class="oa-post-field-options" id="<?= esc_attr( $id ); ?>"><?php foreach ( $choices as $choice_value => $choice_label ) : ?><label><input type="radio" name="<?= esc_attr( $name ); ?>" value="<?= esc_attr( $choice_value ); ?>"<?= checked( (string) $value, $choice_value, false ); ?>> <span><?= esc_html( $choice_label ); ?></span></label><?php endforeach; ?></div>
+			<?php elseif ( 'checkbox' === $type ) : ?>
+			<label class="oa-post-field-checkbox" for="<?= esc_attr( $id ); ?>"><input type="checkbox" id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>" value="1"<?= checked( ! empty( $value ), true, false ); ?>><span><?php esc_html_e( 'Yes', 'octave-addons' ); ?></span></label>
+			<?php elseif ( in_array( $type, [ 'image', 'file' ], true ) ) :
+
+				$attachment_id = absint( $value );
+				$file_name     = $attachment_id ? basename( (string) get_attached_file( $attachment_id ) ) : '';
+				$image_url     = 'image' === $type && $attachment_id ? wp_get_attachment_image_url( $attachment_id, 'medium' ) : '';
+
+			?>
+			<div class="oa-post-field-media" data-media-type="<?= esc_attr( $type ); ?>">
+				<input type="hidden" id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>" value="<?= esc_attr( (string) $attachment_id ); ?>">
+				<div class="oa-post-field-media-preview<?= $attachment_id ? ' has-value' : ''; ?>"><?php if ( $image_url ) : ?><img src="<?= esc_url( $image_url ); ?>" alt=""><?php else : ?><span class="dashicons <?= 'image' === $type ? 'dashicons-format-image' : 'dashicons-media-default'; ?>" aria-hidden="true"></span><?php endif; ?><span class="oa-post-field-media-name"><?= esc_html( $file_name ); ?></span></div>
+				<div class="oa-post-field-media-actions"><button type="button" class="button oa-post-field-media-select"><?= $attachment_id ? esc_html__( 'Replace', 'octave-addons' ) : esc_html__( 'Choose from Media Library', 'octave-addons' ); ?></button><button type="button" class="button-link-delete oa-post-field-media-remove<?= $attachment_id ? '' : ' hidden'; ?>"><?php esc_html_e( 'Remove', 'octave-addons' ); ?></button></div>
+			</div>
+			<?php else :
+
+				$html_type = 'datetime' === $type ? 'datetime-local' : $type;
+
+			?>
+			<input type="<?= esc_attr( $html_type ); ?>" id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>" value="<?= esc_attr( (string) $value ); ?>"<?= in_array( $type, [ 'number', 'range' ], true ) ? ' step="any"' : ''; ?><?= ! empty( $field['required'] ) ? ' required' : ''; ?>>
+			<?php endif; ?>
+
+			<?php if ( '' !== $field['description'] ) : ?><p class="description"><?= esc_html( $field['description'] ); ?></p><?php endif; ?>
+		</div>
+
+		<?php
+
+	}
+
+	/*
 	SAVE POST
 	-- Validates the editor request and updates only fields assigned to the post.
 	---------------------------------------------------------- */
@@ -340,7 +526,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields_for_post_type( $post->post_type ) as $field ) {
 
-			$raw   = $submitted[ $field['name'] ] ?? ( 'multiselect' === $field['type'] ? [] : '' );
+			$raw   = $submitted[ $field['name'] ] ?? ( in_array( $field['type'], [ 'multiselect', 'group', 'repeater' ], true ) ? [] : '' );
 			$value = $this->sanitize_value( $raw, $field );
 
 			update_post_meta( $post_id, $field['meta_key'], $value );
@@ -357,6 +543,30 @@ class Octave_Addons_Custom_Post_Fields {
 	protected function sanitize_value( $value, array $field ) {
 
 		$type = $field['type'];
+
+		if ( 'group' === $type ) {
+
+			return $this->sanitize_container_row( is_array( $value ) ? $value : [], $field['sub_fields'] );
+
+		}
+
+		if ( 'repeater' === $type ) {
+
+			$rows = [];
+
+			foreach ( array_slice( is_array( $value ) ? $value : [], 0, 100 ) as $row ) {
+
+				if ( is_array( $row ) ) {
+
+					$rows[] = $this->sanitize_container_row( $row, $field['sub_fields'] );
+
+				}
+
+			}
+
+			return $rows;
+
+		}
 
 		if ( 'multiselect' === $type ) {
 
@@ -447,6 +657,27 @@ class Octave_Addons_Custom_Post_Fields {
 	}
 
 	/*
+	SANITIZE CONTAINER ROW
+	-- Applies each child definition while discarding unknown submitted keys.
+	---------------------------------------------------------- */
+
+	protected function sanitize_container_row( array $row, array $sub_fields ): array {
+
+		$clean = [];
+
+		foreach ( $sub_fields as $sub_field ) {
+
+			$raw = $row[ $sub_field['name'] ] ?? ( 'multiselect' === $sub_field['type'] ? [] : '' );
+
+			$clean[ $sub_field['name'] ] = $this->sanitize_value( $raw, $sub_field );
+
+		}
+
+		return $clean;
+
+	}
+
+	/*
 	ENQUEUE EDITOR ASSETS
 	-- Loads the purpose-built field UI only on applicable post editors.
 	---------------------------------------------------------- */
@@ -480,6 +711,7 @@ class Octave_Addons_Custom_Post_Fields {
 				'chooseFile'  => __( 'Choose a file', 'octave-addons' ),
 				'useMedia'    => __( 'Use this media', 'octave-addons' ),
 				'replace'     => __( 'Replace', 'octave-addons' ),
+				'itemLabel'   => __( 'Item %d', 'octave-addons' ),
 			]
 		);
 
@@ -519,13 +751,56 @@ class Octave_Addons_Custom_Post_Fields {
 
 			$field['subcategory'] = $this->field_subcategory( $field );
 
-			if ( 'image' === $field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
+			if ( 'group' === $field['type'] ) {
+
+				$this->register_breakdance_sub_fields( $field );
+
+			} elseif ( 'repeater' === $field['type'] ) {
+
+				if ( class_exists( 'Octave_Addons_Breakdance_Repeater_Field', false ) ) {
+
+					\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Repeater_Field( $field ) );
+					$this->register_breakdance_sub_fields( $field );
+
+				}
+
+			} elseif ( 'image' === $field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
 
 				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Image_Field( $field ) );
 
 			} elseif ( class_exists( 'Octave_Addons_Breakdance_String_Field', false ) ) {
 
 				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_String_Field( $field ) );
+
+			}
+
+		}
+
+	}
+
+	/*
+	REGISTER BREAKDANCE SUB FIELDS
+	-- Exposes structured children beneath their group or repeater context.
+	---------------------------------------------------------- */
+
+	protected function register_breakdance_sub_fields( array $parent ): void {
+
+		foreach ( $parent['sub_fields'] as $sub_field ) {
+
+			$sub_field['meta_key']      = $parent['meta_key'];
+			$sub_field['post_types']    = $parent['post_types'];
+			$sub_field['parent_type']   = $parent['type'];
+			$sub_field['parent_name']   = $parent['name'];
+			$sub_field['dynamic_name'] = $parent['name'] . '_' . $sub_field['name'];
+			$sub_field['subcategory']  = $parent['subcategory'] . ' · ' . $parent['label'];
+
+			if ( 'image' === $sub_field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
+
+				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Image_Field( $sub_field ) );
+
+			} elseif ( class_exists( 'Octave_Addons_Breakdance_String_Field', false ) ) {
+
+				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_String_Field( $sub_field ) );
 
 			}
 
