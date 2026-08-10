@@ -252,8 +252,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$this->render_taxonomy_editor( $custom_taxonomies, $post_type_options );
 		$this->render_field_editor( $custom_fields, $post_type_options );
 
-		?>
-
 	}
 
 	/*

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.6.3
+Stable tag:        2.6.4
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -60,6 +60,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.6.4 =
+* Fixed a PHP boundary error that caused the Custom Posts settings page to fail before rendering its editor and save controls.
 
 = 2.6.3 =
 * Prevented the Custom Posts admin page from depending on a newly added cross-module settings method, keeping its configuration visible without risking a render-time fatal.
