@@ -671,7 +671,7 @@ class Octave_Addons_Admin {
 
 								$settings      = $module_settings[ $id ];
 								$always        = $module->is_always_enabled();
-								$configurable  = $module->settings_available_when_disabled();
+								$configurable  = 'custom-post-types' === $id;
 								$show_settings = ! empty( $settings['enabled'] ) || $configurable;
 
 							?>

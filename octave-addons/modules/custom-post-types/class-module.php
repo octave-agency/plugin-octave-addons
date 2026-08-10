@@ -43,17 +43,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
-	SETTINGS AVAILABLE WHEN DISABLED
-	-- Lets administrators define content structure before registering it.
-	---------------------------------------------------------- */
-
-	public function settings_available_when_disabled(): bool {
-
-		return true;
-
-	}
-
-	/*
 	GET TITLE
 	-- Returns the admin navigation label.
 	---------------------------------------------------------- */

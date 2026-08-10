@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 }
 
+if ( class_exists( '\\Breakdance\\DynamicData\\StringField' ) ) {
+
 class Octave_Addons_Breakdance_String_Field extends \Breakdance\DynamicData\StringField {
 
 	protected array $field_data;
@@ -83,6 +85,10 @@ class Octave_Addons_Breakdance_String_Field extends \Breakdance\DynamicData\Stri
 
 }
 
+}
+
+if ( class_exists( '\\Breakdance\\DynamicData\\ImageField' ) ) {
+
 class Octave_Addons_Breakdance_Image_Field extends \Breakdance\DynamicData\ImageField {
 
 	protected array $field_data;
@@ -138,5 +144,7 @@ class Octave_Addons_Breakdance_Image_Field extends \Breakdance\DynamicData\Image
 		return \Breakdance\DynamicData\ImageData::fromAttachmentId( $attachment_id );
 
 	}
+
+}
 
 }

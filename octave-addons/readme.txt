@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.6.2
+Stable tag:        2.6.3
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -60,6 +60,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.6.3 =
+* Prevented the Custom Posts admin page from depending on a newly added cross-module settings method, keeping its configuration visible without risking a render-time fatal.
+* Made Breakdance Dynamic Data classes load only when enabled fields exist and their matching Breakdance base class is available, preventing partial builder APIs from causing a 500 error.
 
 = 2.6.2 =
 * Kept Custom Posts on its stable `tab=custom-post-types` module id so existing settings, integrations, and bookmarks continue to work.

@@ -492,7 +492,18 @@ class Octave_Addons_Custom_Post_Fields {
 
 	public function register_breakdance_fields(): void {
 
-		if ( ! function_exists( '\\Breakdance\\DynamicData\\registerField' ) || ! class_exists( '\\Breakdance\\DynamicData\\StringField' ) ) {
+		$enabled_fields = array_values(
+			array_filter(
+				$this->fields,
+				static function ( array $field ): bool {
+
+					return ! empty( $field['enabled'] );
+
+				}
+			)
+		);
+
+		if ( empty( $enabled_fields ) || ! function_exists( '\\Breakdance\\DynamicData\\registerField' ) ) {
 
 			return;
 
@@ -504,21 +515,15 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
-		foreach ( $this->fields as $field ) {
-
-			if ( empty( $field['enabled'] ) ) {
-
-				continue;
-
-			}
+		foreach ( $enabled_fields as $field ) {
 
 			$field['subcategory'] = $this->field_subcategory( $field );
 
-			if ( 'image' === $field['type'] && class_exists( '\\Breakdance\\DynamicData\\ImageField' ) ) {
+			if ( 'image' === $field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
 
 				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Image_Field( $field ) );
 
-			} else {
+			} elseif ( class_exists( 'Octave_Addons_Breakdance_String_Field', false ) ) {
 
 				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_String_Field( $field ) );
 
