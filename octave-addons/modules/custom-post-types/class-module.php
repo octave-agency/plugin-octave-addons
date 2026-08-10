@@ -1168,7 +1168,11 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 				?>
 
-				<label class="oa-assignment-option<?= $is_primary ? ' is-primary' : ''; ?>"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( $collection, $index, 'post_types' ) ); ?>[]" value="<?= esc_attr( $post_type ); ?>"<?= checked( $is_primary || in_array( $post_type, $assigned, true ), true, false ); ?><?= $is_primary ? ' data-primary-assignment="true"' : ''; ?>><span><strong><?= esc_html( $label ); ?></strong><small><?= $is_primary ? esc_html__( 'Current post type', 'octave-addons' ) : esc_html( $post_type ); ?></small></span></label>
+				<label class="oa-assignment-option<?= $is_primary ? ' is-primary' : ''; ?>">
+					<input type="checkbox" name="<?= esc_attr( $this->collection_field_name( $collection, $index, 'post_types' ) ); ?>[]" value="<?= esc_attr( $post_type ); ?>"<?= checked( $is_primary || in_array( $post_type, $assigned, true ), true, false ); ?><?= $is_primary ? ' data-primary-assignment="true"' : ''; ?>>
+					<span class="oa-assignment-check" aria-hidden="true"></span>
+					<span class="oa-assignment-copy"><strong><?= esc_html( $label ); ?></strong><small><?= $is_primary ? esc_html__( 'Current post type', 'octave-addons' ) : esc_html( $post_type ); ?></small></span>
+				</label>
 
 				<?php
 

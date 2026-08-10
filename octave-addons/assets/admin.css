@@ -3091,31 +3091,93 @@ CUSTOM POST TYPE EDITOR
 .oa-assignment-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 9px;
+    gap: 10px;
     padding: 14px;
 }
 
 .oa-assignment-option {
-    display: flex;
+    position: relative;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
     align-items: center;
-    gap: 9px;
+    gap: 11px;
     min-width: 0;
-    padding: 10px;
+    min-height: 58px;
+    padding: 11px 12px;
     color: var(--oa-text);
     border: 1px solid var(--oa-border-light);
-    border-radius: 8px;
-    background: rgba(8, 11, 12, 0.42);
+    border-radius: 10px;
+    background: rgba(8, 11, 12, 0.5);
+    box-sizing: border-box;
     cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.oa-assignment-option:hover {
+    border-color: rgba(147, 147, 147, 0.3);
+    background: rgba(20, 24, 25, 0.82);
+    transform: translateY(-1px);
+}
+
+.oa-assignment-option:focus-within {
+    border-color: var(--oa-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.14);
+}
+
+.oa-assignment-option > input[type="checkbox"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.oa-assignment-check {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid rgba(147, 147, 147, 0.34);
+    border-radius: 8px;
+    background: rgba(147, 147, 147, 0.08);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.04);
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.oa-assignment-check::after {
+    width: 5px;
+    height: 10px;
+    border-right: 2px solid var(--oa-on-accent);
+    border-bottom: 2px solid var(--oa-on-accent);
+    content: "";
+    opacity: 0;
+    transform: translateY(-1px) rotate(45deg) scale(0.65);
+    transition: opacity 0.12s ease, transform 0.12s ease;
 }
 
 .oa-assignment-option:has(input:checked) {
-    border-color: rgba(43, 255, 134, 0.4);
-    background: var(--oa-accent-bg);
+    border-color: rgba(43, 255, 134, 0.46);
+    background: linear-gradient(135deg, rgba(43, 255, 134, 0.14), rgba(43, 255, 134, 0.06));
+    box-shadow: inset 0 0 0 1px rgba(43, 255, 134, 0.04);
+}
+
+.oa-assignment-option input:checked + .oa-assignment-check {
+    border-color: var(--oa-accent);
+    background: var(--oa-accent);
+    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.12);
+}
+
+.oa-assignment-option input:checked + .oa-assignment-check::after {
+    opacity: 1;
+    transform: translateY(-1px) rotate(45deg) scale(1);
 }
 
 .oa-assignment-option.is-primary {
-    border-color: rgba(43, 255, 134, 0.4);
-    background: var(--oa-accent-bg);
+    border-color: rgba(43, 255, 134, 0.56);
 }
 
 .oa-sub-field-editor.oa-hidden {
@@ -3230,14 +3292,17 @@ CUSTOM POST TYPE EDITOR
     display: none;
 }
 
-.oa-assignment-option > span {
+.oa-assignment-copy {
     display: grid;
+    gap: 3px;
     min-width: 0;
 }
 
 .oa-assignment-option strong {
     overflow: hidden;
-    font-size: 11.5px;
+    color: var(--oa-text);
+    font-size: 12px;
+    line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -3246,6 +3311,16 @@ CUSTOM POST TYPE EDITOR
     color: var(--oa-text-dim);
     font-family: Menlo, Consolas, monospace;
     font-size: 9.5px;
+    line-height: 1.25;
+}
+
+.oa-assignment-option.is-primary small {
+    color: var(--oa-accent);
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
 }
 
 .oa-assignment-empty {
