@@ -30,6 +30,7 @@ PALETTE (TOKENS)
     --oa-text-muted:   #939393;
     --oa-text-dim:     #6B6D6F;
     --oa-shadow:       0 28px 80px rgba(0, 0, 0, 0.34);
+    --oa-app-radius:   20px;
 }
 
 /* --- Outer wrap ------------------------------------------ */
@@ -86,8 +87,9 @@ TEXT LINKS
         radial-gradient(circle at 43% 18%, rgba(43, 255, 134, 0.13), transparent 34%),
         var(--oa-bg);
     border: 1px solid var(--oa-border);
-    border-radius: 20px;
-    overflow: hidden;
+    border-radius: var(--oa-app-radius);
+    /* Visible so custom-select dropdowns and sticky children are not clipped */
+    overflow: visible;
     box-shadow: var(--oa-shadow), 0 0 0 1px rgba(255, 255, 255, 0.025) inset;
 }
 
@@ -137,6 +139,8 @@ FOCUS STATES
     width: 254px;
     flex-shrink: 0;
     background: rgba(12, 15, 16, 0.82);
+    /* Rounds its own corners now the shell no longer clips them */
+    border-radius: calc(var(--oa-app-radius) - 1px) 0 0 calc(var(--oa-app-radius) - 1px);
     border-right: 1px solid var(--oa-border);
     display: flex;
     flex-direction: column;
@@ -752,7 +756,8 @@ Navigation entry
 
 .oa-panel {
     position: relative;
-    overflow: hidden;
+    /* Visible so custom-select dropdowns can extend past the card edge */
+    overflow: visible;
     background: linear-gradient(145deg, rgba(23, 27, 28, 0.94), rgba(15, 18, 19, 0.94));
     border: 1px solid var(--oa-border);
     border-radius: 18px;
@@ -1170,6 +1175,10 @@ CUSTOM SELECTS
     transform: translateX(22px);
 }
 
+.oa-switch--always input[type="checkbox"]:checked::before {
+    content: none;
+}
+
 .oa-switch input:disabled + .oa-switch-slider {
     cursor: default;
     opacity: 0.65;
@@ -1532,7 +1541,6 @@ CUSTOM SELECTS
     .oa-app {
         flex-direction: column;
         min-height: 0;
-        overflow: visible; /* allow sidebar to be position:sticky */
     }
 
     .oa-sidebar {
@@ -1540,6 +1548,7 @@ CUSTOM SELECTS
         flex-direction: row;
         flex-wrap: wrap;
         align-items: center;
+        border-radius: calc(var(--oa-app-radius) - 1px) calc(var(--oa-app-radius) - 1px) 0 0;
         border-right: none;
         border-bottom: 1px solid var(--oa-border);
         position: sticky;
@@ -1713,7 +1722,7 @@ CUSTOM SELECTS
 @media (max-width: 600px) {
 
     .oa-app {
-        border-radius: 6px;
+        --oa-app-radius: 6px;
         margin-top: 8px;
     }
 

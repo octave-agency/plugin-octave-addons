@@ -666,7 +666,7 @@ class Octave_Addons_Admin {
 										<span class="oa-enable-label">
 											<?= $always ? esc_html__( 'Always on', 'octave-addons' ) : esc_html__( 'Enable', 'octave-addons' ); ?>
 										</span>
-										<label class="oa-switch">
+										<label class="oa-switch<?= $always ? ' oa-switch--always' : ''; ?>">
 											<input type="checkbox"
 											       class="oa-enable-toggle"
 											       id="<?= esc_attr( 'oa-' . $id . '-enabled' ); ?>"

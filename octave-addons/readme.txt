@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.4.2
+Stable tag:        2.4.3
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -56,6 +56,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.4.3 =
+* Set the Custom Post Types module to off by default on sites without saved settings.
+* Removed the WordPress admin checkbox checkmark from the disabled Always on switch.
 
 = 2.4.2 =
 * Removed the administrator status-page preview query parameter now that the branded pages are ready for production.

@@ -71,7 +71,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	public function get_defaults(): array {
 
 		return [
-			'enabled'           => true,
+			'enabled'           => false,
 			'page_categories'   => true,
 			'custom_post_types' => [],
 		];
@@ -484,7 +484,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'new_item_name'     => __( 'New Page Category Name', 'octave-addons' ),
 			'not_found'         => __( 'No page categories found.', 'octave-addons' ),
 			'back_to_items'     => __( 'Back to Page Categories', 'octave-addons' ),
-			'menu_name'         => $name,
+			'menu_name'         => __( 'Categories', 'octave-addons' ),
 		];
 
 		register_taxonomy(
