@@ -749,8 +749,6 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $enabled_fields as $field ) {
 
-			$field['subcategory'] = $this->field_subcategory( $field );
-
 			if ( 'group' === $field['type'] ) {
 
 				$this->register_breakdance_sub_fields( $field );
@@ -792,7 +790,7 @@ class Octave_Addons_Custom_Post_Fields {
 			$sub_field['parent_type']   = $parent['type'];
 			$sub_field['parent_name']   = $parent['name'];
 			$sub_field['dynamic_name'] = $parent['name'] . '_' . $sub_field['name'];
-			$sub_field['subcategory']  = $parent['subcategory'] . ' · ' . $parent['label'];
+			$sub_field['label']        = $parent['label'] . ' · ' . $sub_field['label'];
 
 			if ( 'image' === $sub_field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
 
@@ -860,29 +858,6 @@ class Octave_Addons_Custom_Post_Fields {
 		}
 
 		return $parsed;
-
-	}
-
-	/*
-	FIELD SUBCATEGORY
-	-- Labels Dynamic Data fields with their assigned content areas.
-	---------------------------------------------------------- */
-
-	protected function field_subcategory( array $field ): string {
-
-		$labels = [];
-
-		foreach ( $field['post_types'] as $post_type ) {
-
-			if ( isset( $this->post_type_labels[ $post_type ] ) ) {
-
-				$labels[] = $this->post_type_labels[ $post_type ];
-
-			}
-
-		}
-
-		return implode( ', ', $labels );
 
 	}
 
