@@ -2,9 +2,9 @@
 
 /**
  * Plugin Name:       Octave Addons
- * Plugin URI:        https://github.com/octave-agency/plugin-octave-addons
+ * Plugin URI:        https://www.octaveagency.com/
  * Description:       A modular collection of Octave site add-ons.
- * Version:           2.4.3
+ * Version:           2.5.0
  * Author:            Octave Agency
  * Author URI:        https://octaveagency.com
  * License:           GPL-2.0+

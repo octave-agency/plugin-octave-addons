@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.4.3
+Stable tag:        2.5.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -24,6 +24,9 @@ Octave Addons ships with a growing collection of focused modules:
     IntersectionObserver JS, with an editable override for each file.
 *   **Breakdance AJAX Filtering** – adds server-backed filtering and
     pagination to Breakdance loops with a Filter Bar.
+*   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
+    every Breakdance Lazy Load toggle off so images, backgrounds and
+    embeds are left to the site's third-party performance plugin.
 *   **Custom Post Types** – renames Posts to Blogs, groups Pages into campaign
     categories, and manages sortable custom content types and taxonomies.
 
@@ -56,6 +59,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.5.0 =
+* Added the always-on Breakdance Lazy Load module, which keeps every Breakdance Lazy Load toggle off so lazy loading stays with the site's third-party performance plugin.
+* New elements are now added with Lazy Load already off, and saved pages have any remaining Lazy Load toggle ignored at render time.
 
 = 2.4.3 =
 * Set the Custom Post Types module to off by default on sites without saved settings.
