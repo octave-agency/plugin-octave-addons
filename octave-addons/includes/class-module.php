@@ -76,6 +76,17 @@ abstract class Octave_Addons_Module {
 
 	}
 
+	/*
+	SETTINGS AVAILABLE WHEN DISABLED
+	-- Allows configuration before activation for modules that opt into it.
+	---------------------------------------------------------- */
+
+	public function settings_available_when_disabled(): bool {
+
+		return false;
+
+	}
+
 	/**
 	 * Called only when the module is enabled. Register hooks here.
 	 * This is where the module does its real work on the site.

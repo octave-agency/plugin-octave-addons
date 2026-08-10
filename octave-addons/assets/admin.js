@@ -39,23 +39,46 @@ ADMIN INTERACTIONS
 	}
 
 	/* Enable toggle → show/hide settings body + update sidebar dot */
-	document.querySelectorAll('.oa-enable-toggle').forEach(function (toggle) {
-		var panelId  = toggle.dataset.panel;
-		var panel    = panelId ? document.getElementById(panelId) : null;
-		if (!panel) return;
+	document.querySelectorAll( '.oa-enable-toggle' ).forEach( function ( toggle ) {
 
-		var body     = panel.querySelector('.oa-settings-body');
-		var locked   = panel.querySelector('.oa-settings-locked');
+		var panelId = toggle.dataset.panel;
+		var panel = panelId ? document.getElementById( panelId ) : null;
 
-		function sync() {
-			var on = toggle.checked;
-			if (body)   body.classList.toggle('oa-hidden', !on);
-			if (locked) locked.classList.toggle('oa-hidden', on);
-			syncNavDots();
+		if ( ! panel ) {
+
+			return;
+
 		}
 
-		toggle.addEventListener('change', sync);
-	});
+		var body = panel.querySelector( '.oa-settings-body' );
+		var locked = panel.querySelector( '.oa-settings-locked' );
+		var alwaysVisible = 'true' === toggle.dataset.settingsAlwaysVisible;
+
+		function sync() {
+
+			var on = toggle.checked;
+			var showSettings = on || alwaysVisible;
+
+			if ( body ) {
+
+				body.classList.toggle( 'oa-hidden', ! showSettings );
+
+			}
+
+			if ( locked ) {
+
+				locked.classList.toggle( 'oa-hidden', showSettings );
+
+			}
+
+			syncNavDots();
+
+		}
+
+		toggle.addEventListener( 'change', sync );
+		sync();
+
+	} );
 
 	/* Field row show/hide — data-controls-row accepts comma-separated IDs */
 	document.querySelectorAll('[data-controls-row]').forEach(function (cb) {

@@ -27,9 +27,25 @@ class Octave_Addons_Admin {
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_deactivation_guard' ] );
 		add_action( 'admin_head',            [ $this, 'print_global_admin_icon_css' ] );
+		add_filter( 'admin_footer_text',      [ $this, 'admin_footer_text' ] );
 		add_filter( 'plugin_action_links_' . OCTAVE_ADDONS_BASENAME, [ $this, 'plugin_action_links' ] );
 		add_action( 'wp_ajax_oa_icon_sets',    [ $this, 'ajax_icon_sets' ] );
 		add_action( 'wp_ajax_oa_icons_search', [ $this, 'ajax_icons_search' ] );
+
+	}
+
+	/*
+	ADMIN FOOTER TEXT
+	-- Replaces the default WordPress credit with the Octave Agency credit.
+	---------------------------------------------------------- */
+
+	public function admin_footer_text(): string {
+
+		return sprintf(
+			/* translators: %s: Octave Agency website link. */
+			__( 'Thank you for working with %s', 'octave-addons' ),
+			'<a href="https://www.octaveagency.com/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Octave Agency', 'octave-addons' ) . '</a>'
+		);
 
 	}
 
@@ -653,8 +669,10 @@ class Octave_Addons_Admin {
 
 							foreach ( $entry['modules'] as $id => $module ) :
 
-								$settings = $module_settings[ $id ];
-								$always   = $module->is_always_enabled();
+								$settings      = $module_settings[ $id ];
+								$always        = $module->is_always_enabled();
+								$configurable  = $module->settings_available_when_disabled();
+								$show_settings = ! empty( $settings['enabled'] ) || $configurable;
 
 							?>
 
@@ -676,8 +694,9 @@ class Octave_Addons_Admin {
 											       name="<?= esc_attr( OCTAVE_ADDONS_OPTION_KEY . '[' . $id . '][enabled]' ); ?>"
 											       value="1"
 											       data-panel="oa-panel-<?= esc_attr( $id ); ?>"
-											       data-module="<?= esc_attr( $id ); ?>"
-											       data-entry="<?= esc_attr( $entry_id ); ?>"
+										       data-module="<?= esc_attr( $id ); ?>"
+										       data-entry="<?= esc_attr( $entry_id ); ?>"
+										       data-settings-always-visible="<?= $configurable ? 'true' : 'false'; ?>"
 											       <?php checked( ! empty( $settings['enabled'] ) ); ?>
 											       <?php disabled( $always ); ?>>
 											<span class="oa-switch-slider"></span>
@@ -685,11 +704,11 @@ class Octave_Addons_Admin {
 									</div>
 								</div>
 
-								<div class="oa-settings-body<?= empty( $settings['enabled'] ) ? ' oa-hidden' : ''; ?><?= $meta['locked'] ? ' oa-locked' : ''; ?>"<?= $meta['locked'] ? ' inert' : ''; ?>>
+								<div class="oa-settings-body<?= $show_settings ? '' : ' oa-hidden'; ?><?= $meta['locked'] ? ' oa-locked' : ''; ?>"<?= $meta['locked'] ? ' inert' : ''; ?>>
 									<?php $module->render_settings( $settings ); ?>
 								</div>
 
-								<div class="oa-settings-locked<?= ! empty( $settings['enabled'] ) ? ' oa-hidden' : ''; ?>">
+								<div class="oa-settings-locked<?= $show_settings ? ' oa-hidden' : ''; ?>">
 									<p><?php esc_html_e( 'Enable this add-on to configure its settings.', 'octave-addons' ); ?></p>
 								</div>
 

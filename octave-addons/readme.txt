@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.6.0
+Stable tag:        2.6.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -60,6 +60,13 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.6.2 =
+* Kept Custom Posts on its stable `tab=custom-post-types` module id so existing settings, integrations, and bookmarks continue to work.
+* Made the Post Types, Post Categories, and Post Fields configuration available before activation; the module switch now controls runtime registration without hiding its setup tools.
+
+= 2.6.1 =
+* Replaced the default WordPress admin footer credit with a linked Octave Agency message.
 
 = 2.6.0 =
 * Renamed Custom Post Types to Custom Posts and split its settings into Post Types, Post Categories, and Post Fields.
