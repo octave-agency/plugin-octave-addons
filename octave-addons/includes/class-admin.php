@@ -41,10 +41,19 @@ class Octave_Addons_Admin {
 
 	public function admin_footer_text(): string {
 
+		$link = sprintf(
+			'<a class="oa-admin-footer-link" href="https://www.octaveagency.com/" target="_blank" rel="noopener noreferrer">%1$s<span class="dashicons dashicons-external" aria-hidden="true"></span><span class="screen-reader-text">%2$s</span></a>',
+			esc_html__( 'Octave Agency', 'octave-addons' ),
+			esc_html__( '(opens in a new tab)', 'octave-addons' )
+		);
+
 		return sprintf(
-			/* translators: %s: Octave Agency website link. */
-			__( 'Thank you for working with %s', 'octave-addons' ),
-			'<a href="https://www.octaveagency.com/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Octave Agency', 'octave-addons' ) . '</a>'
+			'<span class="oa-admin-footer-credit"><span class="oa-admin-footer-mark" aria-hidden="true">OA</span><span class="oa-admin-footer-message">%s</span></span>',
+			sprintf(
+				/* translators: %s: Octave Agency website link. */
+				__( 'Thank you for working with %s', 'octave-addons' ),
+				$link
+			)
 		);
 
 	}
@@ -184,6 +193,21 @@ class Octave_Addons_Admin {
 		?>
 
 		<style id="octave-addons-admin-icon-css">
+			/*
+			OCTAVE BUTTON ICONS
+			---------------------------------------------------------- */
+
+			body.wp-admin button[class*="oa-"] .dashicons::before,
+			body.wp-admin a[class*="oa-"] .dashicons::before,
+			body.wp-admin .oa-app .button .dashicons::before,
+			body.wp-admin .oa-post-fields button .dashicons::before {
+				line-height: 1 !important;
+			}
+
+			/*
+			ADMIN MENU ICON
+			---------------------------------------------------------- */
+
 			#toplevel_page_<?= esc_html( OCTAVE_ADDONS_SLUG ); ?> .wp-menu-image img {
 				width: auto;
 				height: auto;
@@ -192,6 +216,90 @@ class Octave_Addons_Admin {
 				box-sizing: border-box;
 				max-width: 20px;
 				object-fit: contain;
+
+			}
+
+			/*
+			ADMIN FOOTER CREDIT
+			---------------------------------------------------------- */
+
+			#wpfooter #footer-left .oa-admin-footer-credit {
+				display: inline-flex;
+				align-items: center;
+				gap: 9px;
+				min-height: 34px;
+				padding: 4px 12px 4px 5px;
+				color: #b9c0bd;
+				border: 1px solid rgba(43, 255, 134, 0.24);
+				border-radius: 10px;
+				background: linear-gradient(145deg, #171b1a, #0d100f);
+				box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+				font-size: 11.5px;
+				line-height: 1.35;
+			}
+
+			#wpfooter #footer-left .oa-admin-footer-mark {
+				display: inline-grid;
+				place-items: center;
+				width: 26px;
+				height: 26px;
+				flex-shrink: 0;
+				color: #07100b;
+				border-radius: 7px;
+				background: linear-gradient(135deg, #5dff9f, #2bff86);
+				box-shadow: 0 0 16px rgba(43, 255, 134, 0.18);
+				font-size: 9px;
+				font-weight: 800;
+				letter-spacing: -0.02em;
+			}
+
+			#wpfooter #footer-left .oa-admin-footer-message {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+			}
+
+			#wpfooter #footer-left .oa-admin-footer-link {
+				display: inline-flex;
+				align-items: center;
+				gap: 3px;
+				color: #5dff9f;
+				font-weight: 650;
+				text-decoration: none;
+				transition: color 0.15s ease, text-shadow 0.15s ease;
+			}
+
+			#wpfooter #footer-left .oa-admin-footer-link:hover {
+				color: #fff;
+				text-shadow: 0 0 12px rgba(43, 255, 134, 0.45);
+			}
+
+			#wpfooter #footer-left .oa-admin-footer-link:focus {
+				color: #fff;
+				border-radius: 3px;
+				outline: 2px solid #2bff86;
+				outline-offset: 2px;
+				box-shadow: none;
+			}
+
+			#wpfooter #footer-left .oa-admin-footer-link .dashicons {
+				width: 13px;
+				height: 13px;
+				font-size: 13px;
+				line-height: 13px;
+			}
+
+			@media (max-width: 782px) {
+
+				#wpfooter #footer-left .oa-admin-footer-credit {
+					align-items: flex-start;
+				}
+
+				#wpfooter #footer-left .oa-admin-footer-message {
+					align-items: flex-start;
+					flex-direction: column;
+					gap: 1px;
+				}
 
 			}
 		</style>

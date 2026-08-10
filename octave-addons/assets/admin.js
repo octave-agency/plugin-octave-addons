@@ -1299,6 +1299,11 @@ ADMIN INTERACTIONS
 			var enabledToggle = item.querySelector( '.oa-cpt-enabled-toggle' );
 			var removeButton = item.querySelector( '.oa-cpt-remove' );
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
+			var iconValue = item.querySelector( '.oa-cpt-icon-value' );
+			var iconToggle = item.querySelector( '.oa-cpt-icon-toggle' );
+			var iconOptions = item.querySelector( '.oa-cpt-icon-options' );
+			var iconLabel = item.querySelector( '.oa-cpt-icon-selection strong' );
+			var iconCode = item.querySelector( '.oa-cpt-icon-selection code' );
 			var nameInput = item.querySelector( '[data-cpt-field="name"]' );
 			var singularInput = item.querySelector( '[data-cpt-field="singular_name"]' );
 			var keyInput = item.querySelector( '[data-cpt-field="post_type"]' );
@@ -1308,6 +1313,41 @@ ADMIN INTERACTIONS
 			var keyPreview = item.querySelector( '.oa-cpt-key-preview' );
 			var isNew = 'false' === item.dataset.saved;
 			var keyIsAutomatic = isNew;
+
+			function setIcon( icon, label ) {
+
+				iconValue.value = icon;
+				iconLabel.textContent = label;
+				iconCode.textContent = icon;
+
+				item.querySelectorAll( '.oa-cpt-live-icon' ).forEach( function ( preview ) {
+
+					Array.from( preview.classList ).forEach( function ( className ) {
+
+						if ( 0 === className.indexOf( 'dashicons-' ) ) {
+
+							preview.classList.remove( className );
+
+						}
+
+					} );
+
+					preview.classList.add( icon );
+
+				} );
+
+				iconOptions.querySelectorAll( '.oa-cpt-icon-option' ).forEach( function ( option ) {
+
+					var selected = option.dataset.icon === icon;
+
+					option.classList.toggle( 'is-selected', selected );
+					option.setAttribute( 'aria-selected', selected ? 'true' : 'false' );
+
+				} );
+
+				iconValue.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+			}
 
 			function syncEnabledState() {
 
@@ -1339,6 +1379,28 @@ ADMIN INTERACTIONS
 			archiveToggle.addEventListener( 'change', function () {
 
 				syncConditionalFields( item );
+
+			} );
+
+			iconToggle.addEventListener( 'click', function () {
+
+				var opening = iconOptions.classList.contains( 'oa-hidden' );
+
+				iconOptions.classList.toggle( 'oa-hidden', ! opening );
+				iconToggle.setAttribute( 'aria-expanded', opening ? 'true' : 'false' );
+
+			} );
+
+			iconOptions.querySelectorAll( '.oa-cpt-icon-option' ).forEach( function ( option ) {
+
+				option.addEventListener( 'click', function () {
+
+					setIcon( option.dataset.icon, option.dataset.label );
+					iconOptions.classList.add( 'oa-hidden' );
+					iconToggle.setAttribute( 'aria-expanded', 'false' );
+					iconToggle.focus();
+
+				} );
 
 			} );
 
@@ -1587,6 +1649,28 @@ ADMIN INTERACTIONS
 
 		list.querySelectorAll( '.oa-cpt-item' ).forEach( wireItem );
 		reindexItems();
+
+	} );
+
+	/*
+	SCHEMA ASSIGNMENTS
+	-- Reflects reusable definition assignments without opening their editors.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '.oa-assignment-card' ).forEach( function ( card ) {
+
+		var input = card.querySelector( '.oa-assignment-toggle input' );
+		var label = card.querySelector( '.oa-assignment-toggle > span:first-child' );
+
+		function syncAssignment() {
+
+			card.classList.toggle( 'is-assigned', input.checked );
+			label.textContent = input.checked ? card.dataset.assignedLabel : card.dataset.unassignedLabel;
+
+		}
+
+		input.addEventListener( 'change', syncAssignment );
+		syncAssignment();
 
 	} );
 

@@ -159,6 +159,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'name'                   => '',
 			'singular_name'          => '',
 			'post_type'              => 'oa_content',
+			'menu_icon'              => 'dashicons-admin-post',
 			'post_slug'              => '',
 			'public'                 => true,
 			'has_archive'            => true,
@@ -180,68 +181,90 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		?>
 
-		<div class="notice notice-info inline oa-inline-notice">
-			<p><strong><?php esc_html_e( 'Built-in content naming', 'octave-addons' ); ?></strong></p>
-			<p><?php esc_html_e( 'WordPress Posts are displayed as Blogs in the admin. The underlying post type remains “post”, so existing content, queries, templates and URLs continue to work.', 'octave-addons' ); ?></p>
-		</div>
+		<section class="oa-builtin-content">
+			<div class="oa-builtin-content-head">
+				<div>
+					<span class="oa-panel-kicker"><?php esc_html_e( 'WordPress content', 'octave-addons' ); ?></span>
+					<h3><?php esc_html_e( 'Built-in content', 'octave-addons' ); ?></h3>
+					<p><?php esc_html_e( 'Small enhancements for the Posts and Pages already provided by WordPress.', 'octave-addons' ); ?></p>
+				</div>
+				<span class="oa-builtin-content-badge"><?php esc_html_e( 'Core content', 'octave-addons' ); ?></span>
+			</div>
 
-		<table class="form-table oa-form-table" role="presentation">
+			<div class="oa-builtin-content-grid">
+				<article class="oa-builtin-content-card">
+					<div class="oa-builtin-content-icon" aria-hidden="true">
+						<span class="dashicons dashicons-admin-post"></span>
+					</div>
+					<div class="oa-builtin-content-copy">
+						<span class="oa-builtin-content-type"><?php esc_html_e( 'Posts', 'octave-addons' ); ?></span>
+						<h4><?php esc_html_e( 'Displayed as Blogs', 'octave-addons' ); ?></h4>
+						<p><?php esc_html_e( 'Only the admin labels change. The post type remains “post”, so content, queries, templates and URLs continue working normally.', 'octave-addons' ); ?></p>
+					</div>
+					<span class="oa-builtin-content-status">
+						<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
+						<?php esc_html_e( 'Always applied', 'octave-addons' ); ?>
+					</span>
+				</article>
 
-			<?php
-
-			Octave_Addons_Fields::section(
-				[
-					'label' => __( 'Pages', 'octave-addons' ),
-					'first' => true,
-				]
-			);
-
-			Octave_Addons_Fields::row(
-				[
-					'label' => __( 'Page Categories', 'octave-addons' ),
-					'field' => function () use ( $settings, $page_terms_url ) {
-
-						Octave_Addons_Fields::switch_field(
-							[
-								'name'    => $this->field_name( 'page_categories' ),
-								'checked' => ! empty( $settings['page_categories'] ),
-								'help'    => __( 'Adds an admin-only hierarchical category taxonomy to Pages.', 'octave-addons' ),
-							]
-						);
-
-						if ( empty( $settings['page_categories'] ) ) {
-
-							return;
-
-						}
-
-						?>
-
-						<span class="oa-help">
-							<a href="<?= esc_url( $page_terms_url ); ?>"><?php esc_html_e( 'Manage page categories', 'octave-addons' ); ?></a>
-						</span>
+				<article class="oa-builtin-content-card">
+					<div class="oa-builtin-content-icon" aria-hidden="true">
+						<span class="dashicons dashicons-admin-page"></span>
+					</div>
+					<div class="oa-builtin-content-copy">
+						<span class="oa-builtin-content-type"><?php esc_html_e( 'Pages', 'octave-addons' ); ?></span>
+						<h4 id="oa-page-categories-label"><?php esc_html_e( 'Page Categories', 'octave-addons' ); ?></h4>
+						<p><?php esc_html_e( 'Add an admin-only hierarchical category system for organising Pages without creating public category archives.', 'octave-addons' ); ?></p>
 
 						<?php
 
-					},
-				]
-			);
+						if ( ! empty( $settings['page_categories'] ) ) :
 
-			?>
+						?>
 
-		</table>
+						<a href="<?= esc_url( $page_terms_url ); ?>" class="oa-builtin-content-link">
+							<?php esc_html_e( 'Manage page categories', 'octave-addons' ); ?>
+							<span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+						</a>
+
+						<?php
+
+						endif;
+
+						?>
+
+					</div>
+					<label class="oa-switch oa-builtin-content-switch">
+						<input type="checkbox" name="<?= esc_attr( $this->field_name( 'page_categories' ) ); ?>" value="1" aria-labelledby="oa-page-categories-label"<?= checked( ! empty( $settings['page_categories'] ), true, false ); ?>>
+						<span class="oa-switch-slider"></span>
+					</label>
+				</article>
+			</div>
+		</section>
+
+		<div class="oa-content-area-divider" aria-hidden="true">
+			<span></span>
+			<strong><?php esc_html_e( 'Custom content types', 'octave-addons' ); ?></strong>
+			<span></span>
+		</div>
 
 		<div class="oa-cpt-section oa-custom-posts-box">
 			<div class="oa-cpt-section-head">
 				<div>
-					<span class="oa-panel-kicker"><?php esc_html_e( 'Custom Posts', 'octave-addons' ); ?></span>
+					<span class="oa-panel-kicker"><?php esc_html_e( 'Custom content types', 'octave-addons' ); ?></span>
 					<h3><?php esc_html_e( 'Post Types', 'octave-addons' ); ?></h3>
 					<p><?php esc_html_e( 'Add multiple content types and drag them into the order they should appear in the WordPress admin menu.', 'octave-addons' ); ?></p>
 				</div>
-				<button type="button" class="button oa-cpt-add">
-					<span class="oa-cpt-add-icon" aria-hidden="true">+</span>
-					<?php esc_html_e( 'Add post type', 'octave-addons' ); ?>
-				</button>
+				<div class="oa-cpt-section-actions">
+					<a href="<?= esc_url( $this->schema_url( 'library' ) ); ?>" class="button oa-cpt-schema-link">
+						<span class="dashicons dashicons-database" aria-hidden="true"></span>
+						<?php esc_html_e( 'Content schema library', 'octave-addons' ); ?>
+					</a>
+					<button type="button" class="button oa-cpt-add">
+						<span class="oa-cpt-add-icon" aria-hidden="true">+</span>
+						<?php esc_html_e( 'Add post type', 'octave-addons' ); ?>
+					</button>
+				</div>
 			</div>
 
 			<div class="oa-cpt-list" data-empty-text="<?php esc_attr_e( 'No custom post types have been added.', 'octave-addons' ); ?>">
@@ -282,6 +305,23 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( (string) $_GET['section'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only settings navigation.
 		$key = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( (string) $_GET['post_type'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only settings navigation.
+		$definition = isset( $_GET['definition'] ) ? sanitize_key( wp_unslash( (string) $_GET['definition'] ) ) : '';
+
+		if ( 'library' === $section ) {
+
+			return [ 'section' => $section ];
+
+		}
+
+		if ( in_array( $section, [ 'taxonomy', 'field' ], true ) && '' !== $definition ) {
+
+			return [
+				'section'    => $section,
+				'definition' => $definition,
+			];
+
+		}
 
 		if ( ! in_array( $section, [ 'categories', 'fields' ], true ) || '' === $key ) {
 
@@ -313,13 +353,33 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	protected function render_focused_editor( array $editor, array $settings, array $post_types, array $taxonomies, array $fields, array $post_type_options ): void {
 
-		$post_type = $editor['post_type'];
-		$key       = $post_type['post_type'];
-		$section   = $editor['section'];
-		$back_url  = $this->settings_url();
+		$section = $editor['section'];
 
 		$this->render_hidden_value( $this->field_name( 'page_categories' ), ! empty( $settings['page_categories'] ) ? '1' : '0' );
 		$this->render_hidden_collection( 'custom_post_types', $post_types );
+
+		if ( 'library' === $section ) {
+
+			$this->render_schema_library( $taxonomies, $fields, $post_type_options );
+			$this->render_preserved_collection( 'custom_taxonomies', $taxonomies );
+			$this->render_preserved_collection( 'custom_fields', $fields );
+
+			return;
+
+		}
+
+		if ( in_array( $section, [ 'taxonomy', 'field' ], true ) ) {
+
+			$this->render_single_definition_editor( $editor, $taxonomies, $fields, $post_type_options );
+
+			return;
+
+		}
+
+		$post_type = $editor['post_type'];
+		$key       = $post_type['post_type'];
+		$menu_icon = $post_type['menu_icon'];
+		$back_url  = $this->settings_url();
 
 		?>
 
@@ -328,9 +388,22 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
 				<?php esc_html_e( 'All post types', 'octave-addons' ); ?>
 			</a>
+			<div class="oa-cpt-editor-context">
+				<div class="oa-cpt-editor-context-icon" aria-hidden="true">
+					<span class="dashicons <?= esc_attr( $menu_icon ); ?>"></span>
+				</div>
+				<div class="oa-cpt-editor-context-copy">
+					<span class="oa-panel-kicker"><?php esc_html_e( 'Editing custom post type', 'octave-addons' ); ?></span>
+					<div class="oa-cpt-editor-context-name">
+						<h3><?= esc_html( $post_type['name'] ); ?></h3>
+						<code><?= esc_html( $key ); ?></code>
+					</div>
+					<p><?= sprintf( esc_html__( 'These settings apply to every %s entry.', 'octave-addons' ), esc_html( strtolower( $post_type['singular_name'] ) ) ); ?></p>
+				</div>
+				<span class="oa-cpt-editor-current-section"><?= 'categories' === $section ? esc_html__( 'Editing categories', 'octave-addons' ) : esc_html__( 'Editing content fields', 'octave-addons' ); ?></span>
+			</div>
 			<div class="oa-cpt-editor-title">
-				<span class="oa-panel-kicker"><?= esc_html( $post_type['name'] ); ?></span>
-				<h3><?= 'categories' === $section ? esc_html__( 'Edit post categories', 'octave-addons' ) : esc_html__( 'Edit content fields', 'octave-addons' ); ?></h3>
+				<h4><?= 'categories' === $section ? esc_html__( 'Post categories', 'octave-addons' ) : esc_html__( 'Content fields', 'octave-addons' ); ?></h4>
 				<p><?= 'categories' === $section ? esc_html__( 'Create the categories used by this post type. A category can also be shared with other content areas.', 'octave-addons' ) : esc_html__( 'Build the content form editors will complete when creating this type of post.', 'octave-addons' ); ?></p>
 			</div>
 			<nav class="oa-cpt-editor-tabs" aria-label="<?php esc_attr_e( 'Post type content settings', 'octave-addons' ); ?>">
@@ -343,23 +416,352 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		if ( 'categories' === $section ) {
 
-			$visible = $this->definitions_for_post_type( $taxonomies, $key );
-			$hidden  = $this->definitions_without_post_type( $taxonomies, $key );
-
-			$this->render_taxonomy_editor( $visible, $post_type_options, $key );
-			$this->render_preserved_collection( 'custom_taxonomies', $hidden );
+			$this->render_assignment_manager( 'custom_taxonomies', $taxonomies, $key, $post_type_options );
 			$this->render_preserved_collection( 'custom_fields', $fields );
 
 			return;
 
 		}
 
-		$visible = $this->definitions_for_post_type( $fields, $key );
-		$hidden  = $this->definitions_without_post_type( $fields, $key );
-
-		$this->render_field_editor( $visible, $post_type_options, $key );
-		$this->render_preserved_collection( 'custom_fields', $hidden );
+		$this->render_assignment_manager( 'custom_fields', $fields, $key, $post_type_options );
 		$this->render_preserved_collection( 'custom_taxonomies', $taxonomies );
+
+	}
+
+	/*
+	RENDER SCHEMA LIBRARY
+	-- Lists reusable definitions without exposing their full settings at once.
+	---------------------------------------------------------- */
+
+	protected function render_schema_library( array $taxonomies, array $fields, array $post_types ): void {
+
+		?>
+
+		<div class="oa-schema-page-head">
+			<a href="<?= esc_url( $this->settings_url() ); ?>" class="oa-cpt-back-link"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span><?php esc_html_e( 'All post types', 'octave-addons' ); ?></a>
+			<span class="oa-panel-kicker"><?php esc_html_e( 'Reusable content definitions', 'octave-addons' ); ?></span>
+			<h3><?php esc_html_e( 'Content schema library', 'octave-addons' ); ?></h3>
+			<p><?php esc_html_e( 'Define each category or field once, then attach it to every content type that needs it. Open one definition to change its settings.', 'octave-addons' ); ?></p>
+		</div>
+
+		<?php
+
+		$this->render_schema_collection( 'custom_taxonomies', $taxonomies, $post_types );
+		$this->render_schema_collection( 'custom_fields', $fields, $post_types );
+
+	}
+
+	/*
+	RENDER SCHEMA COLLECTION
+	-- Outputs compact taxonomy or field summary cards.
+	---------------------------------------------------------- */
+
+	protected function render_schema_collection( string $collection, array $definitions, array $post_types ): void {
+
+		$is_taxonomy = 'custom_taxonomies' === $collection;
+		$title       = $is_taxonomy ? __( 'Post categories', 'octave-addons' ) : __( 'Content fields', 'octave-addons' );
+		$description = $is_taxonomy
+			? __( 'Reusable category and tag structures shared between content types.', 'octave-addons' )
+			: __( 'Reusable typed values, including groups and repeaters, shared between post editors.', 'octave-addons' );
+		$add_url     = $this->schema_url( $is_taxonomy ? 'taxonomy' : 'field', 'new' );
+
+		?>
+
+		<section class="oa-schema-collection">
+			<div class="oa-schema-collection-head">
+				<div>
+					<h4><?= esc_html( $title ); ?></h4>
+					<p><?= esc_html( $description ); ?></p>
+				</div>
+				<a href="<?= esc_url( $add_url ); ?>" class="button oa-schema-add"><span aria-hidden="true">+</span><?= $is_taxonomy ? esc_html__( 'Add category', 'octave-addons' ) : esc_html__( 'Add field', 'octave-addons' ); ?></a>
+			</div>
+
+			<div class="oa-schema-card-grid">
+
+				<?php
+
+				if ( empty( $definitions ) ) :
+
+				?>
+
+				<div class="oa-schema-empty"><?= $is_taxonomy ? esc_html__( 'No reusable post categories have been created.', 'octave-addons' ) : esc_html__( 'No reusable content fields have been created.', 'octave-addons' ); ?></div>
+
+				<?php
+
+				endif;
+
+				foreach ( $definitions as $definition ) {
+
+					$this->render_schema_card( $collection, $definition, $post_types );
+
+				}
+
+				?>
+
+			</div>
+		</section>
+
+		<?php
+
+	}
+
+	/*
+	RENDER SCHEMA CARD
+	-- Summarizes one reusable definition and every assigned content area.
+	---------------------------------------------------------- */
+
+	protected function render_schema_card( string $collection, array $definition, array $post_types ): void {
+
+		$is_taxonomy = 'custom_taxonomies' === $collection;
+		$key         = $is_taxonomy ? $definition['taxonomy'] : $definition['name'];
+		$label       = $is_taxonomy ? $definition['name'] : $definition['label'];
+		$type        = $is_taxonomy
+			? ( ! empty( $definition['hierarchical'] ) ? __( 'Category', 'octave-addons' ) : __( 'Tag', 'octave-addons' ) )
+			: ( $this->field_types()[ $definition['type'] ] ?? __( 'Field', 'octave-addons' ) );
+		$edit_url    = $this->schema_url( $is_taxonomy ? 'taxonomy' : 'field', $key );
+		$assigned    = is_array( $definition['post_types'] ?? null ) ? $definition['post_types'] : [];
+
+		?>
+
+		<article class="oa-schema-card">
+			<div class="oa-schema-card-icon" aria-hidden="true"><span class="dashicons <?= $is_taxonomy ? 'dashicons-category' : 'dashicons-feedback'; ?>"></span></div>
+			<div class="oa-schema-card-copy">
+				<div class="oa-schema-card-title"><strong><?= esc_html( $label ); ?></strong><span><?= esc_html( $type ); ?></span></div>
+				<code><?= esc_html( $key ); ?></code>
+				<div class="oa-schema-assignments">
+
+					<?php
+
+					foreach ( $assigned as $post_type ) {
+
+						if ( isset( $post_types[ $post_type ] ) ) {
+
+							echo '<span>' . esc_html( $post_types[ $post_type ] ) . '</span>';
+
+						}
+
+					}
+
+					if ( empty( $assigned ) ) {
+
+						echo '<span class="is-unassigned">' . esc_html__( 'Not assigned', 'octave-addons' ) . '</span>';
+
+					}
+
+					?>
+
+				</div>
+			</div>
+			<a href="<?= esc_url( $edit_url ); ?>" class="button oa-schema-edit"><?php esc_html_e( 'Edit', 'octave-addons' ); ?><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></a>
+		</article>
+
+		<?php
+
+	}
+
+	/*
+	RENDER ASSIGNMENT MANAGER
+	-- Lets one post type attach reusable definitions without opening editors.
+	---------------------------------------------------------- */
+
+	protected function render_assignment_manager( string $collection, array $definitions, string $post_type, array $post_types ): void {
+
+		$is_taxonomy = 'custom_taxonomies' === $collection;
+		$title       = $is_taxonomy ? __( 'Available post categories', 'octave-addons' ) : __( 'Available content fields', 'octave-addons' );
+		$add_url     = $this->schema_url( $is_taxonomy ? 'taxonomy' : 'field', 'new' );
+
+		?>
+
+		<section class="oa-assignment-manager">
+			<div class="oa-assignment-manager-head">
+				<div>
+					<h3><?= esc_html( $title ); ?></h3>
+					<p><?php esc_html_e( 'Switch a definition on here to use it for this post type. Its configuration remains shared everywhere it is assigned.', 'octave-addons' ); ?></p>
+				</div>
+				<div class="oa-assignment-manager-actions">
+					<a href="<?= esc_url( $this->schema_url( 'library' ) ); ?>" class="button oa-schema-library-link"><?php esc_html_e( 'Open schema library', 'octave-addons' ); ?></a>
+					<a href="<?= esc_url( $add_url ); ?>" class="button oa-schema-add"><span aria-hidden="true">+</span><?= $is_taxonomy ? esc_html__( 'New category', 'octave-addons' ) : esc_html__( 'New field', 'octave-addons' ); ?></a>
+				</div>
+			</div>
+
+			<div class="oa-assignment-manager-list">
+
+				<?php
+
+				if ( empty( $definitions ) ) :
+
+				?>
+
+				<div class="oa-schema-empty"><?php esc_html_e( 'Nothing is available yet. Create the first reusable definition to get started.', 'octave-addons' ); ?></div>
+
+				<?php
+
+				endif;
+
+				foreach ( array_values( $definitions ) as $index => $definition ) {
+
+					$this->render_assignment_card( $collection, (string) $index, $definition, $post_type, $post_types );
+
+				}
+
+				?>
+
+			</div>
+		</section>
+
+		<?php
+
+	}
+
+	/*
+	RENDER ASSIGNMENT CARD
+	-- Preserves definition data while exposing one post-type assignment switch.
+	---------------------------------------------------------- */
+
+	protected function render_assignment_card( string $collection, string $index, array $definition, string $post_type, array $post_types ): void {
+
+		$is_taxonomy = 'custom_taxonomies' === $collection;
+		$key         = $is_taxonomy ? $definition['taxonomy'] : $definition['name'];
+		$label       = $is_taxonomy ? $definition['name'] : $definition['label'];
+		$type        = $is_taxonomy
+			? ( ! empty( $definition['hierarchical'] ) ? __( 'Category', 'octave-addons' ) : __( 'Tag', 'octave-addons' ) )
+			: ( $this->field_types()[ $definition['type'] ] ?? __( 'Field', 'octave-addons' ) );
+		$assigned    = is_array( $definition['post_types'] ?? null ) ? $definition['post_types'] : [];
+		$edit_url    = $this->schema_url( $is_taxonomy ? 'taxonomy' : 'field', $key );
+
+		foreach ( $definition as $definition_key => $value ) {
+
+			if ( 'post_types' !== $definition_key ) {
+
+				$this->render_hidden_value( $this->collection_field_name( $collection, $index, $definition_key ), $value );
+
+			}
+
+		}
+
+		foreach ( $assigned as $assigned_post_type ) {
+
+			if ( $post_type !== $assigned_post_type ) {
+
+				$this->render_hidden_value( $this->collection_field_name( $collection, $index, 'post_types' ) . '[]', $assigned_post_type );
+
+			}
+
+		}
+
+		?>
+
+		<article class="oa-assignment-card<?= in_array( $post_type, $assigned, true ) ? ' is-assigned' : ''; ?>" data-assigned-label="<?php esc_attr_e( 'Used here', 'octave-addons' ); ?>" data-unassigned-label="<?php esc_attr_e( 'Add here', 'octave-addons' ); ?>">
+			<div class="oa-schema-card-icon" aria-hidden="true"><span class="dashicons <?= $is_taxonomy ? 'dashicons-category' : 'dashicons-feedback'; ?>"></span></div>
+			<div class="oa-schema-card-copy">
+				<div class="oa-schema-card-title"><strong><?= esc_html( $label ); ?></strong><span><?= esc_html( $type ); ?></span></div>
+				<code><?= esc_html( $key ); ?></code>
+				<div class="oa-schema-assignments">
+
+					<?php
+
+					foreach ( $assigned as $assigned_post_type ) {
+
+						if ( $post_type !== $assigned_post_type && isset( $post_types[ $assigned_post_type ] ) ) {
+
+							echo '<span>' . esc_html( $post_types[ $assigned_post_type ] ) . '</span>';
+
+						}
+
+					}
+
+					?>
+
+				</div>
+			</div>
+			<a href="<?= esc_url( $edit_url ); ?>" class="oa-assignment-edit"><?php esc_html_e( 'Edit definition', 'octave-addons' ); ?></a>
+			<label class="oa-assignment-toggle">
+				<span><?= in_array( $post_type, $assigned, true ) ? esc_html__( 'Used here', 'octave-addons' ) : esc_html__( 'Add here', 'octave-addons' ); ?></span>
+				<span class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( $collection, $index, 'post_types' ) ); ?>[]" value="<?= esc_attr( $post_type ); ?>"<?= checked( in_array( $post_type, $assigned, true ), true, false ); ?>><span class="oa-switch-slider"></span></span>
+			</label>
+		</article>
+
+		<?php
+
+	}
+
+	/*
+	RENDER SINGLE DEFINITION EDITOR
+	-- Opens exactly one reusable taxonomy or field definition for editing.
+	---------------------------------------------------------- */
+
+	protected function render_single_definition_editor( array $editor, array $taxonomies, array $fields, array $post_types ): void {
+
+		$is_taxonomy = 'taxonomy' === $editor['section'];
+		$collection  = $is_taxonomy ? 'custom_taxonomies' : 'custom_fields';
+		$definitions = $is_taxonomy ? $taxonomies : $fields;
+		$definition  = $editor['definition'];
+		$is_new      = 'new' === $definition;
+		$selected    = null;
+		$remaining   = [];
+
+		foreach ( $definitions as $item ) {
+
+			$item_key = $is_taxonomy ? $item['taxonomy'] : $item['name'];
+
+			if ( ! $is_new && $definition === $item_key ) {
+
+				$selected = $item;
+
+			} else {
+
+				$remaining[] = $item;
+
+			}
+
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress adds this after a successful Settings API save.
+		if ( $is_new && ! empty( $_GET['settings-updated'] ) && ! empty( $definitions ) ) {
+
+			$selected  = array_shift( $remaining );
+			$is_new    = false;
+			$definition = $is_taxonomy ? $selected['taxonomy'] : $selected['name'];
+
+		}
+
+		?>
+
+		<div class="oa-schema-page-head oa-schema-page-head--editor">
+			<a href="<?= esc_url( $this->schema_url( 'library' ) ); ?>" class="oa-cpt-back-link"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span><?php esc_html_e( 'Content schema library', 'octave-addons' ); ?></a>
+			<span class="oa-panel-kicker"><?= $is_taxonomy ? esc_html__( 'Reusable post category', 'octave-addons' ) : esc_html__( 'Reusable content field', 'octave-addons' ); ?></span>
+			<h3><?= $is_new ? ( $is_taxonomy ? esc_html__( 'Add post category', 'octave-addons' ) : esc_html__( 'Add content field', 'octave-addons' ) ) : sprintf( esc_html__( 'Editing: %s', 'octave-addons' ), esc_html( $is_taxonomy ? $selected['name'] : $selected['label'] ) ); ?></h3>
+			<p><?php esc_html_e( 'Changes to this definition apply everywhere it is assigned. Use the assignment section to add it to more content types.', 'octave-addons' ); ?></p>
+		</div>
+
+		<?php
+
+		if ( ! $is_new && null === $selected ) {
+
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'This definition could not be found. Return to the schema library and choose an available item.', 'octave-addons' ) . '</p></div>';
+			$this->render_preserved_collection( $collection, $definitions );
+
+		} elseif ( $is_taxonomy ) {
+
+			$this->render_taxonomy_editor( null === $selected ? [] : [ $selected ], $post_types, '', true, $is_new );
+			$this->render_preserved_collection( 'custom_taxonomies', $remaining );
+
+		} else {
+
+			$this->render_field_editor( null === $selected ? [] : [ $selected ], $post_types, '', true, $is_new );
+			$this->render_preserved_collection( 'custom_fields', $remaining );
+
+		}
+
+		if ( $is_taxonomy ) {
+
+			$this->render_preserved_collection( 'custom_fields', $fields );
+
+		} else {
+
+			$this->render_preserved_collection( 'custom_taxonomies', $taxonomies );
+
+		}
 
 	}
 
@@ -373,6 +775,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$name                   = (string) ( $post_type['name'] ?? '' );
 		$singular_name          = (string) ( $post_type['singular_name'] ?? '' );
 		$key                    = (string) ( $post_type['post_type'] ?? '' );
+		$menu_icon              = (string) ( $post_type['menu_icon'] ?? 'dashicons-admin-post' );
 		$post_slug              = (string) ( $post_type['post_slug'] ?? '' );
 		$archive_slug           = (string) ( $post_type['archive_slug'] ?? '' );
 		$public                 = ! empty( $post_type['public'] );
@@ -380,6 +783,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$enabled                = ! empty( $post_type['enabled'] );
 		$categories_url         = $saved ? $this->editor_url( $key, 'categories' ) : '';
 		$fields_url             = $saved ? $this->editor_url( $key, 'fields' ) : '';
+		$dashicons              = $this->dashicons();
 
 		?>
 
@@ -396,6 +800,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				</button>
 				<button type="button" class="oa-cpt-expand" aria-expanded="false">
 					<span class="oa-cpt-expand-copy">
+						<span class="dashicons <?= esc_attr( $menu_icon ); ?> oa-cpt-item-icon oa-cpt-live-icon" aria-hidden="true"></span>
 						<strong class="oa-cpt-item-title"><?= esc_html( '' !== $name ? $name : __( 'New post type', 'octave-addons' ) ); ?></strong>
 						<span class="oa-cpt-key-preview"><?= esc_html( $key ); ?></span>
 					</span>
@@ -454,6 +859,42 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 							<input type="text" data-cpt-field="post_type" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_type' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="20" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>>
 							<small><?= $saved ? esc_html__( 'Permanent after saving to protect existing content.', 'octave-addons' ) : esc_html__( 'Use an oa_ prefix; maximum 20 characters.', 'octave-addons' ); ?></small>
 						</label>
+
+						<div class="oa-cpt-field oa-cpt-field--full oa-cpt-icon-field">
+							<span><?php esc_html_e( 'Admin menu icon', 'octave-addons' ); ?></span>
+							<input type="hidden" class="oa-cpt-icon-value" name="<?= esc_attr( $this->cpt_field_name( $index, 'menu_icon' ) ); ?>" value="<?= esc_attr( $menu_icon ); ?>">
+							<div class="oa-cpt-icon-picker">
+								<div class="oa-cpt-icon-selection">
+									<span class="oa-cpt-icon-preview" aria-hidden="true"><span class="dashicons <?= esc_attr( $menu_icon ); ?> oa-cpt-live-icon"></span></span>
+									<div>
+										<strong><?= esc_html( $dashicons[ $menu_icon ] ?? __( 'Posts', 'octave-addons' ) ); ?></strong>
+										<code><?= esc_html( $menu_icon ); ?></code>
+									</div>
+									<button type="button" class="button oa-cpt-icon-toggle" aria-expanded="false"><?php esc_html_e( 'Choose icon', 'octave-addons' ); ?><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button>
+								</div>
+								<div class="oa-cpt-icon-options oa-hidden" role="listbox" aria-label="<?php esc_attr_e( 'WordPress admin menu icons', 'octave-addons' ); ?>">
+
+									<?php
+
+									foreach ( $dashicons as $icon => $icon_label ) :
+
+									?>
+
+									<button type="button" class="oa-cpt-icon-option<?= $menu_icon === $icon ? ' is-selected' : ''; ?>" data-icon="<?= esc_attr( $icon ); ?>" data-label="<?= esc_attr( $icon_label ); ?>" role="option" aria-selected="<?= $menu_icon === $icon ? 'true' : 'false'; ?>" title="<?= esc_attr( $icon_label ); ?>">
+										<span class="dashicons <?= esc_attr( $icon ); ?>" aria-hidden="true"></span>
+										<span><?= esc_html( $icon_label ); ?></span>
+									</button>
+
+									<?php
+
+									endforeach;
+
+									?>
+
+								</div>
+							</div>
+							<small><?php esc_html_e( 'Uses WordPress Dashicons, so no additional icon files are loaded.', 'octave-addons' ); ?></small>
+						</div>
 					</div>
 				</fieldset>
 
@@ -510,7 +951,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	-- Displays reusable category definitions and multi-post assignments.
 	---------------------------------------------------------- */
 
-	protected function render_taxonomy_editor( array $taxonomies, array $post_types, string $primary_post_type = '' ): void {
+	protected function render_taxonomy_editor( array $taxonomies, array $post_types, string $primary_post_type = '', bool $single = false, bool $start_new = false ): void {
 
 		$template = [
 			'enabled'      => true,
@@ -523,16 +964,22 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'post_types'   => '' !== $primary_post_type ? [ $primary_post_type ] : [],
 		];
 
+		if ( $start_new ) {
+
+			$taxonomies = [ $template ];
+
+		}
+
 		?>
 
-		<div class="oa-cpt-section oa-custom-posts-box oa-collection" data-collection="custom_taxonomies" data-new-label="<?php esc_attr_e( 'New post category', 'octave-addons' ); ?>">
+		<div class="oa-cpt-section oa-custom-posts-box oa-collection<?= $single ? ' oa-single-definition' : ''; ?>" data-collection="custom_taxonomies" data-new-label="<?php esc_attr_e( 'New post category', 'octave-addons' ); ?>">
 			<div class="oa-cpt-section-head">
 				<div>
 					<span class="oa-panel-kicker"><?php esc_html_e( 'Custom Posts', 'octave-addons' ); ?></span>
 					<h3><?php esc_html_e( 'Post Categories', 'octave-addons' ); ?></h3>
 					<p><?php esc_html_e( 'Create reusable taxonomies, then assign each one to any combination of posts, pages, or custom post types.', 'octave-addons' ); ?></p>
 				</div>
-				<button type="button" class="button oa-cpt-add oa-collection-add"><span class="oa-cpt-add-icon" aria-hidden="true">+</span><?php esc_html_e( 'Add post category', 'octave-addons' ); ?></button>
+				<button type="button" class="button oa-cpt-add oa-collection-add<?= $single ? ' oa-hidden' : ''; ?>"><span class="oa-cpt-add-icon" aria-hidden="true">+</span><?php esc_html_e( 'Add post category', 'octave-addons' ); ?></button>
 			</div>
 
 			<div class="oa-cpt-list oa-collection-list" data-empty-text="<?php esc_attr_e( 'No custom post categories have been added.', 'octave-addons' ); ?>">
@@ -541,7 +988,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 				foreach ( $taxonomies as $index => $taxonomy ) {
 
-					$this->render_taxonomy_card( (string) $index, $taxonomy, $post_types, true, $primary_post_type );
+					$this->render_taxonomy_card( (string) $index, $taxonomy, $post_types, ! $start_new, $primary_post_type );
 
 				}
 
@@ -606,20 +1053,26 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	-- Displays ACF-style field definitions assigned to custom post types.
 	---------------------------------------------------------- */
 
-	protected function render_field_editor( array $fields, array $post_types, string $primary_post_type = '' ): void {
+	protected function render_field_editor( array $fields, array $post_types, string $primary_post_type = '', bool $single = false, bool $start_new = false ): void {
 
 		$template = [ 'enabled' => true, 'label' => '', 'name' => 'field_name', 'type' => 'text', 'default_value' => '', 'choices' => '', 'description' => '', 'required' => false, 'post_types' => '' !== $primary_post_type ? [ $primary_post_type ] : [], 'sub_fields' => [] ];
 
+		if ( $start_new ) {
+
+			$fields = [ $template ];
+
+		}
+
 		?>
 
-		<div class="oa-cpt-section oa-custom-posts-box oa-collection" data-collection="custom_fields" data-new-label="<?php esc_attr_e( 'New post field', 'octave-addons' ); ?>">
+		<div class="oa-cpt-section oa-custom-posts-box oa-collection<?= $single ? ' oa-single-definition' : ''; ?>" data-collection="custom_fields" data-new-label="<?php esc_attr_e( 'New post field', 'octave-addons' ); ?>">
 			<div class="oa-cpt-section-head">
 				<div>
 					<span class="oa-panel-kicker"><?php esc_html_e( 'Custom Posts', 'octave-addons' ); ?></span>
 					<h3><?php esc_html_e( 'Post Fields', 'octave-addons' ); ?></h3>
 					<p><?php esc_html_e( 'Define typed fields for post editors. Values are stored as registered WordPress post meta and appear under Octave in Breakdance Dynamic Data.', 'octave-addons' ); ?></p>
 				</div>
-				<button type="button" class="button oa-cpt-add oa-collection-add"><span class="oa-cpt-add-icon" aria-hidden="true">+</span><?php esc_html_e( 'Add post field', 'octave-addons' ); ?></button>
+				<button type="button" class="button oa-cpt-add oa-collection-add<?= $single ? ' oa-hidden' : ''; ?>"><span class="oa-cpt-add-icon" aria-hidden="true">+</span><?php esc_html_e( 'Add post field', 'octave-addons' ); ?></button>
 			</div>
 
 			<div class="oa-cpt-list oa-collection-list" data-empty-text="<?php esc_attr_e( 'No custom post fields have been added.', 'octave-addons' ); ?>">
@@ -628,7 +1081,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 				foreach ( $fields as $index => $field ) {
 
-					$this->render_field_card( (string) $index, $field, $post_types, true, $primary_post_type );
+					$this->render_field_card( (string) $index, $field, $post_types, ! $start_new, $primary_post_type );
 
 				}
 
@@ -850,6 +1303,25 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			],
 			$this->settings_url()
 		);
+
+	}
+
+	/*
+	SCHEMA URL
+	-- Returns a reusable schema library or single-definition editor URL.
+	---------------------------------------------------------- */
+
+	protected function schema_url( string $section, string $definition = '' ): string {
+
+		$args = [ 'section' => $section ];
+
+		if ( '' !== $definition ) {
+
+			$args['definition'] = $definition;
+
+		}
+
+		return add_query_arg( $args, $this->settings_url() );
 
 	}
 
@@ -1293,7 +1765,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				'show_in_nav_menus'   => $is_public,
 				'show_in_rest'        => true,
 				'menu_position'       => $menu_position,
-				'menu_icon'           => 'dashicons-admin-post',
+				'menu_icon'           => $post_type['menu_icon'],
 				'capability_type'     => 'post',
 				'map_meta_cap'        => true,
 				'query_var'           => $is_public,
@@ -1440,6 +1912,14 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			$post_slug    = self::sanitize_rewrite_slug( $post_type['post_slug'] ?? '', sanitize_title( $singular_name ) );
 			$archive_slug = self::sanitize_rewrite_slug( $post_type['archive_slug'] ?? '', sanitize_title( $name ) );
+			$menu_icon    = sanitize_key( wp_unslash( (string) ( $post_type['menu_icon'] ?? '' ) ) );
+
+			if ( ! array_key_exists( $menu_icon, $this->dashicons() ) ) {
+
+				$menu_icon = 'dashicons-admin-post';
+
+			}
+
 			$taxonomy     = self::CASE_STUDY_POST_TYPE === $key
 				? self::CASE_STUDY_TAXONOMY
 				: substr( $key . '_category', 0, 32 );
@@ -1464,6 +1944,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				'name'                   => $name,
 				'singular_name'          => $singular_name,
 				'post_type'              => $key,
+				'menu_icon'              => $menu_icon,
 				'post_slug'              => $post_slug,
 				'public'                 => ! empty( $post_type['public'] ),
 				'has_archive'            => ! empty( $post_type['has_archive'] ),
@@ -1532,12 +2013,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				? array_values( array_intersect( array_map( 'sanitize_key', $taxonomy['post_types'] ), $available ) )
 				: [];
 
-			if ( empty( $assigned ) ) {
-
-				continue;
-
-			}
-
 			$used[ $key ] = true;
 			$clean[]      = [
 				'enabled'      => ! empty( $taxonomy['enabled'] ),
@@ -1602,12 +2077,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			$assigned = isset( $field['post_types'] ) && is_array( $field['post_types'] )
 				? array_values( array_intersect( array_map( 'sanitize_key', $field['post_types'] ), $available ) )
 				: [];
-
-			if ( empty( $assigned ) ) {
-
-				continue;
-
-			}
 
 			$used[ $name ] = true;
 			$is_container  = in_array( $type, [ 'group', 'repeater' ], true );
@@ -1789,6 +2258,48 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
+	DASHICONS
+	-- Provides a focused set of built-in WordPress icons for admin menus.
+	---------------------------------------------------------- */
+
+	protected function dashicons(): array {
+
+		return [
+			'dashicons-admin-post'       => __( 'Posts', 'octave-addons' ),
+			'dashicons-admin-page'       => __( 'Pages', 'octave-addons' ),
+			'dashicons-portfolio'        => __( 'Portfolio', 'octave-addons' ),
+			'dashicons-products'         => __( 'Products', 'octave-addons' ),
+			'dashicons-store'            => __( 'Store', 'octave-addons' ),
+			'dashicons-building'         => __( 'Building', 'octave-addons' ),
+			'dashicons-businessperson'   => __( 'Person', 'octave-addons' ),
+			'dashicons-groups'           => __( 'People', 'octave-addons' ),
+			'dashicons-id'               => __( 'Profile', 'octave-addons' ),
+			'dashicons-location'         => __( 'Location', 'octave-addons' ),
+			'dashicons-calendar-alt'     => __( 'Calendar', 'octave-addons' ),
+			'dashicons-tickets-alt'      => __( 'Tickets', 'octave-addons' ),
+			'dashicons-megaphone'        => __( 'Announcement', 'octave-addons' ),
+			'dashicons-format-aside'     => __( 'Article', 'octave-addons' ),
+			'dashicons-book'             => __( 'Book', 'octave-addons' ),
+			'dashicons-book-alt'         => __( 'Resource', 'octave-addons' ),
+			'dashicons-welcome-learn-more' => __( 'Learning', 'octave-addons' ),
+			'dashicons-awards'           => __( 'Award', 'octave-addons' ),
+			'dashicons-star-filled'      => __( 'Featured', 'octave-addons' ),
+			'dashicons-heart'            => __( 'Heart', 'octave-addons' ),
+			'dashicons-images-alt2'      => __( 'Gallery', 'octave-addons' ),
+			'dashicons-format-video'     => __( 'Video', 'octave-addons' ),
+			'dashicons-format-audio'     => __( 'Audio', 'octave-addons' ),
+			'dashicons-media-document'   => __( 'Document', 'octave-addons' ),
+			'dashicons-download'         => __( 'Download', 'octave-addons' ),
+			'dashicons-chart-bar'        => __( 'Analytics', 'octave-addons' ),
+			'dashicons-lightbulb'        => __( 'Idea', 'octave-addons' ),
+			'dashicons-hammer'           => __( 'Services', 'octave-addons' ),
+			'dashicons-shield'           => __( 'Security', 'octave-addons' ),
+			'dashicons-universal-access' => __( 'Accessibility', 'octave-addons' ),
+		];
+
+	}
+
+	/*
 	SUB FIELD TYPES
 	-- Allows every standard control while preventing deeply nested containers.
 	---------------------------------------------------------- */
@@ -1839,6 +2350,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'name'                   => __( 'Case Studies', 'octave-addons' ),
 			'singular_name'          => __( 'Case Study', 'octave-addons' ),
 			'post_type'              => self::CASE_STUDY_POST_TYPE,
+			'menu_icon'              => 'dashicons-portfolio',
 			'post_slug'              => 'case-study',
 			'public'                 => true,
 			'has_archive'            => true,

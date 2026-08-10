@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.7.1
+Stable tag:        2.9.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -60,6 +60,23 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.9.0 =
+* Added a reusable Content Schema Library with compact category and field summaries, type badges, permanent keys, and assignment labels.
+* Replaced large per-post-type definition editors with simple assignment screens for attaching shared categories and fields to multiple content types.
+* Added dedicated single-definition editors so only the category or field being updated exposes its full settings, including group and repeater children.
+* Definitions can now remain safely unassigned in the library until they are ready to be attached to a content type.
+
+= 2.8.0 =
+* Added a validated visual Dashicons picker for every custom post type and now uses the selected icon in WordPress admin menus and focused content editors.
+* Added a prominent post-type identity banner to focused category and content-field screens so the current editing context remains clear.
+* Normalised Dashicon pseudo-element line height across Octave admin buttons to prevent WordPress load-styles overrides.
+
+= 2.7.3 =
+* Separated built-in Posts and Pages enhancements from the custom post type workflow with a dedicated WordPress content area inside Custom Posts.
+
+= 2.7.2 =
+* Redesigned the global WordPress admin footer credit as a friendly, accessible Octave-branded pill with a prominent agency link.
 
 = 2.7.1 =
 * Restored the standard disabled-module state for Custom Posts so every configurable module displays the enable prompt before exposing its settings.
