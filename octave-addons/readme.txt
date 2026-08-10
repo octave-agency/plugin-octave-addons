@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.9.0
+Stable tag:        2.9.3
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -27,7 +27,7 @@ Octave Addons ships with a growing collection of focused modules:
 *   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
     every Breakdance Lazy Load toggle off so images, backgrounds and
     embeds are left to the site's third-party performance plugin.
-*   **Custom Posts** – renames Posts to Blogs and provides separate managers for
+*   **Custom Posts** – can display Posts as Blogs and provides separate managers for
     post types, reusable taxonomies, and typed post fields. Fields use registered
     WordPress post meta and are available in Breakdance Dynamic Data.
 
@@ -61,6 +61,16 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 2.9.3 =
+* Opened the dedicated taxonomy definition body by default while preserving saved-definition key protection.
+
+= 2.9.2 =
+* Applied the Octave admin button Dashicon line height directly to the icon element for reliable WordPress admin alignment.
+
+= 2.9.1 =
+* Added an optional Built-in Content toggle for displaying WordPress Posts as Blogs.
+* Removed the Page Categories management shortcut from the module settings.
+
 = 2.9.0 =
 * Added a reusable Content Schema Library with compact category and field summaries, type badges, permanent keys, and assignment labels.
 * Replaced large per-post-type definition editors with simple assignment screens for attaching shared categories and fields to multiple content types.
@@ -70,7 +80,7 @@ automatically during updates and critical errors.
 = 2.8.0 =
 * Added a validated visual Dashicons picker for every custom post type and now uses the selected icon in WordPress admin menus and focused content editors.
 * Added a prominent post-type identity banner to focused category and content-field screens so the current editing context remains clear.
-* Normalised Dashicon pseudo-element line height across Octave admin buttons to prevent WordPress load-styles overrides.
+* Normalised Dashicon line height across Octave admin buttons to prevent WordPress load-styles overrides.
 
 = 2.7.3 =
 * Separated built-in Posts and Pages enhancements from the custom post type workflow with a dedicated WordPress content area inside Custom Posts.

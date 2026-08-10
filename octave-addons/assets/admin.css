@@ -2123,45 +2123,8 @@ BUILT-IN WORDPRESS CONTENT
     line-height: 1.55;
 }
 
-.oa-builtin-content-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    color: var(--oa-accent);
-    font-size: 9.5px;
-    font-weight: 650;
-}
-
-.oa-builtin-content-status .dashicons {
-    width: 14px;
-    height: 14px;
-    font-size: 14px;
-}
-
 .oa-builtin-content-switch {
     margin-top: 5px;
-}
-
-.oa-builtin-content-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 10px;
-    color: var(--oa-accent);
-    font-size: 10.5px;
-    font-weight: 650;
-    text-decoration: none;
-}
-
-.oa-builtin-content-link:hover {
-    color: var(--oa-text);
-}
-
-.oa-builtin-content-link .dashicons {
-    width: 13px;
-    height: 13px;
-    font-size: 13px;
 }
 
 .oa-content-area-divider {
@@ -2451,12 +2414,6 @@ CUSTOM POST TYPE EDITOR
     margin: 28px 0 22px;
     padding-top: 26px;
     border-top: 1px solid var(--oa-border-light);
-}
-
-.oa-content-area-divider + .oa-cpt-section {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0;
 }
 
 .oa-custom-posts-box {
@@ -3521,7 +3478,6 @@ body.oa-confirm-open {
         grid-template-columns: auto minmax(0, 1fr);
     }
 
-    .oa-builtin-content-card > .oa-builtin-content-status,
     .oa-builtin-content-card > .oa-builtin-content-switch {
         grid-column: 2;
         justify-self: start;

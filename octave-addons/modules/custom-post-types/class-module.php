@@ -73,6 +73,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		return [
 			'enabled'           => false,
+			'blog_labels'       => false,
 			'page_categories'   => true,
 			'custom_post_types' => [],
 			'custom_taxonomies' => [],
@@ -90,6 +91,12 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	public function get_settings( array $saved ): array {
 
 		$settings = wp_parse_args( $saved, $this->get_defaults() );
+
+		if ( ! array_key_exists( 'blog_labels', $saved ) && ! empty( $saved['enabled'] ) ) {
+
+			$settings['blog_labels'] = true;
+
+		}
 
 		if ( ! array_key_exists( 'custom_post_types', $saved ) && $this->has_legacy_case_study_settings( $saved ) ) {
 
@@ -133,6 +140,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		return [
 			'enabled'           => ! empty( $input['enabled'] ),
+			'blog_labels'       => ! empty( $input['blog_labels'] ),
 			'page_categories'   => ! empty( $input['page_categories'] ),
 			'custom_post_types' => $post_types,
 			'custom_taxonomies' => $this->normalise_taxonomies( $taxonomies, $post_types ),
@@ -148,7 +156,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	public function render_settings( array $settings ): void {
 
-		$page_terms_url     = admin_url( 'edit-tags.php?taxonomy=' . self::PAGE_TAXONOMY . '&post_type=page' );
 		$custom_types       = $this->normalise_post_types( $settings['custom_post_types'] ?? [] );
 		$custom_taxonomies  = $this->normalise_taxonomies( $settings['custom_taxonomies'] ?? [], $custom_types );
 		$custom_fields      = $this->normalise_fields( $settings['custom_fields'] ?? [], $custom_types );
@@ -198,13 +205,13 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					</div>
 					<div class="oa-builtin-content-copy">
 						<span class="oa-builtin-content-type"><?php esc_html_e( 'Posts', 'octave-addons' ); ?></span>
-						<h4><?php esc_html_e( 'Displayed as Blogs', 'octave-addons' ); ?></h4>
-						<p><?php esc_html_e( 'Only the admin labels change. The post type remains “post”, so content, queries, templates and URLs continue working normally.', 'octave-addons' ); ?></p>
+						<h4 id="oa-blog-labels-label"><?php esc_html_e( 'Display as Blogs', 'octave-addons' ); ?></h4>
+						<p><?php esc_html_e( 'Rename Posts to Blogs throughout the WordPress admin. The post type remains “post”, so content, queries, templates and URLs continue working normally.', 'octave-addons' ); ?></p>
 					</div>
-					<span class="oa-builtin-content-status">
-						<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
-						<?php esc_html_e( 'Always applied', 'octave-addons' ); ?>
-					</span>
+					<label class="oa-switch oa-builtin-content-switch">
+						<input type="checkbox" name="<?= esc_attr( $this->field_name( 'blog_labels' ) ); ?>" value="1" aria-labelledby="oa-blog-labels-label"<?= checked( ! empty( $settings['blog_labels'] ), true, false ); ?>>
+						<span class="oa-switch-slider"></span>
+					</label>
 				</article>
 
 				<article class="oa-builtin-content-card">
@@ -215,24 +222,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 						<span class="oa-builtin-content-type"><?php esc_html_e( 'Pages', 'octave-addons' ); ?></span>
 						<h4 id="oa-page-categories-label"><?php esc_html_e( 'Page Categories', 'octave-addons' ); ?></h4>
 						<p><?php esc_html_e( 'Add an admin-only hierarchical category system for organising Pages without creating public category archives.', 'octave-addons' ); ?></p>
-
-						<?php
-
-						if ( ! empty( $settings['page_categories'] ) ) :
-
-						?>
-
-						<a href="<?= esc_url( $page_terms_url ); ?>" class="oa-builtin-content-link">
-							<?php esc_html_e( 'Manage page categories', 'octave-addons' ); ?>
-							<span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
-						</a>
-
-						<?php
-
-						endif;
-
-						?>
-
 					</div>
 					<label class="oa-switch oa-builtin-content-switch">
 						<input type="checkbox" name="<?= esc_attr( $this->field_name( 'page_categories' ) ); ?>" value="1" aria-labelledby="oa-page-categories-label"<?= checked( ! empty( $settings['page_categories'] ), true, false ); ?>>
@@ -355,6 +344,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		$section = $editor['section'];
 
+		$this->render_hidden_value( $this->field_name( 'blog_labels' ), ! empty( $settings['blog_labels'] ) ? '1' : '0' );
 		$this->render_hidden_value( $this->field_name( 'page_categories' ), ! empty( $settings['page_categories'] ) ? '1' : '0' );
 		$this->render_hidden_collection( 'custom_post_types', $post_types );
 
@@ -988,7 +978,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 				foreach ( $taxonomies as $index => $taxonomy ) {
 
-					$this->render_taxonomy_card( (string) $index, $taxonomy, $post_types, ! $start_new, $primary_post_type );
+					$this->render_taxonomy_card( (string) $index, $taxonomy, $post_types, ! $start_new, $primary_post_type, $single );
 
 				}
 
@@ -1008,7 +998,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	-- Outputs one taxonomy definition with friendly assignment controls.
 	---------------------------------------------------------- */
 
-	protected function render_taxonomy_card( string $index, array $taxonomy, array $post_types, bool $saved, string $primary_post_type = '' ): void {
+	protected function render_taxonomy_card( string $index, array $taxonomy, array $post_types, bool $saved, string $primary_post_type = '', bool $expanded = false ): void {
 
 		$name     = (string) ( $taxonomy['name'] ?? '' );
 		$key      = (string) ( $taxonomy['taxonomy'] ?? '' );
@@ -1018,7 +1008,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		<article class="oa-cpt-item oa-collection-item" data-saved="<?= $saved ? 'true' : 'false'; ?>">
 			<div class="oa-cpt-item-head">
-				<button type="button" class="oa-cpt-expand oa-collection-expand" aria-expanded="<?= $saved ? 'false' : 'true'; ?>">
+				<button type="button" class="oa-cpt-expand oa-collection-expand" aria-expanded="<?= $saved && ! $expanded ? 'false' : 'true'; ?>">
 					<span class="oa-cpt-expand-copy"><strong class="oa-cpt-item-title"><?= esc_html( '' !== $name ? $name : __( 'New post category', 'octave-addons' ) ); ?></strong><span class="oa-cpt-key-preview"><?= esc_html( $key ); ?></span></span>
 					<span class="dashicons dashicons-arrow-down-alt2 oa-cpt-expand-icon" aria-hidden="true"></span>
 				</button>
@@ -1026,7 +1016,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				<button type="button" class="oa-cpt-remove oa-collection-remove" aria-label="<?php esc_attr_e( 'Remove this post category', 'octave-addons' ); ?>"><span class="dashicons dashicons-trash" aria-hidden="true"></span></button>
 			</div>
 
-			<div class="oa-cpt-groups oa-collection-body<?= $saved ? ' oa-hidden' : ''; ?>">
+			<div class="oa-cpt-groups oa-collection-body<?= $saved && ! $expanded ? ' oa-hidden' : ''; ?>">
 				<fieldset class="oa-cpt-group">
 					<legend><?php esc_html_e( 'Identity and URLs', 'octave-addons' ); ?></legend>
 					<p class="oa-cpt-group-description"><?php esc_html_e( 'The key becomes permanent after the first save. Categories behave hierarchically; tags do not.', 'octave-addons' ); ?></p>
@@ -1460,14 +1450,18 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	public function run( array $settings ): void {
 
-		add_filter( 'post_type_labels_post', [ $this, 'rename_post_labels' ] );
+		if ( ! empty( $settings['blog_labels'] ) ) {
 
-		$post_type_object = get_post_type_object( 'post' );
+			add_filter( 'post_type_labels_post', [ $this, 'rename_post_labels' ] );
 
-		if ( $post_type_object ) {
+			$post_type_object = get_post_type_object( 'post' );
 
-			$post_type_object->labels = $this->rename_post_labels( $post_type_object->labels );
-			$post_type_object->label  = __( 'Blogs', 'octave-addons' );
+			if ( $post_type_object ) {
+
+				$post_type_object->labels = $this->rename_post_labels( $post_type_object->labels );
+				$post_type_object->label  = __( 'Blogs', 'octave-addons' );
+
+			}
 
 		}
 

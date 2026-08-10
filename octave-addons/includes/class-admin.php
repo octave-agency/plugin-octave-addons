@@ -197,11 +197,11 @@ class Octave_Addons_Admin {
 			OCTAVE BUTTON ICONS
 			---------------------------------------------------------- */
 
-			body.wp-admin button[class*="oa-"] .dashicons::before,
-			body.wp-admin a[class*="oa-"] .dashicons::before,
-			body.wp-admin .oa-app .button .dashicons::before,
-			body.wp-admin .oa-post-fields button .dashicons::before {
-				line-height: 1 !important;
+			body.wp-admin button[class*="oa-"] .dashicons,
+			body.wp-admin a[class*="oa-"] .dashicons,
+			body.wp-admin .oa-app .button .dashicons,
+			body.wp-admin .oa-post-fields button .dashicons {
+				line-height: 1.9 !important;
 			}
 
 			/*
