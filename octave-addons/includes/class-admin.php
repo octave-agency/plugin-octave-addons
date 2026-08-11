@@ -48,7 +48,7 @@ class Octave_Addons_Admin {
 		);
 
 		return sprintf(
-			'<span class="oa-admin-footer-credit"><span class="oa-admin-footer-mark" aria-hidden="true">OA</span><span class="oa-admin-footer-message">%s</span></span>',
+			'<span class="oa-admin-footer-credit">%s</span>',
 			sprintf(
 				/* translators: %s: Octave Agency website link. */
 				__( 'Thank you for working with %s', 'octave-addons' ),
@@ -223,63 +223,18 @@ class Octave_Addons_Admin {
 			ADMIN FOOTER CREDIT
 			---------------------------------------------------------- */
 
-			#wpfooter #footer-left .oa-admin-footer-credit {
-				display: inline-flex;
-				align-items: center;
-				gap: 9px;
-				min-height: 34px;
-				padding: 4px 12px 4px 5px;
-				color: #b9c0bd;
-				border: 1px solid rgba(43, 255, 134, 0.24);
-				border-radius: 10px;
-				background: linear-gradient(145deg, #171b1a, #0d100f);
-				box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-				font-size: 11.5px;
-				line-height: 1.35;
-			}
-
-			#wpfooter #footer-left .oa-admin-footer-mark {
-				display: inline-grid;
-				place-items: center;
-				width: 26px;
-				height: 26px;
-				flex-shrink: 0;
-				color: #07100b;
-				border-radius: 7px;
-				background: linear-gradient(135deg, #5dff9f, #2bff86);
-				box-shadow: 0 0 16px rgba(43, 255, 134, 0.18);
-				font-size: 9px;
-				font-weight: 800;
-				letter-spacing: -0.02em;
-			}
-
-			#wpfooter #footer-left .oa-admin-footer-message {
-				display: inline-flex;
-				align-items: center;
-				gap: 4px;
-			}
-
 			#wpfooter #footer-left .oa-admin-footer-link {
 				display: inline-flex;
 				align-items: center;
 				gap: 3px;
-				color: #5dff9f;
-				font-weight: 650;
+				color: #00875a;
 				text-decoration: none;
-				transition: color 0.15s ease, text-shadow 0.15s ease;
 			}
 
-			#wpfooter #footer-left .oa-admin-footer-link:hover {
-				color: #fff;
-				text-shadow: 0 0 12px rgba(43, 255, 134, 0.45);
-			}
-
+			#wpfooter #footer-left .oa-admin-footer-link:hover,
 			#wpfooter #footer-left .oa-admin-footer-link:focus {
-				color: #fff;
-				border-radius: 3px;
-				outline: 2px solid #2bff86;
-				outline-offset: 2px;
-				box-shadow: none;
+				color: #00d084;
+				text-decoration: underline;
 			}
 
 			#wpfooter #footer-left .oa-admin-footer-link .dashicons {
@@ -287,20 +242,6 @@ class Octave_Addons_Admin {
 				height: 13px;
 				font-size: 13px;
 				line-height: 13px;
-			}
-
-			@media (max-width: 782px) {
-
-				#wpfooter #footer-left .oa-admin-footer-credit {
-					align-items: flex-start;
-				}
-
-				#wpfooter #footer-left .oa-admin-footer-message {
-					align-items: flex-start;
-					flex-direction: column;
-					gap: 1px;
-				}
-
 			}
 		</style>
 		<?php
@@ -468,24 +409,25 @@ class Octave_Addons_Admin {
 
 	/*
 	MODULE ICON
-	-- Returns the Dashicons class used for a module or group on the dashboard.
+	-- Returns the icon kit name used for a module or group on the dashboard.
 	---------------------------------------------------------- */
 
 	protected function module_icon( string $id ): string {
 
 		$icons = [
-			'animations'                    => 'dashicons-image-rotate',
-			'breakdance'                    => 'dashicons-layout',
-			'breakdance-ajax-filtering'     => 'dashicons-filter',
-			'breakdance-custom-elements'    => 'dashicons-layout',
-			'custom-login'                  => 'dashicons-lock',
-			'custom-post-types'             => 'dashicons-admin-post',
-			'disable-comments'              => 'dashicons-no-alt',
-			'empty-link-highlighter'        => 'dashicons-warning',
-			'mobile-contact-popup'          => 'dashicons-smartphone',
+			'animations'                 => 'sparkles',
+			'breakdance'                 => 'layout',
+			'breakdance-ajax-filtering'  => 'filter',
+			'breakdance-custom-elements' => 'blocks',
+			'breakdance-lazy-load'       => 'zap',
+			'custom-login'               => 'lock',
+			'custom-post-types'          => 'layers',
+			'disable-comments'           => 'message-off',
+			'empty-link-highlighter'     => 'unlink',
+			'mobile-contact-popup'       => 'smartphone',
 		];
 
-		return $icons[ $id ] ?? 'dashicons-admin-generic';
+		return $icons[ $id ] ?? 'sliders';
 
 	}
 
@@ -546,7 +488,7 @@ class Octave_Addons_Admin {
 					<nav class="oa-nav" aria-label="<?php esc_attr_e( 'Octave Addons navigation', 'octave-addons' ); ?>">
 						<a href="<?= esc_url( $dashboard_url ); ?>"
 						   class="oa-nav-item oa-dashboard-nav-item<?= 'dashboard' === $active_tab ? ' is-active' : ''; ?>">
-							<span class="dashicons dashicons-dashboard oa-nav-icon" aria-hidden="true"></span>
+							<?php Octave_Addons_Icons::render( 'grid', 16, 'oa-nav-icon' ); ?>
 							<span class="oa-nav-label"><?php esc_html_e( 'Dashboard', 'octave-addons' ); ?></span>
 						</a>
 
@@ -625,7 +567,7 @@ class Octave_Addons_Admin {
 					<section class="oa-hero">
 						<div class="oa-hero-copy">
 							<span class="oa-eyebrow"><?php esc_html_e( 'Octave site toolkit', 'octave-addons' ); ?></span>
-							<h1><?php esc_html_e( 'Shape a better WordPress experience.', 'octave-addons' ); ?></h1>
+							<h1><?php esc_html_e( 'Shape a better website experience.', 'octave-addons' ); ?></h1>
 							<p><?php esc_html_e( 'Activate focused enhancements, tune their behaviour, and keep every site capability organised in one place.', 'octave-addons' ); ?></p>
 						</div>
 						<div class="oa-hero-visual" aria-hidden="true">
@@ -686,7 +628,7 @@ class Octave_Addons_Admin {
 
 						<a href="<?= esc_url( $url ); ?>" class="oa-module-card">
 							<span class="oa-module-card-icon" aria-hidden="true">
-								<span class="dashicons <?= esc_attr( $meta['icon'] ); ?>"></span>
+								<?php Octave_Addons_Icons::render( $meta['icon'], 20 ); ?>
 							</span>
 							<span class="oa-module-card-copy">
 								<strong><?= esc_html( $meta['title'] ); ?></strong>
@@ -699,7 +641,7 @@ class Octave_Addons_Admin {
 								</span>
 								<span class="oa-module-card-link">
 									<?php esc_html_e( 'Open settings', 'octave-addons' ); ?>
-									<span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+									<?php Octave_Addons_Icons::render( 'arrow-right', 14 ); ?>
 								</span>
 							</span>
 						</a>

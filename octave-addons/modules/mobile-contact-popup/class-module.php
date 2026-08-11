@@ -380,12 +380,7 @@ class Octave_Addons_Module_Mobile_Contact_Popup extends Octave_Addons_Module {
 					<span class="oa-contact-popup-title"><?= esc_html( $popup_label ); ?></span>
 					<button class="oa-contact-popup-close" type="button"
 					        aria-label="<?php esc_attr_e( 'Close contact popup', 'octave-addons' ); ?>">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-						     stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-						     stroke-linejoin="round" width="18" height="18" aria-hidden="true">
-							<line x1="18" y1="6" x2="6" y2="18"/>
-							<line x1="6" y1="6" x2="18" y2="18"/>
-						</svg>
+						<?php Octave_Addons_Icons::render( 'close', 18 ); ?>
 					</button>
 				</div>
 
@@ -490,22 +485,21 @@ class Octave_Addons_Module_Mobile_Contact_Popup extends Octave_Addons_Module {
 
 	private static function default_svg( string $type ): string {
 
-		switch ( $type ) {
+		$icons = [
+			'phone'   => 'phone',
+			'call'    => 'phone',
+			'email'   => 'mail',
+			'address' => 'map-pin',
+			'trigger' => 'message',
+		];
 
-			case 'phone':
-				return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.01 2.22 2 2 0 012 .04h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>';
-			case 'email':
-				return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>';
-			case 'address':
-				return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>';
-			case 'trigger':
-				return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-			case 'call':
-				return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.01 2.22 2 2 0 012 .04h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>';
-			default:
-				return '';
+		if ( ! isset( $icons[ $type ] ) ) {
+
+			return '';
 
 		}
+
+		return Octave_Addons_Icons::get( $icons[ $type ], 20 );
 
 	}
 

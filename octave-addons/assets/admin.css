@@ -36,12 +36,42 @@ PALETTE (TOKENS)
 /* --- Outer wrap ------------------------------------------ */
 
 .octave-addons-wrap {
-    margin-right: 0 !important;
     font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .octave-addons-wrap > h1 {
     display: none;
+}
+
+/*
+ICON KIT
+-- Shared sizing for the plugin's own stroke icons. Colour always comes from
+-- the surrounding text colour, so no icon needs its own palette rule.
+---------------------------------------------------------- */
+
+.oa-icon {
+    display: block;
+    flex-shrink: 0;
+}
+
+/*
+BUTTON LABELS
+-- Titlecases every action label without rewriting each translated string.
+-- Technical keys printed inside a button keep their exact casing.
+---------------------------------------------------------- */
+
+.oa-app .button,
+.oa-app .button-primary,
+.oa-app .oa-overview-action,
+.oa-ipm-more,
+.oa-confirm-button {
+    text-transform: capitalize;
+}
+
+.oa-app .button code,
+.oa-app .button .oa-cpt-key-preview,
+.oa-app .oa-overview-action code {
+    text-transform: none;
 }
 
 /*
@@ -277,9 +307,9 @@ FOCUS STATES
 }
 
 .oa-nav-icon {
+    flex-shrink: 0;
     width: 16px;
     height: 16px;
-    font-size: 16px;
 }
 
 .oa-sidebar-footer {
@@ -653,10 +683,9 @@ DASHBOARD MODULES
     color: #8CFFC0;
 }
 
-.oa-module-card-icon .dashicons {
+.oa-module-card-icon .oa-icon {
     width: 20px;
     height: 20px;
-    font-size: 20px;
 }
 
 .oa-module-card-copy {
@@ -711,10 +740,9 @@ DASHBOARD MODULES
     color: #8CFFC0;
 }
 
-.oa-module-card-link .dashicons {
+.oa-module-card-link .oa-icon {
     width: 13px;
     height: 13px;
-    font-size: 13px;
 }
 
 /*
@@ -960,6 +988,18 @@ Navigation entry
     color: var(--oa-on-accent);
     box-shadow: 0 9px 24px rgba(43, 255, 134, 0.27);
     transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+/*
+-- WordPress repaints .button-primary text white on hover, focus and active,
+-- so each of those states restates the button's own on-accent colour.
+---------------------------------------------------------- */
+
+.oa-save-bar .button-primary:hover,
+.oa-save-bar .button-primary:focus,
+.oa-save-bar .button-primary:focus-visible,
+.oa-save-bar .button-primary:active {
+    color: var(--oa-on-accent);
 }
 
 .oa-save-bar .button-primary:hover {
@@ -1579,7 +1619,7 @@ CUSTOM SELECTS
         margin: 8px 12px;
         padding: 7px 32px 7px 10px;
         background-color: var(--oa-surface-2);
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a8099' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a8099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 10px center;
         color: var(--oa-text);
@@ -2149,6 +2189,210 @@ BUILT-IN WORDPRESS CONTENT
 }
 
 /*
+CONTENT OVERVIEW
+-- Three summary pillars that create and open the parts of a content type.
+---------------------------------------------------------- */
+
+.oa-content-overview {
+    margin-bottom: 16px;
+    padding: 20px;
+    border: 1px solid var(--oa-border);
+    border-radius: 14px;
+    background: var(--oa-surface);
+}
+
+.oa-content-overview-head {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.oa-content-overview-head h3 {
+    margin: 0;
+    color: var(--oa-text);
+    font-size: 15px;
+}
+
+.oa-content-overview-head p {
+    margin: 0;
+    color: var(--oa-text-muted);
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.oa-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.oa-overview-card {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 12px;
+    padding: 15px;
+    border: 1px solid var(--oa-border-light);
+    border-radius: 12px;
+    background: var(--oa-surface-2);
+}
+
+.oa-overview-card-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+}
+
+.oa-overview-card-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    color: var(--oa-accent);
+    border: 1px solid rgba(43, 255, 134, 0.22);
+    border-radius: 9px;
+    background: var(--oa-accent-bg);
+}
+
+.oa-overview-card-icon .dashicons {
+    width: 17px;
+    height: 17px;
+    font-size: 17px;
+}
+
+.oa-overview-card-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.oa-overview-card-step {
+    color: var(--oa-text-dim);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.oa-overview-card-copy h4 {
+    margin: 0;
+    color: var(--oa-text);
+    font-size: 13px;
+}
+
+.oa-overview-card-copy p {
+    margin: 0;
+    color: var(--oa-text-muted);
+    font-size: 10.5px;
+    line-height: 1.5;
+}
+
+.oa-overview-count {
+    color: var(--oa-accent);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.oa-overview-items {
+    display: flex;
+    align-content: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.oa-overview-empty {
+    margin: 0;
+    color: var(--oa-text-dim);
+    font-size: 10.5px;
+    line-height: 1.55;
+}
+
+.oa-app .oa-overview-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    max-width: 100%;
+    padding: 5px 9px;
+    color: var(--oa-text) !important;
+    border: 1px solid var(--oa-border);
+    border-radius: 999px;
+    background: var(--oa-surface-3);
+    font-size: 10.5px;
+    text-decoration: none;
+}
+
+.oa-app .oa-overview-chip:hover,
+.oa-app .oa-overview-chip:focus {
+    color: var(--oa-accent) !important;
+    border-color: rgba(43, 255, 134, 0.4);
+}
+
+.oa-overview-chip strong {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.oa-overview-chip span {
+    flex-shrink: 0;
+    color: var(--oa-text-dim);
+    font-size: 9.5px;
+    white-space: nowrap;
+}
+
+.oa-app .oa-overview-chip--more {
+    color: var(--oa-text-muted) !important;
+    border-style: dashed;
+    background: none;
+}
+
+.oa-overview-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.oa-app .oa-overview-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 13px;
+    color: var(--oa-on-accent) !important;
+    border: 0;
+    border-radius: 8px;
+    background: var(--oa-accent);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.oa-app .oa-overview-action:hover,
+.oa-app .oa-overview-action:focus {
+    color: var(--oa-on-accent) !important;
+    background: var(--oa-accent-2);
+}
+
+.oa-app .oa-overview-action.is-quiet {
+    color: var(--oa-text-muted) !important;
+    border: 1px solid var(--oa-border);
+    background: none;
+}
+
+.oa-app .oa-overview-action.is-quiet:hover,
+.oa-app .oa-overview-action.is-quiet:focus {
+    color: var(--oa-accent) !important;
+    border-color: rgba(43, 255, 134, 0.4);
+    background: none;
+}
+
+/*
 CONTENT SCHEMA LIBRARY
 -- Compact reusable definitions and per-post-type assignment controls.
 ---------------------------------------------------------- */
@@ -2162,7 +2406,6 @@ CONTENT SCHEMA LIBRARY
     gap: 8px;
 }
 
-.oa-cpt-schema-link,
 .oa-schema-library-link,
 .oa-schema-add,
 .oa-schema-edit {
@@ -2177,7 +2420,6 @@ CONTENT SCHEMA LIBRARY
     background: var(--oa-surface-3) !important;
 }
 
-.oa-cpt-schema-link:hover,
 .oa-schema-library-link:hover,
 .oa-schema-add:hover,
 .oa-schema-edit:hover {
@@ -2185,7 +2427,6 @@ CONTENT SCHEMA LIBRARY
     border-color: rgba(43, 255, 134, 0.4) !important;
 }
 
-.oa-cpt-schema-link .dashicons,
 .oa-schema-edit .dashicons {
     width: 15px;
     height: 15px;
@@ -2846,15 +3087,22 @@ CUSTOM POST TYPE EDITOR
     font-size: 16px;
 }
 
-.oa-cpt-save-hint {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 13px;
-    color: var(--oa-text-muted);
-    border: 1px dashed var(--oa-border);
-    border-radius: 9px;
-    font-size: 11px;
+.oa-cpt-content-actions .oa-cpt-content-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    color: var(--oa-on-accent);
+    border-radius: 999px;
+    background: var(--oa-accent);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.oa-cpt-starter {
+    border-color: rgba(43, 255, 134, 0.24) !important;
+    background: var(--oa-accent-bg);
 }
 
 .oa-cpt-groups.oa-hidden,

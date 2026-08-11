@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.9.5
+Stable tag:        2.11.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -60,6 +60,19 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.11.0 =
+* Added a shared Octave icon kit and replaced the mixed Dashicons on the module dashboard with matching stroke icons.
+* Brought every SVG the plugin draws itself onto the same 24px stroke style, including the contact popup, deactivation dialog, icon picker and select chevrons.
+* Titlecased Octave admin button labels.
+* Fixed the save button text turning white on hover, focus and active where WordPress repainted it.
+
+= 2.10.0 =
+* Added a Custom Posts content overview that summarises post types, categories and fields, creates each one, and links straight to the area that edits it.
+* Added optional starter content to new post types so one save creates the post type, its first category and its first content field together.
+* Categories and fields created from a post type now arrive pre-assigned to it and return to that post type when closed.
+* Replaced the Pages category shortcut links with the single category dropdown in the list toolbar.
+* Simplified the admin footer credit to plain text with a link, and removed the forced Octave Addons page margin.
 
 = 2.9.5 =
 * Removed Dynamic Data subcategory headings so custom fields appear directly under Octave, with nested fields retaining clear parent-qualified labels.

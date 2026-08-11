@@ -379,7 +379,7 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 
 		if ( '' === trim( $svg ) ) {
 
-			return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>';
+			return Octave_Addons_Icons::get( 'square', 18 );
 
 		}
 

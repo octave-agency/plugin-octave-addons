@@ -231,7 +231,7 @@ ADMIN INTERACTIONS
 					'<div class="oa-ipm-head">' +
 						'<span class="oa-ipm-title">Choose Icon</span>' +
 						'<button type="button" class="oa-ipm-close" aria-label="Close">' +
-							'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+							'<svg class="oa-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
 						'</button>' +
 					'</div>' +
 					'<div class="oa-ipm-bar">' +
@@ -1649,6 +1649,59 @@ ADMIN INTERACTIONS
 
 		list.querySelectorAll( '.oa-cpt-item' ).forEach( wireItem );
 		reindexItems();
+
+	} );
+
+	/*
+	CONTENT OVERVIEW
+	-- Points the summary pillars at the editors further down the same page.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '[data-oa-add-post-type]' ).forEach( function ( button ) {
+
+		button.addEventListener( 'click', function () {
+
+			var addButton = document.querySelector( '.oa-cpt-section:not(.oa-collection) .oa-cpt-add' );
+
+			if ( ! addButton ) {
+
+				return;
+
+			}
+
+			addButton.click();
+
+		} );
+
+	} );
+
+	document.querySelectorAll( '.oa-overview-chip[data-target]' ).forEach( function ( chip ) {
+
+		chip.addEventListener( 'click', function ( event ) {
+
+			var item = document.getElementById( chip.dataset.target );
+
+			if ( ! item ) {
+
+				return;
+
+			}
+
+			event.preventDefault();
+
+			var expand = item.querySelector( '.oa-cpt-expand' );
+			var groups = item.querySelector( '.oa-cpt-groups' );
+
+			if ( expand && groups ) {
+
+				groups.classList.remove( 'oa-hidden' );
+				expand.setAttribute( 'aria-expanded', 'true' );
+
+			}
+
+			item.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+
+		} );
 
 	} );
 
