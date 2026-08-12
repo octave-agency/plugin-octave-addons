@@ -730,7 +730,11 @@ ADMIN INTERACTIONS
 
 	}
 
-	document.querySelectorAll( '.oa-app select' ).forEach( enhanceSelect );
+	// .oa-plain-select opts a field out: the listbox is built for full-width
+	// fields, so compact in-grid controls keep the native select.
+	var SELECT_SELECTOR = 'select:not(.oa-plain-select)';
+
+	document.querySelectorAll( '.oa-app ' + SELECT_SELECTOR ).forEach( enhanceSelect );
 
 	new MutationObserver( function ( mutations ) {
 
@@ -744,13 +748,13 @@ ADMIN INTERACTIONS
 
 				}
 
-				if ( node.matches( 'select' ) ) {
+				if ( node.matches( SELECT_SELECTOR ) ) {
 
 					enhanceSelect( node );
 
 				}
 
-				node.querySelectorAll( 'select' ).forEach( enhanceSelect );
+				node.querySelectorAll( SELECT_SELECTOR ).forEach( enhanceSelect );
 
 			} );
 
@@ -2054,4 +2058,355 @@ ADMIN INTERACTIONS
 		reindex();
 
 	} );
+})();
+
+/*
+BREAKDANCE SPACING GRID
+-- Switches the grid between Breakdance breakpoints, keeps token-bound rows
+-- read-only, and mirrors the compiled stylesheet into the preview panel so
+-- the result is visible before saving.
+---------------------------------------------------------- */
+
+(function () {
+
+	'use strict';
+
+	var grid = document.querySelector( '[data-oa-spacing]' );
+
+	if ( ! grid ) {
+
+		return;
+
+	}
+
+	var tabs        = Array.prototype.slice.call( grid.querySelectorAll( '.oa-spacing-tab' ) );
+	var tokenRows   = Array.prototype.slice.call( grid.querySelectorAll( '.oa-spacing-row--token' ) );
+	var elementRows = Array.prototype.slice.call( grid.querySelectorAll( '.oa-spacing-row[data-selector]' ) );
+	var resetToggle = grid.querySelector( '.oa-switch input[type="checkbox"]' );
+	var preview     = grid.querySelector( '.oa-spacing-css' );
+	var NUMBER      = /^-?\d+(\.\d+)?$/;
+
+	/*
+	TOKEN VAR
+	-- The variable a row is bound to, or an empty string when the row carries
+	-- its own literal value.
+	---------------------------------------------------------- */
+
+	function tokenVar( row ) {
+
+		var select = row.querySelector( '.oa-spacing-unit-select' );
+		var option = select ? select.options[ select.selectedIndex ] : null;
+
+		return option && option.dataset.var ? option.dataset.var : '';
+
+	}
+
+	/*
+	RESOLVE VALUE
+	-- Mirrors the module's PHP value resolution: a bound row emits its
+	-- variable once at the base breakpoint, everything else emits a number
+	-- plus its unit, and a blank field emits nothing.
+	---------------------------------------------------------- */
+
+	function resolveValue( row, breakpoint, isBase ) {
+
+		var bound = tokenVar( row );
+
+		if ( bound ) {
+
+			return isBase ? 'var(' + bound + ')' : '';
+
+		}
+
+		var input = row.querySelector( '.oa-spacing-input[data-breakpoint="' + breakpoint + '"]' );
+		var value = input ? input.value.trim() : '';
+
+		if ( '' === value || ! NUMBER.test( value ) ) {
+
+			return '';
+
+		}
+
+		var select = row.querySelector( '.oa-spacing-unit-select' );
+		var unit = select ? select.value : 'px';
+
+		return '0' === value ? '0px' : value + unit;
+
+	}
+
+	/*
+	INDENT
+	-- Pushes a block of rules one tab in, for rules nested in a media query.
+	---------------------------------------------------------- */
+
+	function indent( css ) {
+
+		return css.split( '\n' ).map( function ( line ) {
+
+			return '' === line.trim() ? '' : '\t' + line;
+
+		} ).join( '\n' );
+
+	}
+
+	/*
+	BUILD CSS
+	-- Recompiles the whole stylesheet from the current field values.
+	---------------------------------------------------------- */
+
+	function buildCss() {
+
+		var blocks = [];
+		var reset = [];
+
+		tabs.forEach( function ( tab ) {
+
+			var breakpoint = tab.dataset.breakpoint;
+			var isBase = tab.hasAttribute( 'data-base' );
+			var media = tab.dataset.media || '';
+			var rules = [];
+			var declarations = [];
+
+			tokenRows.forEach( function ( row ) {
+
+				var value = resolveValue( row, breakpoint, isBase );
+
+				if ( ! value ) {
+
+					return;
+
+				}
+
+				declarations.push( '\t' + row.dataset.var + ': ' + value + ';' );
+
+			} );
+
+			if ( declarations.length ) {
+
+				rules.push( ':root {\n' + declarations.join( '\n' ) + '\n}' );
+
+			}
+
+			elementRows.forEach( function ( row ) {
+
+				var value = resolveValue( row, breakpoint, isBase );
+
+				if ( ! value ) {
+
+					return;
+
+				}
+
+				rules.push( '.breakdance :where(' + row.dataset.selector + ') {\n\tmargin-bottom: ' + value + ';\n}' );
+
+				if ( -1 === reset.indexOf( row ) ) {
+
+					reset.push( row );
+
+				}
+
+			} );
+
+			if ( ! rules.length ) {
+
+				return;
+
+			}
+
+			if ( ! media ) {
+
+				blocks.push( rules.join( '\n\n' ) );
+
+				return;
+
+			}
+
+			blocks.push( media + ' {\n\n' + indent( rules.join( '\n\n' ) ) + '\n\n}' );
+
+		} );
+
+		if ( resetToggle && resetToggle.checked && reset.length ) {
+
+			var selectors = [];
+
+			reset.forEach( function ( row ) {
+
+				var via = row.dataset.resetVia || '';
+
+				var covered = via && reset.some( function ( other ) {
+
+					return other.dataset.row === via;
+
+				} );
+
+				var selector = row.dataset.selector + ':last-child';
+
+				if ( ! covered && -1 === selectors.indexOf( selector ) ) {
+
+					selectors.push( selector );
+
+				}
+
+			} );
+
+			if ( selectors.length ) {
+
+				var list = selectors.length > 3
+					? '\n\t' + selectors.join( ',\n\t' ) + '\n'
+					: selectors.join( ', ' );
+
+				blocks.push( '.breakdance :where(' + list + ') {\n\tmargin-bottom: 0;\n}' );
+
+			}
+
+		}
+
+		if ( ! blocks.length ) {
+
+			return '';
+
+		}
+
+		return '/* Octave Addons — Breakdance default spacing */\n\n' + blocks.join( '\n\n' ) + '\n';
+
+	}
+
+	/*
+	SYNC PREVIEW
+	-- Writes the compiled stylesheet, or the empty-state note, into the
+	-- read-only preview panel.
+	---------------------------------------------------------- */
+
+	function syncPreview() {
+
+		if ( ! preview ) {
+
+			return;
+
+		}
+
+		var code = preview.querySelector( 'code' ) || preview;
+
+		code.textContent = buildCss() || preview.dataset.empty || '';
+
+	}
+
+	/*
+	SYNC TABS
+	-- Marks any breakpoint that carries its own values, so an override on a
+	-- hidden tab is never invisible.
+	---------------------------------------------------------- */
+
+	function syncTabs() {
+
+		tabs.forEach( function ( tab ) {
+
+			var breakpoint = tab.dataset.breakpoint;
+
+			var hasValues = tokenRows.concat( elementRows ).some( function ( row ) {
+
+				return '' !== resolveValue( row, breakpoint, tab.hasAttribute( 'data-base' ) );
+
+			} );
+
+			tab.classList.toggle( 'has-values', hasValues );
+
+		} );
+
+	}
+
+	/*
+	SYNC ROW
+	-- Keeps a bound row's number fields read-only, since its spacing comes
+	-- from the token rather than from the row itself.
+	---------------------------------------------------------- */
+
+	function syncRow( row ) {
+
+		var bound = '' !== tokenVar( row );
+		var note = row.querySelector( '.oa-spacing-token-note' );
+
+		row.classList.toggle( 'is-token', bound );
+
+		row.querySelectorAll( '.oa-spacing-input' ).forEach( function ( input ) {
+
+			input.readOnly = bound;
+
+		} );
+
+		if ( note ) {
+
+			note.hidden = ! bound;
+
+		}
+
+	}
+
+	/*
+	SHOW BREAKPOINT
+	-- Reveals one breakpoint's fields. Every field stays in the form at all
+	-- times, so hidden values are still submitted.
+	---------------------------------------------------------- */
+
+	function showBreakpoint( breakpoint ) {
+
+		tabs.forEach( function ( tab ) {
+
+			var isActive = tab.dataset.breakpoint === breakpoint;
+
+			tab.classList.toggle( 'is-active', isActive );
+			tab.setAttribute( 'aria-selected', isActive ? 'true' : 'false' );
+
+		} );
+
+		grid.querySelectorAll( '.oa-spacing-input' ).forEach( function ( input ) {
+
+			input.classList.toggle( 'oa-hidden', input.dataset.breakpoint !== breakpoint );
+
+		} );
+
+	}
+
+	tabs.forEach( function ( tab ) {
+
+		tab.addEventListener( 'click', function () {
+
+			showBreakpoint( tab.dataset.breakpoint );
+
+		} );
+
+	} );
+
+	grid.addEventListener( 'change', function ( event ) {
+
+		var row = event.target.closest ? event.target.closest( '.oa-spacing-row' ) : null;
+
+		if ( row && event.target.matches( '.oa-spacing-unit-select' ) ) {
+
+			syncRow( row );
+
+		}
+
+		syncTabs();
+		syncPreview();
+
+	} );
+
+	grid.addEventListener( 'input', function () {
+
+		syncTabs();
+		syncPreview();
+
+	} );
+
+	if ( resetToggle ) {
+
+		resetToggle.addEventListener( 'change', syncPreview );
+
+	}
+
+	elementRows.forEach( syncRow );
+	syncTabs();
+	syncPreview();
+
 })();

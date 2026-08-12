@@ -333,7 +333,7 @@ class Octave_Addons_Admin {
 		$groups = [
 			'breakdance' => [
 				'title'       => __( 'Breakdance', 'octave-addons' ),
-				'description' => __( 'Everything that plugs into the Breakdance builder — AJAX filtering for post loops, and the custom element library.', 'octave-addons' ),
+				'description' => __( 'Everything that plugs into the Breakdance builder — AJAX filtering for post loops, default element spacing, and the custom element library.', 'octave-addons' ),
 				'requires'    => 'breakdance',
 			],
 		];

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.11.0
+Stable tag:        2.12.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -24,6 +24,10 @@ Octave Addons ships with a growing collection of focused modules:
     IntersectionObserver JS, with an editable override for each file.
 *   **Breakdance AJAX Filtering** – adds server-backed filtering and
     pagination to Breakdance loops with a Filter Bar.
+*   **Breakdance Default Spacing** – sets the default bottom margin for
+    Breakdance headings and content elements, per breakpoint, from two
+    shared spacing tokens. Anything set on an element in the builder
+    still wins.
 *   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
     every Breakdance Lazy Load toggle off so images, backgrounds and
     embeds are left to the site's third-party performance plugin.
@@ -60,6 +64,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.12.0 =
+* Added Breakdance Default Spacing: a visual editor for the default bottom margin of Breakdance headings and content elements, with a value per Breakdance breakpoint and no CSS to write.
+* Added two shared spacing tokens, --default-element-gap and --default-heading-margin, that any element row can follow and any site CSS can reference.
+* Added an optional last-element reset that drops the bottom margin on the last spaced element in a container.
+* Added a read-only preview of the generated stylesheet that updates as values change.
 
 = 2.11.0 =
 * Added a shared Octave icon kit and replaced the mixed Dashicons on the module dashboard with matching stroke icons.
