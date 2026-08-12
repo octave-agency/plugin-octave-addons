@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 	/**
-	 * Style handle the compiled stylesheet is attached to.
+	 * Id given to the printed style tag, so it is identifiable in dev tools.
 	 */
 	protected const HANDLE = 'octave-addons-breakdance-spacing';
 
@@ -778,45 +778,49 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 	/*
 	RUN
-	-- Inlines the compiled stylesheet on the frontend, late enough to land
-	-- after Breakdance's own CSS.
+	-- Prints the compiled stylesheet inside Breakdance's own header assets
+	-- block rather than through wp_enqueue_style.
+	--
+	-- Breakdance writes its stylesheets as raw link tags into a placeholder it
+	-- echoes on wp_head at priority 1000000, so every enqueued style — inline
+	-- ones included — lands before that whole block. Its element defaults
+	-- include ".breakdance .bde-heading { margin: 0 }", which matches these
+	-- rules for specificity, so an enqueued default always lost on source
+	-- order and nothing here took effect.
+	--
+	-- Appending to the global settings slot puts these rules after the element
+	-- defaults but before presets, global selectors and per-element CSS, so
+	-- element spacing set in the builder still wins.
 	---------------------------------------------------------- */
 
 	public function run( array $s ): void {
 
-		add_action( 'wp_enqueue_scripts', function () use ( $s ) {
+		add_filter( 'breakdance_global_settings_css', function ( $html ) use ( $s ) {
 
-			$this->enqueue_css( $s );
+			return $this->append_style( (string) $html, $s );
 
-		}, 20 );
+		} );
 
 	}
 
 	/*
-	ENQUEUE CSS
-	-- Attaches the compiled stylesheet to an otherwise empty handle, which is
-	-- the standard way to print inline-only CSS through the queue.
+	APPEND STYLE
+	-- Adds the compiled stylesheet after Breakdance's global settings tag.
+	-- Nothing user-entered reaches the CSS — selectors are plugin constants and
+	-- values are a sanitized number plus a unit from a fixed list.
 	---------------------------------------------------------- */
 
-	protected function enqueue_css( array $s ): void {
-
-		if ( ! Octave_Addons::is_breakdance_active() ) {
-
-			return;
-
-		}
+	protected function append_style( string $html, array $s ): string {
 
 		$css = $this->build_css( $s );
 
 		if ( '' === $css ) {
 
-			return;
+			return $html;
 
 		}
 
-		wp_register_style( self::HANDLE, false, [], OCTAVE_ADDONS_VERSION );
-		wp_enqueue_style( self::HANDLE );
-		wp_add_inline_style( self::HANDLE, $css );
+		return $html . '<style id="' . self::HANDLE . '">' . $css . '</style>' . PHP_EOL;
 
 	}
 
@@ -838,7 +842,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 		<div class="oa-spacing" data-oa-spacing>
 
 			<p class="oa-help oa-help--intro">
-				<?php esc_html_e( 'Default bottom margins for Breakdance elements. These load after Breakdance\'s own CSS at matching specificity, so they take over from spacing set on individual elements in the builder — treat this as the site\'s spacing scale.', 'octave-addons' ); ?>
+				<?php esc_html_e( 'Default bottom margins for Breakdance elements. They print after Breakdance\'s element defaults but before its per-element CSS, so spacing set on an individual element in the builder still wins. The H1–H6 rows are the exception: they are more specific, so they also override the builder.', 'octave-addons' ); ?>
 			</p>
 
 			<div class="oa-spacing-bar">

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.12.1
+Stable tag:        2.12.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.12.2 =
+* Fixed Breakdance Default Spacing having no effect: Breakdance prints its stylesheets into a placeholder echoed on wp_head at priority 1000000, so an enqueued inline style always landed before its element defaults and lost to `.breakdance .bde-heading { margin: 0 }` on source order.
+* The compiled stylesheet is now appended to Breakdance's global settings slot, placing it after the element defaults but before presets, global selectors and per-element CSS.
 
 = 2.12.1 =
 * Breakdance Default Spacing now emits plain scoped selectors such as `.breakdance .bde-text` instead of wrapping them in `:where()`.
