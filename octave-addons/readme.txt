@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.12.0
+Stable tag:        2.12.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -26,8 +26,8 @@ Octave Addons ships with a growing collection of focused modules:
     pagination to Breakdance loops with a Filter Bar.
 *   **Breakdance Default Spacing** – sets the default bottom margin for
     Breakdance headings and content elements, per breakpoint, from two
-    shared spacing tokens. Anything set on an element in the builder
-    still wins.
+    shared spacing tokens, replacing the hand-written spacing stylesheet
+    a site would otherwise need.
 *   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
     every Breakdance Lazy Load toggle off so images, backgrounds and
     embeds are left to the site's third-party performance plugin.
@@ -64,6 +64,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.12.1 =
+* Breakdance Default Spacing now emits plain scoped selectors such as `.breakdance .bde-text` instead of wrapping them in `:where()`.
+* Spacing unit pickers use the standard Octave select design rather than a plain native dropdown.
+* Removed the "follows the token" note from token-bound spacing rows.
 
 = 2.12.0 =
 * Added Breakdance Default Spacing: a visual editor for the default bottom margin of Breakdance headings and content elements, with a value per Breakdance breakpoint and no CSS to write.

@@ -730,11 +730,7 @@ ADMIN INTERACTIONS
 
 	}
 
-	// .oa-plain-select opts a field out: the listbox is built for full-width
-	// fields, so compact in-grid controls keep the native select.
-	var SELECT_SELECTOR = 'select:not(.oa-plain-select)';
-
-	document.querySelectorAll( '.oa-app ' + SELECT_SELECTOR ).forEach( enhanceSelect );
+	document.querySelectorAll( '.oa-app select' ).forEach( enhanceSelect );
 
 	new MutationObserver( function ( mutations ) {
 
@@ -748,13 +744,13 @@ ADMIN INTERACTIONS
 
 				}
 
-				if ( node.matches( SELECT_SELECTOR ) ) {
+				if ( node.matches( 'select' ) ) {
 
 					enhanceSelect( node );
 
 				}
 
-				node.querySelectorAll( SELECT_SELECTOR ).forEach( enhanceSelect );
+				node.querySelectorAll( 'select' ).forEach( enhanceSelect );
 
 			} );
 
@@ -2197,7 +2193,7 @@ BREAKDANCE SPACING GRID
 
 				}
 
-				rules.push( '.breakdance :where(' + row.dataset.selector + ') {\n\tmargin-bottom: ' + value + ';\n}' );
+				rules.push( '.breakdance ' + row.dataset.selector + ' {\n\tmargin-bottom: ' + value + ';\n}' );
 
 				if ( -1 === reset.indexOf( row ) ) {
 
@@ -2239,7 +2235,7 @@ BREAKDANCE SPACING GRID
 
 				} );
 
-				var selector = row.dataset.selector + ':last-child';
+				var selector = '.breakdance ' + row.dataset.selector + ':last-child';
 
 				if ( ! covered && -1 === selectors.indexOf( selector ) ) {
 
@@ -2251,11 +2247,7 @@ BREAKDANCE SPACING GRID
 
 			if ( selectors.length ) {
 
-				var list = selectors.length > 3
-					? '\n\t' + selectors.join( ',\n\t' ) + '\n'
-					: selectors.join( ', ' );
-
-				blocks.push( '.breakdance :where(' + list + ') {\n\tmargin-bottom: 0;\n}' );
+				blocks.push( selectors.join( ',\n' ) + ' {\n\tmargin-bottom: 0;\n}' );
 
 			}
 
@@ -2324,7 +2316,6 @@ BREAKDANCE SPACING GRID
 	function syncRow( row ) {
 
 		var bound = '' !== tokenVar( row );
-		var note = row.querySelector( '.oa-spacing-token-note' );
 
 		row.classList.toggle( 'is-token', bound );
 
@@ -2333,12 +2324,6 @@ BREAKDANCE SPACING GRID
 			input.readOnly = bound;
 
 		} );
-
-		if ( note ) {
-
-			note.hidden = ! bound;
-
-		}
 
 	}
 

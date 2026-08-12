@@ -4123,7 +4123,7 @@ Sections
 .oa-spacing-head,
 .oa-spacing-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 110px 150px;
+    grid-template-columns: minmax(0, 1fr) 110px 210px;
     align-items: center;
     gap: 12px;
     padding: 10px 16px;
@@ -4211,42 +4211,25 @@ Value and unit controls
     color: var(--oa-text-dim);
 }
 
-.oa-spacing-token-note {
-    color: var(--oa-text-dim);
-    font-size: 11px;
-    font-style: italic;
-    white-space: nowrap;
-}
-
 .oa-spacing-unit {
     min-width: 0;
 }
 
-.oa-spacing select.oa-spacing-unit-select {
+/* The shared listbox sizes itself for full-width fields, so inside the grid it
+   follows its column instead. */
+.oa-spacing .oa-custom-select {
     width: 100%;
-    max-width: 150px;
+    min-width: 0;
+}
+
+.oa-spacing .oa-custom-select-trigger {
     min-height: 34px;
-    padding: 6px 26px 6px 10px;
-    border: 1px solid var(--oa-border);
-    border-radius: 9px;
-    background-color: var(--oa-bg-soft);
-    color: var(--oa-text);
+    gap: 8px;
     font-size: 12.5px;
-    line-height: 1.3;
-    box-shadow: none;
 }
 
-.oa-spacing select.oa-spacing-unit-select:focus {
-    border-color: var(--oa-accent);
-    box-shadow: 0 0 0 1px var(--oa-accent);
-}
-
-.oa-spacing-row.is-token .oa-spacing-name {
-    color: var(--oa-text);
-}
-
-.oa-spacing-row.is-token select.oa-spacing-unit-select {
-    border-color: rgba(43, 255, 134, 0.4);
+.oa-spacing-row.is-token .oa-custom-select-trigger {
+    border-color: rgba(43, 255, 134, 0.35);
     color: var(--oa-accent);
 }
 
@@ -4333,8 +4316,7 @@ Responsive
         padding-left: 0;
     }
 
-    .oa-spacing input[type="number"].oa-spacing-input,
-    .oa-spacing select.oa-spacing-unit-select {
+    .oa-spacing input[type="number"].oa-spacing-input {
         max-width: none;
     }
 

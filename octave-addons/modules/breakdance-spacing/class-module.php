@@ -623,9 +623,8 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 	/*
 	BUILD CSS
 	-- Compiles the whole settings payload into one stylesheet.
-	-- Every element rule is wrapped in :where() so it stays at a single class
-	-- of specificity: anything set on an element inside Breakdance, which
-	-- renders as ".breakdance .bde-<id>", always wins over these defaults.
+	-- Rules are scoped to .breakdance and emitted in element order, so the
+	-- heading level overrides land after the catch-all heading rule.
 	---------------------------------------------------------- */
 
 	public function build_css( array $s ): string {
@@ -678,7 +677,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 				}
 
 				$rules[] = sprintf(
-					".breakdance :where(%s) {\n\tmargin-bottom: %s;\n}",
+					".breakdance %s {\n\tmargin-bottom: %s;\n}",
 					$element['selector'],
 					$value
 				);
@@ -714,13 +713,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 			if ( ! empty( $selectors ) ) {
 
-				// Short lists read fine inline; longer ones get one selector per
-				// line so the preview panel stays scannable.
-				$list = count( $selectors ) > 3
-					? "\n\t" . implode( ",\n\t", $selectors ) . "\n"
-					: implode( ', ', $selectors );
-
-				$blocks[] = sprintf( ".breakdance :where(%s) {\n\tmargin-bottom: 0;\n}", $list );
+				$blocks[] = implode( ",\n", $selectors ) . " {\n\tmargin-bottom: 0;\n}";
 
 			}
 
@@ -756,7 +749,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 			}
 
-			$selectors[] = $element['selector'] . ':last-child';
+			$selectors[] = '.breakdance ' . $element['selector'] . ':last-child';
 
 		}
 
@@ -845,7 +838,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 		<div class="oa-spacing" data-oa-spacing>
 
 			<p class="oa-help oa-help--intro">
-				<?php esc_html_e( 'Default bottom margins for Breakdance elements. Anything you set on an individual element inside the builder still wins — these only fill in where nothing has been set.', 'octave-addons' ); ?>
+				<?php esc_html_e( 'Default bottom margins for Breakdance elements. These load after Breakdance\'s own CSS at matching specificity, so they take over from spacing set on individual elements in the builder — treat this as the site\'s spacing scale.', 'octave-addons' ); ?>
 			</p>
 
 			<div class="oa-spacing-bar">
@@ -908,7 +901,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 							<?php $this->render_value_inputs( 'tokens', $key, $row, $breakpoints, __( 'not set', 'octave-addons' ), $token['label'] ); ?>
 						</span>
 						<span class="oa-spacing-unit">
-							<?php $this->render_unit_select( 'tokens', $key, (string) ( $row['unit'] ?? 'px' ), false ); ?>
+							<?php $this->render_unit_select( 'tokens', $key, (string) ( $row['unit'] ?? 'px' ), false, $token['label'] ); ?>
 						</span>
 					</div>
 
@@ -967,7 +960,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 							<?php $this->render_value_inputs( 'elements', $key, $row, $breakpoints, __( 'none', 'octave-addons' ), $element['label'] ); ?>
 						</span>
 						<span class="oa-spacing-unit">
-							<?php $this->render_unit_select( 'elements', $key, $unit, true ); ?>
+							<?php $this->render_unit_select( 'elements', $key, $unit, true, $element['label'] ); ?>
 						</span>
 					</div>
 
@@ -1051,33 +1044,23 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 		endforeach;
 
-		?>
-
-		<span class="oa-spacing-token-note"<?= $is_token ? '' : ' hidden'; ?>>
-			<?php esc_html_e( 'follows the token', 'octave-addons' ); ?>
-		</span>
-
-		<?php
-
 	}
 
 	/*
 	RENDER UNIT SELECT
 	-- The unit for a whole row. Element rows can also point at a token, in
 	-- which case the row inherits that token's responsive values.
-	-- oa-plain-select keeps this compact control out of the custom listbox
-	-- enhancement, which is built for full-width fields.
 	---------------------------------------------------------- */
 
-	protected function render_unit_select( string $bucket, string $key, string $current, bool $allow_tokens ): void {
+	protected function render_unit_select( string $bucket, string $key, string $current, bool $allow_tokens, string $aria_prefix ): void {
 
 		$field_name = sprintf( '%s[%s][%s][%s][unit]', OCTAVE_ADDONS_OPTION_KEY, $this->get_id(), $bucket, $key );
 
 		?>
 
-		<select class="oa-plain-select oa-spacing-unit-select"
+		<select class="oa-spacing-unit-select"
 		        name="<?= esc_attr( $field_name ); ?>"
-		        aria-label="<?php esc_attr_e( 'Unit', 'octave-addons' ); ?>">
+		        aria-label="<?php echo esc_attr( sprintf( /* translators: %s: field name. */ __( 'Unit — %s', 'octave-addons' ), $aria_prefix ) ); ?>">
 			<?php
 
 			foreach ( self::UNITS as $unit ) :
