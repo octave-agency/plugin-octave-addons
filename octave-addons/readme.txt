@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.20.2
+Stable tag:        2.21.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,13 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.21.0 =
+* Rebuilt the field-only CPT canvas: Gutenberg now shows a "custom content is disabled" notice with every assigned Content Field beneath it, in the content area.
+* Bound the canvas fields straight to registered post meta with useEntityProp, so values load, edit, and save through Gutenberg's own post save.
+* Replaced the raw inputs with native block editor controls, including toggles, tick lists, media pickers, and reorderable repeater rows.
+* Declared the canvas stylesheet as the block's editor style and split it out of the meta box stylesheet, clearing the "octave-post-fields-css was added to the iframe incorrectly" console warning.
+* Stopped loading meta box assets, TinyMCE, and the media library on field-only CPT editors that never use them.
 
 = 2.20.2 =
 * Loaded structured Content Field styles through WordPress's supported block asset lifecycle so they render correctly inside Gutenberg's iframe.

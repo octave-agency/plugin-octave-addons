@@ -65,7 +65,11 @@ class Octave_Addons_Custom_Post_Fields {
 
 	/*
 	REGISTER STRUCTURED CONTENT BLOCK
-	-- Provides the Gutenberg-native launcher used when standard content is off.
+	-- Provides the Gutenberg-native canvas used when standard content is off.
+	-- The canvas stylesheet is declared as the block's editor style, which is
+	-- how WordPress collects assets for the block editor iframe. Enqueuing it
+	-- any other way either misses the iframe or triggers Gutenberg's
+	-- "added to the iframe incorrectly" warning.
 	---------------------------------------------------------- */
 
 	public function register_structured_content_block(): void {
@@ -83,8 +87,8 @@ class Octave_Addons_Custom_Post_Fields {
 			OCTAVE_ADDONS_VERSION
 		);
 		wp_register_style(
-			'octave-structured-content-fields',
-			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/post-fields.css',
+			'octave-structured-content',
+			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/structured-content.css',
 			[],
 			OCTAVE_ADDONS_VERSION
 		);
@@ -107,6 +111,7 @@ class Octave_Addons_Custom_Post_Fields {
 			'octave/block-octave-launcher',
 			[
 				'api_version'     => 2,
+				'editor_style'    => 'octave-structured-content',
 				'render_callback' => '__return_empty_string',
 			]
 		);
@@ -115,8 +120,10 @@ class Octave_Addons_Custom_Post_Fields {
 
 	/*
 	ENQUEUE STRUCTURED CONTENT STYLES
-	-- Uses the supported block asset lifecycle so WordPress loads schema styles
-	-- inside Gutenberg's editor iframe only for Octave field-only post types.
+	-- The block's editor style covers the iframe. This adds the same sheet to
+	-- the editor page itself, which the iframe never sees, so the rules that
+	-- hide the inserter and appender apply on field-only post types even when
+	-- the site loads block assets separately.
 	---------------------------------------------------------- */
 
 	public function enqueue_structured_content_styles(): void {
@@ -135,7 +142,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
-		wp_enqueue_style( 'octave-structured-content-fields' );
+		wp_enqueue_style( 'octave-structured-content' );
 
 	}
 
@@ -195,15 +202,17 @@ class Octave_Addons_Custom_Post_Fields {
 
 		wp_enqueue_script( 'octave-structured-content-launcher' );
 
-		$fields        = $this->fields_for_post_type( $screen->post_type );
-		$stored_values = [];
-		$post_id       = $post instanceof WP_Post ? $post->ID : 0;
+		$post_type   = get_post_type_object( $screen->post_type );
+		$singular    = $post_type ? $post_type->labels->singular_name : __( 'post', 'octave-addons' );
+		$fields      = $this->fields_for_post_type( $screen->post_type );
+		$post_id     = $post instanceof WP_Post ? $post->ID : 0;
+		$stored_keys = [];
 
 		foreach ( $fields as $field ) {
 
 			if ( $post_id && metadata_exists( 'post', $post_id, $field['meta_key'] ) ) {
 
-				$stored_values[ $field['meta_key'] ] = get_post_meta( $post_id, $field['meta_key'], true );
+				$stored_keys[ $field['meta_key'] ] = true;
 
 			}
 
@@ -213,18 +222,31 @@ class Octave_Addons_Custom_Post_Fields {
 			'octave-structured-content-launcher',
 			'octaveStructuredContent',
 			[
-				'enabled'      => true,
-				'postType'     => $screen->post_type,
-				'fields'       => $fields,
-				'storedValues' => $stored_values,
-				'title'        => __( 'This post type uses default fields.', 'octave-addons' ),
-				'description'  => __( 'Content cannot be added in the block editor. Please populate the fields below.', 'octave-addons' ),
-				'emptyFields'  => __( 'No Content Fields are assigned to this post type yet.', 'octave-addons' ),
-				'addItem'      => __( 'Add item', 'octave-addons' ),
-				'removeItem'   => __( 'Remove item', 'octave-addons' ),
-				'chooseMedia'  => __( 'Choose media', 'octave-addons' ),
-				'replaceMedia' => __( 'Replace media', 'octave-addons' ),
-				'removeMedia'  => __( 'Remove media', 'octave-addons' ),
+				'enabled'    => true,
+				'postType'   => $screen->post_type,
+				'fields'     => $fields,
+				'storedKeys' => (object) $stored_keys,
+				'strings'    => [
+					'blockTitle'   => __( 'Octave Content Fields', 'octave-addons' ),
+					'title'        => __( 'Custom content is disabled for this post type.', 'octave-addons' ),
+					/* translators: %s: singular post type name. */
+					'description'  => sprintf( __( 'This %s is built from Octave content fields instead of blocks. Update the fields below and save as normal.', 'octave-addons' ), strtolower( $singular ) ),
+					'emptyFields'  => __( 'No content fields are assigned to this post type yet. Add fields in Octave Addons, then return here to populate them.', 'octave-addons' ),
+					'required'     => __( 'Required', 'octave-addons' ),
+					'selectOption' => __( 'Select an option', 'octave-addons' ),
+					'yes'          => __( 'Yes', 'octave-addons' ),
+					/* translators: %d: item number. */
+					'item'         => __( 'Item %d', 'octave-addons' ),
+					'noItems'      => __( 'No items yet. Use “Add item” to begin.', 'octave-addons' ),
+					'addItem'      => __( 'Add item', 'octave-addons' ),
+					'removeItem'   => __( 'Remove item', 'octave-addons' ),
+					'moveUp'       => __( 'Move item up', 'octave-addons' ),
+					'moveDown'     => __( 'Move item down', 'octave-addons' ),
+					'noMedia'      => __( 'Nothing selected', 'octave-addons' ),
+					'chooseMedia'  => __( 'Choose', 'octave-addons' ),
+					'replaceMedia' => __( 'Replace', 'octave-addons' ),
+					'removeMedia'  => __( 'Remove', 'octave-addons' ),
+				],
 			]
 		);
 
@@ -376,19 +398,13 @@ class Octave_Addons_Custom_Post_Fields {
 
 	public function render_meta_box( WP_Post $post ): void {
 
-		$fields          = $this->fields_for_post_type( $post->post_type );
-		$structured_only = in_array( $post->post_type, $this->structured_post_types, true );
+		$fields = $this->fields_for_post_type( $post->post_type );
 
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_NAME );
 
 		?>
 
-		<div class="oa-post-fields<?= $structured_only ? ' oa-post-fields--structured' : ''; ?>">
-			<?php
-
-			if ( ! $structured_only ) :
-
-			?>
+		<div class="oa-post-fields">
 
 			<div class="oa-post-fields-intro">
 				<span class="dashicons dashicons-admin-generic" aria-hidden="true"></span>
@@ -397,12 +413,6 @@ class Octave_Addons_Custom_Post_Fields {
 					<p><?php esc_html_e( 'Complete the fields below to keep this content consistent across templates and dynamic layouts.', 'octave-addons' ); ?></p>
 				</div>
 			</div>
-
-			<?php
-
-			endif;
-
-			?>
 
 			<div class="oa-post-fields-grid">
 
@@ -1029,7 +1039,9 @@ class Octave_Addons_Custom_Post_Fields {
 
 	/*
 	ENQUEUE EDITOR ASSETS
-	-- Loads the purpose-built field UI only on applicable post editors.
+	-- Loads the meta box field UI only on applicable post editors.
+	-- Field-only post types are skipped entirely; their canvas assets go
+	-- through the block asset hooks so Gutenberg can serve them to the iframe.
 	---------------------------------------------------------- */
 
 	public function enqueue_editor_assets( string $hook ): void {
@@ -1042,7 +1054,13 @@ class Octave_Addons_Custom_Post_Fields {
 
 		$screen = get_current_screen();
 
-		if ( ! $screen || ( empty( $this->fields_for_post_type( $screen->post_type ) ) && ! in_array( $screen->post_type, $this->structured_post_types, true ) ) ) {
+		if ( ! $screen || in_array( $screen->post_type, $this->structured_post_types, true ) ) {
+
+			return;
+
+		}
+
+		if ( empty( $this->fields_for_post_type( $screen->post_type ) ) ) {
 
 			return;
 
@@ -1051,13 +1069,6 @@ class Octave_Addons_Custom_Post_Fields {
 		wp_enqueue_editor();
 		wp_enqueue_media();
 		wp_enqueue_style( 'octave-post-fields' );
-
-		if ( in_array( $screen->post_type, $this->structured_post_types, true ) ) {
-
-			return;
-
-		}
-
 		wp_enqueue_script( 'octave-post-fields' );
 
 		wp_localize_script(
