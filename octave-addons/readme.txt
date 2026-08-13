@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.14.1
+Stable tag:        2.15.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,18 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.15.1 =
+* Replaced step and part labels with direct Post Types, Categories, and Content Fields boxes.
+* Added explicit Manage Post Types, Manage Categories, and Manage Fields actions for clearer navigation.
+
+= 2.15.0 =
+* Split the main Post Types screen into Post Control and Content Management sections.
+* Grouped post types with reusable categories, then placed content fields below the post type controls for a clearer workflow.
+
+= 2.14.2 =
+* Changed Add Reusable Field on a single post type’s Content Fields editor into a searchable picker of definitions already created in Reusable Content Fields.
+* Kept reusable field creation exclusive to the global reusable field library.
 
 = 2.14.1 =
 * Made custom field storage sparse: empty and default-equivalent values now remove their postmeta row, while intentional empty overrides of non-empty defaults remain stored.

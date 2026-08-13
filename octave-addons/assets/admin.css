@@ -2190,7 +2190,7 @@ BUILT-IN WORDPRESS CONTENT
 
 /*
 CONTENT OVERVIEW
--- Three summary pillars that create and open the parts of a content type.
+-- Separates structural post controls from editor-facing content management.
 ---------------------------------------------------------- */
 
 .oa-content-overview {
@@ -2199,6 +2199,11 @@ CONTENT OVERVIEW
     border: 1px solid var(--oa-border);
     border-radius: 14px;
     background: var(--oa-surface);
+}
+
+.oa-content-overview--content-management {
+    margin-top: 32px;
+    border-color: rgba(43, 255, 134, 0.24);
 }
 
 .oa-content-overview-head {
@@ -2264,14 +2269,6 @@ CONTENT OVERVIEW
     display: grid;
     gap: 3px;
     min-width: 0;
-}
-
-.oa-overview-card-step {
-    color: var(--oa-text-dim);
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
 }
 
 .oa-overview-card-copy h4 {
@@ -3053,6 +3050,111 @@ CUSTOM POST TYPE EDITOR
 
 .oa-field-scope-guide strong {
     color: var(--oa-text);
+}
+
+.oa-reusable-field-finder {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 14px;
+    padding: 12px;
+    border: 1px solid rgba(43, 255, 134, 0.24);
+    border-radius: 10px;
+    background: var(--oa-accent-bg);
+}
+
+.oa-reusable-field-finder.oa-hidden {
+    display: none;
+}
+
+.oa-reusable-field-finder-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.oa-reusable-field-finder-head > div,
+.oa-reusable-field-option > span:first-child {
+    display: grid;
+    gap: 3px;
+}
+
+.oa-reusable-field-finder-head strong,
+.oa-reusable-field-option strong {
+    color: var(--oa-text);
+}
+
+.oa-reusable-field-finder-head span {
+    color: var(--oa-text-muted);
+    font-size: 10.5px;
+}
+
+.oa-reusable-field-finder-close {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    color: var(--oa-text-muted);
+    border: 1px solid var(--oa-border-light);
+    border-radius: 7px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.oa-reusable-field-search input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.oa-reusable-field-options {
+    display: grid;
+    gap: 7px;
+}
+
+.oa-reusable-field-option {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    color: var(--oa-text-muted);
+    border: 1px solid var(--oa-border-light);
+    border-radius: 8px;
+    background: rgba(8, 11, 12, 0.42);
+    cursor: pointer;
+    text-align: left;
+}
+
+.oa-reusable-field-option:hover,
+.oa-reusable-field-option:focus-visible {
+    color: var(--oa-accent);
+    border-color: rgba(43, 255, 134, 0.4);
+    outline: none;
+}
+
+.oa-reusable-field-option code {
+    color: var(--oa-text-dim);
+    font-size: 9.5px;
+}
+
+.oa-reusable-field-option > span:last-child {
+    padding: 4px 8px;
+    color: var(--oa-on-accent);
+    border-radius: 6px;
+    background: var(--oa-accent);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.oa-reusable-field-option.is-used,
+.oa-reusable-field-option.is-filtered {
+    display: none;
+}
+
+.oa-reusable-field-empty {
+    margin: 2px 0;
+    color: var(--oa-text-muted);
+    font-size: 11px;
 }
 
 .oa-field-scope-badge {

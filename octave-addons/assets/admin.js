@@ -1836,6 +1836,12 @@ ADMIN INTERACTIONS
 		var addButtons = collection.querySelectorAll( '.oa-collection-add' );
 		var collectionKey = collection.dataset.collection;
 		var nextIndex = list.querySelectorAll( '.oa-collection-item' ).length;
+		var reusableFinderToggle = collection.querySelector( '.oa-reusable-field-finder-toggle' );
+		var reusableFinder = collection.querySelector( '.oa-reusable-field-finder' );
+		var reusableFinderClose = collection.querySelector( '.oa-reusable-field-finder-close' );
+		var reusableFinderSearch = collection.querySelector( '.oa-reusable-field-search input' );
+		var reusableFinderOptions = collection.querySelectorAll( '.oa-reusable-field-option' );
+		var reusableFinderEmpty = collection.querySelector( '.oa-reusable-field-empty' );
 
 		function slugify( value ) {
 
@@ -1856,6 +1862,39 @@ ADMIN INTERACTIONS
 				} );
 
 			} );
+
+		}
+
+		function syncReusableFieldFinder() {
+
+			if ( ! reusableFinder ) {
+
+				return;
+
+			}
+
+			var query = reusableFinderSearch.value.trim().toLowerCase();
+			var visibleCount = 0;
+
+			reusableFinderOptions.forEach( function ( option ) {
+
+				var field = document.getElementById( option.dataset.fieldTarget );
+				var assignment = field ? field.querySelector( '[data-context-assignment="true"]' ) : null;
+				var used = ! assignment || assignment.checked;
+				var matches = '' === query || -1 !== option.dataset.search.indexOf( query );
+
+				option.classList.toggle( 'is-used', used );
+				option.classList.toggle( 'is-filtered', ! matches );
+
+				if ( ! used && matches ) {
+
+					visibleCount += 1;
+
+				}
+
+			} );
+
+			reusableFinderEmpty.classList.toggle( 'oa-hidden', visibleCount > 0 );
 
 		}
 
@@ -2058,7 +2097,12 @@ ADMIN INTERACTIONS
 
 			if ( contextAssignment ) {
 
-				contextAssignment.addEventListener( 'change', syncContextAssignment );
+				contextAssignment.addEventListener( 'change', function () {
+
+					syncContextAssignment();
+					syncReusableFieldFinder();
+
+				} );
 
 			}
 
@@ -2178,8 +2222,59 @@ ADMIN INTERACTIONS
 
 		} );
 
+		if ( reusableFinder ) {
+
+			reusableFinderToggle.addEventListener( 'click', function () {
+
+				var opening = reusableFinder.classList.contains( 'oa-hidden' );
+
+				reusableFinder.classList.toggle( 'oa-hidden', ! opening );
+				reusableFinderToggle.setAttribute( 'aria-expanded', opening ? 'true' : 'false' );
+
+				if ( opening ) {
+
+					syncReusableFieldFinder();
+					reusableFinderSearch.focus();
+
+				}
+
+			} );
+
+			reusableFinderClose.addEventListener( 'click', function () {
+
+				reusableFinder.classList.add( 'oa-hidden' );
+				reusableFinderToggle.setAttribute( 'aria-expanded', 'false' );
+				reusableFinderToggle.focus();
+
+			} );
+
+			reusableFinderSearch.addEventListener( 'input', syncReusableFieldFinder );
+
+			reusableFinderOptions.forEach( function ( option ) {
+
+				option.addEventListener( 'click', function () {
+
+					var field = document.getElementById( option.dataset.fieldTarget );
+					var assignment = field ? field.querySelector( '[data-context-assignment="true"]' ) : null;
+
+					if ( ! assignment ) {
+
+						return;
+
+					}
+
+					assignment.checked = true;
+					assignment.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+
+				} );
+
+			} );
+
+		}
+
 		list.querySelectorAll( '.oa-collection-item' ).forEach( wireItem );
 		reindex();
+		syncReusableFieldFinder();
 
 	} );
 
