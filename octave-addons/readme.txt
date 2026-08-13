@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.12.3
+Stable tag:        2.12.4
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.12.4 =
+* Fixed Scroll Animation CSS and JavaScript overrides losing backslashes when saved through the WordPress Settings API.
 
 = 2.12.3 =
 * Scroll Animation CSS and JavaScript overrides now replace the bundled assets and load on the frontend even when their corresponding load toggles are disabled.

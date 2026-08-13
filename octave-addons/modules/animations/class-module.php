@@ -60,8 +60,8 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 		// Overrides are raw CSS/JS — we do NOT KSES them (that would
 		// destroy valid CSS/JS). They're only settable by users with
 		// manage_options, same as the theme's Additional CSS field.
-		$clean['css_override'] = isset( $input['css_override'] ) ? (string) wp_unslash( $input['css_override'] ) : '';
-		$clean['js_override']  = isset( $input['js_override'] )  ? (string) wp_unslash( $input['js_override'] )  : '';
+		$clean['css_override'] = isset( $input['css_override'] ) ? (string) $input['css_override'] : '';
+		$clean['js_override']  = isset( $input['js_override'] )  ? (string) $input['js_override'] : '';
 
 		return $clean;
 
