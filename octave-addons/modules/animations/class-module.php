@@ -129,8 +129,8 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						'class'       => 'oa-code-editor',
 						'rows'        => 12,
 						'spellcheck'  => false,
-						'placeholder' => __( 'Added after the bundled animation.css.', 'octave-addons' ),
-						'help'        => __( 'Appended after the bundled animation.css — use this to override or extend individual rules.', 'octave-addons' ),
+						'placeholder' => __( 'Replaces the bundled animation.css.', 'octave-addons' ),
+						'help'        => __( 'Used as the main animation CSS instead of the bundled file, even when Load CSS is disabled.', 'octave-addons' ),
 					] );
 
 				},
@@ -147,8 +147,8 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						'class'       => 'oa-code-editor',
 						'rows'        => 14,
 						'spellcheck'  => false,
-						'placeholder' => __( 'Added after the bundled animation.js.', 'octave-addons' ),
-						'help'        => __( 'Appended after the bundled animation.js in the footer.', 'octave-addons' ),
+						'placeholder' => __( 'Replaces the bundled animation.js.', 'octave-addons' ),
+						'help'        => __( 'Used as the main animation JavaScript instead of the bundled file, even when Load JavaScript is disabled.', 'octave-addons' ),
 					] );
 
 				},
@@ -177,6 +177,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 	}
 
 	protected function enqueue_assets( array $s ): void {
+
 		if ( $this->is_breakdance_builder_request() ) {
 
 			return;
@@ -194,35 +195,40 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 		}
 
 		// -------- CSS --------
-		if ( ! empty( $s['load_css'] ) ) {
+		$css_handle   = 'octave-addons-animations';
+		$css_override = (string) ( $s['css_override'] ?? '' );
 
-			$handle  = 'octave-addons-animations';
+		if ( '' !== trim( $css_override ) ) {
+
+			wp_register_style( $css_handle, false, [], null );
+			wp_enqueue_style( $css_handle );
+			wp_add_inline_style( $css_handle, $css_override );
+
+		} elseif ( ! empty( $s['load_css'] ) ) {
+
 			$css_url = OCTAVE_ADDONS_URL . 'modules/animations/assets/animation.css';
 			$css_ver = $this->file_version( OCTAVE_ADDONS_DIR . 'modules/animations/assets/animation.css' );
 
-			wp_enqueue_style( $handle, $css_url, [], $css_ver );
-
-			if ( ! empty( $s['css_override'] ) ) {
-
-				wp_add_inline_style( $handle, (string) $s['css_override'] );
-
-			}
+			wp_enqueue_style( $css_handle, $css_url, [], $css_ver );
 
 		}
 
 		// -------- JS --------
-		if ( ! empty( $s['load_js'] ) ) {
-			$handle = 'octave-addons-animations';
+		$js_handle   = 'octave-addons-animations';
+		$js_override = (string) ( $s['js_override'] ?? '' );
+
+		if ( '' !== trim( $js_override ) ) {
+
+			wp_register_script( $js_handle, false, [], null, true );
+			wp_enqueue_script( $js_handle );
+			wp_add_inline_script( $js_handle, $js_override );
+
+		} elseif ( ! empty( $s['load_js'] ) ) {
+
 			$js_url = OCTAVE_ADDONS_URL . 'modules/animations/assets/animation.js';
 			$js_ver = $this->file_version( OCTAVE_ADDONS_DIR . 'modules/animations/assets/animation.js' );
 
-			wp_enqueue_script( $handle, $js_url, [], $js_ver, true );
-
-			if ( ! empty( $s['js_override'] ) ) {
-
-				wp_add_inline_script( $handle, (string) $s['js_override'] );
-
-			}
+			wp_enqueue_script( $js_handle, $js_url, [], $js_ver, true );
 
 		}
 
