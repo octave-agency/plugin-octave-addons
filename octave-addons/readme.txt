@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.20.1
+Stable tag:        2.20.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.20.2 =
+* Loaded structured Content Field styles through WordPress's supported block asset lifecycle so they render correctly inside Gutenberg's iframe.
+* Kept outer editor styling separate and restricted both assets to Octave field-only CPT screens.
 
 = 2.20.1 =
 * Replaced the mixed Content field inventory with clear Reusable Fields and per-post-type Fields destinations.

@@ -55,6 +55,7 @@ class Octave_Addons_Custom_Post_Fields {
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ $this, 'save_post' ], 10, 2 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
+		add_action( 'enqueue_block_assets', [ $this, 'enqueue_structured_content_styles' ] );
 		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_structured_content_launcher' ] );
 		add_action( 'current_screen', [ $this, 'add_structured_content_template' ] );
 		add_action( 'init', [ $this, 'register_structured_content_block' ], 15 );
@@ -81,6 +82,12 @@ class Octave_Addons_Custom_Post_Fields {
 			[],
 			OCTAVE_ADDONS_VERSION
 		);
+		wp_register_style(
+			'octave-structured-content-fields',
+			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/post-fields.css',
+			[],
+			OCTAVE_ADDONS_VERSION
+		);
 		wp_register_script(
 			'octave-post-fields',
 			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/post-fields.js',
@@ -103,6 +110,32 @@ class Octave_Addons_Custom_Post_Fields {
 				'render_callback' => '__return_empty_string',
 			]
 		);
+
+	}
+
+	/*
+	ENQUEUE STRUCTURED CONTENT STYLES
+	-- Uses the supported block asset lifecycle so WordPress loads schema styles
+	-- inside Gutenberg's editor iframe only for Octave field-only post types.
+	---------------------------------------------------------- */
+
+	public function enqueue_structured_content_styles(): void {
+
+		if ( ! is_admin() ) {
+
+			return;
+
+		}
+
+		$screen = get_current_screen();
+
+		if ( ! $screen || ! in_array( $screen->post_type, $this->structured_post_types, true ) ) {
+
+			return;
+
+		}
+
+		wp_enqueue_style( 'octave-structured-content-fields' );
 
 	}
 
@@ -160,7 +193,6 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
-		wp_enqueue_style( 'octave-post-fields' );
 		wp_enqueue_script( 'octave-structured-content-launcher' );
 
 		$fields        = $this->fields_for_post_type( $screen->post_type );
