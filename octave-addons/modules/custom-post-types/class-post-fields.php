@@ -44,6 +44,12 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
+		foreach ( $this->structured_post_types as $post_type ) {
+
+			add_action( 'rest_after_insert_' . $post_type, [ $this, 'clean_structured_meta' ], 10, 3 );
+
+		}
+
 		$this->register_meta();
 
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
@@ -85,7 +91,7 @@ class Octave_Addons_Custom_Post_Fields {
 		wp_register_script(
 			'octave-structured-content-launcher',
 			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/structured-content-launcher.js',
-			[ 'wp-blocks', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-i18n' ],
+			[ 'wp-block-editor', 'wp-blocks', 'wp-components', 'wp-core-data', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-i18n' ],
 			OCTAVE_ADDONS_VERSION,
 			false
 		);
@@ -144,6 +150,8 @@ class Octave_Addons_Custom_Post_Fields {
 
 	public function enqueue_structured_content_launcher(): void {
 
+		global $post;
+
 		$screen = get_current_screen();
 
 		if ( ! $screen || ! in_array( $screen->post_type, $this->structured_post_types, true ) ) {
@@ -154,14 +162,37 @@ class Octave_Addons_Custom_Post_Fields {
 
 		wp_enqueue_style( 'octave-post-fields' );
 		wp_enqueue_script( 'octave-structured-content-launcher' );
+
+		$fields        = $this->fields_for_post_type( $screen->post_type );
+		$stored_values = [];
+		$post_id       = $post instanceof WP_Post ? $post->ID : 0;
+
+		foreach ( $fields as $field ) {
+
+			if ( $post_id && metadata_exists( 'post', $post_id, $field['meta_key'] ) ) {
+
+				$stored_values[ $field['meta_key'] ] = get_post_meta( $post_id, $field['meta_key'], true );
+
+			}
+
+		}
+
 		wp_localize_script(
 			'octave-structured-content-launcher',
 			'octaveStructuredContent',
 			[
-				'enabled'     => true,
-				'postType'    => $screen->post_type,
-				'title'       => __( 'This post type uses default fields.', 'octave-addons' ),
-				'description' => __( 'Content cannot be added in the block editor. Please populate the fields below.', 'octave-addons' ),
+				'enabled'      => true,
+				'postType'     => $screen->post_type,
+				'fields'       => $fields,
+				'storedValues' => $stored_values,
+				'title'        => __( 'This post type uses default fields.', 'octave-addons' ),
+				'description'  => __( 'Content cannot be added in the block editor. Please populate the fields below.', 'octave-addons' ),
+				'emptyFields'  => __( 'No Content Fields are assigned to this post type yet.', 'octave-addons' ),
+				'addItem'      => __( 'Add item', 'octave-addons' ),
+				'removeItem'   => __( 'Remove item', 'octave-addons' ),
+				'chooseMedia'  => __( 'Choose media', 'octave-addons' ),
+				'replaceMedia' => __( 'Replace media', 'octave-addons' ),
+				'removeMedia'  => __( 'Remove media', 'octave-addons' ),
 			]
 		);
 
@@ -235,14 +266,20 @@ class Octave_Addons_Custom_Post_Fields {
 
 	/*
 	ADD META BOXES
-	-- Adds one consistent Octave panel to every assigned content type.
+	-- Adds a panel only where the standard content editor remains enabled.
 	---------------------------------------------------------- */
 
 	public function add_meta_boxes(): void {
 
 		foreach ( array_keys( $this->post_type_labels ) as $post_type ) {
 
-			if ( empty( $this->fields_for_post_type( $post_type ) ) && ! in_array( $post_type, $this->structured_post_types, true ) ) {
+			if ( in_array( $post_type, $this->structured_post_types, true ) ) {
+
+				continue;
+
+			}
+
+			if ( empty( $this->fields_for_post_type( $post_type ) ) ) {
 
 				continue;
 
@@ -250,12 +287,51 @@ class Octave_Addons_Custom_Post_Fields {
 
 			add_meta_box(
 				'octave-custom-post-fields',
-				in_array( $post_type, $this->structured_post_types, true ) ? __( 'Content Fields', 'octave-addons' ) : __( 'Octave Post Fields', 'octave-addons' ),
+				__( 'Octave Post Fields', 'octave-addons' ),
 				[ $this, 'render_meta_box' ],
 				$post_type,
 				'normal',
 				'high'
 			);
+
+		}
+
+	}
+
+	/*
+	CLEAN STRUCTURED META
+	-- Applies sparse storage after Gutenberg saves registered meta through REST.
+	---------------------------------------------------------- */
+
+	public function clean_structured_meta( WP_Post $post, WP_REST_Request $request, bool $creating ): void {
+
+		$submitted = $request->get_param( 'meta' );
+
+		if ( ! is_array( $submitted ) ) {
+
+			return;
+
+		}
+
+		foreach ( $this->fields_for_post_type( $post->post_type ) as $field ) {
+
+			if ( ! array_key_exists( $field['meta_key'], $submitted ) ) {
+
+				continue;
+
+			}
+
+			$value = $this->sanitize_value( $submitted[ $field['meta_key'] ], $field );
+
+			if ( $this->should_store_value( $value, $field ) ) {
+
+				update_post_meta( $post->ID, $field['meta_key'], $value );
+
+			} else {
+
+				delete_post_meta( $post->ID, $field['meta_key'] );
+
+			}
 
 		}
 
@@ -943,6 +1019,13 @@ class Octave_Addons_Custom_Post_Fields {
 		wp_enqueue_editor();
 		wp_enqueue_media();
 		wp_enqueue_style( 'octave-post-fields' );
+
+		if ( in_array( $screen->post_type, $this->structured_post_types, true ) ) {
+
+			return;
+
+		}
+
 		wp_enqueue_script( 'octave-post-fields' );
 
 		wp_localize_script(
@@ -954,7 +1037,6 @@ class Octave_Addons_Custom_Post_Fields {
 				'useMedia'             => __( 'Use this media', 'octave-addons' ),
 				'replace'              => __( 'Replace', 'octave-addons' ),
 				'itemLabel'            => __( 'Item %d', 'octave-addons' ),
-				'structuredOnly' => in_array( $screen->post_type, $this->structured_post_types, true ),
 			]
 		);
 

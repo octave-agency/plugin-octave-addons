@@ -119,114 +119,6 @@ POST FIELDS EDITOR
 	}
 
 	/*
-	ASSOCIATE CONTROLS WITH FORM
-	-- Keeps moved and dynamically added inputs attached to Gutenberg's native
-	-- meta-box form without moving unrelated meta boxes.
-	---------------------------------------------------------- */
-
-	function associateControlsWithForm( scope, formId ) {
-
-		scope.querySelectorAll( 'button, fieldset, input, object, output, select, textarea' ).forEach( function ( control ) {
-
-			control.setAttribute( 'form', formId );
-
-		} );
-
-	}
-
-	/*
-	POSITION STRUCTURED FIELDS
-	-- Places only the Octave box directly after Gutenberg's editor canvas and
-	-- associates its controls with the original WordPress meta-box form.
-	---------------------------------------------------------- */
-
-	function positionStructuredFields() {
-
-		if ( ! window.octavePostFields || ! octavePostFields.structuredOnly ) {
-
-			return true;
-
-		}
-
-		var editorCanvas = document.querySelector( '.editor-canvas' );
-		var postbox = document.getElementById( 'octave-custom-post-fields' );
-
-		if ( ! editorCanvas || ! postbox ) {
-
-			return false;
-
-		}
-
-		var ownerFormId = postbox.dataset.oaOwnerForm || '';
-		var metaBoxForm = postbox.closest( 'form' ) || ( ownerFormId ? document.getElementById( ownerFormId ) : null );
-
-		if ( ! metaBoxForm ) {
-
-			return false;
-
-		}
-
-		if ( ! metaBoxForm.id ) {
-
-			metaBoxForm.id = 'oa-structured-fields-form';
-
-		}
-
-		postbox.dataset.oaOwnerForm = metaBoxForm.id;
-		postbox.classList.remove( 'closed' );
-		postbox.classList.add( 'oa-structured-fields-location' );
-		associateControlsWithForm( postbox, metaBoxForm.id );
-
-		var metaBoxesArea = document.querySelector( '.edit-post-meta-boxes-area, .editor-meta-boxes-area' );
-		var visualEditor = editorCanvas.closest( '.edit-post-visual-editor' );
-		var host = document.querySelector( '.oa-structured-fields-host' );
-
-		if ( ! host ) {
-
-			host = document.createElement( 'div' );
-			host.className = 'oa-structured-fields-host';
-
-			if ( metaBoxesArea && metaBoxesArea.parentNode ) {
-
-				metaBoxesArea.parentNode.insertBefore( host, metaBoxesArea );
-
-			} else if ( visualEditor ) {
-
-				visualEditor.insertAdjacentElement( 'afterend', host );
-
-			} else {
-
-				editorCanvas.insertAdjacentElement( 'afterend', host );
-
-			}
-
-		}
-
-		if ( metaBoxesArea && metaBoxesArea.parentNode && metaBoxesArea.previousElementSibling !== host ) {
-
-			metaBoxesArea.parentNode.insertBefore( host, metaBoxesArea );
-
-		}
-
-		if ( postbox.parentNode !== host ) {
-
-			host.appendChild( postbox );
-
-		}
-
-		if ( metaBoxesArea ) {
-
-			var remainingPostboxes = metaBoxesArea.querySelectorAll( '.postbox:not(#octave-custom-post-fields)' );
-
-			metaBoxesArea.classList.toggle( 'oa-empty-meta-boxes-area', 0 === remainingPostboxes.length );
-
-		}
-
-		return true;
-
-	}
-
-	/*
 	WIRE REPEATER
 	-- Adds, removes, reorders, and reindexes rows without changing meta shape.
 	---------------------------------------------------------- */
@@ -278,14 +170,6 @@ POST FIELDS EDITOR
 
 			row.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 			initializeWysiwyg( row );
-
-			var structuredPostbox = row.closest( '#octave-custom-post-fields[data-oa-owner-form]' );
-
-			if ( structuredPostbox ) {
-
-				associateControlsWithForm( row, structuredPostbox.dataset.oaOwnerForm );
-
-			}
 
 			up.addEventListener( 'click', function () {
 
@@ -362,25 +246,5 @@ POST FIELDS EDITOR
 
 	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 	initializeWysiwyg( document );
-
-	positionStructuredFields();
-
-	if ( window.octavePostFields && octavePostFields.structuredOnly ) {
-
-		var positionAttempts = 0;
-		var positionTimer = window.setInterval( function () {
-
-			positionAttempts++;
-			positionStructuredFields();
-
-			if ( positionAttempts >= 40 ) {
-
-				window.clearInterval( positionTimer );
-
-			}
-
-		}, 250 );
-
-	}
 
 })( jQuery );

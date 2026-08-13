@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.19.1
+Stable tag:        2.20.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,15 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.20.1 =
+* Replaced the mixed Content field inventory with clear Reusable Fields and per-post-type Fields destinations.
+* Added field counts and direct links to each focused content schema editor.
+
+= 2.20.0 =
+* Rendered field-only CPT schemas as native controls directly inside the locked Gutenberg content block.
+* Removed the Octave meta-box card from field-only CPT editors while retaining registered REST post meta and sparse storage.
+* Restored the no-content-editor message exclusively for enabled CPTs registered by Octave.
 
 = 2.19.1 =
 * Restricted the structured-content Gutenberg launcher to enabled post types successfully registered by Octave.

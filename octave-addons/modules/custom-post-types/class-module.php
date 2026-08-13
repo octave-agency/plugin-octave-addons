@@ -396,7 +396,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		<?php
 
-		$this->render_content_overview( $custom_taxonomies, $custom_fields );
+		$this->render_content_overview( $custom_types, $custom_taxonomies, $custom_fields );
 
 		$this->render_preserved_collection( 'custom_taxonomies', $custom_taxonomies );
 		$this->render_preserved_collection( 'custom_fields', $custom_fields );
@@ -408,12 +408,11 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	-- Renders compact stacked inventories beneath the editable Post Types box.
 	---------------------------------------------------------- */
 
-	protected function render_content_overview( array $taxonomies, array $fields ): void {
+	protected function render_content_overview( array $post_types, array $taxonomies, array $fields ): void {
 
 		$library_url   = $this->schema_url( 'library' );
-		$field_types   = $this->field_types();
 		$category_tips = [];
-		$field_tips    = [];
+		$content_areas = [];
 
 		foreach ( $taxonomies as $taxonomy ) {
 
@@ -425,20 +424,30 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		}
 
-		foreach ( $fields as $field ) {
+		$reusable_count = count( $this->reusable_fields( $fields ) );
+		$content_areas[] = [
+			'label' => __( 'Reusable Fields', 'octave-addons' ),
+			'meta'  => sprintf(
+				/* translators: %s: number of reusable fields. */
+				_n( '%s field', '%s fields', $reusable_count, 'octave-addons' ),
+				number_format_i18n( $reusable_count )
+			),
+			'url'   => $library_url . '#oa-reusable-content-fields',
+		];
 
-			$is_specific = 'specific' === ( $field['scope'] ?? 'reusable' );
-			$owner       = (string) ( $field['owner_post_type'] ?? '' );
-			$field_url   = $is_specific && '' !== $owner
-				? $this->editor_url( $owner, 'fields' ) . '#oa-field-' . $field['name']
-				: $library_url . '#oa-field-' . $field['name'];
+		foreach ( $post_types as $post_type ) {
 
-			$field_tips[] = [
-				'label' => $field['label'],
-				'meta'  => $is_specific
-					? sprintf( __( '%s · Specific', 'octave-addons' ), $field_types[ $field['type'] ] ?? __( 'Field', 'octave-addons' ) )
-					: sprintf( __( '%s · Reusable', 'octave-addons' ), $field_types[ $field['type'] ] ?? __( 'Field', 'octave-addons' ) ),
-				'url'   => $field_url,
+			$key         = (string) $post_type['post_type'];
+			$field_count = count( $this->definitions_for_post_type( $fields, $key ) );
+
+			$content_areas[] = [
+				'label' => sprintf( __( '%s Fields', 'octave-addons' ), $post_type['name'] ),
+				'meta'  => sprintf(
+					/* translators: %s: number of fields assigned to a post type. */
+					_n( '%s field', '%s fields', $field_count, 'octave-addons' ),
+					number_format_i18n( $field_count )
+				),
+				'url'   => $this->editor_url( $key, 'fields' ),
 			];
 
 		}
@@ -475,18 +484,18 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				[
 					'icon'    => 'dashicons-feedback',
 					'title'   => __( 'Content', 'octave-addons' ),
-					'summary' => __( 'Reusable definitions and post-specific inputs editors complete on the post screen.', 'octave-addons' ),
-					'items'   => $field_tips,
-					'empty'   => __( 'No content fields yet. Add one and assign it to a post type.', 'octave-addons' ),
-					'more'    => $library_url,
+					'summary' => __( 'Choose reusable fields or manage the content schema for one post type.', 'octave-addons' ),
+					'items'   => $content_areas,
+					'empty'   => __( 'Choose Reusable Fields to create the first content field.', 'octave-addons' ),
+					'more'    => $this->settings_url() . '#oa-post-types',
 					'actions' => [
 						[
 							'label' => __( 'New reusable field', 'octave-addons' ),
 							'url'   => add_query_arg( 'add', 'field', $library_url ),
 						],
 						[
-							'label' => __( 'Manage fields', 'octave-addons' ),
-							'url'   => $library_url,
+							'label' => __( 'Manage reusable fields', 'octave-addons' ),
+							'url'   => $library_url . '#oa-reusable-content-fields',
 							'quiet' => true,
 						],
 					],
@@ -1505,6 +1514,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			]
 		);
 		$new_field_index   = null;
+		$section_id        = '' === $primary_post_type ? 'oa-reusable-content-fields' : 'oa-' . $primary_post_type . '-fields';
 
 		if ( $start_new ) {
 
@@ -1516,7 +1526,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		?>
 
-		<div class="oa-cpt-section oa-custom-posts-box oa-collection<?= $single ? ' oa-single-definition' : ''; ?>" data-collection="custom_fields" data-new-label="<?php esc_attr_e( 'New post field', 'octave-addons' ); ?>">
+		<div id="<?= esc_attr( $section_id ); ?>" class="oa-cpt-section oa-custom-posts-box oa-collection<?= $single ? ' oa-single-definition' : ''; ?>" data-collection="custom_fields" data-new-label="<?php esc_attr_e( 'New post field', 'octave-addons' ); ?>">
 			<div class="oa-cpt-section-head">
 				<div>
 					<span class="oa-panel-kicker"><?php esc_html_e( 'Post Types', 'octave-addons' ); ?></span>
