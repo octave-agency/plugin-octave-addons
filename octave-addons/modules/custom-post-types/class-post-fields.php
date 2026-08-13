@@ -36,7 +36,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 			$key = (string) ( $post_type['post_type'] ?? '' );
 
-			if ( '' !== $key && empty( $post_type['content_editor'] ) ) {
+			if ( '' !== $key && ! empty( $post_type['enabled'] ) && empty( $post_type['content_editor'] ) ) {
 
 				$this->structured_post_types[] = $key;
 
@@ -94,8 +94,6 @@ class Octave_Addons_Custom_Post_Fields {
 			'octave/block-octave-launcher',
 			[
 				'api_version'     => 2,
-				'editor_script'   => 'octave-structured-content-launcher',
-				'editor_style'    => 'octave-post-fields',
 				'render_callback' => '__return_empty_string',
 			]
 		);
@@ -160,6 +158,8 @@ class Octave_Addons_Custom_Post_Fields {
 			'octave-structured-content-launcher',
 			'octaveStructuredContent',
 			[
+				'enabled'     => true,
+				'postType'    => $screen->post_type,
 				'title'       => __( 'This post type uses default fields.', 'octave-addons' ),
 				'description' => __( 'Content cannot be added in the block editor. Please populate the fields below.', 'octave-addons' ),
 			]

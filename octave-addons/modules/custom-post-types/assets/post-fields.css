@@ -60,6 +60,15 @@ STRUCTURED CONTENT LAUNCHER
     display: none !important;
 }
 
+.oa-structured-content-editor iframe.editor-canvas {
+    min-height: 280px !important;
+    height: 280px !important;
+}
+
+.oa-structured-content-editor .edit-post-visual-editor {
+    min-height: 0 !important;
+}
+
 :root :where(.editor-styles-wrapper)::after {
     display: none;
     height: 0;
@@ -67,7 +76,15 @@ STRUCTURED CONTENT LAUNCHER
 
 .oa-structured-fields-location {
     width: min(840px, calc(100% - 48px));
-    margin: 16px auto 72px;
+    margin: 20px auto 72px;
+}
+
+.oa-structured-fields-host {
+    width: 100%;
+}
+
+.oa-empty-meta-boxes-area {
+    display: none !important;
 }
 
 .oa-structured-fields-location#octave-custom-post-fields {

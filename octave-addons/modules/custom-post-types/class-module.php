@@ -2202,7 +2202,10 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		}
 
-		foreach ( $this->normalise_post_types( $settings['custom_post_types'] ?? [] ) as $index => $post_type ) {
+		$post_types         = $this->normalise_post_types( $settings['custom_post_types'] ?? [] );
+		$runtime_post_types = [];
+
+		foreach ( $post_types as $index => $post_type ) {
 
 			if ( empty( $post_type['enabled'] ) ) {
 
@@ -2210,11 +2213,13 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			}
 
-			$this->register_custom_post_type( $post_type, $this->menu_position_for_index( (int) $index ) );
+			if ( $this->register_custom_post_type( $post_type, $this->menu_position_for_index( (int) $index ) ) ) {
+
+				$runtime_post_types[] = $post_type;
+
+			}
 
 		}
-
-		$post_types = $this->normalise_post_types( $settings['custom_post_types'] ?? [] );
 
 		foreach ( $this->normalise_taxonomies( $settings['custom_taxonomies'] ?? [], $post_types ) as $taxonomy ) {
 
@@ -2228,7 +2233,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		$fields = $this->normalise_fields( $settings['custom_fields'] ?? [], $post_types );
 
-		new Octave_Addons_Custom_Post_Fields( $fields, $this->post_type_options( $post_types ), $post_types );
+		new Octave_Addons_Custom_Post_Fields( $fields, $this->post_type_options( $post_types ), $runtime_post_types );
 
 	}
 
@@ -2374,7 +2379,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	-- Registers one user-defined type and its optional category taxonomy.
 	---------------------------------------------------------- */
 
-	protected function register_custom_post_type( array $post_type, int $menu_position ): void {
+	protected function register_custom_post_type( array $post_type, int $menu_position ): bool {
 
 		$key          = $post_type['post_type'];
 		$name         = $post_type['name'];
@@ -2394,7 +2399,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		if ( post_type_exists( $key ) ) {
 
-			return;
+			return false;
 
 		}
 
@@ -2452,7 +2457,9 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		}
 
-		register_post_type( $key, $registration_args );
+		$registered = register_post_type( $key, $registration_args );
+
+		return ! is_wp_error( $registered );
 
 	}
 

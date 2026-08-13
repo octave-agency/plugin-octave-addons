@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.19.0
+Stable tag:        2.19.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.19.1 =
+* Restricted the structured-content Gutenberg launcher to enabled post types successfully registered by Octave.
+* Prevented the Octave launcher script from running globally or replacing Breakdance and standard Page content.
+* Moved structured Content Fields into a dedicated main-editor section before the Meta boxes area while retaining WordPress's reliable save transport.
 
 = 2.19.0 =
 * Replaced the Post Control overview with stacked Post Types, Categories, and Content boxes.

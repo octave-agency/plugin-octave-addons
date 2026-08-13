@@ -177,9 +177,48 @@ POST FIELDS EDITOR
 		postbox.classList.add( 'oa-structured-fields-location' );
 		associateControlsWithForm( postbox, metaBoxForm.id );
 
-		if ( editorCanvas.nextElementSibling !== postbox ) {
+		var metaBoxesArea = document.querySelector( '.edit-post-meta-boxes-area, .editor-meta-boxes-area' );
+		var visualEditor = editorCanvas.closest( '.edit-post-visual-editor' );
+		var host = document.querySelector( '.oa-structured-fields-host' );
 
-			editorCanvas.insertAdjacentElement( 'afterend', postbox );
+		if ( ! host ) {
+
+			host = document.createElement( 'div' );
+			host.className = 'oa-structured-fields-host';
+
+			if ( metaBoxesArea && metaBoxesArea.parentNode ) {
+
+				metaBoxesArea.parentNode.insertBefore( host, metaBoxesArea );
+
+			} else if ( visualEditor ) {
+
+				visualEditor.insertAdjacentElement( 'afterend', host );
+
+			} else {
+
+				editorCanvas.insertAdjacentElement( 'afterend', host );
+
+			}
+
+		}
+
+		if ( metaBoxesArea && metaBoxesArea.parentNode && metaBoxesArea.previousElementSibling !== host ) {
+
+			metaBoxesArea.parentNode.insertBefore( host, metaBoxesArea );
+
+		}
+
+		if ( postbox.parentNode !== host ) {
+
+			host.appendChild( postbox );
+
+		}
+
+		if ( metaBoxesArea ) {
+
+			var remainingPostboxes = metaBoxesArea.querySelectorAll( '.postbox:not(#octave-custom-post-fields)' );
+
+			metaBoxesArea.classList.toggle( 'oa-empty-meta-boxes-area', 0 === remainingPostboxes.length );
 
 		}
 

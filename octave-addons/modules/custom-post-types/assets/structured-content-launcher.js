@@ -6,8 +6,28 @@ STRUCTURED CONTENT LAUNCHER
 (function () {
     'use strict';
 
+	if ( ! window.octaveStructuredContent || ! octaveStructuredContent.enabled ) {
+
+		return;
+
+	}
+
 	var blockName = 'octave/block-octave-launcher';
 	var unsubscribeFromEditor;
+
+	/*
+	IS TARGET EDITOR
+	-- Confirms the active editor still matches the Octave-owned post type that
+	-- received this script, protecting against stale caches and combined assets.
+	---------------------------------------------------------- */
+
+	function isTargetEditor() {
+
+		var editor = wp.data.select( 'core/editor' );
+
+		return editor && octaveStructuredContent.postType === editor.getCurrentPostType();
+
+	}
 
 	/*
 	RESET TO LAUNCHER
@@ -26,6 +46,12 @@ STRUCTURED CONTENT LAUNCHER
 	---------------------------------------------------------- */
 
 	function lockLauncherContent() {
+
+		if ( ! isTargetEditor() ) {
+
+			return;
+
+		}
 
 		document.body.classList.add( 'oa-structured-content-editor' );
 
@@ -101,6 +127,12 @@ STRUCTURED CONTENT LAUNCHER
 	} );
 
 	wp.domReady( function () {
+
+		if ( ! isTargetEditor() ) {
+
+			return;
+
+		}
 
 		var blocks = wp.data.select( 'core/block-editor' ).getBlocks();
 		var onlyLauncher = 1 === blocks.length && blockName === blocks[0].name;
