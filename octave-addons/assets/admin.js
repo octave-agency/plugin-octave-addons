@@ -78,15 +78,66 @@ ADMIN INTERACTIONS
 
 	} );
 
-	/* Field row show/hide — data-controls-row accepts comma-separated IDs */
-	document.querySelectorAll('[data-controls-row]').forEach(function (cb) {
-		var ids  = cb.dataset.controlsRow.split(',');
-		var rows = ids.map(function (id) { return document.getElementById(id.trim()); }).filter(Boolean);
-		if (!rows.length) return;
-		function sync() { rows.forEach(function (r) { r.classList.toggle('oa-hidden', !cb.checked); }); }
+	/* Field row show/hide — control attributes accept comma-separated IDs */
+	document.querySelectorAll( '[data-controls-row]' ).forEach( function ( checkbox ) {
+
+		var ids = checkbox.dataset.controlsRow.split( ',' );
+		var rows = ids.map( function ( id ) {
+
+			return document.getElementById( id.trim() );
+
+		} ).filter( Boolean );
+
+		if ( ! rows.length ) {
+
+			return;
+
+		}
+
+		function sync() {
+
+			rows.forEach( function ( row ) {
+
+				row.classList.toggle( 'oa-hidden', ! checkbox.checked );
+
+			} );
+
+		}
+
 		sync();
-		cb.addEventListener('change', sync);
-	});
+		checkbox.addEventListener( 'change', sync );
+
+	} );
+
+	document.querySelectorAll( '[data-controls-row-hide]' ).forEach( function ( checkbox ) {
+
+		var ids = checkbox.dataset.controlsRowHide.split( ',' );
+		var rows = ids.map( function ( id ) {
+
+			return document.getElementById( id.trim() );
+
+		} ).filter( Boolean );
+
+		if ( ! rows.length ) {
+
+			return;
+
+		}
+
+		function sync() {
+
+			rows.forEach( function ( row ) {
+
+				row.classList.toggle( 'oa-hidden', checkbox.checked );
+
+			} );
+
+		}
+
+		sync();
+		checkbox.addEventListener( 'change', sync );
+
+	} );
 
 	/* Responsive nav dropdown */
 	var navSelect = document.querySelector('.oa-nav-select');
@@ -1279,7 +1330,11 @@ ADMIN INTERACTIONS
 
 		function syncConditionalFields( item ) {
 
+			var publicToggle = item.querySelector( '.oa-cpt-public-toggle' );
+			var urls = item.querySelector( '.oa-cpt-urls' );
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
+
+			urls.classList.toggle( 'oa-hidden', ! publicToggle.checked );
 
 			item.querySelectorAll( '.oa-cpt-archive-field' ).forEach( function ( field ) {
 
@@ -1298,10 +1353,14 @@ ADMIN INTERACTIONS
 			var groups = item.querySelector( '.oa-cpt-groups' );
 			var enabledToggle = item.querySelector( '.oa-cpt-enabled-toggle' );
 			var removeButton = item.querySelector( '.oa-cpt-remove' );
+			var publicToggle = item.querySelector( '.oa-cpt-public-toggle' );
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
 			var iconValue = item.querySelector( '.oa-cpt-icon-value' );
 			var iconToggle = item.querySelector( '.oa-cpt-icon-toggle' );
 			var iconOptions = item.querySelector( '.oa-cpt-icon-options' );
+			var iconSearch = item.querySelector( '.oa-cpt-icon-search input' );
+			var iconEmpty = item.querySelector( '.oa-cpt-icon-empty' );
+			var iconButtons = iconOptions.querySelectorAll( '.oa-cpt-icon-option' );
 			var iconLabel = item.querySelector( '.oa-cpt-icon-selection strong' );
 			var iconCode = item.querySelector( '.oa-cpt-icon-selection code' );
 			var nameInput = item.querySelector( '[data-cpt-field="name"]' );
@@ -1376,6 +1435,12 @@ ADMIN INTERACTIONS
 
 			enabledToggle.addEventListener( 'change', syncEnabledState );
 
+			publicToggle.addEventListener( 'change', function () {
+
+				syncConditionalFields( item );
+
+			} );
+
 			archiveToggle.addEventListener( 'change', function () {
 
 				syncConditionalFields( item );
@@ -1389,15 +1454,47 @@ ADMIN INTERACTIONS
 				iconOptions.classList.toggle( 'oa-hidden', ! opening );
 				iconToggle.setAttribute( 'aria-expanded', opening ? 'true' : 'false' );
 
+				if ( opening ) {
+
+					iconSearch.focus();
+
+				}
+
 			} );
 
-			iconOptions.querySelectorAll( '.oa-cpt-icon-option' ).forEach( function ( option ) {
+			iconSearch.addEventListener( 'input', function () {
+
+				var query = iconSearch.value.trim().toLowerCase();
+				var visibleCount = 0;
+
+				iconButtons.forEach( function ( option ) {
+
+					var searchText = ( option.dataset.label + ' ' + option.dataset.icon ).toLowerCase();
+					var visible = '' === query || -1 !== searchText.indexOf( query );
+
+					option.classList.toggle( 'oa-hidden', ! visible );
+
+					if ( visible ) {
+
+						visibleCount += 1;
+
+					}
+
+				} );
+
+				iconEmpty.classList.toggle( 'oa-hidden', visibleCount > 0 );
+
+			} );
+
+			iconButtons.forEach( function ( option ) {
 
 				option.addEventListener( 'click', function () {
 
 					setIcon( option.dataset.icon, option.dataset.label );
 					iconOptions.classList.add( 'oa-hidden' );
 					iconToggle.setAttribute( 'aria-expanded', 'false' );
+					iconSearch.value = '';
+					iconSearch.dispatchEvent( new Event( 'input' ) );
 					iconToggle.focus();
 
 				} );
@@ -1735,10 +1832,10 @@ ADMIN INTERACTIONS
 	document.querySelectorAll( '.oa-collection' ).forEach( function ( collection ) {
 
 		var list = collection.querySelector( '.oa-collection-list' );
-		var template = collection.querySelector( '.oa-collection-template' );
-		var addButton = collection.querySelector( '.oa-collection-add' );
+		var defaultTemplate = collection.querySelector( '.oa-collection-template' );
+		var addButtons = collection.querySelectorAll( '.oa-collection-add' );
 		var collectionKey = collection.dataset.collection;
-		var nextIndex = list.children.length;
+		var nextIndex = list.querySelectorAll( '.oa-collection-item' ).length;
 
 		function slugify( value ) {
 
@@ -1773,11 +1870,27 @@ ADMIN INTERACTIONS
 			var title = item.querySelector( '.oa-cpt-item-title' );
 			var keyPreview = item.querySelector( '.oa-cpt-key-preview' );
 			var typeInput = item.querySelector( '[data-field-type]' );
+			var scopeBadge = item.querySelector( '.oa-field-scope-badge' );
+			var contextAssignment = item.querySelector( '[data-context-assignment="true"]' );
 			var keyIsAutomatic = 'false' === item.dataset.saved;
 
 			function syncEnabled() {
 
 				item.classList.toggle( 'is-disabled', ! enabled.checked );
+
+			}
+
+			function syncContextAssignment() {
+
+				if ( ! scopeBadge || ! contextAssignment ) {
+
+					return;
+
+				}
+
+				scopeBadge.textContent = contextAssignment.checked
+					? scopeBadge.dataset.usedLabel
+					: scopeBadge.dataset.availableLabel;
 
 			}
 
@@ -1943,6 +2056,12 @@ ADMIN INTERACTIONS
 
 			enabled.addEventListener( 'change', syncEnabled );
 
+			if ( contextAssignment ) {
+
+				contextAssignment.addEventListener( 'change', syncContextAssignment );
+
+			}
+
 			titleInput.addEventListener( 'input', function () {
 
 				title.textContent = titleInput.value.trim() || collection.dataset.newLabel;
@@ -2029,24 +2148,33 @@ ADMIN INTERACTIONS
 
 			syncEnabled();
 			syncFieldType();
+			syncContextAssignment();
 
 		}
 
-		addButton.addEventListener( 'click', function () {
+		addButtons.forEach( function ( addButton ) {
 
-			var html = template.innerHTML.split( '__INDEX__' ).join( 'new_' + nextIndex );
-			var holder = document.createElement( 'div' );
+			addButton.addEventListener( 'click', function () {
 
-			nextIndex++;
-			holder.innerHTML = html.trim();
+				var scope = addButton.dataset.fieldScope || '';
+				var template = scope
+					? collection.querySelector( '.oa-collection-template[data-field-scope="' + scope + '"]' )
+					: defaultTemplate;
+				var html = template.innerHTML.split( '__INDEX__' ).join( 'new_' + nextIndex );
+				var holder = document.createElement( 'div' );
 
-			var item = holder.firstElementChild;
+				nextIndex++;
+				holder.innerHTML = html.trim();
 
-			list.appendChild( item );
-			wireItem( item );
-			reindex();
-			item.querySelector( '[data-role="title"]' ).focus();
-			list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+				var item = holder.firstElementChild;
+
+				list.appendChild( item );
+				wireItem( item );
+				reindex();
+				item.querySelector( '[data-role="title"]' ).focus();
+				list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+			} );
 
 		} );
 
@@ -2054,6 +2182,29 @@ ADMIN INTERACTIONS
 		reindex();
 
 	} );
+
+	/* Open a field linked from the content overview directly in place */
+	if ( 0 === window.location.hash.indexOf( '#oa-field-' ) ) {
+
+		var targetedField = document.getElementById( window.location.hash.substring( 1 ) );
+
+		if ( targetedField ) {
+
+			var targetedFieldToggle = targetedField.querySelector( '.oa-collection-expand' );
+			var targetedFieldBody = targetedField.querySelector( '.oa-collection-body' );
+
+			targetedFieldBody.classList.remove( 'oa-hidden' );
+			targetedFieldToggle.setAttribute( 'aria-expanded', 'true' );
+			window.requestAnimationFrame( function () {
+
+				targetedField.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+
+			} );
+
+		}
+
+	}
+
 })();
 
 /*

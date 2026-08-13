@@ -76,10 +76,10 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 		return [
 			'enabled'           => false,
-			'schema'            => 3,
+			'schema'            => 4,
 			'all_archives'      => true,
 			'page_path'         => '',
-			'posts_per_page'    => self::reading_posts_per_page(),
+			'posts_per_page'    => '',
 			'navigation_mode'   => 'load_more',
 			'load_more_label'   => 'Load more',
 			'show_result_count' => true,
@@ -97,6 +97,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	-- Merges saved settings with the defaults and upgrades older layouts
 	-- Schema 2 dropped the removed options and switched browser URL updates off
 	-- Schema 3 releases posts per page so it follows Settings → Reading again
+	-- Schema 4 keeps the inherited posts per page value empty when settings save
 	---------------------------------------------------------- */
 
 	public function get_settings( array $saved ): array {
@@ -131,13 +132,14 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 	public function sanitize( $input ): array {
 
-		$defaults = $this->get_defaults();
-		$clean    = $defaults;
+		$defaults       = $this->get_defaults();
+		$clean          = $defaults;
+		$posts_per_page = absint( $input['posts_per_page'] ?? 0 );
 
 		$clean['enabled']           = ! empty( $input['enabled'] );
 		$clean['all_archives']      = ! empty( $input['all_archives'] );
 		$clean['page_path']         = self::sanitize_page_path( $input['page_path'] ?? '' );
-		$clean['posts_per_page']    = min( 100, max( 1, absint( $input['posts_per_page'] ?? 0 ) ?: $defaults['posts_per_page'] ) );
+		$clean['posts_per_page']    = $posts_per_page > 0 ? min( 100, $posts_per_page ) : '';
 		$clean['navigation_mode']   = self::sanitize_navigation_mode( $input['navigation_mode'] ?? $defaults['navigation_mode'] );
 		$clean['load_more_label']   = isset( $input['load_more_label'] ) ? sanitize_text_field( wp_unslash( $input['load_more_label'] ) ) : $defaults['load_more_label'];
 		$clean['show_result_count'] = ! empty( $input['show_result_count'] );
@@ -231,11 +233,12 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 						Octave_Addons_Fields::text(
 							[
-								'id'    => $this->field_id( 'posts_per_page' ),
-								'name'  => $this->field_name( 'posts_per_page' ),
-								'value' => (string) $settings['posts_per_page'],
-								'class' => 'small-text',
-								'help'  => sprintf(
+								'id'          => $this->field_id( 'posts_per_page' ),
+								'name'        => $this->field_name( 'posts_per_page' ),
+								'value'       => (string) $settings['posts_per_page'],
+								'placeholder' => (string) self::reading_posts_per_page(),
+								'class'       => 'small-text',
+								'help'        => sprintf(
 									/* translators: %d: the Settings → Reading posts per page value. */
 									__( 'How many posts each filter or page request returns. Defaults to the Reading setting (%d). Maximum 100.', 'octave-addons' ),
 									self::reading_posts_per_page()

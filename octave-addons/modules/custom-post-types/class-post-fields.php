@@ -107,7 +107,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 	/*
 	ADD META BOXES
-	-- Adds one consistent Octave panel to every assigned custom post type.
+	-- Adds one consistent Octave panel to every assigned content type.
 	---------------------------------------------------------- */
 
 	public function add_meta_boxes(): void {
@@ -529,7 +529,15 @@ class Octave_Addons_Custom_Post_Fields {
 			$raw   = $submitted[ $field['name'] ] ?? ( in_array( $field['type'], [ 'multiselect', 'group', 'repeater' ], true ) ? [] : '' );
 			$value = $this->sanitize_value( $raw, $field );
 
-			update_post_meta( $post_id, $field['meta_key'], $value );
+			if ( $this->should_store_value( $value, $field ) ) {
+
+				update_post_meta( $post_id, $field['meta_key'], $value );
+
+			} else {
+
+				delete_post_meta( $post_id, $field['meta_key'] );
+
+			}
 
 		}
 
@@ -558,7 +566,13 @@ class Octave_Addons_Custom_Post_Fields {
 
 				if ( is_array( $row ) ) {
 
-					$rows[] = $this->sanitize_container_row( $row, $field['sub_fields'] );
+					$clean_row = $this->sanitize_container_row( $row, $field['sub_fields'] );
+
+					if ( ! $this->is_container_row_empty( $clean_row, $field['sub_fields'] ) ) {
+
+						$rows[] = $clean_row;
+
+					}
 
 				}
 
@@ -653,6 +667,83 @@ class Octave_Addons_Custom_Post_Fields {
 		}
 
 		return sanitize_text_field( (string) $value );
+
+	}
+
+	/*
+	SHOULD STORE VALUE
+	-- Keeps postmeta sparse by omitting values that resolve to the field default.
+	-- An intentional empty override is retained when the configured default is
+	-- non-empty, so clearing a field never makes its default reappear.
+	---------------------------------------------------------- */
+
+	protected function should_store_value( $value, array $field ): bool {
+
+		$default = $this->sanitize_value( $field['default_value'] ?? '', $field );
+
+		if ( $value === $default ) {
+
+			return false;
+
+		}
+
+		return ! ( $this->is_field_value_empty( $value, $field ) && $this->is_field_value_empty( $default, $field ) );
+
+	}
+
+	/*
+	IS FIELD VALUE EMPTY
+	-- Applies type-aware emptiness so meaningful numeric zero values survive,
+	-- while unchecked toggles and unselected media do not create meta rows.
+	---------------------------------------------------------- */
+
+	protected function is_field_value_empty( $value, array $field ): bool {
+
+		$type = $field['type'] ?? 'text';
+
+		if ( 'group' === $type ) {
+
+			return $this->is_container_row_empty( is_array( $value ) ? $value : [], $field['sub_fields'] ?? [] );
+
+		}
+
+		if ( in_array( $type, [ 'repeater', 'multiselect' ], true ) ) {
+
+			return empty( $value );
+
+		}
+
+		if ( in_array( $type, [ 'checkbox', 'image', 'file' ], true ) ) {
+
+			return empty( $value );
+
+		}
+
+		return '' === (string) $value;
+
+	}
+
+	/*
+	IS CONTAINER ROW EMPTY
+	-- Treats a group or repeater row as empty only when every known child is
+	-- empty according to its own field type.
+	---------------------------------------------------------- */
+
+	protected function is_container_row_empty( array $row, array $sub_fields ): bool {
+
+		foreach ( $sub_fields as $sub_field ) {
+
+			$value = $row[ $sub_field['name'] ] ?? '';
+
+			if ( ! $this->is_field_value_empty( $value, $sub_field ) ) {
+
+				return false;
+
+			}
+
+		}
+
+		return true;
 
 	}
 

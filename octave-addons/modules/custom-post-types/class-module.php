@@ -21,6 +21,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	protected const CASE_STUDY_TAXONOMY    = 'octave_case_category';
 	protected const OVERVIEW_PREVIEW_LIMIT = 6;
 
+	protected static ?array $dashicons = null;
+
 	/*
 	CONSTRUCTOR
 	-- Refreshes rewrite rules only when custom routing changes.
@@ -50,7 +52,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	public function get_title(): string {
 
-		return __( 'Custom Posts', 'octave-addons' );
+		return __( 'Post Types', 'octave-addons' );
 
 	}
 
@@ -158,7 +160,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	/*
 	APPLY STARTER CONTENT
 	-- Turns the optional first category and field on a brand new post type card
-	-- into full reusable definitions already assigned to that post type.
+	-- into definitions already assigned to that post type. Starter fields remain
+	-- specific to the post type unless an editor creates them in the library.
 	---------------------------------------------------------- */
 
 	protected function apply_starter_content( $submitted, array $post_types, array &$taxonomies, array &$fields ): void {
@@ -210,11 +213,13 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			if ( '' !== $field_label ) {
 
 				$fields[] = [
-					'enabled'    => true,
-					'label'      => $field_label,
-					'name'       => $this->unique_definition_key( $field_label, 'field', array_column( $fields, 'name' ), 40 ),
-					'type'       => sanitize_key( $post_type['starter_field_type'] ?? 'text' ),
-					'post_types' => [ $key ],
+					'enabled'         => true,
+					'label'           => $field_label,
+					'name'            => $this->unique_definition_key( $field_label, 'field', array_column( $fields, 'name' ), 40 ),
+					'type'            => sanitize_key( $post_type['starter_field_type'] ?? 'text' ),
+					'scope'           => 'specific',
+					'owner_post_type' => $key,
+					'post_types'      => [ $key ],
 				];
 
 			}
@@ -274,6 +279,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'menu_icon'              => 'dashicons-admin-post',
 			'post_slug'              => '',
 			'public'                 => true,
+			'content_editor'         => true,
 			'has_archive'            => true,
 			'archive_slug'           => '',
 			'categories'             => true,
@@ -433,10 +439,18 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		foreach ( $fields as $field ) {
 
+			$is_specific = 'specific' === ( $field['scope'] ?? 'reusable' );
+			$owner       = (string) ( $field['owner_post_type'] ?? '' );
+			$field_url   = $is_specific && '' !== $owner
+				? $this->editor_url( $owner, 'fields' ) . '#oa-field-' . $field['name']
+				: $library_url . '#oa-field-' . $field['name'];
+
 			$field_tips[] = [
 				'label' => $field['label'],
-				'meta'  => $field_types[ $field['type'] ] ?? __( 'Field', 'octave-addons' ),
-				'url'   => $this->schema_url( 'field', $field['name'] ),
+				'meta'  => $is_specific
+					? sprintf( __( '%s · Specific', 'octave-addons' ), $field_types[ $field['type'] ] ?? __( 'Field', 'octave-addons' ) )
+					: sprintf( __( '%s · Reusable', 'octave-addons' ), $field_types[ $field['type'] ] ?? __( 'Field', 'octave-addons' ) ),
+				'url'   => $field_url,
 			];
 
 		}
@@ -507,7 +521,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 						'actions' => [
 							[
 								'label' => __( 'New field', 'octave-addons' ),
-								'url'   => $this->schema_url( 'field', 'new' ),
+								'url'   => add_query_arg( 'add', 'field', $library_url ),
 							],
 							[
 								'label' => __( 'View all', 'octave-addons' ),
@@ -726,7 +740,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			$this->render_schema_library( $taxonomies, $fields, $post_type_options );
 			$this->render_preserved_collection( 'custom_taxonomies', $taxonomies );
-			$this->render_preserved_collection( 'custom_fields', $fields );
+			$this->render_preserved_collection( 'custom_fields', $this->specific_fields_outside_post_type( $fields, '' ) );
 
 			return;
 
@@ -787,14 +801,15 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		}
 
-		$this->render_assignment_manager( 'custom_fields', $fields, $key, $post_type_options );
+		$this->render_field_editor( $this->fields_for_post_type_editor( $fields, $key ), $post_type_options, $key );
+		$this->render_preserved_collection( 'custom_fields', $this->specific_fields_outside_post_type( $fields, $key ) );
 		$this->render_preserved_collection( 'custom_taxonomies', $taxonomies );
 
 	}
 
 	/*
 	RENDER SCHEMA LIBRARY
-	-- Lists reusable definitions without exposing their full settings at once.
+	-- Lists reusable categories and exposes reusable fields for inline editing.
 	---------------------------------------------------------- */
 
 	protected function render_schema_library( array $taxonomies, array $fields, array $post_types ): void {
@@ -805,13 +820,13 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			<a href="<?= esc_url( $this->settings_url() ); ?>" class="oa-cpt-back-link"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span><?php esc_html_e( 'All post types', 'octave-addons' ); ?></a>
 			<span class="oa-panel-kicker"><?php esc_html_e( 'Reusable content definitions', 'octave-addons' ); ?></span>
 			<h3><?php esc_html_e( 'Content schema library', 'octave-addons' ); ?></h3>
-			<p><?php esc_html_e( 'Define each category or field once, then attach it to every content type that needs it. Open one definition to change its settings.', 'octave-addons' ); ?></p>
+			<p><?php esc_html_e( 'Define reusable categories and fields once, then attach them to every content type that needs them. Fields can be created and edited directly below.', 'octave-addons' ); ?></p>
 		</div>
 
 		<?php
 
 		$this->render_schema_collection( 'custom_taxonomies', $taxonomies, $post_types );
-		$this->render_schema_collection( 'custom_fields', $fields, $post_types );
+		$this->render_field_editor( $this->reusable_fields( $fields ), $post_types, '', false, $this->should_start_new_library_field() );
 
 	}
 
@@ -1152,6 +1167,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$post_slug              = (string) ( $post_type['post_slug'] ?? '' );
 		$archive_slug           = (string) ( $post_type['archive_slug'] ?? '' );
 		$public                 = ! empty( $post_type['public'] );
+		$content_editor         = ! array_key_exists( 'content_editor', $post_type ) || ! empty( $post_type['content_editor'] );
 		$has_archive            = ! empty( $post_type['has_archive'] );
 		$enabled                = ! empty( $post_type['enabled'] );
 		$categories_url         = $saved ? $this->editor_url( $key, 'categories' ) : '';
@@ -1241,7 +1257,12 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 									</div>
 									<button type="button" class="button oa-cpt-icon-toggle" aria-expanded="false"><?php esc_html_e( 'Choose icon', 'octave-addons' ); ?><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button>
 								</div>
-								<div class="oa-cpt-icon-options oa-hidden" role="listbox" aria-label="<?php esc_attr_e( 'WordPress admin menu icons', 'octave-addons' ); ?>">
+								<div class="oa-cpt-icon-options oa-hidden">
+									<label class="oa-cpt-icon-search">
+										<span class="screen-reader-text"><?php esc_html_e( 'Search WordPress admin menu icons', 'octave-addons' ); ?></span>
+										<input type="search" placeholder="<?php esc_attr_e( 'Search Dashicons…', 'octave-addons' ); ?>" autocomplete="off">
+									</label>
+									<div class="oa-cpt-icon-grid" role="listbox" aria-label="<?php esc_attr_e( 'WordPress admin menu icons', 'octave-addons' ); ?>">
 
 									<?php
 
@@ -1260,6 +1281,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 									?>
 
+									</div>
+									<p class="oa-cpt-icon-empty oa-hidden"><?php esc_html_e( 'No Dashicons match your search.', 'octave-addons' ); ?></p>
 								</div>
 							</div>
 							<small><?php esc_html_e( 'Uses WordPress Dashicons, so no additional icon files are loaded.', 'octave-addons' ); ?></small>
@@ -1274,7 +1297,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 						<div class="oa-cpt-field oa-cpt-switch-field">
 							<span><?php esc_html_e( 'Public', 'octave-addons' ); ?></span>
 							<label class="oa-switch">
-								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'public' ) ); ?>" value="1"<?= checked( $public, true, false ); ?>>
+								<input type="checkbox" class="oa-cpt-public-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'public' ) ); ?>" value="1"<?= checked( $public, true, false ); ?>>
 								<span class="oa-switch-slider"></span>
 							</label>
 							<small><?php esc_html_e( 'Allow frontend URLs, searches and navigation use.', 'octave-addons' ); ?></small>
@@ -1283,6 +1306,22 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				</fieldset>
 
 				<fieldset class="oa-cpt-group">
+					<legend><?php esc_html_e( 'Editing', 'octave-addons' ); ?></legend>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'Choose whether this post type needs the standard WordPress content area as well as its Octave content fields.', 'octave-addons' ); ?></p>
+					<div class="oa-cpt-fields oa-cpt-fields--switches">
+						<div class="oa-cpt-field oa-cpt-switch-field">
+							<span><?php esc_html_e( 'Content editor', 'octave-addons' ); ?></span>
+							<label class="oa-switch">
+								<input type="hidden" name="<?= esc_attr( $this->cpt_field_name( $index, 'content_editor' ) ); ?>" value="0">
+								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'content_editor' ) ); ?>" value="1"<?= checked( $content_editor, true, false ); ?>>
+								<span class="oa-switch-slider"></span>
+							</label>
+							<small><?php esc_html_e( 'Turn off when entries are built entirely from Octave content fields, such as testimonials. The Octave meta box remains available at the top of the edit screen.', 'octave-addons' ); ?></small>
+						</div>
+					</div>
+				</fieldset>
+
+				<fieldset class="oa-cpt-group oa-cpt-urls<?= $public ? '' : ' oa-hidden'; ?>">
 					<legend><?php esc_html_e( 'URLs', 'octave-addons' ); ?></legend>
 					<p class="oa-cpt-group-description"><?php esc_html_e( 'Set the individual item path and optionally expose a listing archive.', 'octave-addons' ); ?></p>
 					<div class="oa-cpt-fields">
@@ -1414,7 +1453,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		<div class="oa-cpt-section oa-custom-posts-box oa-collection<?= $single ? ' oa-single-definition' : ''; ?>" data-collection="custom_taxonomies" data-new-label="<?php esc_attr_e( 'New post category', 'octave-addons' ); ?>">
 			<div class="oa-cpt-section-head">
 				<div>
-					<span class="oa-panel-kicker"><?php esc_html_e( 'Custom Posts', 'octave-addons' ); ?></span>
+					<span class="oa-panel-kicker"><?php esc_html_e( 'Post Types', 'octave-addons' ); ?></span>
 					<h3><?php esc_html_e( 'Post Categories', 'octave-addons' ); ?></h3>
 					<p><?php esc_html_e( 'Create reusable taxonomies, then assign each one to any combination of posts, pages, or custom post types.', 'octave-addons' ); ?></p>
 				</div>
@@ -1489,16 +1528,41 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	RENDER FIELD EDITOR
-	-- Displays ACF-style field definitions assigned to custom post types.
+	-- Displays reusable and post-type-specific field definitions inline.
 	---------------------------------------------------------- */
 
 	protected function render_field_editor( array $fields, array $post_types, string $primary_post_type = '', bool $single = false, bool $start_new = false ): void {
 
-		$template = [ 'enabled' => true, 'label' => '', 'name' => 'field_name', 'type' => 'text', 'default_value' => '', 'choices' => '', 'description' => '', 'required' => false, 'post_types' => '' !== $primary_post_type ? [ $primary_post_type ] : [], 'sub_fields' => [] ];
+		$context_label     = $post_types[ $primary_post_type ] ?? '';
+		$reusable_template = [
+			'enabled'         => true,
+			'label'           => '',
+			'name'            => 'field_name',
+			'type'            => 'text',
+			'default_value'   => '',
+			'choices'         => '',
+			'description'     => '',
+			'required'        => false,
+			'scope'           => 'reusable',
+			'owner_post_type' => '',
+			'post_types'      => '' !== $primary_post_type ? [ $primary_post_type ] : [],
+			'sub_fields'      => [],
+		];
+		$specific_template = array_merge(
+			$reusable_template,
+			[
+				'scope'           => 'specific',
+				'owner_post_type' => $primary_post_type,
+				'post_types'      => '' !== $primary_post_type ? [ $primary_post_type ] : [],
+			]
+		);
+		$new_field_index   = null;
 
 		if ( $start_new ) {
 
-			$fields = [ $template ];
+			$new_field_index = $single ? 0 : count( $fields );
+			$new_field       = '' !== $primary_post_type ? $specific_template : $reusable_template;
+			$fields          = $single ? [ $new_field ] : array_merge( $fields, [ $new_field ] );
 
 		}
 
@@ -1507,20 +1571,56 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		<div class="oa-cpt-section oa-custom-posts-box oa-collection<?= $single ? ' oa-single-definition' : ''; ?>" data-collection="custom_fields" data-new-label="<?php esc_attr_e( 'New post field', 'octave-addons' ); ?>">
 			<div class="oa-cpt-section-head">
 				<div>
-					<span class="oa-panel-kicker"><?php esc_html_e( 'Custom Posts', 'octave-addons' ); ?></span>
-					<h3><?php esc_html_e( 'Post Fields', 'octave-addons' ); ?></h3>
-					<p><?php esc_html_e( 'Define typed fields for post editors. Values are stored as registered WordPress post meta and appear under Octave in Breakdance Dynamic Data.', 'octave-addons' ); ?></p>
+					<span class="oa-panel-kicker"><?php esc_html_e( 'Post Types', 'octave-addons' ); ?></span>
+					<h3><?= '' !== $context_label ? sprintf( esc_html__( 'Fields for %s', 'octave-addons' ), esc_html( $context_label ) ) : esc_html__( 'Reusable content fields', 'octave-addons' ); ?></h3>
+					<p><?= '' !== $context_label ? esc_html__( 'Create fields used only by this post type, and edit or assign reusable fields without leaving this page.', 'octave-addons' ) : esc_html__( 'Create a field once, then assign it to Posts, Pages, or any custom post type that needs it.', 'octave-addons' ); ?></p>
 				</div>
-				<button type="button" class="button oa-cpt-add oa-collection-add<?= $single ? ' oa-hidden' : ''; ?>"><span class="oa-cpt-add-icon" aria-hidden="true">+</span><?php esc_html_e( 'Add post field', 'octave-addons' ); ?></button>
+				<div class="oa-cpt-section-actions<?= $single ? ' oa-hidden' : ''; ?>">
+
+					<?php
+
+					if ( '' !== $primary_post_type ) :
+
+					?>
+
+					<button type="button" class="button oa-cpt-add oa-collection-add" data-field-scope="specific"><span class="oa-cpt-add-icon" aria-hidden="true">+</span><?= sprintf( esc_html__( 'Add field for %s', 'octave-addons' ), esc_html( $context_label ) ); ?></button>
+
+					<?php
+
+					endif;
+
+					?>
+
+					<button type="button" class="button oa-cpt-add oa-collection-add" data-field-scope="reusable"><span class="oa-cpt-add-icon" aria-hidden="true">+</span><?php esc_html_e( 'Add reusable field', 'octave-addons' ); ?></button>
+				</div>
 			</div>
 
-			<div class="oa-cpt-list oa-collection-list" data-empty-text="<?php esc_attr_e( 'No custom post fields have been added.', 'octave-addons' ); ?>">
+			<div class="oa-field-scope-guide">
+				<span><strong><?php esc_html_e( 'Reusable', 'octave-addons' ); ?></strong><span><?php esc_html_e( 'Can be assigned to multiple content types.', 'octave-addons' ); ?></span></span>
+
+				<?php
+
+				if ( '' !== $primary_post_type ) :
+
+				?>
+
+				<span><strong><?php esc_html_e( 'Specific', 'octave-addons' ); ?></strong><span><?= sprintf( esc_html__( 'Belongs only to %s.', 'octave-addons' ), esc_html( $context_label ) ); ?></span></span>
+
+				<?php
+
+				endif;
+
+				?>
+
+			</div>
+
+			<div class="oa-cpt-list oa-collection-list" data-empty-text="<?php esc_attr_e( 'No content fields have been added.', 'octave-addons' ); ?>">
 
 				<?php
 
 				foreach ( $fields as $index => $field ) {
 
-					$this->render_field_card( (string) $index, $field, $post_types, ! $start_new, $primary_post_type );
+					$this->render_field_card( (string) $index, $field, $post_types, $index !== $new_field_index, $primary_post_type );
 
 				}
 
@@ -1528,7 +1628,22 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			</div>
 
-			<template class="oa-collection-template"><?php $this->render_field_card( '__INDEX__', $template, $post_types, false, $primary_post_type ); ?></template>
+			<template class="oa-collection-template" data-field-scope="reusable"><?php $this->render_field_card( '__INDEX__', $reusable_template, $post_types, false, $primary_post_type ); ?></template>
+
+			<?php
+
+			if ( '' !== $primary_post_type ) :
+
+			?>
+
+			<template class="oa-collection-template" data-field-scope="specific"><?php $this->render_field_card( '__INDEX__', $specific_template, $post_types, false, $primary_post_type ); ?></template>
+
+			<?php
+
+			endif;
+
+			?>
+
 		</div>
 
 		<?php
@@ -1542,18 +1657,34 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	protected function render_field_card( string $index, array $field, array $post_types, bool $saved, string $primary_post_type = '' ): void {
 
-		$label    = (string) ( $field['label'] ?? '' );
-		$name     = (string) ( $field['name'] ?? '' );
-		$type     = (string) ( $field['type'] ?? 'text' );
-		$assigned = is_array( $field['post_types'] ?? null ) ? $field['post_types'] : [];
-		$types    = $this->field_types();
-		$is_container = in_array( $type, [ 'group', 'repeater' ], true );
+		$label          = (string) ( $field['label'] ?? '' );
+		$name           = (string) ( $field['name'] ?? '' );
+		$type           = (string) ( $field['type'] ?? 'text' );
+		$scope          = 'specific' === ( $field['scope'] ?? 'reusable' ) ? 'specific' : 'reusable';
+		$owner          = 'specific' === $scope ? (string) ( $field['owner_post_type'] ?? $primary_post_type ) : '';
+		$owner_label    = $post_types[ $owner ] ?? $owner;
+		$assigned       = is_array( $field['post_types'] ?? null ) ? $field['post_types'] : [];
+		$types          = $this->field_types();
+		$is_container   = in_array( $type, [ 'group', 'repeater' ], true );
+		$scope_label    = 'specific' === $scope
+			? sprintf( __( 'Specific to %s', 'octave-addons' ), $owner_label )
+			: __( 'Reusable', 'octave-addons' );
+
+		if ( 'reusable' === $scope && '' !== $primary_post_type ) {
+
+			$scope_label = in_array( $primary_post_type, $assigned, true )
+				? __( 'Reusable · Used here', 'octave-addons' )
+				: __( 'Reusable · Available', 'octave-addons' );
+
+		}
 
 		?>
 
-		<article class="oa-cpt-item oa-collection-item" data-saved="<?= $saved ? 'true' : 'false'; ?>">
+		<article class="oa-cpt-item oa-collection-item oa-field-scope--<?= esc_attr( $scope ); ?>"<?= '' !== $name ? ' id="oa-field-' . esc_attr( $name ) . '"' : ''; ?> data-saved="<?= $saved ? 'true' : 'false'; ?>">
+			<input type="hidden" data-field-scope-value name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'scope' ) ); ?>" value="<?= esc_attr( $scope ); ?>">
+			<input type="hidden" data-field-owner-value name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'owner_post_type' ) ); ?>" value="<?= esc_attr( $owner ); ?>">
 			<div class="oa-cpt-item-head">
-				<button type="button" class="oa-cpt-expand oa-collection-expand" aria-expanded="<?= $saved ? 'false' : 'true'; ?>"><span class="oa-cpt-expand-copy"><strong class="oa-cpt-item-title"><?= esc_html( '' !== $label ? $label : __( 'New post field', 'octave-addons' ) ); ?></strong><span class="oa-cpt-key-preview"><?= esc_html( $name ); ?></span></span><span class="dashicons dashicons-arrow-down-alt2 oa-cpt-expand-icon" aria-hidden="true"></span></button>
+				<button type="button" class="oa-cpt-expand oa-collection-expand" aria-expanded="<?= $saved ? 'false' : 'true'; ?>"><span class="oa-cpt-expand-copy"><strong class="oa-cpt-item-title"><?= esc_html( '' !== $label ? $label : __( 'New post field', 'octave-addons' ) ); ?></strong><span class="oa-cpt-key-preview"><?= esc_html( $name ); ?></span><span class="oa-field-scope-badge" data-used-label="<?php esc_attr_e( 'Reusable · Used here', 'octave-addons' ); ?>" data-available-label="<?php esc_attr_e( 'Reusable · Available', 'octave-addons' ); ?>"><?= esc_html( $scope_label ); ?></span></span><span class="dashicons dashicons-arrow-down-alt2 oa-cpt-expand-icon" aria-hidden="true"></span></button>
 				<div class="oa-cpt-enabled-summary"><span><?php esc_html_e( 'Enabled', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" data-role="enabled" name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'enabled' ) ); ?>" value="1"<?= checked( ! empty( $field['enabled'] ), true, false ); ?>><span class="oa-switch-slider"></span></label></div>
 				<button type="button" class="oa-cpt-remove oa-collection-remove" aria-label="<?php esc_attr_e( 'Remove this post field', 'octave-addons' ); ?>"><span class="dashicons dashicons-trash" aria-hidden="true"></span></button>
 			</div>
@@ -1575,7 +1706,15 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 				<?php $this->render_sub_field_editor( $index, $field['sub_fields'] ?? [], $is_container ); ?>
 
-				<?php $this->render_assignment_group( 'custom_fields', $index, $assigned, $post_types, true, $primary_post_type ); ?>
+				<?php
+
+				if ( 'reusable' === $scope ) {
+
+					$this->render_assignment_group( 'custom_fields', $index, $assigned, $post_types, false, $primary_post_type, false );
+
+				}
+
+				?>
 			</div>
 		</article>
 
@@ -1588,7 +1727,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	-- Provides clear checkbox assignments for taxonomies and fields.
 	---------------------------------------------------------- */
 
-	protected function render_assignment_group( string $collection, string $index, array $assigned, array $post_types, bool $custom_only = false, string $primary_post_type = '' ): void {
+	protected function render_assignment_group( string $collection, string $index, array $assigned, array $post_types, bool $custom_only = false, string $primary_post_type = '', bool $lock_primary = true ): void {
 
 		$assignable = $custom_only ? array_diff_key( $post_types, array_flip( [ 'post', 'page' ] ) ) : $post_types;
 
@@ -1618,7 +1757,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				?>
 
 				<label class="oa-assignment-option<?= $is_primary ? ' is-primary' : ''; ?>">
-					<input type="checkbox" name="<?= esc_attr( $this->collection_field_name( $collection, $index, 'post_types' ) ); ?>[]" value="<?= esc_attr( $post_type ); ?>"<?= checked( $is_primary || in_array( $post_type, $assigned, true ), true, false ); ?><?= $is_primary ? ' data-primary-assignment="true"' : ''; ?>>
+					<input type="checkbox" name="<?= esc_attr( $this->collection_field_name( $collection, $index, 'post_types' ) ); ?>[]" value="<?= esc_attr( $post_type ); ?>"<?= checked( in_array( $post_type, $assigned, true ), true, false ); ?><?= $is_primary ? ' data-context-assignment="true"' : ''; ?><?= $is_primary && $lock_primary ? ' data-primary-assignment="true"' : ''; ?>>
 					<span class="oa-assignment-check" aria-hidden="true"></span>
 					<span class="oa-assignment-copy"><strong><?= esc_html( $label ); ?></strong><small><?= $is_primary ? esc_html__( 'Current post type', 'octave-addons' ) : esc_html( $post_type ); ?></small></span>
 				</label>
@@ -1723,7 +1862,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	SETTINGS URL
-	-- Returns the stable Custom Posts settings URL.
+	-- Returns the stable Post Types settings URL.
 	---------------------------------------------------------- */
 
 	protected function settings_url(): string {
@@ -1793,6 +1932,102 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				}
 			)
 		);
+
+	}
+
+	/*
+	REUSABLE FIELDS
+	-- Returns global fields, including definitions created before field scopes
+	-- were introduced.
+	---------------------------------------------------------- */
+
+	protected function reusable_fields( array $fields ): array {
+
+		return array_values(
+			array_filter(
+				$fields,
+				static function ( array $field ): bool {
+
+					return 'specific' !== ( $field['scope'] ?? 'reusable' );
+
+				}
+			)
+		);
+
+	}
+
+	/*
+	FIELDS FOR POST TYPE EDITOR
+	-- Combines fields owned by the current post type with every reusable field
+	-- so both can be edited without leaving the page.
+	---------------------------------------------------------- */
+
+	protected function fields_for_post_type_editor( array $fields, string $post_type ): array {
+
+		$specific = [];
+		$reusable = [];
+
+		foreach ( $fields as $field ) {
+
+			if ( 'specific' === ( $field['scope'] ?? 'reusable' ) ) {
+
+				if ( $post_type === ( $field['owner_post_type'] ?? '' ) ) {
+
+					$specific[] = $field;
+
+				}
+
+			} else {
+
+				$reusable[] = $field;
+
+			}
+
+		}
+
+		return array_merge( $specific, $reusable );
+
+	}
+
+	/*
+	SPECIFIC FIELDS OUTSIDE POST TYPE
+	-- Preserves post-type-owned fields that are intentionally off screen.
+	---------------------------------------------------------- */
+
+	protected function specific_fields_outside_post_type( array $fields, string $post_type ): array {
+
+		return array_values(
+			array_filter(
+				$fields,
+				static function ( array $field ) use ( $post_type ): bool {
+
+					return 'specific' === ( $field['scope'] ?? 'reusable' )
+						&& $post_type !== ( $field['owner_post_type'] ?? '' );
+
+				}
+			)
+		);
+
+	}
+
+	/*
+	SHOULD START NEW LIBRARY FIELD
+	-- Lets overview links open a fresh reusable field directly on the library.
+	---------------------------------------------------------- */
+
+	protected function should_start_new_library_field(): bool {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress adds this after a successful Settings API save.
+		if ( ! empty( $_GET['settings-updated'] ) ) {
+
+			return false;
+
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only settings navigation.
+		$add = isset( $_GET['add'] ) ? sanitize_key( wp_unslash( (string) $_GET['add'] ) ) : '';
+
+		return 'field' === $add;
 
 	}
 
@@ -1960,7 +2195,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		$fields = $this->normalise_fields( $settings['custom_fields'] ?? [], $post_types );
 
-		new Octave_Addons_Custom_Post_Fields( $fields, $this->post_type_options( $post_types, false ) );
+		new Octave_Addons_Custom_Post_Fields( $fields, $this->post_type_options( $post_types ) );
 
 	}
 
@@ -2114,6 +2349,20 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$post_slug    = $post_type['post_slug'];
 		$archive_slug = $post_type['archive_slug'];
 		$is_public    = ! empty( $post_type['public'] );
+		$supports     = [
+			'title',
+			'author',
+			'thumbnail',
+			'excerpt',
+			'revisions',
+			'custom-fields',
+		];
+
+		if ( ! empty( $post_type['content_editor'] ) ) {
+
+			array_splice( $supports, 1, 0, 'editor' );
+
+		}
 
 		if ( post_type_exists( $key ) ) {
 
@@ -2167,15 +2416,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					]
 					: false,
 				'has_archive'         => $is_public && ! empty( $post_type['has_archive'] ) ? $archive_slug : false,
-				'supports'            => [
-					'title',
-					'editor',
-					'author',
-					'thumbnail',
-					'excerpt',
-					'revisions',
-					'custom-fields',
-				],
+				'supports'            => $supports,
 			]
 		);
 
@@ -2338,6 +2579,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				'menu_icon'              => $menu_icon,
 				'post_slug'              => $post_slug,
 				'public'                 => ! empty( $post_type['public'] ),
+				'content_editor'         => ! array_key_exists( 'content_editor', $post_type ) || ! empty( $post_type['content_editor'] ),
 				'has_archive'            => ! empty( $post_type['has_archive'] ),
 				'archive_slug'           => $archive_slug,
 				'categories'             => ! empty( $post_type['categories'] ),
@@ -2435,10 +2677,11 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		}
 
-		$clean     = [];
-		$used      = [];
-		$available = array_diff( array_keys( $this->post_type_options( $post_types ) ), [ 'post', 'page' ] );
-		$types     = array_keys( $this->field_types() );
+		$clean              = [];
+		$used               = [];
+		$available          = array_keys( $this->post_type_options( $post_types ) );
+		$specific_available = array_column( $post_types, 'post_type' );
+		$types              = array_keys( $this->field_types() );
 
 		foreach ( array_slice( $fields, 0, 50 ) as $index => $field ) {
 
@@ -2464,29 +2707,47 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			}
 
-			$type     = in_array( $type, $types, true ) ? $type : 'text';
+			$type  = in_array( $type, $types, true ) ? $type : 'text';
+			$scope = 'specific' === sanitize_key( $field['scope'] ?? 'reusable' ) ? 'specific' : 'reusable';
+			$owner = sanitize_key( $field['owner_post_type'] ?? '' );
+
+			if ( 'specific' === $scope && ! in_array( $owner, $specific_available, true ) ) {
+
+				$scope = 'reusable';
+				$owner = '';
+
+			}
+
 			$assigned = isset( $field['post_types'] ) && is_array( $field['post_types'] )
 				? array_values( array_intersect( array_map( 'sanitize_key', $field['post_types'] ), $available ) )
 				: [];
 
+			if ( 'specific' === $scope ) {
+
+				$assigned = [ $owner ];
+
+			}
+
 			$used[ $name ] = true;
 			$is_container  = in_array( $type, [ 'group', 'repeater' ], true );
 			$clean[]       = [
-				'enabled'       => ! empty( $field['enabled'] ),
-				'label'         => $label,
-				'name'          => $name,
-				'meta_key'      => '_octave_' . $name,
-				'type'          => $type,
-				'default_value' => $is_container
+				'enabled'         => ! empty( $field['enabled'] ),
+				'label'           => $label,
+				'name'            => $name,
+				'meta_key'        => '_octave_' . $name,
+				'type'            => $type,
+				'default_value'   => $is_container
 					? []
 					: ( 'wysiwyg' === $type
 					? wp_kses_post( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) )
 					: sanitize_text_field( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) ) ),
-				'choices'       => sanitize_textarea_field( wp_unslash( (string) ( $field['choices'] ?? '' ) ) ),
-				'description'   => sanitize_textarea_field( wp_unslash( (string) ( $field['description'] ?? '' ) ) ),
-				'required'      => ! empty( $field['required'] ),
-				'post_types'    => $assigned,
-				'sub_fields'    => $is_container ? $this->normalise_sub_fields( $field['sub_fields'] ?? [] ) : [],
+				'choices'         => sanitize_textarea_field( wp_unslash( (string) ( $field['choices'] ?? '' ) ) ),
+				'description'     => sanitize_textarea_field( wp_unslash( (string) ( $field['description'] ?? '' ) ) ),
+				'required'        => ! empty( $field['required'] ),
+				'scope'           => $scope,
+				'owner_post_type' => $owner,
+				'post_types'      => $assigned,
+				'sub_fields'      => $is_container ? $this->normalise_sub_fields( $field['sub_fields'] ?? [] ) : [],
 			];
 
 		}
@@ -2650,12 +2911,19 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	DASHICONS
-	-- Provides a focused set of built-in WordPress icons for admin menus.
+	-- Provides every icon shipped by the installed WordPress version, with the
+	-- most useful admin menu choices kept first.
 	---------------------------------------------------------- */
 
 	protected function dashicons(): array {
 
-		return [
+		if ( null !== self::$dashicons ) {
+
+			return self::$dashicons;
+
+		}
+
+		$dashicons = [
 			'dashicons-admin-post'       => __( 'Posts', 'octave-addons' ),
 			'dashicons-admin-page'       => __( 'Pages', 'octave-addons' ),
 			'dashicons-portfolio'        => __( 'Portfolio', 'octave-addons' ),
@@ -2687,6 +2955,34 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'dashicons-shield'           => __( 'Security', 'octave-addons' ),
 			'dashicons-universal-access' => __( 'Accessibility', 'octave-addons' ),
 		];
+		$stylesheet = ABSPATH . WPINC . '/css/dashicons.css';
+		$css        = is_readable( $stylesheet ) ? file_get_contents( $stylesheet ) : '';
+
+		if ( is_string( $css ) && preg_match_all( '/\.(dashicons-[a-z0-9-]+):before/', $css, $matches ) ) {
+
+			$icon_classes = array_values( array_unique( $matches[1] ) );
+			sort( $icon_classes, SORT_NATURAL );
+
+			foreach ( $icon_classes as $icon_class ) {
+
+				if ( isset( $dashicons[ $icon_class ] ) ) {
+
+					continue;
+
+				}
+
+				$label = str_replace( 'dashicons-', '', $icon_class );
+				$label = ucwords( str_replace( '-', ' ', $label ) );
+
+				$dashicons[ $icon_class ] = $label;
+
+			}
+
+		}
+
+		self::$dashicons = $dashicons;
+
+		return self::$dashicons;
 
 	}
 

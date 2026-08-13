@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.12.4
+Stable tag:        2.14.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -31,7 +31,7 @@ Octave Addons ships with a growing collection of focused modules:
 *   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
     every Breakdance Lazy Load toggle off so images, backgrounds and
     embeds are left to the site's third-party performance plugin.
-*   **Custom Posts** – can display Posts as Blogs and provides separate managers for
+*   **Post Types** – can display Posts as Blogs and provides separate managers for
     post types, reusable taxonomies, and typed post fields. Fields use registered
     WordPress post meta and are available in Breakdance Dynamic Data.
 
@@ -64,6 +64,31 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.14.1 =
+* Made custom field storage sparse: empty and default-equivalent values now remove their postmeta row, while intentional empty overrides of non-empty defaults remain stored.
+* Removed completely blank repeater rows before saving and retained one postmeta row per populated group or repeater.
+
+= 2.14.0 =
+* Added a per-post-type Content Editor toggle so metadata-only types can remove the standard WordPress editor while keeping the Octave content fields panel prominent.
+
+= 2.13.0 =
+* Renamed Custom Posts to Post Types throughout the current admin interface.
+* Added reusable content fields that can be assigned to Posts, Pages, and multiple custom post types.
+* Added post-type-specific content fields that remain owned by one custom post type.
+* Moved reusable and specific field creation, editing, and assignment onto each post type’s Content Fields page.
+* Made reusable fields editable inline in the content schema library and opened overview field links directly at their editor.
+
+= 2.12.7 =
+* Hid custom post type URL settings whenever the post type is not public.
+
+= 2.12.6 =
+* Expanded the custom post type admin menu icon picker to every Dashicon available in the installed WordPress version.
+* Added icon search by name or Dashicon class.
+
+= 2.12.5 =
+* Hid the Breakdance AJAX Filtering page path while the module applies to all Breakdance areas.
+* Posts per page now stays empty by default and follows the current Settings → Reading value until explicitly overridden.
 
 = 2.12.4 =
 * Fixed Scroll Animation CSS and JavaScript overrides losing backslashes when saved through the WordPress Settings API.
