@@ -67,29 +67,46 @@ STRUCTURED CONTENT LAUNCHER
     background: #10683c;
 }
 
+.oa-structured-content-editor .block-editor-block-contextual-toolbar-wrapper,
+.oa-structured-content-editor .edit-post-header-toolbar__inserter-toggle,
+.oa-structured-content-editor .block-editor-block-toolbar,
+.oa-structured-content-editor .block-list-appender {
+    display: none !important;
+}
+
+:root :where(.editor-styles-wrapper)::after {
+    display: none;
+    height: 0;
+}
+
+.oa-structured-fields-location {
+    width: min(840px, calc(100% - 48px));
+    margin: 24px auto 72px;
+}
+
+.oa-structured-fields-location #octave-custom-post-fields {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.oa-structured-fields-location #octave-custom-post-fields > .postbox-header,
+.oa-structured-fields-location #octave-custom-post-fields > h2,
+.oa-structured-fields-location #octave-custom-post-fields > .handlediv {
+    display: none;
+}
+
+.oa-structured-fields-location #octave-custom-post-fields .inside {
+    display: block;
+}
+
 .oa-post-fields--structured {
-    background: #fff;
-}
-
-.oa-post-fields--structured .oa-post-fields-intro {
-    padding: 28px 32px;
-    background: #fff;
-}
-
-.oa-post-fields--structured .oa-post-fields-intro > .dashicons {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-}
-
-.oa-post-fields--structured .oa-post-fields-intro strong {
-    font-size: 16px;
+    background: transparent;
 }
 
 .oa-post-fields--structured .oa-post-fields-grid {
-    padding: 28px 32px 32px;
-    border-top: 1px solid var(--oa-field-border);
-    background: #f8f9fa;
+    padding: 0;
+    background: transparent;
 }
 
 .oa-post-fields-empty {
@@ -416,9 +433,9 @@ STRUCTURED CONTENT LAUNCHER
         padding: 42px 20px;
     }
 
-    .oa-post-fields--structured .oa-post-fields-intro,
-    .oa-post-fields--structured .oa-post-fields-grid {
-        padding: 20px;
+    .oa-structured-fields-location {
+        width: calc(100% - 24px);
+        margin-top: 12px;
     }
 
     .oa-post-fields-grid {

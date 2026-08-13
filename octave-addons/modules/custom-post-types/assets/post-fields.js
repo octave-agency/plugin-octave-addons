@@ -199,6 +199,95 @@ POST FIELDS EDITOR
 			}
 		} );
 
+		wp.domReady( function () {
+
+			var blockEditor = wp.data.select( 'core/block-editor' );
+			var dispatcher  = wp.data.dispatch( 'core/block-editor' );
+
+			if ( ! blockEditor || ! dispatcher ) {
+
+				return;
+
+			}
+
+			var blocks      = blockEditor.getBlocks();
+			var hasLauncher = blocks.some( function ( block ) {
+
+				return 'octave/structured-content-launcher' === block.name;
+
+			} );
+
+			if ( ! hasLauncher ) {
+
+				dispatcher.resetBlocks( [ wp.blocks.createBlock( 'octave/structured-content-launcher' ) ] );
+
+			}
+
+			document.body.classList.add( 'oa-structured-content-editor' );
+
+		} );
+
+	}
+
+	/*
+	POSITION STRUCTURED FIELDS
+	-- Places the complete WordPress meta-box form directly after Gutenberg's
+	-- editor canvas without separating the fields from their save container.
+	---------------------------------------------------------- */
+
+	function positionStructuredFields() {
+
+		if ( ! window.octavePostFields || ! octavePostFields.structuredOnly ) {
+
+			return true;
+
+		}
+
+		var editorCanvas = document.querySelector( '.editor-canvas' );
+		var postbox = document.getElementById( 'octave-custom-post-fields' );
+
+		if ( ! editorCanvas || ! postbox ) {
+
+			return false;
+
+		}
+
+		var metaBoxArea = postbox.closest( '.metabox-location-normal' ) || postbox.parentElement;
+		var editorForm  = editorCanvas.closest( 'form' );
+		var metaBoxForm = postbox.closest( 'form' );
+		var placementTarget;
+
+		if ( ! metaBoxArea || ! metaBoxForm ) {
+
+			return false;
+
+		}
+
+		if ( editorForm === metaBoxForm ) {
+
+			placementTarget = metaBoxArea;
+
+		} else if ( ! metaBoxForm.contains( editorCanvas ) ) {
+
+			placementTarget = metaBoxForm;
+
+		} else {
+
+			return false;
+
+		}
+
+		postbox.classList.remove( 'closed' );
+		placementTarget.classList.add( 'oa-structured-fields-location' );
+
+		if ( editorCanvas.nextElementSibling !== placementTarget ) {
+
+			editorCanvas.insertAdjacentElement( 'afterend', placementTarget );
+
+		}
+
+		return true;
+
 	}
 
 	/*
@@ -330,5 +419,25 @@ POST FIELDS EDITOR
 	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 	initializeWysiwyg( document );
 	registerStructuredContentLauncher();
+
+	positionStructuredFields();
+
+	if ( window.octavePostFields && octavePostFields.structuredOnly ) {
+
+		var positionAttempts = 0;
+		var positionTimer = window.setInterval( function () {
+
+			positionAttempts++;
+			positionStructuredFields();
+
+			if ( positionAttempts >= 40 ) {
+
+				window.clearInterval( positionTimer );
+
+			}
+
+		}, 250 );
+
+	}
 
 })( jQuery );

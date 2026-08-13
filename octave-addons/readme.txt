@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.17.0
+Stable tag:        2.18.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.18.0 =
+* Added a guaranteed Breakdance-style message inside Gutenberg for structured-only post types.
+* Positioned the complete normal meta-box form directly after the editor canvas while preserving its native save boundary.
+* Removed the structured field intro and meta-box chrome, and removed Gutenberg's trailing 40vh editor space.
 
 = 2.17.0 =
 * Replaced the structured-content canvas workaround with a native Gutenberg launcher block modelled on Breakdance's implementation.

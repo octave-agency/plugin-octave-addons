@@ -176,7 +176,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 			add_meta_box(
 				'octave-custom-post-fields',
-				__( 'Octave Post Fields', 'octave-addons' ),
+				in_array( $post_type, $this->structured_post_types, true ) ? __( 'Content Fields', 'octave-addons' ) : __( 'Octave Post Fields', 'octave-addons' ),
 				[ $this, 'render_meta_box' ],
 				$post_type,
 				'normal',
@@ -202,13 +202,25 @@ class Octave_Addons_Custom_Post_Fields {
 		?>
 
 		<div class="oa-post-fields<?= $structured_only ? ' oa-post-fields--structured' : ''; ?>">
+			<?php
+
+			if ( ! $structured_only ) :
+
+			?>
+
 			<div class="oa-post-fields-intro">
-				<span class="dashicons <?= $structured_only ? 'dashicons-feedback' : 'dashicons-admin-generic'; ?>" aria-hidden="true"></span>
+				<span class="dashicons dashicons-admin-generic" aria-hidden="true"></span>
 				<div>
-					<strong><?= $structured_only ? esc_html__( 'This post type uses default fields', 'octave-addons' ) : esc_html__( 'Content details', 'octave-addons' ); ?></strong>
-					<p><?= $structured_only ? esc_html__( 'Please populate the fields below. These values provide the content used by your templates and dynamic layouts.', 'octave-addons' ) : esc_html__( 'Complete the fields below to keep this content consistent across templates and dynamic layouts.', 'octave-addons' ); ?></p>
+					<strong><?php esc_html_e( 'Content details', 'octave-addons' ); ?></strong>
+					<p><?php esc_html_e( 'Complete the fields below to keep this content consistent across templates and dynamic layouts.', 'octave-addons' ); ?></p>
 				</div>
 			</div>
+
+			<?php
+
+			endif;
+
+			?>
 
 			<div class="oa-post-fields-grid">
 
@@ -870,7 +882,7 @@ class Octave_Addons_Custom_Post_Fields {
 				'itemLabel'            => __( 'Item %d', 'octave-addons' ),
 				'structuredOnly'       => in_array( $screen->post_type, $this->structured_post_types, true ),
 				'launcherTitle'        => __( 'This post type uses default fields.', 'octave-addons' ),
-				'launcherDescription'  => __( 'Please populate the Octave content fields below.', 'octave-addons' ),
+				'launcherDescription'  => __( 'Content cannot be added in the block editor. Please populate the fields below.', 'octave-addons' ),
 				'launcherButton'       => __( 'Go to content fields', 'octave-addons' ),
 			]
 		);
