@@ -79,7 +79,13 @@ class Octave_Addons_Breakdance_String_Field extends \Breakdance\DynamicData\Stri
 
 	public function category() {
 
-		return 'Octave';
+		return __( 'Octave', 'octave-addons' );
+
+	}
+
+	public function proOnly() {
+
+		return false;
 
 	}
 
@@ -143,7 +149,13 @@ class Octave_Addons_Breakdance_Image_Field extends \Breakdance\DynamicData\Image
 
 	public function category() {
 
-		return 'Octave';
+		return __( 'Octave', 'octave-addons' );
+
+	}
+
+	public function proOnly() {
+
+		return false;
 
 	}
 
@@ -194,7 +206,13 @@ class Octave_Addons_Breakdance_Repeater_Field extends \Breakdance\DynamicData\Re
 
 	public function category() {
 
-		return 'Octave';
+		return __( 'Octave', 'octave-addons' );
+
+	}
+
+	public function proOnly() {
+
+		return false;
 
 	}
 

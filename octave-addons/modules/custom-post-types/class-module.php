@@ -1323,7 +1323,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'content_editor' ) ); ?>" value="1"<?= checked( $content_editor, true, false ); ?>>
 								<span class="oa-switch-slider"></span>
 							</label>
-							<small><?php esc_html_e( 'Turn off when entries are built entirely from Octave content fields, such as testimonials. The Octave meta box remains available at the top of the edit screen.', 'octave-addons' ); ?></small>
+							<small><?php esc_html_e( 'Turn off when entries are built entirely from Octave content fields, such as testimonials. Gutenberg remains available, with the Octave fields replacing its content canvas.', 'octave-addons' ); ?></small>
 						</div>
 					</div>
 				</fieldset>
@@ -2288,7 +2288,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		$fields = $this->normalise_fields( $settings['custom_fields'] ?? [], $post_types );
 
-		new Octave_Addons_Custom_Post_Fields( $fields, $this->post_type_options( $post_types ) );
+		new Octave_Addons_Custom_Post_Fields( $fields, $this->post_type_options( $post_types ), $post_types );
 
 	}
 
@@ -2444,18 +2444,13 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$is_public    = ! empty( $post_type['public'] );
 		$supports     = [
 			'title',
+			'editor',
 			'author',
 			'thumbnail',
 			'excerpt',
 			'revisions',
 			'custom-fields',
 		];
-
-		if ( ! empty( $post_type['content_editor'] ) ) {
-
-			array_splice( $supports, 1, 0, 'editor' );
-
-		}
 
 		if ( post_type_exists( $key ) ) {
 

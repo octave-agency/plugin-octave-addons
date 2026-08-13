@@ -19,16 +19,30 @@ class Octave_Addons_Custom_Post_Fields {
 
 	protected array $fields;
 	protected array $post_type_labels;
+	protected array $structured_post_types;
 
 	/*
 	CONSTRUCTOR
 	-- Stores normalised definitions and attaches editor and builder hooks.
 	---------------------------------------------------------- */
 
-	public function __construct( array $fields, array $post_type_labels ) {
+	public function __construct( array $fields, array $post_type_labels, array $post_types = [] ) {
 
-		$this->fields           = $fields;
-		$this->post_type_labels = $post_type_labels;
+		$this->fields                = $fields;
+		$this->post_type_labels      = $post_type_labels;
+		$this->structured_post_types = [];
+
+		foreach ( $post_types as $post_type ) {
+
+			$key = (string) ( $post_type['post_type'] ?? '' );
+
+			if ( '' !== $key && empty( $post_type['content_editor'] ) ) {
+
+				$this->structured_post_types[] = $key;
+
+			}
+
+		}
 
 		$this->register_meta();
 
@@ -114,7 +128,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( array_keys( $this->post_type_labels ) as $post_type ) {
 
-			if ( empty( $this->fields_for_post_type( $post_type ) ) ) {
+			if ( empty( $this->fields_for_post_type( $post_type ) ) && ! in_array( $post_type, $this->structured_post_types, true ) ) {
 
 				continue;
 
@@ -140,24 +154,35 @@ class Octave_Addons_Custom_Post_Fields {
 
 	public function render_meta_box( WP_Post $post ): void {
 
-		$fields = $this->fields_for_post_type( $post->post_type );
+		$fields          = $this->fields_for_post_type( $post->post_type );
+		$structured_only = in_array( $post->post_type, $this->structured_post_types, true );
 
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_NAME );
 
 		?>
 
-		<div class="oa-post-fields">
+		<div class="oa-post-fields<?= $structured_only ? ' oa-post-fields--structured' : ''; ?>">
 			<div class="oa-post-fields-intro">
-				<span class="dashicons dashicons-admin-generic" aria-hidden="true"></span>
+				<span class="dashicons <?= $structured_only ? 'dashicons-feedback' : 'dashicons-admin-generic'; ?>" aria-hidden="true"></span>
 				<div>
-					<strong><?php esc_html_e( 'Content details', 'octave-addons' ); ?></strong>
-					<p><?php esc_html_e( 'Complete the fields below to keep this content consistent across templates and dynamic layouts.', 'octave-addons' ); ?></p>
+					<strong><?= $structured_only ? esc_html__( 'This post type uses default fields', 'octave-addons' ) : esc_html__( 'Content details', 'octave-addons' ); ?></strong>
+					<p><?= $structured_only ? esc_html__( 'Please populate the fields below. These values provide the content used by your templates and dynamic layouts.', 'octave-addons' ) : esc_html__( 'Complete the fields below to keep this content consistent across templates and dynamic layouts.', 'octave-addons' ); ?></p>
 				</div>
 			</div>
 
 			<div class="oa-post-fields-grid">
 
 			<?php
+
+			if ( empty( $fields ) ) :
+
+			?>
+
+			<p class="oa-post-fields-empty"><?php esc_html_e( 'No content fields are assigned yet. Add fields to this post type in Octave Addons, then return here to populate them.', 'octave-addons' ); ?></p>
+
+			<?php
+
+			endif;
 
 			foreach ( $fields as $field ) {
 
@@ -783,7 +808,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		$screen = get_current_screen();
 
-		if ( ! $screen || empty( $this->fields_for_post_type( $screen->post_type ) ) ) {
+		if ( ! $screen || ( empty( $this->fields_for_post_type( $screen->post_type ) ) && ! in_array( $screen->post_type, $this->structured_post_types, true ) ) ) {
 
 			return;
 
@@ -798,11 +823,13 @@ class Octave_Addons_Custom_Post_Fields {
 			'octave-post-fields',
 			'octavePostFields',
 			[
-				'chooseImage' => __( 'Choose an image', 'octave-addons' ),
-				'chooseFile'  => __( 'Choose a file', 'octave-addons' ),
-				'useMedia'    => __( 'Use this media', 'octave-addons' ),
-				'replace'     => __( 'Replace', 'octave-addons' ),
-				'itemLabel'   => __( 'Item %d', 'octave-addons' ),
+				'chooseImage'          => __( 'Choose an image', 'octave-addons' ),
+				'chooseFile'           => __( 'Choose a file', 'octave-addons' ),
+				'useMedia'             => __( 'Use this media', 'octave-addons' ),
+				'replace'              => __( 'Replace', 'octave-addons' ),
+				'itemLabel'            => __( 'Item %d', 'octave-addons' ),
+				'structuredOnly'       => in_array( $screen->post_type, $this->structured_post_types, true ),
+				'structuredPanelLabel' => __( 'Default content fields', 'octave-addons' ),
 			]
 		);
 
@@ -837,6 +864,35 @@ class Octave_Addons_Custom_Post_Fields {
 			require_once __DIR__ . '/class-breakdance-fields.php';
 
 		}
+
+		$controller = \Breakdance\DynamicData\DynamicDataController::getInstance();
+		$category   = __( 'Octave', 'octave-addons' );
+
+		if ( ! in_array( $category, $controller->order, true ) ) {
+
+			$post_position = array_search( __( 'Post', 'breakdance' ), $controller->order, true );
+
+			if ( 0 === $post_position ) {
+
+				array_unshift( $controller->order, '__octave_dynamic_data_order_start__' );
+				$post_position = 1;
+
+			}
+
+			$position = false === $post_position ? 0 : (int) $post_position + 1;
+
+			array_splice( $controller->order, $position, 0, [ $category ] );
+
+		}
+
+		usort(
+			$enabled_fields,
+			static function ( array $first, array $second ): int {
+
+				return strcasecmp( (string) $first['label'], (string) $second['label'] );
+
+			}
+		);
 
 		foreach ( $enabled_fields as $field ) {
 

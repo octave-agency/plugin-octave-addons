@@ -14,6 +14,74 @@ POST FIELDS EDITOR
     background: #f8f9fa;
 }
 
+/*
+Structured content canvas
+---------------------------------------------------------- */
+
+.oa-structured-editor-canvas {
+    width: min(840px, calc(100% - 48px));
+    margin: 24px auto 72px;
+}
+
+.oa-structured-editor-canvas #octave-custom-post-fields {
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: none;
+}
+
+.oa-structured-editor-canvas #octave-custom-post-fields > .postbox-header,
+.oa-structured-editor-canvas #octave-custom-post-fields > h2,
+.oa-structured-editor-canvas #octave-custom-post-fields > .handlediv {
+    display: none;
+}
+
+.oa-structured-editor-canvas #octave-custom-post-fields .inside {
+    display: block;
+}
+
+.oa-structured-content-editor .edit-post-visual-editor:not(.oa-structured-editor--framed) .block-editor-block-list__layout.is-root-container > :not(.edit-post-visual-editor__post-title-wrapper),
+.oa-structured-content-editor .editor-visual-editor:not(.oa-structured-editor--framed) .block-editor-block-list__layout.is-root-container > :not(.edit-post-visual-editor__post-title-wrapper),
+.oa-structured-content-editor .block-editor-default-block-appender {
+    display: none !important;
+}
+
+.oa-post-fields--structured {
+    background: #fff;
+}
+
+.oa-post-fields--structured .oa-post-fields-intro {
+    padding: 28px 32px;
+    background: #fff;
+}
+
+.oa-post-fields--structured .oa-post-fields-intro > .dashicons {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+}
+
+.oa-post-fields--structured .oa-post-fields-intro strong {
+    font-size: 16px;
+}
+
+.oa-post-fields--structured .oa-post-fields-grid {
+    padding: 28px 32px 32px;
+    border-top: 1px solid var(--oa-field-border);
+    background: #f8f9fa;
+}
+
+.oa-post-fields-empty {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 24px;
+    color: #646970;
+    border: 1px dashed #b8bcc2;
+    border-radius: 8px;
+    background: #fff;
+    text-align: center;
+}
+
 .oa-post-fields-intro {
     display: flex;
     align-items: flex-start;
@@ -322,6 +390,16 @@ POST FIELDS EDITOR
 }
 
 @media (max-width: 782px) {
+
+    .oa-structured-editor-canvas {
+        width: calc(100% - 24px);
+        margin-top: 12px;
+    }
+
+    .oa-post-fields--structured .oa-post-fields-intro,
+    .oa-post-fields--structured .oa-post-fields-grid {
+        padding: 20px;
+    }
 
     .oa-post-fields-grid {
         grid-template-columns: minmax(0, 1fr);

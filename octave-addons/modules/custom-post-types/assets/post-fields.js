@@ -119,6 +119,120 @@ POST FIELDS EDITOR
 	}
 
 	/*
+	PROMOTE STRUCTURED FIELDS
+	-- Replaces the block-writing area with the real Octave meta form while
+	-- preserving Gutenberg's title, toolbar, publishing and sidebar controls.
+	---------------------------------------------------------- */
+
+	function promoteStructuredFields() {
+
+		if ( ! window.octavePostFields || ! octavePostFields.structuredOnly ) {
+
+			return;
+
+		}
+
+		var postbox = document.getElementById( 'octave-custom-post-fields' );
+		var visualEditor = document.querySelector( '.edit-post-visual-editor, .editor-visual-editor' );
+
+		if ( ! postbox || ! visualEditor ) {
+
+			return;
+
+		}
+
+		var canvas = visualEditor.querySelector( '.oa-structured-editor-canvas' );
+
+		if ( ! canvas ) {
+
+			canvas = document.createElement( 'section' );
+			canvas.className = 'oa-structured-editor-canvas';
+			canvas.setAttribute( 'aria-label', octavePostFields.structuredPanelLabel );
+
+			var contentArea = visualEditor.querySelector( '.edit-post-visual-editor__content-area' );
+			var title = visualEditor.querySelector( '.edit-post-visual-editor__post-title-wrapper' );
+
+			if ( contentArea && contentArea.parentNode === visualEditor ) {
+
+				contentArea.insertAdjacentElement( 'afterend', canvas );
+
+			} else if ( title ) {
+
+				title.insertAdjacentElement( 'afterend', canvas );
+
+			} else {
+
+				visualEditor.appendChild( canvas );
+
+			}
+
+		}
+
+		var ownerForm = postbox.closest( 'form' );
+
+		if ( ownerForm ) {
+
+			if ( ! ownerForm.id ) {
+
+				ownerForm.id = 'oa-structured-fields-form';
+
+			}
+
+			postbox.dataset.oaOwnerForm = ownerForm.id;
+
+		}
+
+		postbox.classList.remove( 'closed' );
+
+		if ( postbox.parentNode !== canvas ) {
+
+			canvas.appendChild( postbox );
+
+		}
+
+		document.body.classList.add( 'oa-structured-content-editor' );
+
+		if ( postbox.dataset.oaOwnerForm ) {
+
+			postbox.querySelectorAll( 'button, fieldset, input, object, output, select, textarea' ).forEach( function ( control ) {
+
+				control.setAttribute( 'form', postbox.dataset.oaOwnerForm );
+
+			} );
+
+		}
+
+		var editorFrame = visualEditor.querySelector( 'iframe[name="editor-canvas"]' );
+
+		if ( editorFrame ) {
+
+			visualEditor.classList.add( 'oa-structured-editor--framed' );
+
+			try {
+
+				var frameDocument = editorFrame.contentDocument;
+
+				if ( frameDocument && frameDocument.head && ! frameDocument.getElementById( 'oa-structured-editor-frame-style' ) ) {
+
+					var frameStyle = frameDocument.createElement( 'style' );
+
+					frameStyle.id = 'oa-structured-editor-frame-style';
+					frameStyle.textContent = '.block-editor-block-list__layout.is-root-container > :not(.edit-post-visual-editor__post-title-wrapper), .block-editor-default-block-appender { display: none !important; }';
+					frameDocument.head.appendChild( frameStyle );
+
+				}
+
+			} catch ( error ) {
+
+				visualEditor.classList.add( 'oa-structured-editor--frame-unavailable' );
+
+			}
+
+		}
+
+	}
+
+	/*
 	WIRE REPEATER
 	-- Adds, removes, reorders, and reindexes rows without changing meta shape.
 	---------------------------------------------------------- */
@@ -246,5 +360,14 @@ POST FIELDS EDITOR
 
 	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 	initializeWysiwyg( document );
+	promoteStructuredFields();
+
+	if ( window.octavePostFields && octavePostFields.structuredOnly ) {
+
+		var structuredFieldObserver = new MutationObserver( promoteStructuredFields );
+
+		structuredFieldObserver.observe( document.body, { childList: true, subtree: true } );
+
+	}
 
 })( jQuery );

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.15.1
+Stable tag:        2.16.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,14 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.16.1 =
+* Listed configured content fields directly in Breakdance's Octave Dynamic Data category.
+* Positioned Octave immediately after Post, sorted its fields by label, and preserved typed image and repeater options.
+
+= 2.16.0 =
+* Kept the Gutenberg editing shell for post types that disable the standard content editor.
+* Replaced the block content canvas with the assigned Octave fields for structured-only post types.
 
 = 2.15.1 =
 * Replaced step and part labels with direct Post Types, Categories, and Content Fields boxes.
