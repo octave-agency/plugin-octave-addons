@@ -19,6 +19,10 @@ STRUCTURED CONTENT LAUNCHER
 -- Gutenberg block modelled on Breakdance's launcher treatment.
 ---------------------------------------------------------- */
 
+.wp-block-octave-block-octave-launcher {
+    max-width: none;
+}
+
 .oa-content-launcher {
     display: flex;
     align-items: center;
@@ -49,24 +53,6 @@ STRUCTURED CONTENT LAUNCHER
     font-size: 14px !important;
 }
 
-.oa-content-launcher__button {
-    padding: 15px 25px;
-    color: #fff;
-    border: 0;
-    border-radius: 0;
-    background: #16834c;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 1;
-    transition: background-color 0.2s ease;
-}
-
-.oa-content-launcher__button:hover,
-.oa-content-launcher__button:focus-visible {
-    background: #10683c;
-}
-
 .oa-structured-content-editor .block-editor-block-contextual-toolbar-wrapper,
 .oa-structured-content-editor .edit-post-header-toolbar__inserter-toggle,
 .oa-structured-content-editor .block-editor-block-toolbar,
@@ -81,22 +67,22 @@ STRUCTURED CONTENT LAUNCHER
 
 .oa-structured-fields-location {
     width: min(840px, calc(100% - 48px));
-    margin: 24px auto 72px;
+    margin: 16px auto 72px;
 }
 
-.oa-structured-fields-location #octave-custom-post-fields {
+.oa-structured-fields-location#octave-custom-post-fields {
     border: 0;
     background: transparent;
     box-shadow: none;
 }
 
-.oa-structured-fields-location #octave-custom-post-fields > .postbox-header,
-.oa-structured-fields-location #octave-custom-post-fields > h2,
-.oa-structured-fields-location #octave-custom-post-fields > .handlediv {
+.oa-structured-fields-location#octave-custom-post-fields > .postbox-header,
+.oa-structured-fields-location#octave-custom-post-fields > h2,
+.oa-structured-fields-location#octave-custom-post-fields > .handlediv {
     display: none;
 }
 
-.oa-structured-fields-location #octave-custom-post-fields .inside {
+.oa-structured-fields-location#octave-custom-post-fields .inside {
     display: block;
 }
 

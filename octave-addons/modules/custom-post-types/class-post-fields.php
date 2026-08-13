@@ -49,6 +49,8 @@ class Octave_Addons_Custom_Post_Fields {
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ $this, 'save_post' ], 10, 2 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
+		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_structured_content_launcher' ] );
+		add_action( 'current_screen', [ $this, 'add_structured_content_template' ] );
 		add_action( 'init', [ $this, 'register_structured_content_block' ], 15 );
 		add_action( 'init', [ $this, 'register_breakdance_fields' ], 20 );
 
@@ -76,18 +78,90 @@ class Octave_Addons_Custom_Post_Fields {
 		wp_register_script(
 			'octave-post-fields',
 			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/post-fields.js',
-			[ 'jquery', 'wp-blocks', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-i18n' ],
+			[ 'jquery' ],
 			OCTAVE_ADDONS_VERSION,
 			true
 		);
+		wp_register_script(
+			'octave-structured-content-launcher',
+			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/structured-content-launcher.js',
+			[ 'wp-blocks', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-i18n' ],
+			OCTAVE_ADDONS_VERSION,
+			false
+		);
 
 		register_block_type(
-			'octave/structured-content-launcher',
+			'octave/block-octave-launcher',
 			[
 				'api_version'     => 2,
-				'editor_script'   => 'octave-post-fields',
+				'editor_script'   => 'octave-structured-content-launcher',
 				'editor_style'    => 'octave-post-fields',
 				'render_callback' => '__return_empty_string',
+			]
+		);
+
+	}
+
+	/*
+	ADD STRUCTURED CONTENT TEMPLATE
+	-- Matches Breakdance's current-screen template injection so the launcher is
+	-- part of Gutenberg content for both new and existing structured-only CPTs.
+	---------------------------------------------------------- */
+
+	public function add_structured_content_template(): void {
+
+		global $pagenow;
+
+		if ( ! in_array( $pagenow, [ 'post.php', 'post-new.php' ], true ) ) {
+
+			return;
+
+		}
+
+		$screen = get_current_screen();
+
+		if ( ! $screen || ! in_array( $screen->post_type, $this->structured_post_types, true ) ) {
+
+			return;
+
+		}
+
+		$post_type = get_post_type_object( $screen->post_type );
+
+		if ( ! $post_type ) {
+
+			return;
+
+		}
+
+		$post_type->template      = [ [ 'octave/block-octave-launcher' ] ];
+		$post_type->template_lock = 'all';
+
+	}
+
+	/*
+	ENQUEUE STRUCTURED CONTENT LAUNCHER
+	-- Loads the block registration before Gutenberg initializes its content.
+	---------------------------------------------------------- */
+
+	public function enqueue_structured_content_launcher(): void {
+
+		$screen = get_current_screen();
+
+		if ( ! $screen || ! in_array( $screen->post_type, $this->structured_post_types, true ) ) {
+
+			return;
+
+		}
+
+		wp_enqueue_style( 'octave-post-fields' );
+		wp_enqueue_script( 'octave-structured-content-launcher' );
+		wp_localize_script(
+			'octave-structured-content-launcher',
+			'octaveStructuredContent',
+			[
+				'title'       => __( 'This post type uses default fields.', 'octave-addons' ),
+				'description' => __( 'Content cannot be added in the block editor. Please populate the fields below.', 'octave-addons' ),
 			]
 		);
 
@@ -880,10 +954,7 @@ class Octave_Addons_Custom_Post_Fields {
 				'useMedia'             => __( 'Use this media', 'octave-addons' ),
 				'replace'              => __( 'Replace', 'octave-addons' ),
 				'itemLabel'            => __( 'Item %d', 'octave-addons' ),
-				'structuredOnly'       => in_array( $screen->post_type, $this->structured_post_types, true ),
-				'launcherTitle'        => __( 'This post type uses default fields.', 'octave-addons' ),
-				'launcherDescription'  => __( 'Content cannot be added in the block editor. Please populate the fields below.', 'octave-addons' ),
-				'launcherButton'       => __( 'Go to content fields', 'octave-addons' ),
+				'structuredOnly' => in_array( $screen->post_type, $this->structured_post_types, true ),
 			]
 		);
 

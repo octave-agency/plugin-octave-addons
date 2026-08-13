@@ -144,15 +144,22 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$taxonomies = $this->normalise_taxonomies( $taxonomies, $post_types );
 		$fields     = $this->normalise_fields( $fields, $post_types );
 
-		$this->apply_starter_content( $input['custom_post_types'] ?? [], $post_types, $taxonomies, $fields );
+		$has_starter_content = $this->apply_starter_content( $input['custom_post_types'] ?? [], $post_types, $taxonomies, $fields );
+
+		if ( $has_starter_content ) {
+
+			$taxonomies = $this->normalise_taxonomies( $taxonomies, $post_types );
+			$fields     = $this->normalise_fields( $fields, $post_types );
+
+		}
 
 		return [
 			'enabled'           => ! empty( $input['enabled'] ),
 			'blog_labels'       => ! empty( $input['blog_labels'] ),
 			'page_categories'   => ! empty( $input['page_categories'] ),
 			'custom_post_types' => $post_types,
-			'custom_taxonomies' => $this->normalise_taxonomies( $taxonomies, $post_types ),
-			'custom_fields'     => $this->normalise_fields( $fields, $post_types ),
+			'custom_taxonomies' => $taxonomies,
+			'custom_fields'     => $fields,
 		];
 
 	}
@@ -164,15 +171,16 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	-- specific to the post type unless an editor creates them in the library.
 	---------------------------------------------------------- */
 
-	protected function apply_starter_content( $submitted, array $post_types, array &$taxonomies, array &$fields ): void {
+	protected function apply_starter_content( $submitted, array $post_types, array &$taxonomies, array &$fields ): bool {
 
 		if ( ! is_array( $submitted ) ) {
 
-			return;
+			return false;
 
 		}
 
-		$keys = array_column( $post_types, 'post_type' );
+		$keys    = array_column( $post_types, 'post_type' );
+		$changed = false;
 
 		foreach ( $submitted as $index => $post_type ) {
 
@@ -207,6 +215,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					'public'        => true,
 					'post_types'    => [ $key ],
 				];
+				$changed = true;
 
 			}
 
@@ -221,10 +230,13 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					'owner_post_type' => $key,
 					'post_types'      => [ $key ],
 				];
+				$changed = true;
 
 			}
 
 		}
+
+		return $changed;
 
 	}
 
@@ -260,8 +272,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	RENDER SETTINGS
-	-- Displays Blog naming, Page Categories, the content overview, and the
-	-- sortable post type editor.
+	-- Displays built-in controls and stacked Post Types, Categories, and Content
+	-- management boxes.
 	---------------------------------------------------------- */
 
 	public function render_settings( array $settings ): void {
@@ -348,17 +360,10 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			<span></span>
 		</div>
 
-		<?php
-
-		$this->render_content_overview( $custom_types, $custom_taxonomies, $custom_fields, 'post_control' );
-
-		?>
-
 		<div class="oa-cpt-section oa-custom-posts-box" id="oa-post-types">
 			<div class="oa-cpt-section-head">
 				<div>
-					<span class="oa-panel-kicker"><?php esc_html_e( 'Post control', 'octave-addons' ); ?></span>
-					<h3><?php esc_html_e( 'Manage post types', 'octave-addons' ); ?></h3>
+					<h3><?php esc_html_e( 'Post Types', 'octave-addons' ); ?></h3>
 					<p><?php esc_html_e( 'Add content areas, configure how they behave, and drag them into WordPress admin menu order.', 'octave-addons' ); ?></p>
 				</div>
 				<div class="oa-cpt-section-actions">
@@ -391,7 +396,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		<?php
 
-		$this->render_content_overview( $custom_types, $custom_taxonomies, $custom_fields, 'content_management' );
+		$this->render_content_overview( $custom_taxonomies, $custom_fields );
 
 		$this->render_preserved_collection( 'custom_taxonomies', $custom_taxonomies );
 		$this->render_preserved_collection( 'custom_fields', $custom_fields );
@@ -400,33 +405,15 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	RENDER CONTENT OVERVIEW
-	-- Splits structural post controls from editor-facing content management.
+	-- Renders compact stacked inventories beneath the editable Post Types box.
 	---------------------------------------------------------- */
 
-	protected function render_content_overview( array $post_types, array $taxonomies, array $fields, string $area ): void {
+	protected function render_content_overview( array $taxonomies, array $fields ): void {
 
-		$library_url     = $this->schema_url( 'library' );
-		$is_post_control = 'post_control' === $area;
-		$field_types     = $this->field_types();
-		$post_type_tips  = [];
-		$category_tips   = [];
-		$field_tips      = [];
-
-		foreach ( $post_types as $post_type ) {
-
-			$post_type_tips[] = [
-				'label'  => $post_type['name'],
-				'meta'   => sprintf(
-					/* translators: 1: number of categories, 2: number of content fields. */
-					__( '%1$d categories · %2$d fields', 'octave-addons' ),
-					count( $this->definitions_for_post_type( $taxonomies, $post_type['post_type'] ) ),
-					count( $this->definitions_for_post_type( $fields, $post_type['post_type'] ) )
-				),
-				'url'    => '#oa-cpt-' . $post_type['post_type'],
-				'target' => 'oa-cpt-' . $post_type['post_type'],
-			];
-
-		}
+		$library_url   = $this->schema_url( 'library' );
+		$field_types   = $this->field_types();
+		$category_tips = [];
+		$field_tips    = [];
 
 		foreach ( $taxonomies as $taxonomy ) {
 
@@ -458,92 +445,57 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		?>
 
-		<section class="oa-content-overview oa-content-overview--<?= esc_attr( str_replace( '_', '-', $area ) ); ?>">
-			<div class="oa-content-overview-head">
-				<h3><?= $is_post_control ? esc_html__( 'Post control', 'octave-addons' ) : esc_html__( 'Content management', 'octave-addons' ); ?></h3>
-				<p><?= $is_post_control ? esc_html__( 'Create the post types WordPress manages and the reusable categories that organise them.', 'octave-addons' ) : esc_html__( 'Build the reusable and post-specific fields editors complete when adding content.', 'octave-addons' ); ?></p>
-			</div>
+		<div class="oa-management-stack">
 
-			<div class="oa-overview-grid<?= $is_post_control ? '' : ' oa-overview-grid--single'; ?>">
+			<?php
 
-				<?php
-
-				if ( $is_post_control ) {
-
-					$this->render_overview_card(
+			$this->render_overview_card(
+				[
+					'icon'    => 'dashicons-category',
+					'title'   => __( 'Categories', 'octave-addons' ),
+					'summary' => __( 'Reusable taxonomies that group entries inside one or more post types.', 'octave-addons' ),
+					'items'   => $category_tips,
+					'empty'   => __( 'No categories yet. Add one and assign it to a post type.', 'octave-addons' ),
+					'more'    => $library_url,
+					'actions' => [
 						[
-							'icon'    => 'dashicons-screenoptions',
-							'title'   => __( 'Post Types', 'octave-addons' ),
-							'summary' => __( 'The content areas added to the WordPress admin menu.', 'octave-addons' ),
-							'items'   => $post_type_tips,
-							'empty'   => __( 'No post types yet. Add one to get started.', 'octave-addons' ),
-							'more'    => '#oa-post-types',
-							'actions' => [
-								[
-									'label'   => __( 'Add post type', 'octave-addons' ),
-									'trigger' => true,
-								],
-								[
-									'label' => __( 'Manage post types', 'octave-addons' ),
-									'url'   => '#oa-post-types',
-									'quiet' => true,
-								],
-							],
-						]
-					);
-
-					$this->render_overview_card(
+							'label' => __( 'New category', 'octave-addons' ),
+							'url'   => $this->schema_url( 'taxonomy', 'new' ),
+						],
 						[
-							'icon'    => 'dashicons-category',
-							'title'   => __( 'Categories', 'octave-addons' ),
-							'summary' => __( 'Reusable taxonomies that group entries inside one or more post types.', 'octave-addons' ),
-							'items'   => $category_tips,
-							'empty'   => __( 'No categories yet. Add one and assign it to a post type.', 'octave-addons' ),
-							'more'    => $library_url,
-							'actions' => [
-								[
-									'label' => __( 'New category', 'octave-addons' ),
-									'url'   => $this->schema_url( 'taxonomy', 'new' ),
-								],
-								[
-									'label' => __( 'Manage categories', 'octave-addons' ),
-									'url'   => $library_url,
-									'quiet' => true,
-								],
-							],
-						]
-					);
+							'label' => __( 'Manage categories', 'octave-addons' ),
+							'url'   => $library_url,
+							'quiet' => true,
+						],
+					],
+				]
+			);
 
-				} else {
-
-					$this->render_overview_card(
+			$this->render_overview_card(
+				[
+					'icon'    => 'dashicons-feedback',
+					'title'   => __( 'Content', 'octave-addons' ),
+					'summary' => __( 'Reusable definitions and post-specific inputs editors complete on the post screen.', 'octave-addons' ),
+					'items'   => $field_tips,
+					'empty'   => __( 'No content fields yet. Add one and assign it to a post type.', 'octave-addons' ),
+					'more'    => $library_url,
+					'actions' => [
 						[
-							'icon'    => 'dashicons-feedback',
-							'title'   => __( 'Content Fields', 'octave-addons' ),
-							'summary' => __( 'Reusable definitions and post-specific inputs editors complete on the post screen.', 'octave-addons' ),
-							'items'   => $field_tips,
-							'empty'   => __( 'No content fields yet. Add one and assign it to a post type.', 'octave-addons' ),
-							'more'    => $library_url,
-							'actions' => [
-								[
-									'label' => __( 'New reusable field', 'octave-addons' ),
-									'url'   => add_query_arg( 'add', 'field', $library_url ),
-								],
-								[
-									'label' => __( 'Manage fields', 'octave-addons' ),
-									'url'   => $library_url,
-									'quiet' => true,
-								],
-							],
-						]
-					);
+							'label' => __( 'New reusable field', 'octave-addons' ),
+							'url'   => add_query_arg( 'add', 'field', $library_url ),
+						],
+						[
+							'label' => __( 'Manage fields', 'octave-addons' ),
+							'url'   => $library_url,
+							'quiet' => true,
+						],
+					],
+				]
+			);
 
-				}
+			?>
 
-				?>
-
-			</div>
-		</section>
+		</div>
 
 		<?php
 
@@ -551,7 +503,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	RENDER OVERVIEW CARD
-	-- Outputs one summary pillar with its items capped to a readable preview.
+	-- Outputs one stacked inventory with its items capped to a readable preview.
 	---------------------------------------------------------- */
 
 	protected function render_overview_card( array $card ): void {
@@ -591,7 +543,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 				?>
 
-				<a href="<?= esc_url( $item['url'] ); ?>" class="oa-overview-chip"<?= isset( $item['target'] ) ? ' data-target="' . esc_attr( $item['target'] ) . '"' : ''; ?>>
+				<a href="<?= esc_url( $item['url'] ); ?>" class="oa-overview-chip">
 					<strong><?= esc_html( $item['label'] ); ?></strong>
 					<span><?= esc_html( $item['meta'] ); ?></span>
 				</a>
@@ -632,23 +584,11 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 					$classes = 'oa-overview-action' . ( empty( $action['quiet'] ) ? '' : ' is-quiet' );
 
-					if ( ! empty( $action['trigger'] ) ) :
-
-				?>
-
-				<button type="button" class="<?= esc_attr( $classes ); ?>" data-oa-add-post-type><span aria-hidden="true">+</span><?= esc_html( $action['label'] ); ?></button>
-
-				<?php
-
-					else :
-
 				?>
 
 				<a href="<?= esc_url( $action['url'] ); ?>" class="<?= esc_attr( $classes ); ?>"><?= empty( $action['quiet'] ) ? '<span aria-hidden="true">+</span>' : ''; ?><?= esc_html( $action['label'] ); ?></a>
 
 				<?php
-
-					endif;
 
 				endforeach;
 
@@ -2507,7 +2447,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		if ( empty( $post_type['content_editor'] ) ) {
 
-			$registration_args['template']      = [ [ 'octave/structured-content-launcher' ] ];
+			$registration_args['template']      = [ [ 'octave/block-octave-launcher' ] ];
 			$registration_args['template_lock'] = 'all';
 
 		}

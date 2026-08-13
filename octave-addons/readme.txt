@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.18.0
+Stable tag:        2.19.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,20 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.19.0 =
+* Replaced the Post Control overview with stacked Post Types, Categories, and Content boxes.
+* Kept category and content inventories compact, with six-item previews and focused editors for larger collections.
+* Avoided a second full category and field normalization pass during ordinary settings saves.
+
+= 2.18.2 =
+* Positioned only the Octave field panel immediately below the structured-content Gutenberg launcher.
+* Kept moved and dynamically added field controls associated with WordPress's native meta-box form for reliable saving.
+* Removed the redundant launcher button so the notice flows directly into the editable fields.
+
+= 2.18.1 =
+* Registered the structured-content launcher before Gutenberg initialization using Breakdance's block-editor lifecycle.
+* Added the real octave/block-octave-launcher content block and restored it whenever a field-only CPT editor does not contain it.
 
 = 2.18.0 =
 * Added a guaranteed Breakdance-style message inside Gutenberg for structured-only post types.

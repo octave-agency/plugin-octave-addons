@@ -2189,56 +2189,24 @@ BUILT-IN WORDPRESS CONTENT
 }
 
 /*
-CONTENT OVERVIEW
--- Separates structural post controls from editor-facing content management.
+CONTENT MANAGEMENT STACK
+-- Keeps Post Types, Categories, and Content as separate readable boxes.
 ---------------------------------------------------------- */
 
-.oa-content-overview {
-    margin-bottom: 16px;
-    padding: 20px;
-    border: 1px solid var(--oa-border);
-    border-radius: 14px;
-    background: var(--oa-surface);
-}
-
-.oa-content-overview--content-management {
-    margin-top: 32px;
-    border-color: rgba(43, 255, 134, 0.24);
-}
-
-.oa-content-overview-head {
+.oa-management-stack {
     display: grid;
-    gap: 4px;
-    margin-bottom: 16px;
-}
-
-.oa-content-overview-head h3 {
-    margin: 0;
-    color: var(--oa-text);
-    font-size: 15px;
-}
-
-.oa-content-overview-head p {
-    margin: 0;
-    color: var(--oa-text-muted);
-    font-size: 11px;
-    line-height: 1.55;
-}
-
-.oa-overview-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px;
+    gap: 16px;
+    margin-top: 16px;
 }
 
 .oa-overview-card {
     display: grid;
     grid-template-rows: auto 1fr auto;
     gap: 12px;
-    padding: 15px;
-    border: 1px solid var(--oa-border-light);
-    border-radius: 12px;
-    background: var(--oa-surface-2);
+    padding: 20px;
+    border: 1px solid var(--oa-border);
+    border-radius: 14px;
+    background: var(--oa-surface);
 }
 
 .oa-overview-card-head {
@@ -2292,10 +2260,8 @@ CONTENT OVERVIEW
 }
 
 .oa-overview-items {
-    display: flex;
-    align-content: flex-start;
-    flex-wrap: wrap;
-    gap: 6px;
+    display: grid;
+    gap: 7px;
 }
 
 .oa-overview-empty {
@@ -2306,14 +2272,16 @@ CONTENT OVERVIEW
 }
 
 .oa-app .oa-overview-chip {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    max-width: 100%;
-    padding: 5px 9px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 11px;
     color: var(--oa-text) !important;
     border: 1px solid var(--oa-border);
-    border-radius: 999px;
+    border-radius: 8px;
     background: var(--oa-surface-3);
     font-size: 10.5px;
     text-decoration: none;
@@ -2340,6 +2308,7 @@ CONTENT OVERVIEW
 }
 
 .oa-app .oa-overview-chip--more {
+    display: block;
     color: var(--oa-text-muted) !important;
     border-style: dashed;
     background: none;
@@ -3996,6 +3965,28 @@ body.oa-confirm-open {
 
     .oa-custom-posts-box {
         padding: 16px;
+    }
+
+    .oa-overview-card {
+        padding: 16px;
+    }
+
+    .oa-app .oa-overview-chip {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 3px;
+    }
+
+    .oa-overview-chip span {
+        white-space: normal;
+    }
+
+    .oa-overview-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .oa-app .oa-overview-action {
+        justify-content: center;
     }
 
     .oa-assignment-grid {

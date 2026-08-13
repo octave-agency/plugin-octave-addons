@@ -119,111 +119,16 @@ POST FIELDS EDITOR
 	}
 
 	/*
-	REGISTER STRUCTURED CONTENT LAUNCHER
-	-- Mirrors Breakdance's native block-template approach while keeping the
-	-- real post-meta inputs in WordPress's supported meta-box form below.
+	ASSOCIATE CONTROLS WITH FORM
+	-- Keeps moved and dynamically added inputs attached to Gutenberg's native
+	-- meta-box form without moving unrelated meta boxes.
 	---------------------------------------------------------- */
 
-	function registerStructuredContentLauncher() {
+	function associateControlsWithForm( scope, formId ) {
 
-		if ( ! window.octavePostFields || ! octavePostFields.structuredOnly || ! window.wp || ! wp.blocks || ! wp.element ) {
+		scope.querySelectorAll( 'button, fieldset, input, object, output, select, textarea' ).forEach( function ( control ) {
 
-			return;
-
-		}
-
-		if ( wp.blocks.getBlockType( 'octave/structured-content-launcher' ) ) {
-
-			return;
-
-		}
-
-		wp.blocks.registerBlockType( 'octave/structured-content-launcher', {
-			apiVersion: 2,
-			title: 'Octave Content Fields',
-			icon: 'feedback',
-			category: 'common',
-			supports: {
-				customClassName: false,
-				html: false,
-				inserter: false,
-				multiple: false,
-				reusable: false
-			},
-			edit: function ( props ) {
-
-				function focusContentFields() {
-
-					var postbox = document.getElementById( 'octave-custom-post-fields' );
-
-					if ( ! postbox ) {
-
-						return;
-
-					}
-
-					postbox.classList.remove( 'closed' );
-					postbox.scrollIntoView( { behavior: 'smooth', block: 'start' } );
-
-					var firstInput = postbox.querySelector( 'input:not([type="hidden"]), select, textarea' );
-
-					if ( firstInput ) {
-
-						window.setTimeout( function () {
-
-							firstInput.focus( { preventScroll: true } );
-
-						}, 450 );
-
-					}
-
-				}
-
-				return wp.element.createElement(
-					'div',
-					{ className: props.className },
-					wp.element.createElement(
-						'div',
-						{ className: 'oa-content-launcher' },
-						wp.element.createElement( 'p', { className: 'oa-content-launcher__title' }, octavePostFields.launcherTitle ),
-						wp.element.createElement( 'p', { className: 'oa-content-launcher__description' }, octavePostFields.launcherDescription ),
-						wp.element.createElement( 'button', { className: 'oa-content-launcher__button', onClick: focusContentFields, type: 'button' }, octavePostFields.launcherButton )
-					)
-				);
-
-			},
-			save: function () {
-
-				return null;
-
-			}
-		} );
-
-		wp.domReady( function () {
-
-			var blockEditor = wp.data.select( 'core/block-editor' );
-			var dispatcher  = wp.data.dispatch( 'core/block-editor' );
-
-			if ( ! blockEditor || ! dispatcher ) {
-
-				return;
-
-			}
-
-			var blocks      = blockEditor.getBlocks();
-			var hasLauncher = blocks.some( function ( block ) {
-
-				return 'octave/structured-content-launcher' === block.name;
-
-			} );
-
-			if ( ! hasLauncher ) {
-
-				dispatcher.resetBlocks( [ wp.blocks.createBlock( 'octave/structured-content-launcher' ) ] );
-
-			}
-
-			document.body.classList.add( 'oa-structured-content-editor' );
+			control.setAttribute( 'form', formId );
 
 		} );
 
@@ -231,8 +136,8 @@ POST FIELDS EDITOR
 
 	/*
 	POSITION STRUCTURED FIELDS
-	-- Places the complete WordPress meta-box form directly after Gutenberg's
-	-- editor canvas without separating the fields from their save container.
+	-- Places only the Octave box directly after Gutenberg's editor canvas and
+	-- associates its controls with the original WordPress meta-box form.
 	---------------------------------------------------------- */
 
 	function positionStructuredFields() {
@@ -252,37 +157,29 @@ POST FIELDS EDITOR
 
 		}
 
-		var metaBoxArea = postbox.closest( '.metabox-location-normal' ) || postbox.parentElement;
-		var editorForm  = editorCanvas.closest( 'form' );
-		var metaBoxForm = postbox.closest( 'form' );
-		var placementTarget;
+		var ownerFormId = postbox.dataset.oaOwnerForm || '';
+		var metaBoxForm = postbox.closest( 'form' ) || ( ownerFormId ? document.getElementById( ownerFormId ) : null );
 
-		if ( ! metaBoxArea || ! metaBoxForm ) {
+		if ( ! metaBoxForm ) {
 
 			return false;
 
 		}
 
-		if ( editorForm === metaBoxForm ) {
+		if ( ! metaBoxForm.id ) {
 
-			placementTarget = metaBoxArea;
-
-		} else if ( ! metaBoxForm.contains( editorCanvas ) ) {
-
-			placementTarget = metaBoxForm;
-
-		} else {
-
-			return false;
+			metaBoxForm.id = 'oa-structured-fields-form';
 
 		}
 
+		postbox.dataset.oaOwnerForm = metaBoxForm.id;
 		postbox.classList.remove( 'closed' );
-		placementTarget.classList.add( 'oa-structured-fields-location' );
+		postbox.classList.add( 'oa-structured-fields-location' );
+		associateControlsWithForm( postbox, metaBoxForm.id );
 
-		if ( editorCanvas.nextElementSibling !== placementTarget ) {
+		if ( editorCanvas.nextElementSibling !== postbox ) {
 
-			editorCanvas.insertAdjacentElement( 'afterend', placementTarget );
+			editorCanvas.insertAdjacentElement( 'afterend', postbox );
 
 		}
 
@@ -342,6 +239,14 @@ POST FIELDS EDITOR
 
 			row.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 			initializeWysiwyg( row );
+
+			var structuredPostbox = row.closest( '#octave-custom-post-fields[data-oa-owner-form]' );
+
+			if ( structuredPostbox ) {
+
+				associateControlsWithForm( row, structuredPostbox.dataset.oaOwnerForm );
+
+			}
 
 			up.addEventListener( 'click', function () {
 
@@ -418,7 +323,6 @@ POST FIELDS EDITOR
 
 	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 	initializeWysiwyg( document );
-	registerStructuredContentLauncher();
 
 	positionStructuredFields();
 
