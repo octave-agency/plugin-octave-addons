@@ -119,116 +119,85 @@ POST FIELDS EDITOR
 	}
 
 	/*
-	PROMOTE STRUCTURED FIELDS
-	-- Replaces the block-writing area with the real Octave meta form while
-	-- preserving Gutenberg's title, toolbar, publishing and sidebar controls.
+	REGISTER STRUCTURED CONTENT LAUNCHER
+	-- Mirrors Breakdance's native block-template approach while keeping the
+	-- real post-meta inputs in WordPress's supported meta-box form below.
 	---------------------------------------------------------- */
 
-	function promoteStructuredFields() {
+	function registerStructuredContentLauncher() {
 
-		if ( ! window.octavePostFields || ! octavePostFields.structuredOnly ) {
-
-			return;
-
-		}
-
-		var postbox = document.getElementById( 'octave-custom-post-fields' );
-		var visualEditor = document.querySelector( '.edit-post-visual-editor, .editor-visual-editor' );
-
-		if ( ! postbox || ! visualEditor ) {
+		if ( ! window.octavePostFields || ! octavePostFields.structuredOnly || ! window.wp || ! wp.blocks || ! wp.element ) {
 
 			return;
 
 		}
 
-		var canvas = visualEditor.querySelector( '.oa-structured-editor-canvas' );
+		if ( wp.blocks.getBlockType( 'octave/structured-content-launcher' ) ) {
 
-		if ( ! canvas ) {
-
-			canvas = document.createElement( 'section' );
-			canvas.className = 'oa-structured-editor-canvas';
-			canvas.setAttribute( 'aria-label', octavePostFields.structuredPanelLabel );
-
-			var contentArea = visualEditor.querySelector( '.edit-post-visual-editor__content-area' );
-			var title = visualEditor.querySelector( '.edit-post-visual-editor__post-title-wrapper' );
-
-			if ( contentArea && contentArea.parentNode === visualEditor ) {
-
-				contentArea.insertAdjacentElement( 'afterend', canvas );
-
-			} else if ( title ) {
-
-				title.insertAdjacentElement( 'afterend', canvas );
-
-			} else {
-
-				visualEditor.appendChild( canvas );
-
-			}
+			return;
 
 		}
 
-		var ownerForm = postbox.closest( 'form' );
+		wp.blocks.registerBlockType( 'octave/structured-content-launcher', {
+			apiVersion: 2,
+			title: 'Octave Content Fields',
+			icon: 'feedback',
+			category: 'common',
+			supports: {
+				customClassName: false,
+				html: false,
+				inserter: false,
+				multiple: false,
+				reusable: false
+			},
+			edit: function ( props ) {
 
-		if ( ownerForm ) {
+				function focusContentFields() {
 
-			if ( ! ownerForm.id ) {
+					var postbox = document.getElementById( 'octave-custom-post-fields' );
 
-				ownerForm.id = 'oa-structured-fields-form';
+					if ( ! postbox ) {
 
-			}
+						return;
 
-			postbox.dataset.oaOwnerForm = ownerForm.id;
+					}
 
-		}
+					postbox.classList.remove( 'closed' );
+					postbox.scrollIntoView( { behavior: 'smooth', block: 'start' } );
 
-		postbox.classList.remove( 'closed' );
+					var firstInput = postbox.querySelector( 'input:not([type="hidden"]), select, textarea' );
 
-		if ( postbox.parentNode !== canvas ) {
+					if ( firstInput ) {
 
-			canvas.appendChild( postbox );
+						window.setTimeout( function () {
 
-		}
+							firstInput.focus( { preventScroll: true } );
 
-		document.body.classList.add( 'oa-structured-content-editor' );
+						}, 450 );
 
-		if ( postbox.dataset.oaOwnerForm ) {
-
-			postbox.querySelectorAll( 'button, fieldset, input, object, output, select, textarea' ).forEach( function ( control ) {
-
-				control.setAttribute( 'form', postbox.dataset.oaOwnerForm );
-
-			} );
-
-		}
-
-		var editorFrame = visualEditor.querySelector( 'iframe[name="editor-canvas"]' );
-
-		if ( editorFrame ) {
-
-			visualEditor.classList.add( 'oa-structured-editor--framed' );
-
-			try {
-
-				var frameDocument = editorFrame.contentDocument;
-
-				if ( frameDocument && frameDocument.head && ! frameDocument.getElementById( 'oa-structured-editor-frame-style' ) ) {
-
-					var frameStyle = frameDocument.createElement( 'style' );
-
-					frameStyle.id = 'oa-structured-editor-frame-style';
-					frameStyle.textContent = '.block-editor-block-list__layout.is-root-container > :not(.edit-post-visual-editor__post-title-wrapper), .block-editor-default-block-appender { display: none !important; }';
-					frameDocument.head.appendChild( frameStyle );
+					}
 
 				}
 
-			} catch ( error ) {
+				return wp.element.createElement(
+					'div',
+					{ className: props.className },
+					wp.element.createElement(
+						'div',
+						{ className: 'oa-content-launcher' },
+						wp.element.createElement( 'p', { className: 'oa-content-launcher__title' }, octavePostFields.launcherTitle ),
+						wp.element.createElement( 'p', { className: 'oa-content-launcher__description' }, octavePostFields.launcherDescription ),
+						wp.element.createElement( 'button', { className: 'oa-content-launcher__button', onClick: focusContentFields, type: 'button' }, octavePostFields.launcherButton )
+					)
+				);
 
-				visualEditor.classList.add( 'oa-structured-editor--frame-unavailable' );
+			},
+			save: function () {
+
+				return null;
 
 			}
-
-		}
+		} );
 
 	}
 
@@ -360,14 +329,6 @@ POST FIELDS EDITOR
 
 	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 	initializeWysiwyg( document );
-	promoteStructuredFields();
-
-	if ( window.octavePostFields && octavePostFields.structuredOnly ) {
-
-		var structuredFieldObserver = new MutationObserver( promoteStructuredFields );
-
-		structuredFieldObserver.observe( document.body, { childList: true, subtree: true } );
-
-	}
+	registerStructuredContentLauncher();
 
 })( jQuery );

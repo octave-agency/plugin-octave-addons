@@ -49,7 +49,47 @@ class Octave_Addons_Custom_Post_Fields {
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ $this, 'save_post' ], 10, 2 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
+		add_action( 'init', [ $this, 'register_structured_content_block' ], 15 );
 		add_action( 'init', [ $this, 'register_breakdance_fields' ], 20 );
+
+	}
+
+	/*
+	REGISTER STRUCTURED CONTENT BLOCK
+	-- Provides the Gutenberg-native launcher used when standard content is off.
+	---------------------------------------------------------- */
+
+	public function register_structured_content_block(): void {
+
+		if ( ! function_exists( 'register_block_type' ) ) {
+
+			return;
+
+		}
+
+		wp_register_style(
+			'octave-post-fields',
+			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/post-fields.css',
+			[],
+			OCTAVE_ADDONS_VERSION
+		);
+		wp_register_script(
+			'octave-post-fields',
+			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/post-fields.js',
+			[ 'jquery', 'wp-blocks', 'wp-data', 'wp-dom-ready', 'wp-element', 'wp-i18n' ],
+			OCTAVE_ADDONS_VERSION,
+			true
+		);
+
+		register_block_type(
+			'octave/structured-content-launcher',
+			[
+				'api_version'     => 2,
+				'editor_script'   => 'octave-post-fields',
+				'editor_style'    => 'octave-post-fields',
+				'render_callback' => '__return_empty_string',
+			]
+		);
 
 	}
 
@@ -816,8 +856,8 @@ class Octave_Addons_Custom_Post_Fields {
 
 		wp_enqueue_editor();
 		wp_enqueue_media();
-		wp_enqueue_style( 'octave-post-fields', OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/post-fields.css', [], OCTAVE_ADDONS_VERSION );
-		wp_enqueue_script( 'octave-post-fields', OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/post-fields.js', [ 'jquery' ], OCTAVE_ADDONS_VERSION, true );
+		wp_enqueue_style( 'octave-post-fields' );
+		wp_enqueue_script( 'octave-post-fields' );
 
 		wp_localize_script(
 			'octave-post-fields',
@@ -829,7 +869,9 @@ class Octave_Addons_Custom_Post_Fields {
 				'replace'              => __( 'Replace', 'octave-addons' ),
 				'itemLabel'            => __( 'Item %d', 'octave-addons' ),
 				'structuredOnly'       => in_array( $screen->post_type, $this->structured_post_types, true ),
-				'structuredPanelLabel' => __( 'Default content fields', 'octave-addons' ),
+				'launcherTitle'        => __( 'This post type uses default fields.', 'octave-addons' ),
+				'launcherDescription'  => __( 'Please populate the Octave content fields below.', 'octave-addons' ),
+				'launcherButton'       => __( 'Go to content fields', 'octave-addons' ),
 			]
 		);
 

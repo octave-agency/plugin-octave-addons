@@ -2479,34 +2479,40 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'archives'              => sprintf( __( '%s archives', 'octave-addons' ), $singular ),
 		];
 
-		register_post_type(
-			$key,
-			[
-				'labels'              => $labels,
-				'public'              => $is_public,
-				'hierarchical'        => false,
-				'exclude_from_search' => ! $is_public,
-				'publicly_queryable'  => $is_public,
-				'show_ui'             => true,
-				'show_in_menu'        => true,
-				'show_in_admin_bar'   => true,
-				'show_in_nav_menus'   => $is_public,
-				'show_in_rest'        => true,
-				'menu_position'       => $menu_position,
-				'menu_icon'           => $post_type['menu_icon'],
-				'capability_type'     => 'post',
-				'map_meta_cap'        => true,
-				'query_var'           => $is_public,
-				'rewrite'             => $is_public
-					? [
-						'slug'       => $post_slug,
-						'with_front' => false,
-					]
-					: false,
-				'has_archive'         => $is_public && ! empty( $post_type['has_archive'] ) ? $archive_slug : false,
-				'supports'            => $supports,
-			]
-		);
+		$registration_args = [
+			'labels'              => $labels,
+			'public'              => $is_public,
+			'hierarchical'        => false,
+			'exclude_from_search' => ! $is_public,
+			'publicly_queryable'  => $is_public,
+			'show_ui'             => true,
+			'show_in_menu'        => true,
+			'show_in_admin_bar'   => true,
+			'show_in_nav_menus'   => $is_public,
+			'show_in_rest'        => true,
+			'menu_position'       => $menu_position,
+			'menu_icon'           => $post_type['menu_icon'],
+			'capability_type'     => 'post',
+			'map_meta_cap'        => true,
+			'query_var'           => $is_public,
+			'rewrite'             => $is_public
+				? [
+					'slug'       => $post_slug,
+					'with_front' => false,
+				]
+				: false,
+			'has_archive'         => $is_public && ! empty( $post_type['has_archive'] ) ? $archive_slug : false,
+			'supports'            => $supports,
+		];
+
+		if ( empty( $post_type['content_editor'] ) ) {
+
+			$registration_args['template']      = [ [ 'octave/structured-content-launcher' ] ];
+			$registration_args['template_lock'] = 'all';
+
+		}
+
+		register_post_type( $key, $registration_args );
 
 	}
 

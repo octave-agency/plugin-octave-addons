@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.16.1
+Stable tag:        2.17.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.17.0 =
+* Replaced the structured-content canvas workaround with a native Gutenberg launcher block modelled on Breakdance's implementation.
+* Kept Octave content inputs in the supported meta-box form and added a launcher action that takes editors directly to them.
 
 = 2.16.1 =
 * Listed configured content fields directly in Breakdance's Octave Dynamic Data category.
