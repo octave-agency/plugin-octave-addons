@@ -1,72 +1,81 @@
 /*
 STRUCTURED CONTENT EDITOR
--- Styles the block-canvas notice and field form shown when a post type has
--- the standard content editor switched off.
+-- Styles the field canvas shown when a post type has the standard content
+-- editor switched off. The canvas sits inside the normal .wp-block content
+-- column so it lines up with the post title above it.
 -- Loaded through enqueue_block_assets so WordPress can serve it to both the
 -- editor page and the editor iframe. No rule here may target
 -- .editor-styles-wrapper or .block-editor-block-list__layout, because
 -- Gutenberg then copies the sheet into the iframe a second time and warns.
+-- Themes style the canvas too, so text rules carry !important where a theme
+-- would otherwise win.
 ---------------------------------------------------------- */
 
-.wp-block-octave-block-octave-launcher {
-    max-width: none;
-}
-
 .oa-structured-content {
-    --oa-field-accent: #16834c;
-    --oa-field-border: #dcdcde;
-    overflow: hidden;
-    color: #1e1e1e;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background: #fff;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --oa-accent: #00d084;
+    --oa-accent-ink: #0a7a4a;
+    --oa-accent-soft: rgba(0, 208, 132, 0.12);
+    --oa-line: #e0e0e0;
+    --oa-line-soft: #f0f0f1;
+    --oa-ink: #1e1e1e;
+    --oa-ink-muted: #757575;
+    --oa-error: #cc1818;
+    --oa-error-soft: rgba(204, 24, 24, 0.08);
+    color: var(--oa-ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 13px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
 }
 
 /*
-Notice
+Header
+-- One line only: what the canvas is on the left, its state on the right. The
+-- rule beneath carries a short brand-green segment in place of an icon.
 ---------------------------------------------------------- */
 
-.oa-structured-content__notice {
+.oa-structured-content__header {
     display: flex;
     align-items: center;
-    flex-direction: column;
-    gap: 10px;
-    padding: 44px 32px;
-    border-bottom: 1px solid #e0e0e0;
-    background: #fff;
-}
-
-.oa-structured-content__icon {
-    display: block;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--oa-field-accent);
-    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 5H5v14h14v-4h-2v2H7V7h2V5zm12-2h-8v2h4.6l-7.3 7.3 1.4 1.4L19 6.4V11h2V3z"/></svg>') center / 24px 24px no-repeat;
-    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 5H5v14h14v-4h-2v2H7V7h2V5zm12-2h-8v2h4.6l-7.3 7.3 1.4 1.4L19 6.4V11h2V3z"/></svg>') center / 24px 24px no-repeat;
-}
-
-.oa-structured-content__title,
-.oa-structured-content__description {
-    margin: 0 !important;
-    max-width: 46em;
-    text-align: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    background: linear-gradient(90deg, var(--oa-accent) 0 40px, var(--oa-line) 40px) 0 100% / 100% 2px no-repeat;
 }
 
 .oa-structured-content__title {
-    color: #1e1e1e;
-    font-size: 17px !important;
+    margin: 0 !important;
+    color: var(--oa-ink);
+    font-size: 15px !important;
     font-weight: 600;
     line-height: 1.4;
 }
 
-.oa-structured-content__description {
-    color: #50575e;
-    font-size: 13px !important;
-    line-height: 1.6;
+.oa-structured-content__status {
+    flex-shrink: 0;
+    color: var(--oa-ink-muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.oa-structured-content__status--invalid {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 10px;
+    color: var(--oa-error);
+    border-radius: 999px;
+    background: var(--oa-error-soft);
+    font-weight: 600;
+}
+
+.oa-structured-content__status--invalid::before {
+    content: "";
+    display: block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
 }
 
 /*
@@ -81,21 +90,23 @@ Editor chrome
 
 /*
 Field grid
+-- auto-fit pairs fields up whenever the content column has room for two, so
+-- the layout follows the theme's content width instead of a fixed breakpoint.
 ---------------------------------------------------------- */
 
 .oa-fields {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 22px;
-    padding: 26px;
-    background: #f6f7f7;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 26px 20px;
+    padding-top: 24px;
 }
 
 .oa-fields__empty {
-    margin: 0;
-    padding: 32px;
-    color: #646970;
-    background: #f6f7f7;
+    margin: 24px 0 0 !important;
+    padding: 28px;
+    color: var(--oa-ink-muted);
+    border: 1px dashed #c3c4c7;
+    border-radius: 4px;
     text-align: center;
 }
 
@@ -113,33 +124,40 @@ Field grid
 
 .oa-field__label {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 8px;
-    margin-bottom: 6px;
-    color: #1e1e1e;
-    font-size: 12px;
+    margin-bottom: 8px;
+    color: var(--oa-ink);
+    font-size: 11px !important;
     font-weight: 600;
     line-height: 1.4;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.05em;
 }
 
 .oa-field__required {
-    padding: 2px 6px;
-    color: var(--oa-field-accent);
-    border-radius: 3px;
-    background: rgba(22, 131, 76, 0.1);
+    color: var(--oa-ink-muted);
     font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-weight: 500;
     letter-spacing: 0.04em;
+}
+
+.oa-field.is-invalid .oa-field__required {
+    color: var(--oa-error);
 }
 
 .oa-field__description {
     margin: 6px 0 0 !important;
-    color: #646970;
+    color: var(--oa-ink-muted);
     font-size: 12px !important;
     font-style: normal;
+    line-height: 1.5;
+}
+
+.oa-field__error {
+    margin-top: 6px;
+    color: var(--oa-error);
+    font-size: 12px !important;
     line-height: 1.5;
 }
 
@@ -164,19 +182,23 @@ Field grid
     background: #fff;
 }
 
+.oa-field input:focus,
+.oa-field select:focus,
+.oa-field textarea:focus,
+.oa-rich-text:focus {
+    border-color: var(--oa-accent-ink);
+    box-shadow: 0 0 0 1px var(--oa-accent-ink);
+    outline: 2px solid transparent;
+}
+
 .oa-rich-text {
     min-height: 120px;
     padding: 10px 12px;
     border: 1px solid #949494;
     border-radius: 2px;
     background: #fff;
+    font-size: 13px;
     line-height: 1.6;
-}
-
-.oa-rich-text:focus {
-    border-color: var(--oa-field-accent);
-    box-shadow: 0 0 0 1px var(--oa-field-accent);
-    outline: none;
 }
 
 .oa-checkbox-group {
@@ -184,9 +206,34 @@ Field grid
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 8px 16px;
     padding: 12px 14px;
-    border: 1px solid var(--oa-field-border);
+    border: 1px solid var(--oa-line);
     border-radius: 4px;
     background: #fff;
+}
+
+/*
+Invalid state
+-- Only fields the editor has met are marked, so a brand new post is not red
+-- before anyone has typed. The header count covers the rest.
+---------------------------------------------------------- */
+
+.oa-field.is-invalid input:not([type="checkbox"]):not([type="radio"]),
+.oa-field.is-invalid select,
+.oa-field.is-invalid textarea,
+.oa-field.is-invalid .oa-rich-text,
+.oa-field.is-invalid .oa-checkbox-group,
+.oa-field.is-invalid .oa-media,
+.oa-field.is-invalid .oa-row-fields,
+.oa-field.is-invalid .oa-repeater__empty {
+    border-color: var(--oa-error);
+}
+
+.oa-field.is-invalid input:focus,
+.oa-field.is-invalid select:focus,
+.oa-field.is-invalid textarea:focus,
+.oa-field.is-invalid .oa-rich-text:focus {
+    border-color: var(--oa-error);
+    box-shadow: 0 0 0 1px var(--oa-error);
 }
 
 /*
@@ -198,7 +245,7 @@ Media
     align-items: center;
     gap: 12px;
     padding: 10px;
-    border: 1px solid var(--oa-field-border);
+    border: 1px solid var(--oa-line);
     border-radius: 4px;
     background: #fff;
 }
@@ -209,7 +256,7 @@ Media
     width: 56px;
     height: 56px;
     border-radius: 3px;
-    background: #f0f0f1;
+    background: var(--oa-line-soft);
     object-fit: cover;
 }
 
@@ -224,7 +271,7 @@ Media
 .oa-media__name {
     overflow: hidden;
     max-width: 100%;
-    color: #646970;
+    color: var(--oa-ink-muted);
     font-size: 12px;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -242,10 +289,10 @@ Groups and repeaters
 
 .oa-row-fields {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px 18px;
     padding: 18px;
-    border: 1px solid var(--oa-field-border);
+    border: 1px solid var(--oa-line);
     border-radius: 4px;
     background: #fff;
 }
@@ -253,12 +300,12 @@ Groups and repeaters
 .oa-repeater {
     display: grid;
     gap: 12px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .oa-repeater__row {
     overflow: hidden;
-    border: 1px solid var(--oa-field-border);
+    border: 1px solid var(--oa-line);
     border-radius: 4px;
     background: #fff;
 }
@@ -268,9 +315,15 @@ Groups and repeaters
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 8px 8px 8px 14px;
-    border-bottom: 1px solid var(--oa-field-border);
+    padding: 6px 8px 6px 14px;
+    border-bottom: 1px solid var(--oa-line);
     background: #fbfbfc;
+}
+
+.oa-repeater__number {
+    color: var(--oa-ink);
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .oa-repeater__actions {
@@ -285,9 +338,9 @@ Groups and repeaters
 }
 
 .oa-repeater__empty {
-    margin: 0 0 10px !important;
+    margin: 0 0 12px !important;
     padding: 18px;
-    color: #646970;
+    color: var(--oa-ink-muted);
     border: 1px dashed #c3c4c7;
     border-radius: 4px;
     background: #fff;
@@ -299,27 +352,12 @@ Groups and repeaters
 Narrow screens
 ---------------------------------------------------------- */
 
-@media (max-width: 782px) {
+@media (max-width: 600px) {
 
-    .oa-structured-content__notice {
-        padding: 32px 20px;
-    }
-
-    .oa-fields,
-    .oa-row-fields {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .oa-fields {
-        padding: 20px;
-    }
-
-    .oa-field--textarea,
-    .oa-field--wysiwyg,
-    .oa-field--group,
-    .oa-field--repeater,
-    .oa-field--multiselect {
-        grid-column: auto;
+    .oa-structured-content__header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
     }
 
 }

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.21.0
+Stable tag:        2.22.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,13 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.22.0 =
+* Redesigned the field-only CPT canvas: the fields now sit in the normal editor content column beside the post title, behind a single header line instead of the icon and two-sentence notice.
+* Applied Octave's brand green to the canvas accents, focus rings, and header rule.
+* Marked required canvas controls with the native required attribute and flagged empty ones inline.
+* Held post saving shut while a required field is empty, naming the outstanding fields in an editor notice.
+* Rejected REST saves that would publish a field-only post with required fields empty, returning the same explanation.
 
 = 2.21.0 =
 * Rebuilt the field-only CPT canvas: Gutenberg now shows a "custom content is disabled" notice with every assigned Content Field beneath it, in the content area.

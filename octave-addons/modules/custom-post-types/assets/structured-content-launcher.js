@@ -1,9 +1,11 @@
 /*
 STRUCTURED CONTENT EDITOR
--- Replaces the block canvas with a notice and the post type's Octave fields
--- whenever the standard content editor is switched off for that post type.
+-- Replaces the block canvas with the post type's Octave fields whenever the
+-- standard content editor is switched off for that post type.
 -- Values bind straight to registered post meta, so Gutenberg's own save,
 -- autosave, and revision handling apply without any custom save routine.
+-- Required fields lock post saving and raise an editor notice naming them,
+-- which the REST validation in class-post-fields.php backs up on the server.
 ---------------------------------------------------------- */
 
 ( function () {
@@ -31,6 +33,8 @@ STRUCTURED CONTENT EDITOR
 	var settings      = window.octaveStructuredContent;
 	var strings       = settings.strings || {};
 	var blockName     = 'octave/block-octave-launcher';
+	var lockKey       = 'octave-structured-content';
+	var noticeId      = 'octave-structured-content-required';
 	var createElement = wp.element.createElement;
 	var Fragment      = wp.element.Fragment;
 	var components    = wp.components;
@@ -89,23 +93,139 @@ STRUCTURED CONTENT EDITOR
 	}
 
 	/*
+	ROW VALUE
+	-- Falls back to the child default only while the row has no entry for it at
+	-- all, so a deliberately cleared value never reverts on the next render and
+	-- validation judges exactly what the editor can see.
+	---------------------------------------------------------- */
+
+	function rowValue( row, subField ) {
+
+		var values = row && 'object' === typeof row && ! Array.isArray( row ) ? row : {};
+
+		return Object.prototype.hasOwnProperty.call( values, subField.name )
+			? values[ subField.name ]
+			: subField.default_value;
+
+	}
+
+	/*
+	IS EMPTY VALUE
+	-- Mirrors the PHP emptiness rules so the canvas and the server never
+	-- disagree about which required fields are still outstanding.
+	---------------------------------------------------------- */
+
+	function isEmptyValue( field, value ) {
+
+		if ( 'group' === field.type ) {
+
+			return isRowEmpty( field.sub_fields, value );
+
+		}
+
+		if ( 'repeater' === field.type || 'multiselect' === field.type ) {
+
+			return ! ( Array.isArray( value ) && value.length );
+
+		}
+
+		if ( 'checkbox' === field.type ) {
+
+			return '1' !== String( value );
+
+		}
+
+		if ( 'image' === field.type || 'file' === field.type ) {
+
+			return ! parseInt( value, 10 );
+
+		}
+
+		return '' === String( null === value || undefined === value ? '' : value ).trim();
+
+	}
+
+	/*
+	IS ROW EMPTY
+	-- Treats a group or repeater row as empty only when every child is empty.
+	---------------------------------------------------------- */
+
+	function isRowEmpty( subFields, row ) {
+
+		return ! ( subFields || [] ).some( function ( subField ) {
+
+			return ! isEmptyValue( subField, rowValue( row, subField ) );
+
+		} );
+
+	}
+
+	/*
+	MISSING LABELS
+	-- Names every unfilled required field. A container reports itself only while
+	-- it is completely empty; once it holds content its own required children
+	-- are reported instead, which matches how PHP discards empty rows on save.
+	---------------------------------------------------------- */
+
+	function missingLabels( field, value, prefix ) {
+
+		var label = ( prefix || '' ) + field.label;
+
+		if ( 'group' !== field.type && 'repeater' !== field.type ) {
+
+			return field.required && isEmptyValue( field, value ) ? [ label ] : [];
+
+		}
+
+		var isGroup = 'group' === field.type;
+		var rows    = isGroup ? [ value ] : ( Array.isArray( value ) ? value : [] );
+		var missing = [];
+
+		if ( isGroup ? isRowEmpty( field.sub_fields, value ) : ! rows.length ) {
+
+			return field.required ? [ label ] : [];
+
+		}
+
+		rows.forEach( function ( row, index ) {
+
+			var rowPrefix = isGroup
+				? label + ' › '
+				: label + ' – ' + strings.item.replace( '%d', index + 1 ) + ' › ';
+
+			( field.sub_fields || [] ).forEach( function ( subField ) {
+
+				missing = missing.concat( missingLabels( subField, rowValue( row, subField ), rowPrefix ) );
+
+			} );
+
+		} );
+
+		return missing;
+
+	}
+
+	/*
 	FIELD WRAPPER
-	-- Gives every control the same label, required marker, and help text.
+	-- Gives every control the same label, required marker, error, and help text.
 	---------------------------------------------------------- */
 
 	function FieldWrapper( props ) {
 
+		var field = props.field;
+
 		return createElement(
 			'div',
-			{ className: 'oa-field oa-field--' + props.field.type },
+			{ className: 'oa-field oa-field--' + field.type + ( props.invalid ? ' is-invalid' : '' ) },
 			createElement(
 				'div',
 				{ className: 'oa-field__label' },
-				createElement( 'span', null, props.field.label ),
-				props.field.required ? createElement( 'span', { className: 'oa-field__required' }, strings.required ) : null
+				createElement( 'span', { className: 'oa-field__name' }, field.label ),
+				field.required ? createElement( 'span', { className: 'oa-field__required' }, strings.required ) : null
 			),
 			createElement( 'div', { className: 'oa-field__control' }, props.children ),
-			props.field.description ? createElement( 'p', { className: 'oa-field__description' }, props.field.description ) : null
+			props.invalid ? createElement( 'div', { className: 'oa-field__error' }, strings.fieldRequired ) : null,
+			field.description ? createElement( 'div', { className: 'oa-field__description' }, field.description ) : null
 		);
 
 	}
@@ -221,9 +341,7 @@ STRUCTURED CONTENT EDITOR
 
 	/*
 	ROW FIELDS
-	-- Renders the child controls of a group or one repeater row. A child only
-	-- falls back to its default while the row has no entry for it at all, so a
-	-- deliberately cleared value never reverts on the next render.
+	-- Renders the child controls of a group or one repeater row.
 	---------------------------------------------------------- */
 
 	function RowFields( props ) {
@@ -232,14 +350,11 @@ STRUCTURED CONTENT EDITOR
 
 		return createElement( 'div', { className: 'oa-row-fields' }, ( props.subFields || [] ).map( function ( subField ) {
 
-			var value = Object.prototype.hasOwnProperty.call( row, subField.name )
-				? row[ subField.name ]
-				: subField.default_value;
-
 			return createElement( FieldControl, {
 				field: subField,
 				key: subField.name,
-				value: value,
+				showErrors: props.showErrors,
+				value: rowValue( row, subField ),
 				onChange: function ( nextValue ) {
 
 					var nextRow = Object.assign( {}, row );
@@ -303,7 +418,7 @@ STRUCTURED CONTENT EDITOR
 						createElement(
 							'div',
 							{ className: 'oa-repeater__head' },
-							createElement( 'strong', null, strings.item.replace( '%d', index + 1 ) ),
+							createElement( 'span', { className: 'oa-repeater__number' }, strings.item.replace( '%d', index + 1 ) ),
 							createElement(
 								'div',
 								{ className: 'oa-repeater__actions' },
@@ -352,13 +467,14 @@ STRUCTURED CONTENT EDITOR
 								replaceRow( index, nextRow );
 
 							},
+							showErrors: props.showErrors,
 							subFields: props.field.sub_fields,
 							value: row
 						} )
 					);
 
 				} ) )
-				: createElement( 'p', { className: 'oa-repeater__empty' }, strings.noItems ),
+				: createElement( 'div', { className: 'oa-repeater__empty' }, strings.noItems ),
 			createElement( components.Button, {
 				icon: 'plus-alt2',
 				variant: 'secondary',
@@ -374,20 +490,26 @@ STRUCTURED CONTENT EDITOR
 
 	/*
 	FIELD CONTROL
-	-- Maps every Octave field type to an editor-native Gutenberg control.
+	-- Maps every Octave field type to an editor-native Gutenberg control and
+	-- marks the native input required so browsers and assistive tech agree with
+	-- the save lock.
 	---------------------------------------------------------- */
 
 	function FieldControl( props ) {
 
-		var field   = props.field;
-		var value   = props.value;
-		var choices = parseChoices( field.choices );
+		var field    = props.field;
+		var value    = props.value;
+		var choices  = parseChoices( field.choices );
+		var isEmpty  = isEmptyValue( field, value );
+		var invalid  = !! field.required && isEmpty && !! props.showErrors;
+		var required = !! field.required;
 		var control;
 
 		if ( 'group' === field.type ) {
 
 			control = createElement( RowFields, {
 				onChange: props.onChange,
+				showErrors: props.showErrors && ! isEmpty,
 				subFields: field.sub_fields,
 				value: value
 			} );
@@ -399,6 +521,8 @@ STRUCTURED CONTENT EDITOR
 		} else if ( 'wysiwyg' === field.type ) {
 
 			control = createElement( wp.blockEditor.RichText, {
+				'aria-invalid': invalid ? 'true' : undefined,
+				'aria-required': required ? 'true' : undefined,
 				className: 'oa-rich-text',
 				onChange: props.onChange,
 				tagName: 'div',
@@ -409,7 +533,9 @@ STRUCTURED CONTENT EDITOR
 
 			control = createElement( components.TextareaControl, {
 				__nextHasNoMarginBottom: true,
+				'aria-invalid': invalid ? 'true' : undefined,
 				onChange: props.onChange,
+				required: required,
 				rows: 4,
 				value: String( value || '' )
 			} );
@@ -418,8 +544,10 @@ STRUCTURED CONTENT EDITOR
 
 			control = createElement( components.SelectControl, {
 				__nextHasNoMarginBottom: true,
+				'aria-invalid': invalid ? 'true' : undefined,
 				onChange: props.onChange,
 				options: [ { label: strings.selectOption, value: '' } ].concat( choices ),
+				required: required,
 				value: String( value || '' )
 			} );
 
@@ -472,7 +600,9 @@ STRUCTURED CONTENT EDITOR
 
 			control = createElement( components.TextControl, {
 				__nextHasNoMarginBottom: true,
+				'aria-invalid': invalid ? 'true' : undefined,
 				onChange: props.onChange,
+				required: required,
 				step: 'number' === field.type ? 'any' : undefined,
 				type: 'datetime' === field.type ? 'datetime-local' : field.type,
 				value: String( value || '' )
@@ -480,19 +610,63 @@ STRUCTURED CONTENT EDITOR
 
 		}
 
-		return createElement( FieldWrapper, { field: field }, control );
+		return createElement( FieldWrapper, { field: field, invalid: invalid }, control );
 
 	}
 
 	/*
-	SCHEMA EDITOR
+	SAVE LOCK
+	-- Holds the post shut while a required field is outstanding and explains the
+	-- hold in the editor notice area, because a disabled Update button on its own
+	-- tells the editor nothing. Clearing the fault releases both.
+	---------------------------------------------------------- */
+
+	function useSaveLock( message ) {
+
+		wp.element.useEffect( function () {
+
+			var editor  = wp.data.dispatch( 'core/editor' );
+			var notices = wp.data.dispatch( 'core/notices' );
+
+			if ( ! message ) {
+
+				editor.unlockPostSaving( lockKey );
+				notices.removeNotice( noticeId );
+
+				return;
+
+			}
+
+			editor.lockPostSaving( lockKey );
+			notices.createNotice( 'error', message, {
+				id: noticeId,
+				isDismissible: false
+			} );
+
+		}, [ message ] );
+
+		wp.element.useEffect( function () {
+
+			return function () {
+
+				wp.data.dispatch( 'core/editor' ).unlockPostSaving( lockKey );
+				wp.data.dispatch( 'core/notices' ).removeNotice( noticeId );
+
+			};
+
+		}, [] );
+
+	}
+
+	/*
+	STRUCTURED CONTENT
 	-- Binds the visible controls directly to registered Gutenberg post meta.
 	-- REST reports unset meta as an empty value, so the field default is shown
 	-- only while PHP reported no stored row and the editor has not touched it.
 	-- That keeps a deliberately cleared value from reverting to its default.
 	---------------------------------------------------------- */
 
-	function SchemaEditor() {
+	function StructuredContent() {
 
 		var fields     = settings.fields || [];
 		var storedKeys = settings.storedKeys || {};
@@ -502,44 +676,79 @@ STRUCTURED CONTENT EDITOR
 		var touchState = wp.element.useState( {} );
 		var touched    = touchState[0];
 		var setTouched = touchState[1];
+		var isNewPost  = wp.data.useSelect( function ( select ) {
 
-		if ( ! fields.length ) {
+			return 'auto-draft' === select( 'core/editor' ).getEditedPostAttribute( 'status' );
 
-			return createElement( 'p', { className: 'oa-fields__empty' }, strings.emptyFields );
+		}, [] );
 
-		}
-
-		return createElement( 'div', { className: 'oa-fields' }, fields.map( function ( field ) {
+		var missing = [];
+		var entries = fields.map( function ( field ) {
 
 			var isStored = touched[ field.meta_key ] || Object.prototype.hasOwnProperty.call( storedKeys, field.meta_key );
 			var value    = isStored ? meta[ field.meta_key ] : field.default_value;
 
-			return createElement( FieldControl, {
-				field: field,
-				key: field.meta_key,
-				onChange: function ( nextValue ) {
+			missing = missing.concat( missingLabels( field, value, '' ) );
 
-					var nextMeta = {};
+			return { field: field, value: value };
 
-					nextMeta[ field.meta_key ] = nextValue;
+		} );
 
-					setTouched( function ( current ) {
+		useSaveLock( missing.length ? strings.requiredNotice.replace( '%s', missing.join( ', ' ) ) : '' );
 
-						var next = Object.assign( {}, current );
+		function onFieldChange( field, nextValue ) {
 
-						next[ field.meta_key ] = true;
+			var nextMeta = {};
 
-						return next;
+			nextMeta[ field.meta_key ] = nextValue;
 
-					} );
+			setTouched( function ( current ) {
 
-					setMeta( Object.assign( {}, meta, nextMeta ) );
+				var next = Object.assign( {}, current );
 
-				},
-				value: value
+				next[ field.meta_key ] = true;
+
+				return next;
+
 			} );
 
-		} ) );
+			setMeta( Object.assign( {}, meta, nextMeta ) );
+
+		}
+
+		return createElement(
+			Fragment,
+			null,
+			createElement(
+				'div',
+				{ className: 'oa-structured-content__header' },
+				createElement( 'div', { className: 'oa-structured-content__title' }, strings.title ),
+				missing.length
+					? createElement(
+						'div',
+						{ className: 'oa-structured-content__status oa-structured-content__status--invalid' },
+						1 === missing.length ? strings.requiredSingle : strings.requiredPlural.replace( '%d', missing.length )
+					)
+					: createElement( 'div', { className: 'oa-structured-content__status' }, strings.blocksOff )
+			),
+			fields.length
+				? createElement( 'div', { className: 'oa-fields' }, entries.map( function ( entry ) {
+
+					return createElement( FieldControl, {
+						field: entry.field,
+						key: entry.field.meta_key,
+						showErrors: ! isNewPost || !! touched[ entry.field.meta_key ],
+						value: entry.value,
+						onChange: function ( nextValue ) {
+
+							onFieldChange( entry.field, nextValue );
+
+						}
+					} );
+
+				} ) )
+				: createElement( 'div', { className: 'oa-fields__empty' }, strings.emptyFields )
+		);
 
 	}
 
@@ -603,7 +812,7 @@ STRUCTURED CONTENT EDITOR
 
 	/*
 	REGISTER BLOCK
-	-- Declares the canvas block that carries the notice and the field form.
+	-- Declares the canvas block that carries the field form.
 	---------------------------------------------------------- */
 
 	wp.blocks.registerBlockType( blockName, {
@@ -630,14 +839,7 @@ STRUCTURED CONTENT EDITOR
 			return createElement(
 				'div',
 				wp.blockEditor.useBlockProps( { className: 'oa-structured-content' } ),
-				createElement(
-					'div',
-					{ className: 'oa-structured-content__notice' },
-					createElement( 'span', { className: 'oa-structured-content__icon', 'aria-hidden': 'true' } ),
-					createElement( 'p', { className: 'oa-structured-content__title' }, strings.title ),
-					createElement( 'p', { className: 'oa-structured-content__description' }, strings.description )
-				),
-				createElement( SchemaEditor )
+				createElement( StructuredContent )
 			);
 
 		},

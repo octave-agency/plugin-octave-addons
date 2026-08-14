@@ -47,6 +47,16 @@ class Octave_Addons_Custom_Post_Fields {
 		foreach ( $this->structured_post_types as $post_type ) {
 
 			add_action( 'rest_after_insert_' . $post_type, [ $this, 'clean_structured_meta' ], 10, 3 );
+			add_filter(
+				'rest_pre_insert_' . $post_type,
+				function ( $prepared, $request ) use ( $post_type ) {
+
+					return $this->validate_required_meta( $prepared, $request, $post_type );
+
+				},
+				10,
+				2
+			);
 
 		}
 
@@ -227,25 +237,31 @@ class Octave_Addons_Custom_Post_Fields {
 				'fields'     => $fields,
 				'storedKeys' => (object) $stored_keys,
 				'strings'    => [
-					'blockTitle'   => __( 'Octave Content Fields', 'octave-addons' ),
-					'title'        => __( 'Custom content is disabled for this post type.', 'octave-addons' ),
+					'blockTitle'      => __( 'Octave Content Fields', 'octave-addons' ),
 					/* translators: %s: singular post type name. */
-					'description'  => sprintf( __( 'This %s is built from Octave content fields instead of blocks. Update the fields below and save as normal.', 'octave-addons' ), strtolower( $singular ) ),
-					'emptyFields'  => __( 'No content fields are assigned to this post type yet. Add fields in Octave Addons, then return here to populate them.', 'octave-addons' ),
-					'required'     => __( 'Required', 'octave-addons' ),
-					'selectOption' => __( 'Select an option', 'octave-addons' ),
-					'yes'          => __( 'Yes', 'octave-addons' ),
+					'title'           => sprintf( __( '%s content', 'octave-addons' ), $singular ),
+					'blocksOff'       => __( 'Block editor off', 'octave-addons' ),
+					'emptyFields'     => __( 'No content fields are assigned to this post type yet. Add fields in Octave Addons, then return here to populate them.', 'octave-addons' ),
+					'required'        => __( 'Required', 'octave-addons' ),
+					'fieldRequired'   => __( 'This field is required.', 'octave-addons' ),
+					/* translators: %s: comma separated list of field names. */
+					'requiredNotice'  => __( 'Saving is paused until these required fields are filled in: %s', 'octave-addons' ),
+					'requiredSingle'  => __( '1 required field', 'octave-addons' ),
+					/* translators: %d: number of unfilled required fields. */
+					'requiredPlural'  => __( '%d required fields', 'octave-addons' ),
+					'selectOption'    => __( 'Select an option', 'octave-addons' ),
+					'yes'             => __( 'Yes', 'octave-addons' ),
 					/* translators: %d: item number. */
-					'item'         => __( 'Item %d', 'octave-addons' ),
-					'noItems'      => __( 'No items yet. Use “Add item” to begin.', 'octave-addons' ),
-					'addItem'      => __( 'Add item', 'octave-addons' ),
-					'removeItem'   => __( 'Remove item', 'octave-addons' ),
-					'moveUp'       => __( 'Move item up', 'octave-addons' ),
-					'moveDown'     => __( 'Move item down', 'octave-addons' ),
-					'noMedia'      => __( 'Nothing selected', 'octave-addons' ),
-					'chooseMedia'  => __( 'Choose', 'octave-addons' ),
-					'replaceMedia' => __( 'Replace', 'octave-addons' ),
-					'removeMedia'  => __( 'Remove', 'octave-addons' ),
+					'item'            => __( 'Item %d', 'octave-addons' ),
+					'noItems'         => __( 'No items yet. Use “Add item” to begin.', 'octave-addons' ),
+					'addItem'         => __( 'Add item', 'octave-addons' ),
+					'removeItem'      => __( 'Remove item', 'octave-addons' ),
+					'moveUp'          => __( 'Move item up', 'octave-addons' ),
+					'moveDown'        => __( 'Move item down', 'octave-addons' ),
+					'noMedia'         => __( 'Nothing selected', 'octave-addons' ),
+					'chooseMedia'     => __( 'Choose', 'octave-addons' ),
+					'replaceMedia'    => __( 'Replace', 'octave-addons' ),
+					'removeMedia'     => __( 'Remove', 'octave-addons' ),
 				],
 			]
 		);
@@ -349,6 +365,130 @@ class Octave_Addons_Custom_Post_Fields {
 			);
 
 		}
+
+	}
+
+	/*
+	VALIDATE REQUIRED META
+	-- Refuses a REST save that would leave a required field empty, so the block
+	-- editor's save lock is backed by the server rather than trusted on its own.
+	-- Only saves that place the post in a visible status are checked, which lets
+	-- an editor keep a half-finished draft while still blocking publication.
+	---------------------------------------------------------- */
+
+	public function validate_required_meta( $prepared, WP_REST_Request $request, string $post_type ) {
+
+		if ( is_wp_error( $prepared ) || ! is_object( $prepared ) ) {
+
+			return $prepared;
+
+		}
+
+		$post_id = (int) ( $prepared->ID ?? 0 );
+		$status  = (string) ( $prepared->post_status ?? '' );
+
+		if ( '' === $status && $post_id ) {
+
+			$status = (string) get_post_status( $post_id );
+
+		}
+
+		if ( ! in_array( $status, [ 'publish', 'future', 'private', 'pending' ], true ) ) {
+
+			return $prepared;
+
+		}
+
+		$submitted = $request->get_param( 'meta' );
+		$submitted = is_array( $submitted ) ? $submitted : [];
+		$missing   = [];
+
+		foreach ( $this->fields_for_post_type( $post_type ) as $field ) {
+
+			if ( array_key_exists( $field['meta_key'], $submitted ) ) {
+
+				$value = $this->sanitize_value( $submitted[ $field['meta_key'] ], $field );
+
+			} elseif ( $post_id && metadata_exists( 'post', $post_id, $field['meta_key'] ) ) {
+
+				$value = get_post_meta( $post_id, $field['meta_key'], true );
+
+			} else {
+
+				$value = $this->sanitize_value( $field['default_value'] ?? '', $field );
+
+			}
+
+			$missing = array_merge( $missing, $this->missing_required_labels( $field, $value ) );
+
+		}
+
+		if ( empty( $missing ) ) {
+
+			return $prepared;
+
+		}
+
+		return new WP_Error(
+			'octave_addons_required_fields',
+			sprintf(
+				/* translators: %s: comma separated list of field names. */
+				__( 'This content cannot be saved yet. Fill in these required fields first: %s', 'octave-addons' ),
+				implode( ', ', $missing )
+			),
+			[ 'status' => 400 ]
+		);
+
+	}
+
+	/*
+	MISSING REQUIRED LABELS
+	-- Names every unfilled required field, including children of a group or
+	-- repeater. A container reports itself only while it is completely empty,
+	-- because save discards empty rows before they ever reach storage.
+	---------------------------------------------------------- */
+
+	protected function missing_required_labels( array $field, $value, string $prefix = '' ): array {
+
+		$label = $prefix . $field['label'];
+		$type  = $field['type'] ?? 'text';
+
+		if ( ! in_array( $type, [ 'group', 'repeater' ], true ) ) {
+
+			return ! empty( $field['required'] ) && $this->is_field_value_empty( $value, $field ) ? [ $label ] : [];
+
+		}
+
+		$sub_fields = $field['sub_fields'] ?? [];
+		$rows       = 'group' === $type
+			? [ is_array( $value ) ? $value : [] ]
+			: array_values( array_filter( is_array( $value ) ? $value : [], 'is_array' ) );
+
+		if ( $this->is_field_value_empty( $value, $field ) ) {
+
+			return ! empty( $field['required'] ) ? [ $label ] : [];
+
+		}
+
+		$missing = [];
+
+		foreach ( $rows as $index => $row ) {
+
+			$row_prefix = 'group' === $type
+				? $label . ' › '
+				/* translators: 1: field label, 2: row number. */
+				: sprintf( __( '%1$s – Item %2$d › ', 'octave-addons' ), $label, $index + 1 );
+
+			foreach ( $sub_fields as $sub_field ) {
+
+				$sub_value = array_key_exists( $sub_field['name'], $row ) ? $row[ $sub_field['name'] ] : ( $sub_field['default_value'] ?? '' );
+				$missing   = array_merge( $missing, $this->missing_required_labels( $sub_field, $sub_value, $row_prefix ) );
+
+			}
+
+		}
+
+		return $missing;
 
 	}
 
