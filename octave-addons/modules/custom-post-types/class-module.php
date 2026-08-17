@@ -291,6 +291,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'menu_icon'              => 'dashicons-admin-post',
 			'post_slug'              => '',
 			'public'                 => true,
+			'publicly_queryable'     => true,
 			'content_editor'         => true,
 			'has_archive'            => true,
 			'archive_slug'           => '',
@@ -1123,6 +1124,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$post_slug              = (string) ( $post_type['post_slug'] ?? '' );
 		$archive_slug           = (string) ( $post_type['archive_slug'] ?? '' );
 		$public                 = ! empty( $post_type['public'] );
+		$publicly_queryable     = ! array_key_exists( 'publicly_queryable', $post_type ) ? $public : ! empty( $post_type['publicly_queryable'] );
 		$content_editor         = ! array_key_exists( 'content_editor', $post_type ) || ! empty( $post_type['content_editor'] );
 		$has_archive            = ! empty( $post_type['has_archive'] );
 		$enabled                = ! empty( $post_type['enabled'] );
@@ -1248,7 +1250,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 				<fieldset class="oa-cpt-group">
 					<legend><?php esc_html_e( 'Visibility', 'octave-addons' ); ?></legend>
-					<p class="oa-cpt-group-description"><?php esc_html_e( 'Control whether the type is registered and available publicly.', 'octave-addons' ); ?></p>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'Control how the type is registered and whether it answers frontend URLs.', 'octave-addons' ); ?></p>
 					<div class="oa-cpt-fields oa-cpt-fields--switches">
 						<div class="oa-cpt-field oa-cpt-switch-field">
 							<span><?php esc_html_e( 'Public', 'octave-addons' ); ?></span>
@@ -1256,28 +1258,22 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 								<input type="checkbox" class="oa-cpt-public-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'public' ) ); ?>" value="1"<?= checked( $public, true, false ); ?>>
 								<span class="oa-switch-slider"></span>
 							</label>
-							<small><?php esc_html_e( 'Allow frontend URLs, searches and navigation use.', 'octave-addons' ); ?></small>
+							<small><?php esc_html_e( 'Register the type as public content. Builders such as Breakdance only list public post types in their query and template pickers.', 'octave-addons' ); ?></small>
 						</div>
-					</div>
-				</fieldset>
 
-				<fieldset class="oa-cpt-group">
-					<legend><?php esc_html_e( 'Editing', 'octave-addons' ); ?></legend>
-					<p class="oa-cpt-group-description"><?php esc_html_e( 'Choose whether this post type needs the standard WordPress content area as well as its Octave content fields.', 'octave-addons' ); ?></p>
-					<div class="oa-cpt-fields oa-cpt-fields--switches">
 						<div class="oa-cpt-field oa-cpt-switch-field">
-							<span><?php esc_html_e( 'Content editor', 'octave-addons' ); ?></span>
+							<span><?php esc_html_e( 'Publicly queryable', 'octave-addons' ); ?></span>
 							<label class="oa-switch">
-								<input type="hidden" name="<?= esc_attr( $this->cpt_field_name( $index, 'content_editor' ) ); ?>" value="0">
-								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'content_editor' ) ); ?>" value="1"<?= checked( $content_editor, true, false ); ?>>
+								<input type="hidden" name="<?= esc_attr( $this->cpt_field_name( $index, 'publicly_queryable' ) ); ?>" value="0">
+								<input type="checkbox" class="oa-cpt-queryable-toggle" name="<?= esc_attr( $this->cpt_field_name( $index, 'publicly_queryable' ) ); ?>" value="1"<?= checked( $publicly_queryable, true, false ); ?>>
 								<span class="oa-switch-slider"></span>
 							</label>
-							<small><?php esc_html_e( 'Turn off when entries are built entirely from Octave content fields, such as testimonials. Gutenberg remains available, with the Octave fields replacing its content canvas.', 'octave-addons' ); ?></small>
+							<small><?php esc_html_e( 'Answer frontend URLs, archives and search results. Turn this off to keep entries available to builders and queries while their own URLs stay unavailable.', 'octave-addons' ); ?></small>
 						</div>
 					</div>
 				</fieldset>
 
-				<fieldset class="oa-cpt-group oa-cpt-urls<?= $public ? '' : ' oa-hidden'; ?>">
+				<fieldset class="oa-cpt-group oa-cpt-urls<?= $publicly_queryable ? '' : ' oa-hidden'; ?>">
 					<legend><?php esc_html_e( 'URLs', 'octave-addons' ); ?></legend>
 					<p class="oa-cpt-group-description"><?php esc_html_e( 'Set the individual item path and optionally expose a listing archive.', 'octave-addons' ); ?></p>
 					<div class="oa-cpt-fields">
@@ -1301,6 +1297,22 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 							<input type="text" data-cpt-field="archive_slug" name="<?= esc_attr( $this->cpt_field_name( $index, 'archive_slug' ) ); ?>" value="<?= esc_attr( $archive_slug ); ?>" placeholder="projects">
 							<small><?php esc_html_e( 'The archive URL path, without slashes.', 'octave-addons' ); ?></small>
 						</label>
+					</div>
+				</fieldset>
+
+				<fieldset class="oa-cpt-group">
+					<legend><?php esc_html_e( 'Editing', 'octave-addons' ); ?></legend>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'Choose whether this post type needs the standard WordPress content area as well as its Octave content fields.', 'octave-addons' ); ?></p>
+					<div class="oa-cpt-fields oa-cpt-fields--switches">
+						<div class="oa-cpt-field oa-cpt-switch-field">
+							<span><?php esc_html_e( 'Content editor', 'octave-addons' ); ?></span>
+							<label class="oa-switch">
+								<input type="hidden" name="<?= esc_attr( $this->cpt_field_name( $index, 'content_editor' ) ); ?>" value="0">
+								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'content_editor' ) ); ?>" value="1"<?= checked( $content_editor, true, false ); ?>>
+								<span class="oa-switch-slider"></span>
+							</label>
+							<small><?php esc_html_e( 'Turn off when entries are built entirely from Octave content fields, such as testimonials. Gutenberg remains available, with the Octave fields replacing its content canvas.', 'octave-addons' ); ?></small>
+						</div>
 					</div>
 				</fieldset>
 
@@ -2397,6 +2409,9 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$post_slug    = $post_type['post_slug'];
 		$archive_slug = $post_type['archive_slug'];
 		$is_public    = ! empty( $post_type['public'] );
+		$is_queryable = ! array_key_exists( 'publicly_queryable', $post_type )
+			? $is_public
+			: ! empty( $post_type['publicly_queryable'] );
 		$supports     = [
 			'title',
 			'editor',
@@ -2438,25 +2453,25 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'labels'              => $labels,
 			'public'              => $is_public,
 			'hierarchical'        => false,
-			'exclude_from_search' => ! $is_public,
-			'publicly_queryable'  => $is_public,
+			'exclude_from_search' => ! $is_queryable,
+			'publicly_queryable'  => $is_queryable,
 			'show_ui'             => true,
 			'show_in_menu'        => true,
 			'show_in_admin_bar'   => true,
-			'show_in_nav_menus'   => $is_public,
+			'show_in_nav_menus'   => $is_public && $is_queryable,
 			'show_in_rest'        => true,
 			'menu_position'       => $menu_position,
 			'menu_icon'           => $post_type['menu_icon'],
 			'capability_type'     => 'post',
 			'map_meta_cap'        => true,
-			'query_var'           => $is_public,
-			'rewrite'             => $is_public
+			'query_var'           => $is_queryable,
+			'rewrite'             => $is_queryable
 				? [
 					'slug'       => $post_slug,
 					'with_front' => false,
 				]
 				: false,
-			'has_archive'         => $is_public && ! empty( $post_type['has_archive'] ) ? $archive_slug : false,
+			'has_archive'         => $is_queryable && ! empty( $post_type['has_archive'] ) ? $archive_slug : false,
 			'supports'            => $supports,
 		];
 
@@ -2630,6 +2645,9 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				'menu_icon'              => $menu_icon,
 				'post_slug'              => $post_slug,
 				'public'                 => ! empty( $post_type['public'] ),
+				'publicly_queryable'     => ! array_key_exists( 'publicly_queryable', $post_type )
+					? ! empty( $post_type['public'] )
+					: ! empty( $post_type['publicly_queryable'] ),
 				'content_editor'         => ! array_key_exists( 'content_editor', $post_type ) || ! empty( $post_type['content_editor'] ),
 				'has_archive'            => ! empty( $post_type['has_archive'] ),
 				'archive_slug'           => $archive_slug,
@@ -3091,6 +3109,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'menu_icon'              => 'dashicons-portfolio',
 			'post_slug'              => 'case-study',
 			'public'                 => true,
+			'publicly_queryable'     => true,
 			'has_archive'            => true,
 			'archive_slug'           => 'case-studies',
 			'categories'             => true,

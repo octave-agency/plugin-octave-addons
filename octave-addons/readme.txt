@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.22.0
+Stable tag:        2.23.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.23.0 =
+* Added a Publicly queryable switch beside Public on each custom post type, so a type can stay listed in Breakdance query and template pickers while its own frontend URLs stay unavailable.
+* Registered publicly_queryable, query_var, rewrite rules, archives, and search exclusion from the new switch instead of the Public switch.
+* Moved the URLs group directly beneath Visibility so it is obvious the Public and Publicly queryable switches control it.
 
 = 2.22.0 =
 * Redesigned the field-only CPT canvas: the fields now sit in the normal editor content column beside the post title, behind a single header line instead of the icon and two-sentence notice.

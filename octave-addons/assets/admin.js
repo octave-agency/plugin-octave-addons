@@ -1330,11 +1330,11 @@ ADMIN INTERACTIONS
 
 		function syncConditionalFields( item ) {
 
-			var publicToggle = item.querySelector( '.oa-cpt-public-toggle' );
+			var queryableToggle = item.querySelector( '.oa-cpt-queryable-toggle' );
 			var urls = item.querySelector( '.oa-cpt-urls' );
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
 
-			urls.classList.toggle( 'oa-hidden', ! publicToggle.checked );
+			urls.classList.toggle( 'oa-hidden', ! queryableToggle.checked );
 
 			item.querySelectorAll( '.oa-cpt-archive-field' ).forEach( function ( field ) {
 
@@ -1353,7 +1353,7 @@ ADMIN INTERACTIONS
 			var groups = item.querySelector( '.oa-cpt-groups' );
 			var enabledToggle = item.querySelector( '.oa-cpt-enabled-toggle' );
 			var removeButton = item.querySelector( '.oa-cpt-remove' );
-			var publicToggle = item.querySelector( '.oa-cpt-public-toggle' );
+			var queryableToggle = item.querySelector( '.oa-cpt-queryable-toggle' );
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
 			var iconValue = item.querySelector( '.oa-cpt-icon-value' );
 			var iconToggle = item.querySelector( '.oa-cpt-icon-toggle' );
@@ -1435,7 +1435,7 @@ ADMIN INTERACTIONS
 
 			enabledToggle.addEventListener( 'change', syncEnabledState );
 
-			publicToggle.addEventListener( 'change', function () {
+			queryableToggle.addEventListener( 'change', function () {
 
 				syncConditionalFields( item );
 
