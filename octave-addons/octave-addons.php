@@ -4,7 +4,7 @@
  * Plugin Name:       Octave Addons
  * Plugin URI:        https://www.octaveagency.com/
  * Description:       A modular collection of Octave site add-ons.
- * Version:           2.27.2
+ * Version:           2.29.4
  * Author:            Octave Agency
  * Author URI:        https://octaveagency.com
  * License:           GPL-2.0+
@@ -36,6 +36,7 @@ define( 'OCTAVE_ADDONS_URL',          plugin_dir_url( __FILE__ ) );
 define( 'OCTAVE_ADDONS_MODULES_DIR',  OCTAVE_ADDONS_DIR . 'modules/' );
 define( 'OCTAVE_ADDONS_OPTION_KEY',   'octave_addons_settings' );
 define( 'OCTAVE_ADDONS_SLUG',         'octave-addons' );
+define( 'OCTAVE_ADDONS_ADMIN_EXPERIENCE_OPTION', 'octave_addons_admin_experience_enabled' );
 
 define( 'OCTAVE_ADDONS_GITHUB_REPOSITORY', 'octave-agency/plugin-octave-addons' );
 
@@ -48,10 +49,12 @@ unset( $octave_addons_plugin_data );
 require_once OCTAVE_ADDONS_DIR . 'includes/class-icons.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-module.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-module-manager.php';
+require_once OCTAVE_ADDONS_DIR . 'includes/class-admin-experience.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-admin.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-elements-manifest.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-updater.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-site-status.php';
+require_once OCTAVE_ADDONS_DIR . 'includes/class-user-profile.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-octave-addons.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-fields.php';
 

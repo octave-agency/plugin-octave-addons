@@ -471,7 +471,7 @@ JS;
 
 		$icon = sprintf(
 			'<img src="%s" alt="" class="oa-elh-icon" />',
-			esc_url( OCTAVE_ADDONS_URL . 'assets/admin-icon.png' )
+			esc_url( OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png' )
 		);
 		$label = sprintf(
 			'<span class="oa-elh-label">%s</span>',

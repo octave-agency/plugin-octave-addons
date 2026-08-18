@@ -16,9 +16,11 @@ final class Octave_Addons {
 	protected static ?Octave_Addons $instance = null;
 
 	public Octave_Addons_Module_Manager $modules;
-	public Octave_Addons_Admin         $admin;
-	public Octave_Addons_Updater       $updater;
-	public Octave_Addons_Site_Status   $site_status;
+	public Octave_Addons_Admin_Experience $admin_experience;
+	public Octave_Addons_Admin            $admin;
+	public Octave_Addons_Updater          $updater;
+	public Octave_Addons_Site_Status      $site_status;
+	public Octave_Addons_User_Profile     $user_profile;
 
 	public static function instance(): Octave_Addons {
 
@@ -33,9 +35,11 @@ final class Octave_Addons {
 
 	protected function __construct() {
 
-		$this->modules     = new Octave_Addons_Module_Manager();
-		$this->admin       = new Octave_Addons_Admin( $this->modules );
-		$this->site_status = new Octave_Addons_Site_Status();
+		$this->modules          = new Octave_Addons_Module_Manager();
+		$this->admin_experience = new Octave_Addons_Admin_Experience();
+		$this->admin            = new Octave_Addons_Admin( $this->modules, $this->admin_experience );
+		$this->site_status      = new Octave_Addons_Site_Status();
+		$this->user_profile     = new Octave_Addons_User_Profile();
 		$this->updater     = new Octave_Addons_Updater(
 			OCTAVE_ADDONS_FILE,
 			OCTAVE_ADDONS_GITHUB_REPOSITORY,

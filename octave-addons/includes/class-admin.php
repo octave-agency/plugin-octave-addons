@@ -17,10 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Octave_Addons_Admin {
 
 	protected Octave_Addons_Module_Manager $modules;
+	protected Octave_Addons_Admin_Experience $admin_experience;
 
-	public function __construct( Octave_Addons_Module_Manager $modules ) {
+	public function __construct( Octave_Addons_Module_Manager $modules, Octave_Addons_Admin_Experience $admin_experience ) {
 
-		$this->modules = $modules;
+		$this->modules          = $modules;
+		$this->admin_experience = $admin_experience;
 
 		add_action( 'admin_menu',            [ $this, 'register_menu' ] );
 		add_action( 'admin_init',            [ $this, 'register_settings' ] );
@@ -60,7 +62,7 @@ class Octave_Addons_Admin {
 
 	public function register_menu(): void {
 
-		$icon_url = OCTAVE_ADDONS_URL . 'assets/admin-icon.png';
+		$icon_url = OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png';
 
 		add_menu_page(
 			__( 'Octave Addons', 'octave-addons' ),
@@ -95,22 +97,21 @@ class Octave_Addons_Admin {
 			return;
 
 		}
-		$assets_dir = OCTAVE_ADDONS_DIR . 'assets/';
-		$css_path   = $assets_dir . 'admin.css';
-		$js_path    = $assets_dir . 'admin.js';
+		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/admin.css';
+		$js_path  = OCTAVE_ADDONS_DIR . 'assets/js/admin.js';
 
 		wp_enqueue_media();
 
 		wp_enqueue_style(
 			'octave-addons-admin',
-			OCTAVE_ADDONS_URL . 'assets/admin.css',
+			OCTAVE_ADDONS_URL . 'assets/css/admin.css',
 			[],
 			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
 		);
 
 		wp_enqueue_script(
 			'octave-addons-admin',
-			OCTAVE_ADDONS_URL . 'assets/admin.js',
+			OCTAVE_ADDONS_URL . 'assets/js/admin.js',
 			[],
 			file_exists( $js_path ) ? (string) filemtime( $js_path ) : OCTAVE_ADDONS_VERSION,
 			true
@@ -211,20 +212,19 @@ class Octave_Addons_Admin {
 
 		}
 
-		$assets_dir = OCTAVE_ADDONS_DIR . 'assets/';
-		$css_path   = $assets_dir . 'deactivate.css';
-		$js_path    = $assets_dir . 'deactivate.js';
+		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/deactivate.css';
+		$js_path  = OCTAVE_ADDONS_DIR . 'assets/js/deactivate.js';
 
 		wp_enqueue_style(
 			'octave-addons-deactivate',
-			OCTAVE_ADDONS_URL . 'assets/deactivate.css',
+			OCTAVE_ADDONS_URL . 'assets/css/deactivate.css',
 			[],
 			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
 		);
 
 		wp_enqueue_script(
 			'octave-addons-deactivate',
-			OCTAVE_ADDONS_URL . 'assets/deactivate.js',
+			OCTAVE_ADDONS_URL . 'assets/js/deactivate.js',
 			[],
 			file_exists( $js_path ) ? (string) filemtime( $js_path ) : OCTAVE_ADDONS_VERSION,
 			true
@@ -495,7 +495,7 @@ class Octave_Addons_Admin {
 		$all           = $this->modules->visible_in_admin();
 		$entries       = $this->modules->admin_entries();
 		$active_tab    = $this->current_tab();
-		$icon_url      = OCTAVE_ADDONS_URL . 'assets/admin-icon.png';
+		$icon_url      = OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png';
 		$dashboard_url = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG ], admin_url( 'admin.php' ) );
 
 		$module_settings = [];
@@ -523,15 +523,9 @@ class Octave_Addons_Admin {
 
 		// Settings API notices keep their WordPress styling, so they are printed
 		// in their own wrap above the plugin interface rather than inside it.
-		$notices = '';
-
-		if ( 'dashboard' !== $active_tab ) {
-
-			ob_start();
-			settings_errors();
-			$notices = trim( (string) ob_get_clean() );
-
-		}
+		ob_start();
+		settings_errors();
+		$notices = trim( (string) ob_get_clean() );
 
 		// WordPress moves every admin notice to the first heading it finds inside
 		// a wrap, which would drop third-party notices into a module panel. This
@@ -670,6 +664,8 @@ class Octave_Addons_Admin {
 							</div>
 						</div>
 					</section>
+
+					<?php $this->admin_experience->render_setting_card(); ?>
 
 					<div class="oa-dashboard-heading">
 						<div>

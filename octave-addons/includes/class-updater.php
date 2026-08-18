@@ -356,7 +356,7 @@ class Octave_Addons_Updater {
 
 	protected function asset_url( string $file ): string {
 
-		return plugins_url( 'assets/' . $file, $this->plugin_file );
+		return plugins_url( 'assets/images/' . $file, $this->plugin_file );
 
 	}
 

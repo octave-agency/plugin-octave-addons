@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.27.2
+Stable tag:        2.29.4
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -43,6 +43,16 @@ containing a `class-module.php` file that extends
 `Octave_Addons_Module`, and it will appear automatically. Return a group
 id from `get_group()` to place it on a shared page.
 
+== Modern WordPress admin ==
+
+The complete WordPress dashboard can receive an Octave visual refresh without
+changing its familiar navigation or workflows. One isolated site-wide switch
+on the plugin dashboard controls the refresh, which is disabled by default.
+Each user starts with their operating-system light or dark preference and can
+save an override from the admin bar. User profiles also support a job title and
+a Media Library profile picture; a valid custom attachment is used before
+Gravatar and the configured WordPress fallback.
+
 == GitHub updates ==
 
 This plugin uses its published GitHub Releases as a native WordPress update
@@ -64,6 +74,26 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.29.4 =
+* Kept the optional WordPress admin refresh off by default until it is explicitly enabled from the Octave Addons dashboard.
+
+= 2.29.3 =
+* Isolated the optional admin refresh behind one site-wide switch on the main Octave Addons settings screen, making the feature straightforward to test, disable, or remove later.
+
+= 2.29.2 =
+* Added a quick per-user admin-bar action to disable or restore the custom admin styling and theme script without affecting functional plugin assets.
+
+= 2.29.1 =
+* Organised shared styles, scripts, and image artwork into dedicated asset folders without changing their behaviour.
+
+= 2.29.0 =
+* Added a per-user light and dark admin mode toggle that follows the operating-system preference until the user chooses a mode.
+* Added job title and Media Library avatar fields to user profiles, storing the custom avatar as an attachment ID and using it ahead of Gravatar and the normal fallback.
+* Adopted a broader native system font stack so each operating system gets typography suited to its interface.
+
+= 2.28.0 =
+* Refreshed the complete WordPress admin experience with an always-on Octave visual system for navigation, forms, tables, editors, dashboard panels, plugins, themes, and the media library, without changing core workflows.
 
 = 2.27.2 =
 * Removed the WordPress logo menu from the admin bar everywhere, with no setting required.

@@ -36,7 +36,7 @@ PALETTE (TOKENS)
 /* --- Outer wrap ------------------------------------------ */
 
 .octave-addons-wrap {
-    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 .octave-addons-wrap > h1 {
@@ -626,6 +626,107 @@ Notices above the interface
 /*
 DASHBOARD MODULES
 ---------------------------------------------------------- */
+
+/*
+Admin experience boundary
+-- Isolated site-wide switch for the optional WordPress admin refresh.
+---------------------------------------------------------- */
+
+.oa-dashboard-setting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 4px 2px 24px;
+    padding: 18px 20px;
+    color: var(--oa-text);
+    background: var(--oa-surface);
+    border: 1px solid var(--oa-border);
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+}
+
+.oa-dashboard-setting-copy {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.oa-dashboard-setting-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    color: var(--oa-accent);
+    background: var(--oa-accent-bg);
+    border: 1px solid rgba(43, 255, 134, 0.22);
+    border-radius: 11px;
+}
+
+.oa-dashboard-setting h2 {
+    margin: 3px 0 4px;
+    color: var(--oa-text);
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.oa-dashboard-setting p {
+    max-width: 620px;
+    margin: 0;
+    color: var(--oa-text-dim);
+    font-size: 11.5px;
+    line-height: 1.55;
+}
+
+.oa-dashboard-setting-form {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+.oa-dashboard-setting-state {
+    min-width: 52px;
+    color: var(--oa-text-muted);
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.oa-dashboard-setting .button-primary {
+    min-height: 36px;
+    padding: 0 16px;
+    color: var(--oa-on-accent);
+    background: linear-gradient(135deg, var(--oa-accent), var(--oa-accent-2));
+    border-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-weight: 650;
+    box-shadow: none;
+}
+
+.oa-dashboard-setting .button-primary:hover,
+.oa-dashboard-setting .button-primary:focus {
+    color: var(--oa-on-accent);
+    background: linear-gradient(135deg, var(--oa-accent), var(--oa-accent-2));
+    border-color: rgba(255, 255, 255, 0.16);
+    filter: brightness(1.08);
+}
+
+@media screen and (max-width: 782px) {
+
+    .oa-dashboard-setting {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .oa-dashboard-setting-form {
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+}
 
 .oa-dashboard-heading {
     display: flex;
@@ -4168,7 +4269,7 @@ body.oa-confirm-open {
     border-radius: 9px;
     background: var(--oa-surface-3);
     cursor: pointer;
-    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     font-size: 12px;
     font-weight: 600;
     transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;

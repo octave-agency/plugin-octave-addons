@@ -89,7 +89,7 @@ if ( ! headers_sent() ) {
 				radial-gradient(circle at 28% 18%, rgba(var(--oa-primary-rgb), 0.10), transparent 34%),
 				var(--oa-bg);
 			color: var(--oa-text);
-			font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 			-webkit-font-smoothing: antialiased;
 		}
 
