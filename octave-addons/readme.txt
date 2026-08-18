@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.30.2
+Stable tag:        2.31.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,27 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.31.1 =
+* Corrected Gutenberg's empty block-inspector tool and no-selection states in dark mode.
+
+= 2.31.0 =
+* Added modern light and dark dropdown chevrons to native, AJAX-loaded, Gutenberg, Customizer, Select2, and Choices select controls without replacing accessible native behaviour.
+
+= 2.30.7 =
+* Standardised table-navigation buttons and selects at 36px with vertically centred button labels.
+
+= 2.30.6 =
+* Removed the redundant legacy WordPress pointer from active admin-menu items in both themes.
+
+= 2.30.5 =
+* Matched the active admin-menu pointer to the admin canvas in dark mode instead of using WordPress white.
+
+= 2.30.4 =
+* Corrected dark-mode hover, focus, selected, disabled, and opened-menu colours for native, Gutenberg, Select2, and Choices select controls.
+
+= 2.30.3 =
+* Corrected the Gutenberg document-bar post-type label colour in dark mode.
 
 = 2.30.2 =
 * Corrected the Gutenberg document-bar keyboard shortcut colour in dark mode.

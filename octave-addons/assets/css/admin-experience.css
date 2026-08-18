@@ -330,6 +330,11 @@ body.wp-admin #adminmenu .wp-submenu li.current a {
     color: #FFFFFF;
 }
 
+body.wp-admin ul#adminmenu a.wp-has-current-submenu::after,
+body.wp-admin ul#adminmenu > li.current > a.current::after {
+    display: none;
+}
+
 body.wp-admin #wpadminbar .ab-sub-wrapper,
 body.wp-admin #wpadminbar .menupop .ab-sub-wrapper {
     border-radius: 0 0 3px 3px;
@@ -532,6 +537,27 @@ body.wp-admin textarea {
     line-height: 1.55;
 }
 
+body.wp-admin select:not([multiple]):not([size]),
+body.wp-admin select[size="1"],
+body.wp-customizer select:not([multiple]):not([size]),
+body.wp-customizer select[size="1"] {
+    padding-right: 34px;
+    appearance: none;
+    background-image: url('../images/select-chevron.svg');
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    background-size: 10px 6px;
+}
+
+body.wp-admin.rtl select:not([multiple]):not([size]),
+body.wp-admin.rtl select[size="1"],
+body.wp-customizer.rtl select:not([multiple]):not([size]),
+body.wp-customizer.rtl select[size="1"] {
+    padding-right: 8px;
+    padding-left: 34px;
+    background-position: left 11px center;
+}
+
 body.wp-admin input:hover,
 body.wp-admin select:hover,
 body.wp-admin textarea:hover {
@@ -575,6 +601,22 @@ body.wp-admin .tablenav select,
 body.wp-admin .bulkactions select,
 body.wp-admin .actions select {
     min-height: 36px;
+}
+
+body.wp-admin .tablenav select,
+body.wp-admin .tablenav .button,
+body.wp-admin .tablenav input.button {
+    height: 36px;
+    min-height: 36px;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+body.wp-admin .tablenav .button,
+body.wp-admin .tablenav input.button {
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 34px;
 }
 
 body.wp-admin .form-table {
@@ -1046,6 +1088,11 @@ html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-b
     border-color: var(--oa-admin-border);
 }
 
+html[admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header button,
+html[admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header svg {
+    color: var(--oa-admin-text);
+}
+
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-inserter__menu,
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-list-view,
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-list-view__branch,
@@ -1075,6 +1122,13 @@ html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-men
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-tab-panel__tabs-item,
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-button:not(.is-primary):not(.is-destructive) {
     color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-block-inspector__no-block-tools,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-block-inspector__no-blocks {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
 }
 
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-base-control__help,
@@ -2112,6 +2166,125 @@ html[data-oa-admin-theme="dark"] body.wp-admin .no-items td {
 }
 
 /*
+Dark select controls
+-- Keeps native and scripted option menus readable through every interaction state.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin select,
+html[data-oa-admin-theme="dark"] body.wp-customizer select {
+    color: var(--oa-admin-text);
+    color-scheme: dark;
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin select:not([multiple]):not([size]),
+html[data-oa-admin-theme="dark"] body.wp-admin select[size="1"],
+html[data-oa-admin-theme="dark"] body.wp-customizer select:not([multiple]):not([size]),
+html[data-oa-admin-theme="dark"] body.wp-customizer select[size="1"] {
+    background-image: url('../images/select-chevron-dark.svg');
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin select:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin select:focus,
+html[data-oa-admin-theme="dark"] body.wp-customizer select:hover,
+html[data-oa-admin-theme="dark"] body.wp-customizer select:focus {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin select option,
+html[data-oa-admin-theme="dark"] body.wp-admin select optgroup,
+html[data-oa-admin-theme="dark"] body.wp-customizer select option,
+html[data-oa-admin-theme="dark"] body.wp-customizer select optgroup {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin select option:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin select option:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin select option:checked,
+html[data-oa-admin-theme="dark"] body.wp-customizer select option:hover,
+html[data-oa-admin-theme="dark"] body.wp-customizer select option:focus,
+html[data-oa-admin-theme="dark"] body.wp-customizer select option:checked {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-selected);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin select:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin select option:disabled,
+html[data-oa-admin-theme="dark"] body.wp-customizer select:disabled,
+html[data-oa-admin-theme="dark"] body.wp-customizer select option:disabled {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__button,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__menu,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-select-control__input {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__button:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__button:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-select-control__input:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-select-control__input:focus {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__item {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__item.is-highlighted,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__item:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__item:focus {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-selected);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--single,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--multiple,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-dropdown,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-search__field,
+html[data-oa-admin-theme="dark"] body.wp-admin .choices__inner,
+html[data-oa-admin-theme="dark"] body.wp-admin .choices__list--dropdown,
+html[data-oa-admin-theme="dark"] body.wp-admin .choices__list[aria-expanded] {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--single .select2-selection__rendered,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-results__option,
+html[data-oa-admin-theme="dark"] body.wp-admin .choices__item--choice {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-results__option--highlighted[aria-selected],
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-results__option--highlighted[data-selected],
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-results__option[aria-selected="true"],
+html[data-oa-admin-theme="dark"] body.wp-admin .choices__item--choice.is-highlighted {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-selected);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--single .select2-selection__arrow b,
+html[data-oa-admin-theme="dark"] body.wp-admin .choices[data-type*="select-one"]::after {
+    border-top-color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-top-color: transparent;
+    border-bottom-color: var(--oa-admin-text-soft);
+}
+
+/*
 Plugin and theme discovery
 ---------------------------------------------------------- */
 
@@ -2233,7 +2406,8 @@ html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .edit-post-meta
     color: var(--oa-admin-text);
 }
 
-html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-document-bar__shortcut {
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-document-bar__shortcut,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-document-bar__post-type-label {
     color: var(--oa-admin-text-soft);
 }
 
@@ -2537,7 +2711,7 @@ html[data-oa-admin-theme="dark"] body.wp-customizer input:not([type="checkbox"])
 html[data-oa-admin-theme="dark"] body.wp-customizer select,
 html[data-oa-admin-theme="dark"] body.wp-customizer textarea {
     color: var(--oa-admin-text);
-    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
     border-color: var(--oa-admin-border-strong);
 }
 
