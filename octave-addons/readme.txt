@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.29.7
+Stable tag:        2.29.9
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.29.9 =
+* Removed the redundant WordPress admin colour scheme and Gravatar profile row, and simplified the custom Job Title and Profile Picture fields into the native profile form.
+
+= 2.29.8 =
+* Aligned Screen Options and Help controls, made admin avatars circular, used the site icon in place of the house when available, replaced the appearance label with sun and moon icons, removed admin-bar search, and completed dark Media Library and Plugins table surfaces.
 
 = 2.29.7 =
 * Scoped the blue WordPress admin refresh away from the green Octave Addons workspace so its branded interface remains unchanged.

@@ -62,18 +62,19 @@ final class Octave_Addons {
 			$this->modules->run_enabled();
 		}, 5 );
 
-		add_action( 'admin_bar_menu', [ $this, 'remove_wordpress_admin_bar_logo' ], 999 );
+		add_action( 'admin_bar_menu', [ $this, 'remove_wordpress_admin_bar_items' ], 999 );
 
 	}
 
 	/*
-	REMOVE WORDPRESS ADMIN BAR LOGO
-	-- Removes the WordPress menu from every admin bar without a setting.
+	REMOVE WORDPRESS ADMIN BAR ITEMS
+	-- Removes the WordPress menu and search from every admin bar without a setting.
 	---------------------------------------------------------- */
 
-	public function remove_wordpress_admin_bar_logo( WP_Admin_Bar $admin_bar ): void {
+	public function remove_wordpress_admin_bar_items( WP_Admin_Bar $admin_bar ): void {
 
 		$admin_bar->remove_node( 'wp-logo' );
+		$admin_bar->remove_node( 'search' );
 
 	}
 

@@ -28,10 +28,10 @@ WORDPRESS ADMIN EXPERIENCE
 
     }
 
-    /*
-    UPDATE TOGGLE
-    -- Keeps the admin-bar label and pressed state aligned with the next action.
-    ---------------------------------------------------------- */
+	/*
+	UPDATE TOGGLE
+	-- Keeps the icon-only admin-bar control accessible and aligned with the next action.
+	---------------------------------------------------------- */
 
     function updateToggle() {
 
@@ -43,22 +43,15 @@ WORDPRESS ADMIN EXPERIENCE
 
         }
 
-        var label = toggle.querySelector( '.ab-label' );
-        var nextIsDark = 'light' === activeTheme;
-        var nextLabel = nextIsDark ? config.darkModeText : config.lightModeText;
+		var nextIsDark = 'light' === activeTheme;
+		var nextLabel = nextIsDark ? config.darkModeText : config.lightModeText;
 
         toggle.setAttribute( 'aria-label', nextLabel );
         toggle.setAttribute( 'title', nextLabel );
         toggle.setAttribute( 'aria-pressed', 'dark' === activeTheme ? 'true' : 'false' );
         toggle.setAttribute( 'role', 'button' );
 
-        if ( label ) {
-
-            label.textContent = nextLabel;
-
-        }
-
-    }
+	}
 
     /*
     SAVE THEME

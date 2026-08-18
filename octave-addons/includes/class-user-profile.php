@@ -20,6 +20,7 @@ class Octave_Addons_User_Profile {
 
 	public function __construct() {
 
+		add_action( 'admin_init',              [ $this, 'remove_colour_scheme_picker' ] );
 		add_action( 'show_user_profile',        [ $this, 'render_fields' ] );
 		add_action( 'edit_user_profile',        [ $this, 'render_fields' ] );
 		add_action( 'personal_options_update',  [ $this, 'save_fields' ] );
@@ -30,19 +31,44 @@ class Octave_Addons_User_Profile {
 	}
 
 	/*
+	REMOVE COLOUR SCHEME PICKER
+	-- The custom light and dark control replaces WordPress admin colour schemes.
+	---------------------------------------------------------- */
+
+	public function remove_colour_scheme_picker(): void {
+
+		remove_action( 'admin_color_scheme_picker', 'admin_color_scheme_picker' );
+
+	}
+
+	/*
 	ENQUEUE PROFILE ASSETS
 	-- Loads the native Media Library selector only on user editing screens.
 	---------------------------------------------------------- */
 
 	public function enqueue_assets( string $hook ): void {
 
-		if ( ! in_array( $hook, [ 'profile.php', 'user-edit.php' ], true ) || ! current_user_can( 'upload_files' ) ) {
+		if ( ! in_array( $hook, [ 'profile.php', 'user-edit.php' ], true ) ) {
 
 			return;
 
 		}
 
-		$js_path = OCTAVE_ADDONS_DIR . 'assets/js/user-profile.js';
+		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/user-profile.css';
+		$js_path  = OCTAVE_ADDONS_DIR . 'assets/js/user-profile.js';
+
+		wp_enqueue_style(
+			'octave-addons-user-profile',
+			OCTAVE_ADDONS_URL . 'assets/css/user-profile.css',
+			[],
+			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
+		);
+
+		if ( ! current_user_can( 'upload_files' ) ) {
+
+			return;
+
+		}
 
 		wp_enqueue_media();
 
@@ -74,63 +100,51 @@ class Octave_Addons_User_Profile {
 
 		?>
 
-		<section class="oa-profile-card">
-
-			<div class="oa-profile-card__heading">
-				<h2><?= esc_html__( 'Profile details', 'octave-addons' ); ?></h2>
-				<p><?= esc_html__( 'Add the details used by your site and WordPress interface.', 'octave-addons' ); ?></p>
-			</div>
-
-			<table class="form-table oa-user-profile-fields" role="presentation">
-				<tr>
-					<th><label for="oa_job_title"><?= esc_html__( 'Job title', 'octave-addons' ); ?></label></th>
-					<td>
-						<input type="text" name="oa_job_title" id="oa_job_title" value="<?= esc_attr( $job_title ); ?>" class="regular-text" autocomplete="organization-title">
-						<p class="description"><?= esc_html__( 'The role or position associated with this user.', 'octave-addons' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th><span><?= esc_html__( 'Profile picture', 'octave-addons' ); ?></span></th>
-					<td>
-						<div
-							class="oa-avatar-field"
-							data-default-avatar="<?= esc_url( $default_avatar_url ); ?>"
-							data-dialog-title="<?= esc_attr__( 'Choose a profile picture', 'octave-addons' ); ?>"
-							data-dialog-button="<?= esc_attr__( 'Use as profile picture', 'octave-addons' ); ?>"
-							data-select-label="<?= esc_attr__( 'Select image', 'octave-addons' ); ?>"
-							data-replace-label="<?= esc_attr__( 'Replace image', 'octave-addons' ); ?>"
-						>
-							<div class="oa-avatar-preview" aria-live="polite">
-								<img src="<?= esc_url( $preview_url ); ?>" alt="<?= esc_attr( sprintf( __( '%s profile picture', 'octave-addons' ), $user->display_name ) ); ?>">
-							</div>
-
-							<?php
-
-							if ( $can_upload ) :
-
-							?>
-
-							<input type="hidden" name="oa_custom_avatar_id" value="<?= esc_attr( $avatar_id ); ?>" class="oa-avatar-id">
-
-							<div class="oa-avatar-actions">
-								<button type="button" class="button oa-avatar-select"><?= esc_html( $avatar_id ? __( 'Replace image', 'octave-addons' ) : __( 'Select image', 'octave-addons' ) ); ?></button>
-								<button type="button" class="button-link-delete oa-avatar-remove<?= $avatar_id ? '' : ' hidden'; ?>"><?= esc_html__( 'Remove custom image', 'octave-addons' ); ?></button>
-							</div>
-
-							<?php
-
-							endif;
-
-							?>
-
-							<p class="description">
-								<?= esc_html__( 'Uses the selected Media Library image first, then Gravatar, then the configured WordPress fallback.', 'octave-addons' ); ?>
-							</p>
+		<table class="form-table oa-user-profile-fields" role="presentation">
+			<tr>
+				<th><label for="oa_job_title"><?= esc_html__( 'Job Title', 'octave-addons' ); ?></label></th>
+				<td>
+					<input type="text" name="oa_job_title" id="oa_job_title" value="<?= esc_attr( $job_title ); ?>" class="regular-text" autocomplete="organization-title">
+				</td>
+			</tr>
+			<tr>
+				<th><span><?= esc_html__( 'Profile Picture', 'octave-addons' ); ?></span></th>
+				<td>
+					<div
+						class="oa-avatar-field"
+						data-default-avatar="<?= esc_url( $default_avatar_url ); ?>"
+						data-dialog-title="<?= esc_attr__( 'Choose a profile picture', 'octave-addons' ); ?>"
+						data-dialog-button="<?= esc_attr__( 'Use as profile picture', 'octave-addons' ); ?>"
+						data-select-label="<?= esc_attr__( 'Select image', 'octave-addons' ); ?>"
+						data-replace-label="<?= esc_attr__( 'Replace image', 'octave-addons' ); ?>"
+					>
+						<div class="oa-avatar-preview" aria-live="polite">
+							<img src="<?= esc_url( $preview_url ); ?>" alt="<?= esc_attr( sprintf( __( '%s profile picture', 'octave-addons' ), $user->display_name ) ); ?>">
 						</div>
-					</td>
-				</tr>
-			</table>
-		</section>
+
+						<?php
+
+						if ( $can_upload ) :
+
+						?>
+
+						<input type="hidden" name="oa_custom_avatar_id" value="<?= esc_attr( $avatar_id ); ?>" class="oa-avatar-id">
+
+						<div class="oa-avatar-actions">
+							<button type="button" class="button oa-avatar-select"><?= esc_html( $avatar_id ? __( 'Replace image', 'octave-addons' ) : __( 'Select image', 'octave-addons' ) ); ?></button>
+							<button type="button" class="button-link-delete oa-avatar-remove<?= $avatar_id ? '' : ' hidden'; ?>"><?= esc_html__( 'Remove custom image', 'octave-addons' ); ?></button>
+						</div>
+
+						<?php
+
+						endif;
+
+						?>
+
+					</div>
+				</td>
+			</tr>
+		</table>
 
 		<?php
 

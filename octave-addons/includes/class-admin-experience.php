@@ -18,6 +18,7 @@ class Octave_Addons_Admin_Experience {
 
 		add_action( 'admin_init',            [ $this, 'register_setting' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'admin_bar_menu',        [ $this, 'add_site_icon' ], 997 );
 		add_action( 'admin_bar_menu',        [ $this, 'add_theme_toggle' ], 998 );
 		add_action( 'wp_ajax_oa_save_admin_theme', [ $this, 'ajax_save_theme' ] );
 
@@ -113,8 +114,41 @@ class Octave_Addons_Admin_Experience {
 	}
 
 	/*
+	ADD SITE ICON
+	-- Replaces the admin-bar house with the configured site icon when available.
+	---------------------------------------------------------- */
+
+	public function add_site_icon( WP_Admin_Bar $admin_bar ): void {
+
+		if ( ! is_admin() || ! $this->is_enabled() || $this->is_octave_addons_screen() ) {
+
+			return;
+
+		}
+
+		$site_name     = $admin_bar->get_node( 'site-name' );
+		$site_icon_url = get_site_icon_url( 32 );
+
+		if ( ! $site_name || ! $site_icon_url ) {
+
+			return;
+
+		}
+
+		$meta          = (array) $site_name->meta;
+		$meta['class'] = trim( (string) ( $meta['class'] ?? '' ) . ' oa-has-site-icon' );
+
+		$admin_bar->add_node( [
+			'id'    => 'site-name',
+			'title' => '<span class="oa-admin-site-icon" aria-hidden="true"><img src="' . esc_url( $site_icon_url ) . '" alt=""></span>' . $site_name->title,
+			'meta'  => $meta,
+		] );
+
+	}
+
+	/*
 	ADD THEME TOGGLE
-	-- Places the per-user light and dark mode control in the admin bar.
+	-- Places an icon-only per-user light and dark mode control in the admin bar.
 	---------------------------------------------------------- */
 
 	public function add_theme_toggle( WP_Admin_Bar $admin_bar ): void {
@@ -125,10 +159,13 @@ class Octave_Addons_Admin_Experience {
 
 		}
 
+		$sun_icon  = '<span class="oa-theme-icon oa-theme-icon-sun" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></span>';
+		$moon_icon = '<span class="oa-theme-icon oa-theme-icon-moon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5 8.5 8.5 0 1 0 20.5 14.3Z"></path></svg></span>';
+
 		$admin_bar->add_node( [
 			'id'     => 'oa-theme-toggle',
 			'parent' => 'top-secondary',
-			'title'  => '<span class="ab-icon dashicons dashicons-admin-appearance" aria-hidden="true"></span><span class="ab-label">' . esc_html__( 'Appearance', 'octave-addons' ) . '</span>',
+			'title'  => $sun_icon . $moon_icon,
 			'href'   => '#',
 			'meta'   => [
 				'class' => 'oa-theme-toggle',
