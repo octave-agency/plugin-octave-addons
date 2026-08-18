@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.30.0
+Stable tag:        2.30.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.30.2 =
+* Corrected the Gutenberg document-bar keyboard shortcut colour in dark mode.
+
+= 2.30.1 =
+* Completed dark-mode coverage for Gutenberg confirmation dialogs, component popovers, legacy WordPress dialogs, ThickBox and plugin-details windows, link pickers, pointers, and modal overlays.
 
 = 2.30.0 =
 * Completed a full core WordPress dark-mode regression pass across lists, Appearance, block editors, the Customizer, plugin and theme installers, privacy, Site Health, import, personal-data, and About screens.

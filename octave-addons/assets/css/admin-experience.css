@@ -2233,6 +2233,10 @@ html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .edit-post-meta
     color: var(--oa-admin-text);
 }
 
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-document-bar__shortcut {
+    color: var(--oa-admin-text-soft);
+}
+
 html[data-oa-admin-theme="dark"] body.wp-admin .components-form-toggle:not(.is-checked) .components-form-toggle__track {
     background: var(--oa-admin-surface-soft);
     border-color: var(--oa-admin-border-strong);
@@ -2241,6 +2245,199 @@ html[data-oa-admin-theme="dark"] body.wp-admin .components-form-toggle:not(.is-c
 html[data-oa-admin-theme="dark"] body.wp-admin.font-library-php .boot-layout__stage {
     color: var(--oa-admin-text);
     background: var(--oa-admin-canvas);
+}
+
+/*
+ADMIN DIALOGS AND POPOVERS
+-- Covers Gutenberg components and the legacy popup systems still used by core.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__screen-overlay {
+    background: rgba(4, 8, 12, 0.72);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__frame,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__header,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__content,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__footer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__header-heading,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container h1,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container h3,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container p,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container label,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container legend,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container .components-heading,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container .components-text,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__children-container .components-truncate {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__header .components-button,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-modal__header .components-button svg {
+    color: var(--oa-admin-text-soft);
+    fill: currentColor;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-popover__content,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-dropdown-menu__menu,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-menu-group,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-tooltip,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-snackbar,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-notice {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-popover__content .components-menu-item__item,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-popover__content .components-text,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-dropdown-menu__menu .components-menu-item__item,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-dropdown-menu__menu .components-text {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-popover__content .components-menu-item__button:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-popover__content .components-menu-item__button:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-dropdown-menu__menu .components-menu-item__button:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-dropdown-menu__menu .components-menu-item__button:focus {
+    color: var(--oa-admin-accent-dark);
+    background: var(--oa-admin-surface-hover);
+}
+
+/*
+Legacy WordPress dialogs
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-dialog,
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog .ui-dialog-titlebar,
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog .ui-dialog-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog .ui-dialog-buttonpane,
+html[data-oa-admin-theme="dark"] body.wp-admin .notification-dialog,
+html[data-oa-admin-theme="dark"] body.wp-admin .notification-dialog-wrap {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog .ui-dialog-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog .ui-dialog-content h1,
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog .ui-dialog-content h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog .ui-dialog-content h3,
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-dialog .ui-dialog-content p,
+html[data-oa-admin-theme="dark"] body.wp-admin .notification-dialog h1,
+html[data-oa-admin-theme="dark"] body.wp-admin .notification-dialog h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .notification-dialog p {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .ui-widget-overlay,
+html[data-oa-admin-theme="dark"] body.wp-admin .notification-dialog-background,
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-auth-check-bg {
+    background: rgba(4, 8, 12, 0.72);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_window,
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_title,
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_ajaxContent,
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_caption {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_overlay {
+    background: #04080C;
+    opacity: 0.72;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_closeWindowButton,
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_closeWindowButton .tb-close-icon {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_closeWindowButton:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_closeWindowButton:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_closeWindowButton:hover .tb-close-icon,
+html[data-oa-admin-theme="dark"] body.wp-admin #TB_closeWindowButton:focus .tb-close-icon {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information-content,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information-footer,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information-tabs,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information .fyi,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information .section {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information-tabs,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information .fyi,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information-footer {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information h2,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information h3,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information h4,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information strong,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information .fyi strong {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information p,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information li,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information .fyi li {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information a,
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information-tabs a {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.iframe #plugin-information-tabs a.current {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-accent);
+}
+
+/*
+Link and pointer popups
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-link-wrap,
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-link-wrap #link-modal-title,
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-link-wrap .submitbox,
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-link-wrap .query-results,
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-link-wrap .query-notice,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-pointer-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-pointer-content h3 {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-link-wrap .query-notice em,
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-link-wrap .item-title,
+html[data-oa-admin-theme="dark"] body.wp-admin #wp-link-wrap .item-info,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-pointer-content p {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-pointer-arrow-inner {
+    border-bottom-color: var(--oa-admin-surface);
 }
 
 /*
