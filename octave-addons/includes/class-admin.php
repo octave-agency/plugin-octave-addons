@@ -533,19 +533,22 @@ class Octave_Addons_Admin {
 
 		}
 
-		if ( '' !== $notices ) :
+		// WordPress moves every admin notice to the first heading it finds inside
+		// a wrap, which would drop third-party notices into a module panel. This
+		// wrap owns the first heading and closes with the core wp-header-end
+		// marker, so notices always land above the interface.
 
 		?>
 
 		<div class="wrap oa-notices">
+
+			<h1 class="screen-reader-text"><?php esc_html_e( 'Octave Addons', 'octave-addons' ); ?></h1>
+
 			<?= $notices; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Settings API markup, already escaped. ?>
+
+			<hr class="wp-header-end">
+
 		</div>
-
-		<?php
-
-		endif;
-
-		?>
 
 		<div class="wrap octave-addons-wrap">
 

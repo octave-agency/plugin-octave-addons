@@ -601,6 +601,29 @@ Hero
 }
 
 /*
+Notices above the interface
+-- Holds the plugin's own Settings API notices plus any admin notice WordPress
+-- relocates in front of the wp-header-end marker, so nothing lands inside a
+-- module panel. These keep their native WordPress styling on purpose.
+---------------------------------------------------------- */
+
+.oa-notices {
+    margin-bottom: 0;
+}
+
+.oa-notices .notice,
+.oa-notices div.updated,
+.oa-notices div.error {
+    margin: 0 0 10px;
+}
+
+.oa-notices .wp-header-end {
+    margin: 0;
+    border: 0;
+    height: 0;
+}
+
+/*
 DASHBOARD MODULES
 ---------------------------------------------------------- */
 
