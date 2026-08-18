@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.29.14
+Stable tag:        2.29.17
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,15 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.29.17 =
+* Restored Gutenberg header and block-toolbar icon contrast and standardised hover, focus, active, pressed, disabled, and separator states in both themes.
+
+= 2.29.16 =
+* Completed Gutenberg dark mode across editor chrome, sidebars, inspectors, menus, dialogs, and publishing controls without styling the post canvas or front end.
+
+= 2.29.15 =
+* Removed the visible Media Library search label, added an accessible placeholder, and right-aligned the search input.
 
 = 2.29.14 =
 * Completed a site-wide light and dark admin audit, correcting remaining dashboard widgets, labels, sortable tables, navigation management, Site Health, Gravity Forms, Rank Math, and Wordfence surfaces.

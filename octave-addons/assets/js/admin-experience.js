@@ -28,10 +28,10 @@ WORDPRESS ADMIN EXPERIENCE
 
     }
 
-	/*
-	UPDATE TOGGLE
-	-- Keeps the icon-only admin-bar control accessible and aligned with the next action.
-	---------------------------------------------------------- */
+    /*
+    UPDATE TOGGLE
+    -- Keeps the icon-only admin-bar control accessible and aligned with the next action.
+    ---------------------------------------------------------- */
 
     function updateToggle() {
 
@@ -43,15 +43,46 @@ WORDPRESS ADMIN EXPERIENCE
 
         }
 
-		var nextIsDark = 'light' === activeTheme;
-		var nextLabel = nextIsDark ? config.darkModeText : config.lightModeText;
+        var nextIsDark = 'light' === activeTheme;
+        var nextLabel = nextIsDark ? config.darkModeText : config.lightModeText;
 
         toggle.setAttribute( 'aria-label', nextLabel );
         toggle.setAttribute( 'title', nextLabel );
         toggle.setAttribute( 'aria-pressed', 'dark' === activeTheme ? 'true' : 'false' );
         toggle.setAttribute( 'role', 'button' );
 
-	}
+    }
+
+    /*
+    PREPARE MEDIA SEARCH
+    -- Removes the visible label and keeps the Media Library search accessible.
+    ---------------------------------------------------------- */
+
+    function prepareMediaSearch() {
+
+        var mediaSearch = document.querySelector( '#media-search-input' );
+
+        if ( ! mediaSearch ) {
+
+            return false;
+
+        }
+
+        var searchLabel = document.querySelector( '.media-search-input-label' );
+        var searchText = config.mediaSearchText || 'Search media…';
+
+        if ( searchLabel ) {
+
+            searchLabel.remove();
+
+        }
+
+        mediaSearch.setAttribute( 'placeholder', searchText );
+        mediaSearch.setAttribute( 'aria-label', searchText );
+
+        return true;
+
+    }
 
     /*
     SAVE THEME
@@ -92,6 +123,25 @@ WORDPRESS ADMIN EXPERIENCE
     document.addEventListener( 'DOMContentLoaded', function () {
 
         updateToggle();
+
+        if ( document.body.classList.contains( 'upload-php' ) && ! prepareMediaSearch() ) {
+
+            var mediaSearchObserver = new MutationObserver( function () {
+
+                if ( prepareMediaSearch() ) {
+
+                    mediaSearchObserver.disconnect();
+
+                }
+
+            } );
+
+            mediaSearchObserver.observe( document.body, {
+                childList: true,
+                subtree: true
+            } );
+
+        }
 
         var toggle = document.querySelector( '#wp-admin-bar-oa-theme-toggle > .ab-item' );
 

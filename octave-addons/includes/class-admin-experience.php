@@ -104,11 +104,12 @@ class Octave_Addons_Admin_Experience {
 		);
 
 		wp_localize_script( 'octave-addons-admin-experience', 'oaAdminExperience', [
-			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-			'nonce'         => wp_create_nonce( 'oa_admin_theme' ),
-			'theme'         => $theme,
-			'darkModeText'  => __( 'Use dark mode', 'octave-addons' ),
-			'lightModeText' => __( 'Use light mode', 'octave-addons' ),
+			'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+			'nonce'           => wp_create_nonce( 'oa_admin_theme' ),
+			'theme'           => $theme,
+			'darkModeText'    => __( 'Use dark mode', 'octave-addons' ),
+			'lightModeText'   => __( 'Use light mode', 'octave-addons' ),
+			'mediaSearchText' => __( 'Search media…', 'octave-addons' ),
 		] );
 
 	}
