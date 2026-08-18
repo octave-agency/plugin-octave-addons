@@ -141,6 +141,17 @@ class Octave_Addons_Admin {
 			'removeDefinitionTitle'  => __( 'Remove definition?', 'octave-addons' ),
 			'removeDefinitionText'   => __( 'Saved content values and terms will remain in the database, but this definition will no longer be registered.', 'octave-addons' ),
 			'removeDefinitionAction' => __( 'Remove', 'octave-addons' ),
+			'moduleEnabledText'      => __( 'Module enabled. Save settings to apply it.', 'octave-addons' ),
+			'moduleDisabledText'     => __( 'Module disabled. Save settings to apply it.', 'octave-addons' ),
+			'postTypeAddedText'      => __( 'Post type added. Save settings to create it.', 'octave-addons' ),
+			'postTypeRemovedText'    => __( 'Post type removed. Save settings to apply it.', 'octave-addons' ),
+			'categoryAddedText'      => __( 'Category added. Save settings to create it.', 'octave-addons' ),
+			'categoryRemovedText'    => __( 'Category removed. Save settings to apply it.', 'octave-addons' ),
+			'fieldAddedText'         => __( 'Content field added. Save settings to create it.', 'octave-addons' ),
+			'fieldRemovedText'       => __( 'Content field removed. Save settings to apply it.', 'octave-addons' ),
+			'subFieldAddedText'      => __( 'Item field added. Save settings to create it.', 'octave-addons' ),
+			'subFieldRemovedText'    => __( 'Item field removed. Save settings to apply it.', 'octave-addons' ),
+			'invalidFormText'        => __( 'Nothing was saved. Some settings still need attention — the first one has been opened for you.', 'octave-addons' ),
 		] );
 
 	}

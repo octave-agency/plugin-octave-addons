@@ -65,11 +65,9 @@ ADMIN INTERACTIONS
 
 			var on = toggle.checked;
 
-			if ( body ) {
-
-				body.classList.toggle( 'oa-hidden', ! on );
-
-			}
+			// A disabled module keeps its values in the form, but nothing inside it
+			// should be able to block the save while it is out of view.
+			setFieldVisibility( body, on );
 
 			if ( locked ) {
 
@@ -82,6 +80,13 @@ ADMIN INTERACTIONS
 		}
 
 		toggle.addEventListener( 'change', sync );
+
+		toggle.addEventListener( 'change', function () {
+
+			oaNotify( toggle.checked ? oaAdmin.moduleEnabledText : oaAdmin.moduleDisabledText, 'info' );
+
+		} );
+
 		sync();
 
 	} );
@@ -223,6 +228,15 @@ ADMIN INTERACTIONS
 
 	}
 
+	// A save that came back with something wrong is worth landing on.
+	var failureNotice = document.querySelector( '.oa-content .notice-error' );
+
+	if ( failureNotice ) {
+
+		failureNotice.scrollIntoView( { block: 'center' } );
+
+	}
+
 	if ( settingsForm ) {
 
 		settingsForm.addEventListener( 'input', function () {
@@ -260,6 +274,82 @@ ADMIN INTERACTIONS
 			}
 
 		} );
+
+		/*
+		BLOCKED SAVE
+		-- A control the browser rejects can be sitting in a closed card or an
+		-- inactive tab, where the message it shows would never be seen. Each one
+		-- is brought back into view, and the first is focused and named.
+		---------------------------------------------------------- */
+
+		var invalidReported = false;
+
+		settingsForm.addEventListener( 'invalid', function ( event ) {
+
+			revealField( event.target );
+
+			if ( invalidReported ) {
+
+				return;
+
+			}
+
+			invalidReported = true;
+			oaNotify( oaAdmin.invalidFormText, 'error' );
+
+			window.setTimeout( function () {
+
+				event.target.focus();
+				invalidReported = false;
+
+			}, 0 );
+
+		}, true );
+
+	}
+
+	/*
+	REVEAL FIELD
+	-- Opens whatever is hiding a control: an inactive content tab, a collapsed
+	-- definition card, or a closed sub field.
+	---------------------------------------------------------- */
+
+	function revealField( field ) {
+
+		var node = field;
+
+		while ( node && node !== document.body ) {
+
+			if ( node.classList && node.classList.contains( 'oa-content-tab-panel' ) && node.classList.contains( 'oa-hidden' ) ) {
+
+				var tab = document.querySelector( '.oa-content-tab[data-oa-tab="' + node.id + '"]' );
+
+				if ( tab ) {
+
+					tab.click();
+
+				}
+
+			}
+
+			if ( node.classList && node.classList.contains( 'oa-hidden' ) ) {
+
+				node.classList.remove( 'oa-hidden' );
+
+				var card = node.parentElement;
+				var opener = card ? card.querySelector( 'button[aria-expanded="false"]' ) : null;
+
+				if ( opener ) {
+
+					opener.setAttribute( 'aria-expanded', 'true' );
+
+				}
+
+			}
+
+			node = node.parentElement;
+
+		}
 
 	}
 
@@ -1284,6 +1374,81 @@ ADMIN INTERACTIONS
 	};
 
 	/*
+	ACTION FEEDBACK
+	-- Confirms what an action did, in a message screen readers also receive.
+	-- Structure changes are only pending until the settings are saved, so the
+	-- wording says so rather than implying the change is already stored.
+	---------------------------------------------------------- */
+
+	var toastRegion = null;
+
+	function oaNotify( message, type ) {
+
+		if ( ! message ) {
+
+			return;
+
+		}
+
+		if ( ! toastRegion ) {
+
+			toastRegion = document.createElement( 'div' );
+			toastRegion.className = 'oa-toasts';
+			document.body.appendChild( toastRegion );
+
+		}
+
+		var toast = document.createElement( 'div' );
+		var isError = 'error' === type;
+
+		toast.className = 'oa-toast is-' + ( type || 'info' );
+		toast.setAttribute( 'role', isError ? 'alert' : 'status' );
+		toast.textContent = message;
+		toastRegion.appendChild( toast );
+
+		window.requestAnimationFrame( function () {
+
+			toast.classList.add( 'is-visible' );
+
+		} );
+
+		window.setTimeout( function () {
+
+			toast.classList.remove( 'is-visible' );
+
+			window.setTimeout( function () {
+
+				toast.remove();
+
+			}, 250 );
+
+		}, isError ? 6000 : 4000 );
+
+	}
+
+	window.oaNotify = oaNotify;
+
+	/*
+	SAVE REDIRECT
+	-- WordPress returns to the referer the form carries once the settings are
+	-- stored, so pointing that at another screen sends the save there instead.
+	---------------------------------------------------------- */
+
+	function retargetSaveRedirect( url ) {
+
+		var referer = document.querySelector( '.oa-form [name="_wp_http_referer"]' );
+
+		if ( ! referer || ! url ) {
+
+			return;
+
+		}
+
+		referer.value = url;
+
+	}
+
+	/*
 	CONDITIONAL FIELDS
 	-- Shows or hides a dependent field. The required flag is lifted while the
 	-- field is out of view, because the browser refuses to submit a form held up
@@ -1848,6 +2013,7 @@ ADMIN INTERACTIONS
 				reindexItems();
 				announceOrderChange();
 				addButton.focus();
+				oaNotify( oaAdmin.postTypeRemovedText, 'success' );
 
 			}
 
@@ -2022,6 +2188,7 @@ ADMIN INTERACTIONS
 			reindexItems();
 			announceOrderChange();
 			item.querySelector( '[data-cpt-field="name"]' ).focus();
+			oaNotify( oaAdmin.postTypeAddedText, 'success' );
 
 		} );
 
@@ -2063,6 +2230,9 @@ ADMIN INTERACTIONS
 		var defaultTemplate = collection.querySelector( '.oa-collection-template' );
 		var addButtons = collection.querySelectorAll( '.oa-collection-add' );
 		var collectionKey = collection.dataset.collection;
+		var isTaxonomyCollection = 'custom_taxonomies' === collectionKey;
+		var overviewHead = document.querySelector( '[data-oa-overview-url]' );
+		var overviewUrl = overviewHead ? overviewHead.dataset.oaOverviewUrl : '';
 		var nextIndex = list.querySelectorAll( '.oa-collection-item' ).length;
 		var reusableFinderToggle = collection.querySelector( '.oa-reusable-field-finder-toggle' );
 		var reusableFinder = collection.querySelector( '.oa-reusable-field-finder' );
@@ -2312,6 +2482,7 @@ ADMIN INTERACTIONS
 						subItem.remove();
 						reindexSubFields();
 						subList.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+						oaNotify( oaAdmin.subFieldRemovedText, 'success' );
 
 					} );
 
@@ -2334,6 +2505,7 @@ ADMIN INTERACTIONS
 					reindexSubFields();
 					subItem.querySelector( '[data-sub-role="title"]' ).focus();
 					subList.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+					oaNotify( oaAdmin.subFieldAddedText, 'success' );
 
 				} );
 
@@ -2436,6 +2608,15 @@ ADMIN INTERACTIONS
 					item.remove();
 					reindex();
 					list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+					oaNotify( isTaxonomyCollection ? oaAdmin.categoryRemovedText : oaAdmin.fieldRemovedText, 'success' );
+
+					// On a single definition's own editor there is nothing left to edit once
+					// it is gone, so the save returns to the overview instead of a dead page.
+					if ( ! list.querySelector( '.oa-collection-item' ) ) {
+
+						retargetSaveRedirect( overviewUrl );
+
+					}
 
 				}
 
@@ -2490,6 +2671,7 @@ ADMIN INTERACTIONS
 				reindex();
 				item.querySelector( '[data-role="title"]' ).focus();
 				list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+				oaNotify( isTaxonomyCollection ? oaAdmin.categoryAddedText : oaAdmin.fieldAddedText, 'success' );
 
 			} );
 

@@ -140,8 +140,17 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			$this->preserved_collection( $input, 'custom_fields' )
 		);
 
+		$submitted_post_types = $this->submitted_row_count( $input['custom_post_types'] ?? [] );
+		$submitted_taxonomies = $this->submitted_row_count( $taxonomies );
+		$submitted_fields     = $this->submitted_row_count( $fields );
+
 		$taxonomies = $this->normalise_taxonomies( $taxonomies, $post_types );
 		$fields     = $this->normalise_fields( $fields, $post_types );
+
+		// Rows are dropped silently by the normalisers, so say so rather than let them vanish.
+		$this->report_dropped_rows( 'post_types', $submitted_post_types, count( $post_types ) );
+		$this->report_dropped_rows( 'taxonomies', $submitted_taxonomies, count( $taxonomies ) );
+		$this->report_dropped_rows( 'fields', $submitted_fields, count( $fields ) );
 
 		$has_starter_content = $this->apply_starter_content( $input['custom_post_types'] ?? [], $post_types, $taxonomies, $fields );
 
@@ -160,6 +169,84 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'custom_taxonomies' => $taxonomies,
 			'custom_fields'     => $fields,
 		];
+
+	}
+
+	/*
+	SUBMITTED ROW COUNT
+	-- Counts the definition rows a submission actually carried.
+	---------------------------------------------------------- */
+
+	protected function submitted_row_count( $rows ): int {
+
+		if ( ! is_array( $rows ) ) {
+
+			return 0;
+
+		}
+
+		return count( array_filter( $rows, 'is_array' ) );
+
+	}
+
+	/*
+	REPORT DROPPED ROWS
+	-- Raises a settings notice for definitions the normalisers refused, so an
+	-- incomplete or duplicated row is never dropped without explanation.
+	---------------------------------------------------------- */
+
+	protected function report_dropped_rows( string $type, int $submitted, int $saved ): void {
+
+		$dropped = $submitted - $saved;
+
+		if ( $dropped < 1 || ! function_exists( 'add_settings_error' ) ) {
+
+			return;
+
+		}
+
+		if ( 'post_types' === $type ) {
+
+			$message = sprintf(
+				/* translators: %s: number of post types that were not saved. */
+				_n(
+					'%s post type was not saved. Each one needs a plural name, a singular name, and a key no other post type uses. A maximum of 20 can be stored.',
+					'%s post types were not saved. Each one needs a plural name, a singular name, and a key no other post type uses. A maximum of 20 can be stored.',
+					$dropped,
+					'octave-addons'
+				),
+				number_format_i18n( $dropped )
+			);
+
+		} elseif ( 'taxonomies' === $type ) {
+
+			$message = sprintf(
+				/* translators: %s: number of categories that were not saved. */
+				_n(
+					'%s category was not saved. Each one needs a plural name, a singular name, and a key no other category uses. A maximum of 30 can be stored.',
+					'%s categories were not saved. Each one needs a plural name, a singular name, and a key no other category uses. A maximum of 30 can be stored.',
+					$dropped,
+					'octave-addons'
+				),
+				number_format_i18n( $dropped )
+			);
+
+		} else {
+
+			$message = sprintf(
+				/* translators: %s: number of content fields that were not saved. */
+				_n(
+					'%s content field was not saved. Each one needs a label and a name no other field uses. A maximum of 50 can be stored.',
+					'%s content fields were not saved. Each one needs a label and a name no other field uses. A maximum of 50 can be stored.',
+					$dropped,
+					'octave-addons'
+				),
+				number_format_i18n( $dropped )
+			);
+
+		}
+
+		add_settings_error( OCTAVE_ADDONS_OPTION_KEY, 'oa-dropped-' . $type, $message, 'error' );
 
 	}
 
@@ -270,12 +357,46 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
+	RENDER ACTION NOTICE
+	-- Confirms an action that finished on another screen, such as a definition
+	-- deleted from its own editor before returning here.
+	---------------------------------------------------------- */
+
+	protected function render_action_notice(): void {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only settings navigation.
+		$notice = isset( $_GET['oa-notice'] ) ? sanitize_key( wp_unslash( (string) $_GET['oa-notice'] ) ) : '';
+
+		$messages = [
+			'category-deleted' => __( 'Category deleted.', 'octave-addons' ),
+			'field-deleted'    => __( 'Content field deleted.', 'octave-addons' ),
+		];
+
+		if ( ! isset( $messages[ $notice ] ) ) {
+
+			return;
+
+		}
+
+		?>
+
+		<div class="notice notice-success inline oa-inline-notice">
+			<p><?= esc_html( $messages[ $notice ] ); ?></p>
+		</div>
+
+		<?php
+
+	}
+
+	/*
 	RENDER SETTINGS
 	-- Displays built-in controls and a tabbed view of Post Types, Categories,
 	-- and Content Management.
 	---------------------------------------------------------- */
 
 	public function render_settings( array $settings ): void {
+
+		$this->render_action_notice();
 
 		$custom_types       = $this->normalise_post_types( $settings['custom_post_types'] ?? [] );
 		$custom_taxonomies  = $this->normalise_taxonomies( $settings['custom_taxonomies'] ?? [], $custom_types );
@@ -1333,7 +1454,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		?>
 
-		<div class="oa-schema-page-head oa-schema-page-head--editor">
+		<div class="oa-schema-page-head oa-schema-page-head--editor"<?= $is_new ? '' : ' data-oa-overview-url="' . esc_url( add_query_arg( 'oa-notice', $is_taxonomy ? 'category-deleted' : 'field-deleted', $back_url ) ) . '"'; ?>>
 			<a href="<?= esc_url( $back_url ); ?>" class="oa-cpt-back-link"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span><?= esc_html( $back_label ); ?></a>
 			<span class="oa-panel-kicker"><?= $is_taxonomy ? esc_html__( 'Reusable post category', 'octave-addons' ) : esc_html__( 'Reusable content field', 'octave-addons' ); ?></span>
 			<h3><?= $is_new ? ( $is_taxonomy ? esc_html__( 'Add post category', 'octave-addons' ) : esc_html__( 'Add content field', 'octave-addons' ) ) : sprintf( esc_html__( 'Editing: %s', 'octave-addons' ), esc_html( $is_taxonomy ? $selected['name'] : $selected['label'] ) ); ?></h3>

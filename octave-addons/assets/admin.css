@@ -586,6 +586,20 @@ Hero
     line-height: 1.5;
 }
 
+/* The stripe carries the outcome, so success and failure never look alike. */
+
+.oa-content .notice-success {
+    border-left-color: var(--oa-accent);
+}
+
+.oa-content .notice-warning {
+    border-left-color: #ffb02e;
+}
+
+.oa-content .notice-error {
+    border-left-color: #ff6b6b;
+}
+
 /*
 DASHBOARD MODULES
 ---------------------------------------------------------- */
@@ -931,6 +945,63 @@ Navigation entry
 }
 
 /* --- Save bar -------------------------------------------- */
+
+/*
+ACTION TOASTS
+-- Transient confirmations for actions that only take effect on save.
+---------------------------------------------------------- */
+
+.oa-toasts {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: min(360px, calc(100vw - 48px));
+    pointer-events: none;
+}
+
+.oa-toast {
+    padding: 11px 15px;
+    color: var(--oa-text);
+    border: 1px solid var(--oa-border);
+    border-left: 3px solid var(--oa-text-dim);
+    border-radius: 11px;
+    background: rgba(15, 18, 19, 0.94);
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(18px);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.oa-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.oa-toast.is-success {
+    border-left-color: var(--oa-accent);
+}
+
+.oa-toast.is-error {
+    border-left-color: #ff6b6b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .oa-toast {
+        transition: none;
+        transform: none;
+    }
+
+}
 
 .oa-save-bar {
     position: sticky;

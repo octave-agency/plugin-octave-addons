@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.25.0
+Stable tag:        2.26.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,14 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.26.0 =
+* Returned to the category or field overview after deleting the definition you were editing, instead of leaving you on an editor for something that no longer exists, and confirmed the deletion there.
+* Reported definitions the save refused to store, naming how many and what each one needs, rather than dropping incomplete or duplicated rows in silence.
+* Confirmed adding and removing post types, categories, fields, and item fields, and enabling or disabling a module, in a message that also states the change is not stored until the settings are saved.
+* Explained a save the browser blocked, opening the tab or card holding the first control that needs attention and focusing it.
+* Lifted the required flag off controls hidden by a switch or a disabled module, which could previously block a save with a message nobody could see.
+* Coloured success, warning, and failure notices apart, and scrolled a failed save into view.
 
 = 2.25.0 =
 * Moved a category's URL slug below its Public archives switch and hid it while archives are off, since the slug is unused then; the required flag is lifted with it so an unseen field can no longer block a save.
