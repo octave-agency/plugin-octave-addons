@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.24.0
+Stable tag:        2.24.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.24.1 =
+* Spaced the content type tab strip away from the panel below it.
+* Dropped the Manage categories button from the Categories tab, leaving New category as its only header action.
+* Sat each listing row's key directly beside its title at the width of the key itself, rather than stretched across the row.
 
 = 2.24.0 =
 * Fixed the post type, category, and field key fields swallowing an underscore as it was typed; a trailing separator is now kept until the field is left.

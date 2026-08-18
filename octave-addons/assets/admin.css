@@ -2197,6 +2197,7 @@ CONTENT TYPE TABS
     display: flex;
     flex-wrap: wrap;
     gap: 7px;
+    margin-bottom: 18px;
     padding: 6px;
     border: 1px solid var(--oa-border-light);
     border-radius: 12px;
@@ -2454,9 +2455,9 @@ CONTENT DIRECTORY
 }
 
 .oa-content-directory-row-main {
-    display: grid;
-    grid-template-columns: auto auto;
+    display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 4px 9px;
     min-width: 0;
 }
@@ -2468,15 +2469,20 @@ CONTENT DIRECTORY
 }
 
 .oa-app .oa-content-directory-row-main code {
+    flex: 0 1 auto;
+    overflow: hidden;
+    max-width: 100%;
     padding: 3px 7px;
     color: var(--oa-text-dim);
     border-radius: 6px;
     background: var(--oa-surface-3);
     font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .oa-content-directory-row-meta {
-    grid-column: 1 / -1;
+    flex: 0 0 100%;
     overflow: hidden;
     color: var(--oa-text-muted);
     font-size: 10.5px;

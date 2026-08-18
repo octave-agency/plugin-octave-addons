@@ -477,8 +477,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	protected function categories_directory( array $taxonomies, array $post_type_options ): array {
 
-		$library_url = $this->schema_url( 'library' );
-		$rows        = [];
+		$rows = [];
 
 		foreach ( $taxonomies as $taxonomy ) {
 
@@ -535,11 +534,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				[
 					'label' => __( 'New category', 'octave-addons' ),
 					'url'   => $this->schema_url( 'taxonomy', 'new' ),
-				],
-				[
-					'label' => __( 'Manage categories', 'octave-addons' ),
-					'url'   => $library_url,
-					'quiet' => true,
 				],
 			],
 			'groups'      => [
