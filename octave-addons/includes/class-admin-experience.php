@@ -69,9 +69,9 @@ class Octave_Addons_Admin_Experience {
 	-- Loads the visual refresh only while the site-wide switch is enabled.
 	---------------------------------------------------------- */
 
-	public function enqueue_assets(): void {
+	public function enqueue_assets( string $hook ): void {
 
-		if ( ! $this->is_enabled() ) {
+		if ( ! $this->is_enabled() || 'toplevel_page_' . OCTAVE_ADDONS_SLUG === $hook ) {
 
 			return;
 
@@ -119,7 +119,7 @@ class Octave_Addons_Admin_Experience {
 
 	public function add_theme_toggle( WP_Admin_Bar $admin_bar ): void {
 
-		if ( ! is_admin() || ! is_user_logged_in() || ! $this->is_enabled() ) {
+		if ( ! is_admin() || ! is_user_logged_in() || ! $this->is_enabled() || $this->is_octave_addons_screen() ) {
 
 			return;
 
@@ -135,6 +135,19 @@ class Octave_Addons_Admin_Experience {
 				'title' => __( 'Toggle light or dark mode', 'octave-addons' ),
 			],
 		] );
+
+	}
+
+	/*
+	IS OCTAVE ADDONS SCREEN
+	-- Keeps the branded plugin workspace separate from the WordPress admin refresh.
+	---------------------------------------------------------- */
+
+	protected function is_octave_addons_screen(): bool {
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		return $screen && 'toplevel_page_' . OCTAVE_ADDONS_SLUG === $screen->id;
 
 	}
 

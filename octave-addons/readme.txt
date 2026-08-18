@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.29.4
+Stable tag:        2.29.7
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,15 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.29.7 =
+* Scoped the blue WordPress admin refresh away from the green Octave Addons workspace so its branded interface remains unchanged.
+
+= 2.29.6 =
+* Adopted a refined WordPress-blue accent and neutral blue-grey surfaces across the general dashboard while retaining Octave green inside the Octave Addons workspace.
+
+= 2.29.5 =
+* Simplified the refreshed dashboard with compact controls, small corner radii, flat surfaces, restrained shadows, quieter navigation states, and clearer dark-mode table text after auditing the live WordPress interface.
 
 = 2.29.4 =
 * Kept the optional WordPress admin refresh off by default until it is explicitly enabled from the Octave Addons dashboard.
