@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.29.9
+Stable tag:        2.29.14
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,21 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.29.14 =
+* Completed a site-wide light and dark admin audit, correcting remaining dashboard widgets, labels, sortable tables, navigation management, Site Health, Gravity Forms, Rank Math, and Wordfence surfaces.
+
+= 2.29.13 =
+* Corrected Imagify sortable file-list header links and sorting indicators in dark mode.
+
+= 2.29.12 =
+* Replaced the legacy WordPress loading image with a modern CSS spinner and rebuilt the Media Library toolbar alignment across desktop and responsive layouts.
+
+= 2.29.11 =
+* Restored visible taxonomy field labels across dark-mode term add and edit screens.
+
+= 2.29.10 =
+* Added native tag names and tag checklist labels to the dark-mode text system.
 
 = 2.29.9 =
 * Removed the redundant WordPress admin colour scheme and Gravatar profile row, and simplified the custom Job Title and Profile Picture fields into the native profile form.

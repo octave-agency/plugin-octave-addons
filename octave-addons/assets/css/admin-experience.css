@@ -124,6 +124,35 @@ body.wp-admin hr {
 }
 
 /*
+LOADING INDICATOR
+-- Replaces the legacy WordPress loading image with a lightweight CSS ring.
+---------------------------------------------------------- */
+
+body.wp-admin .spinner {
+    width: 20px;
+    height: 20px;
+    background: none;
+    border: 2px solid var(--oa-admin-border-strong);
+    border-top-color: var(--oa-admin-accent);
+    border-radius: 50%;
+    opacity: 1;
+    box-sizing: border-box;
+}
+
+body.wp-admin .spinner.is-active,
+body.wp-admin .loading-content .spinner {
+    animation: oa-admin-spinner 0.7s linear infinite;
+}
+
+@keyframes oa-admin-spinner {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+/*
 ADMIN BAR
 ---------------------------------------------------------- */
 
@@ -969,6 +998,90 @@ body.wp-admin .components-tab-panel__tabs-item.is-active::after {
 MEDIA LIBRARY
 ---------------------------------------------------------- */
 
+body.wp-admin.upload-php .media-toolbar.wp-filter {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px 18px;
+    min-height: 58px;
+    margin: 12px 0 20px;
+    padding: 10px 12px;
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    box-shadow: none;
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    float: none;
+    width: 32px;
+    height: 32px;
+    color: var(--oa-admin-text-dim);
+    border-radius: 3px;
+    line-height: 1;
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a::before {
+    color: currentColor;
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a:hover,
+body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a:focus {
+    color: var(--oa-admin-accent-dark);
+    background: var(--oa-admin-accent-soft);
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a.current {
+    color: var(--oa-admin-accent);
+    background: var(--oa-admin-accent-soft);
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter .media-toolbar-secondary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: none;
+    height: auto;
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter .media-toolbar-primary {
+    display: grid;
+    grid-template-columns: auto minmax(220px, 280px);
+    align-items: center;
+    gap: 8px;
+    max-width: none;
+    height: auto;
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter select,
+body.wp-admin.upload-php .media-toolbar.wp-filter button,
+body.wp-admin.upload-php .media-toolbar.wp-filter input[type="search"] {
+    margin: 0;
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter .media-search-input-label {
+    margin: 0;
+    color: var(--oa-admin-text-soft);
+    white-space: nowrap;
+}
+
+body.wp-admin.upload-php .media-toolbar.wp-filter input[type="search"] {
+    width: 100%;
+    min-width: 0;
+}
+
 body.wp-admin .media-modal-backdrop {
     background: rgba(5, 12, 11, 0.76);
     backdrop-filter: blur(4px);
@@ -1258,6 +1371,11 @@ RESPONSIVE ADMIN
         animation-iteration-count: 1;
     }
 
+    body.wp-admin .spinner.is-active,
+    body.wp-admin .loading-content .spinner {
+        animation: none;
+    }
+
 }
 
 /*
@@ -1481,6 +1599,20 @@ html[data-oa-admin-theme="dark"] body.wp-admin .widefat .row-title {
     color: var(--oa-admin-text);
 }
 
+html[data-oa-admin-theme="dark"] body.wp-admin .tag-name,
+html[data-oa-admin-theme="dark"] body.wp-admin .tag-name a,
+html[data-oa-admin-theme="dark"] body.wp-admin .tagchecklist > li {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.edit-tags-php .form-field > label,
+html[data-oa-admin-theme="dark"] body.wp-admin.edit-tags-php .form-field > legend,
+html[data-oa-admin-theme="dark"] body.wp-admin.term-php .form-field > label,
+html[data-oa-admin-theme="dark"] body.wp-admin.term-php .form-field > legend,
+html[data-oa-admin-theme="dark"] body.wp-admin.term-php .form-table th {
+    color: var(--oa-admin-text);
+}
+
 html[data-oa-admin-theme="dark"] body.wp-admin .rank_math_seo_details .rank-math-column-display:not(.seo-score),
 html[data-oa-admin-theme="dark"] body.wp-admin .rank_math_seo_details .rank-math-column-display:not(.seo-score) * {
     color: var(--oa-admin-text-soft);
@@ -1504,6 +1636,27 @@ html[data-oa-admin-theme="dark"] body.wp-admin .plugins .active.updated + .plugi
 html[data-oa-admin-theme="dark"] body.wp-admin .plugins tr.paused td,
 html[data-oa-admin-theme="dark"] body.wp-admin .plugins tr.paused th {
     background: var(--oa-admin-surface-subtle);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sortable a,
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted a {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sortable a:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sortable a:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted a:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted a:focus {
+    color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorting-indicator::before {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted.asc .sorting-indicator.asc::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted.desc .sorting-indicator.desc::before {
+    color: var(--oa-admin-accent-dark);
 }
 
 html[data-oa-admin-theme="dark"] body.wp-admin .plugin-install #the-list td,
@@ -1577,6 +1730,247 @@ html[data-oa-admin-theme="dark"] body.wp-admin .edit-attachment-frame .edit-medi
     border-color: var(--oa-admin-border-strong);
 }
 
+/*
+DARK MODE COMPLETION
+-- Normalises remaining native and embedded admin surfaces found in the full audit.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wrap label,
+html[data-oa-admin-theme="dark"] body.wp-admin .form-table th,
+html[data-oa-admin-theme="dark"] body.wp-admin .form-field > label,
+html[data-oa-admin-theme="dark"] body.wp-admin .form-field > legend,
+html[data-oa-admin-theme="dark"] body.wp-admin .inline-edit-row label,
+html[data-oa-admin-theme="dark"] body.wp-admin .inline-edit-row legend {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widefat th.sortable a,
+html[data-oa-admin-theme="dark"] body.wp-admin .widefat th.sorted a {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widefat .sorting-indicator::before {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widefat th.sorted.asc .sorting-indicator.asc::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .widefat th.sorted.desc .sorting-indicator.desc::before {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .manage-menus,
+html[data-oa-admin-theme="dark"] body.wp-admin .nav-menus-php #post-body,
+html[data-oa-admin-theme="dark"] body.wp-admin #nav-menu-header,
+html[data-oa-admin-theme="dark"] body.wp-admin #nav-menu-footer,
+html[data-oa-admin-theme="dark"] body.wp-admin .menu-item-handle,
+html[data-oa-admin-theme="dark"] body.wp-admin .menu-item-settings,
+html[data-oa-admin-theme="dark"] body.wp-admin .accordion-section-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .accordion-section-content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #nav-menu-header,
+html[data-oa-admin-theme="dark"] body.wp-admin #nav-menu-footer,
+html[data-oa-admin-theme="dark"] body.wp-admin .accordion-section-title {
+    background: var(--oa-admin-surface-soft);
+}
+
+/*
+Dashboard widgets
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache [class~="objectcache:widget-charts"] {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-canvas,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-svg {
+    background: transparent !important;
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-text,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-xaxis-label,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-yaxis-label {
+    fill: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-gridline {
+    stroke: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-tooltip,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-tooltip-title,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_objectcache .apexcharts-yaxistooltip {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface) !important;
+    border-color: var(--oa-admin-border) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #onetap_missing_alt_text .onetap-dashboard-missing-alt__stats {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #onetap_missing_alt_text .onetap-dashboard-missing-alt__desc {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+Site Health
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-header,
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-tabs-wrapper {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-header h1,
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-tab,
+html[data-oa-admin-theme="dark"] body.site-health-php .site-health-progress-loading {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-tab.active {
+    color: var(--oa-admin-accent-dark);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-accordion,
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-accordion-heading,
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-accordion-trigger,
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-accordion-panel {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-accordion-trigger:hover,
+html[data-oa-admin-theme="dark"] body.site-health-php .health-check-accordion-trigger:focus {
+    color: var(--oa-admin-accent-dark);
+    background: var(--oa-admin-surface-hover);
+}
+
+/*
+Gravity Forms
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.gform-admin-screen #wpcontent,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen #wpbody-content,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen .gforms_edit_form {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.gform-admin-screen .gform-admin-header,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen .gform-table,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen .gforms_form_settings_wrap table,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen .gform-settings-panel,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen .gform-settings__wrapper,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen .gform-settings-panel__content,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen .gform-card {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table thead td,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table thead th,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table tfoot td,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table tfoot th {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table tbody tr,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table tbody td,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table tbody th {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table tbody tr:nth-child(odd) td,
+html[data-oa-admin-theme="dark"] body.gform-admin-screen table tbody tr:nth-child(odd) th {
+    background: var(--oa-admin-surface-subtle);
+}
+
+/*
+Rank Math
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.rank-math-page #wpcontent,
+html[data-oa-admin-theme="dark"] body.rank-math-page #wpbody-content,
+html[data-oa-admin-theme="dark"] body.rank-math-page #rank-math-dashboard-page,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-wrap {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-header,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-tabs,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-tab-content,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-module,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box footer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box footer,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-tabs {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box h2,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box h3,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-module h2,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-module h3 {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box p,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-module p {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+Wordfence
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wpcontent,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wpbody-content,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard .wf-block,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard .wf-block-content,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard .wf-block-header,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard .wf-dashboard-item,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard .wf-dashboard-item-content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard h1,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard h2,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard h3,
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard h4 {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard p {
+    color: var(--oa-admin-text-soft);
+}
+
 @media screen and (max-width: 960px) {
 
     body.wp-admin #wpcontent {
@@ -1590,6 +1984,16 @@ html[data-oa-admin-theme="dark"] body.wp-admin .edit-attachment-frame .edit-medi
     body.wp-admin #screen-meta,
     body.wp-admin #screen-meta-links {
         margin-right: 16px;
+    }
+
+    body.wp-admin.upload-php .media-toolbar.wp-filter {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    body.wp-admin.upload-php .media-toolbar.wp-filter .media-toolbar-primary {
+        grid-column: 1 / -1;
+        grid-template-columns: auto minmax(0, 1fr);
+        width: 100%;
     }
 
 }
@@ -1607,6 +2011,21 @@ html[data-oa-admin-theme="dark"] body.wp-admin .edit-attachment-frame .edit-medi
     body.wp-admin #screen-meta,
     body.wp-admin #screen-meta-links {
         margin-right: 10px;
+    }
+
+    body.wp-admin.upload-php .media-toolbar.wp-filter {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    body.wp-admin.upload-php .media-toolbar.wp-filter .media-toolbar-primary {
+        grid-column: auto;
+    }
+
+    body.wp-admin.upload-php .media-toolbar.wp-filter .media-toolbar-secondary select {
+        flex: 1 1 150px;
+        max-width: none;
     }
 
     body.wp-admin .wp-list-table,
