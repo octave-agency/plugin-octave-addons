@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.27.1
+Stable tag:        2.27.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.27.2 =
+* Removed the WordPress logo menu from the admin bar everywhere, with no setting required.
 
 = 2.27.1 =
 * Kept notices raised by other plugins above the interface instead of letting WordPress drop them inside a module's header, by giving the notice wrap its own heading and the core wp-header-end marker.
