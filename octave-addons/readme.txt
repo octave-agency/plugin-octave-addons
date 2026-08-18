@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.24.1
+Stable tag:        2.25.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.25.0 =
+* Moved a category's URL slug below its Public archives switch and hid it while archives are off, since the slug is unused then; the required flag is lifted with it so an unseen field can no longer block a save.
+* Labelled a custom category's admin submenu with its own name instead of a fixed "Categories", dropping the owning post type's name from the front so "Properties Listing Types" reads as "Listing Types".
 
 = 2.24.1 =
 * Spaced the content type tab strip away from the panel below it.

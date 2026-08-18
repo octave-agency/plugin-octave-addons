@@ -1284,6 +1284,45 @@ ADMIN INTERACTIONS
 	};
 
 	/*
+	CONDITIONAL FIELDS
+	-- Shows or hides a dependent field. The required flag is lifted while the
+	-- field is out of view, because the browser refuses to submit a form held up
+	-- by a control nobody can see or reach.
+	---------------------------------------------------------- */
+
+	function setFieldVisibility( container, isVisible ) {
+
+		if ( ! container ) {
+
+			return;
+
+		}
+
+		container.classList.toggle( 'oa-hidden', ! isVisible );
+
+		container.querySelectorAll( 'input, select, textarea' ).forEach( function ( field ) {
+
+			if ( ! isVisible && field.required ) {
+
+				field.dataset.oaRequired = 'true';
+				field.required = false;
+
+				return;
+
+			}
+
+			if ( isVisible && 'true' === field.dataset.oaRequired ) {
+
+				field.required = true;
+				delete field.dataset.oaRequired;
+
+			}
+
+		} );
+
+	}
+
+	/*
 	CONTENT TYPE TABS
 	-- Switches between the Post Types, Categories and Content Management views.
 	-- The open tab is restored from the URL hash, then from the last visit so it
@@ -1569,11 +1608,11 @@ ADMIN INTERACTIONS
 			var urls = item.querySelector( '.oa-cpt-urls' );
 			var archiveToggle = item.querySelector( '.oa-cpt-archive-toggle' );
 
-			urls.classList.toggle( 'oa-hidden', ! queryableToggle.checked );
+			setFieldVisibility( urls, queryableToggle.checked );
 
 			item.querySelectorAll( '.oa-cpt-archive-field' ).forEach( function ( field ) {
 
-				field.classList.toggle( 'oa-hidden', ! archiveToggle.checked );
+				setFieldVisibility( field, archiveToggle.checked );
 
 			} );
 
@@ -2109,11 +2148,25 @@ ADMIN INTERACTIONS
 			var typeInput = item.querySelector( '[data-field-type]' );
 			var scopeBadge = item.querySelector( '.oa-field-scope-badge' );
 			var contextAssignment = item.querySelector( '[data-context-assignment="true"]' );
+			var publicToggle = item.querySelector( '.oa-tax-public-toggle' );
+			var urlField = item.querySelector( '.oa-tax-url-field' );
 			var keyIsAutomatic = 'false' === item.dataset.saved;
 
 			function syncEnabled() {
 
 				item.classList.toggle( 'is-disabled', ! enabled.checked );
+
+			}
+
+			function syncPublicUrls() {
+
+				if ( ! publicToggle || ! urlField ) {
+
+					return;
+
+				}
+
+				setFieldVisibility( urlField, publicToggle.checked );
 
 			}
 
@@ -2357,6 +2410,14 @@ ADMIN INTERACTIONS
 				wireSubFields();
 
 			}
+
+			if ( publicToggle ) {
+
+				publicToggle.addEventListener( 'change', syncPublicUrls );
+
+			}
+
+			syncPublicUrls();
 
 			item.querySelectorAll( '[data-primary-assignment="true"]' ).forEach( function ( assignment ) {
 

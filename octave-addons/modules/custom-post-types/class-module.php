@@ -1743,9 +1743,9 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Plural name', 'octave-addons' ); ?></span><input type="text" data-role="title" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" placeholder="Project Categories" required></label>
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Singular name', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'singular_name' ) ); ?>" value="<?= esc_attr( (string) ( $taxonomy['singular_name'] ?? '' ) ); ?>" placeholder="Project Category" required></label>
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Taxonomy key', 'octave-addons' ); ?></span><input type="text" data-role="key" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'taxonomy' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="32" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>></label>
-						<label class="oa-cpt-field"><span><?php esc_html_e( 'URL slug', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'slug' ) ); ?>" value="<?= esc_attr( (string) ( $taxonomy['slug'] ?? '' ) ); ?>" placeholder="project-category" required></label>
 						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Hierarchical', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'hierarchical' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['hierarchical'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Enable parent and child terms like Categories.', 'octave-addons' ); ?></small></div>
-						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Public archives', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'public' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['public'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Expose term archive URLs and navigation options.', 'octave-addons' ); ?></small></div>
+						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Public archives', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" class="oa-tax-public-toggle" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'public' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['public'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Expose term archive URLs and navigation options.', 'octave-addons' ); ?></small></div>
+						<label class="oa-cpt-field oa-cpt-field--full oa-tax-url-field<?= empty( $taxonomy['public'] ) ? ' oa-hidden' : ''; ?>"><span><?php esc_html_e( 'URL slug', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'slug' ) ); ?>" value="<?= esc_attr( (string) ( $taxonomy['slug'] ?? '' ) ); ?>" placeholder="project-category" required><small><?php esc_html_e( 'The term archive URL path. Falls back to the singular name when left empty.', 'octave-addons' ); ?></small></label>
 					</div>
 				</fieldset>
 
@@ -2510,7 +2510,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			if ( ! empty( $taxonomy['enabled'] ) ) {
 
-				$this->register_custom_taxonomy( $taxonomy );
+				$this->register_custom_taxonomy( $taxonomy, $post_types );
 
 			}
 
@@ -2752,11 +2752,69 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
+	TAXONOMY MENU LABEL
+	-- Names the submenu entry under each post type. A taxonomy is normally named
+	-- after the type that owns it, so that leading post type name is dropped and
+	-- only the distinct part is left on the menu.
+	---------------------------------------------------------- */
+
+	protected function taxonomy_menu_label( array $definition, array $post_types ): string {
+
+		$label    = trim( (string) $definition['name'] );
+		$assigned = is_array( $definition['post_types'] ?? null ) ? $definition['post_types'] : [];
+		$owners   = [];
+
+		foreach ( $post_types as $post_type ) {
+
+			if ( ! in_array( $post_type['post_type'], $assigned, true ) ) {
+
+				continue;
+
+			}
+
+			$owners[] = trim( (string) $post_type['name'] );
+			$owners[] = trim( (string) $post_type['singular_name'] );
+
+		}
+
+		// Longest first, so a plural name is preferred over the singular inside it.
+		usort(
+			$owners,
+			static function ( string $a, string $b ): int {
+
+				return strlen( $b ) <=> strlen( $a );
+
+			}
+		);
+
+		foreach ( $owners as $owner ) {
+
+			if ( '' === $owner || 0 !== stripos( $label, $owner . ' ' ) ) {
+
+				continue;
+
+			}
+
+			$trimmed = trim( substr( $label, strlen( $owner ) ) );
+
+			if ( '' !== $trimmed ) {
+
+				return $trimmed;
+
+			}
+
+		}
+
+		return '' !== $label ? $label : __( 'Categories', 'octave-addons' );
+
+	}
+
+	/*
 	REGISTER CUSTOM TAXONOMY
 	-- Registers one reusable taxonomy against all selected post types.
 	---------------------------------------------------------- */
 
-	protected function register_custom_taxonomy( array $definition ): void {
+	protected function register_custom_taxonomy( array $definition, array $post_types = [] ): void {
 
 		$taxonomy = $definition['taxonomy'];
 		$name     = $definition['name'];
@@ -2772,7 +2830,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'update_item'       => sprintf( __( 'Update %s', 'octave-addons' ), $singular ),
 			'add_new_item'      => sprintf( __( 'Add New %s', 'octave-addons' ), $singular ),
 			'new_item_name'     => sprintf( __( 'New %s Name', 'octave-addons' ), $singular ),
-			'menu_name'         => __( 'Categories', 'octave-addons' ),
+			'menu_name'         => $this->taxonomy_menu_label( $definition, $post_types ),
 		];
 
 		register_taxonomy(
