@@ -51,6 +51,8 @@ html[data-oa-admin-theme="dark"] {
     --oa-admin-on-accent: #07100C;
     --oa-admin-check-filter: brightness(0);
     --oa-admin-focus-ring: rgba(99, 169, 245, 0.32);
+    --oa-admin-danger: #FF858C;
+    --oa-admin-warning: #F6B95F;
     --oa-admin-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
     --oa-admin-shadow-raised: 0 18px 50px rgba(0, 0, 0, 0.34);
 }
@@ -1195,6 +1197,102 @@ body.wp-admin.block-editor-page .block-editor-block-toolbar .components-toolbar-
 }
 
 /*
+Gutenberg sidebar controls
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header h1,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header h2,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header h3,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header h4,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header .components-heading,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header .components-text,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header .components-button,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__body-title,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__body-title .components-button {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header svg,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__body-title svg {
+    color: inherit;
+    fill: currentColor;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-heading,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-toggle-control__label,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-checkbox-control__label,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-radio-control__label,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-radio-control__option,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-font-size-picker__header,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-unit-control__label,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-border-control__label,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-tools-panel-header,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page fieldset legend {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-button.is-link:not(.is-destructive),
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-button.is-tertiary:not(.is-destructive) {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-button.is-destructive,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-button.is-link.is-destructive {
+    color: var(--oa-admin-danger);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-form-token-field__input-container,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-toggle-group-control,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-custom-select-control__button {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__toggle {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__toggle:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__toggle:focus {
+    color: var(--oa-admin-accent-dark);
+    background: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__preview {
+    border-color: var(--oa-admin-border-strong);
+    outline-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__action,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__actions:not(.editor-post-featured-image__actions-missing-image) .editor-post-featured-image__action {
+    color: var(--oa-admin-text);
+    background: rgba(25, 31, 38, 0.9);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__action:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__action:focus {
+    color: var(--oa-admin-accent-dark);
+    background: rgba(34, 43, 53, 0.96);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image__actions-missing-image .editor-post-featured-image__action {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-featured-image .components-drop-zone__content {
+    color: var(--oa-admin-text);
+    background: rgba(25, 31, 38, 0.94);
+    border-color: var(--oa-admin-accent);
+}
+
+/*
 MEDIA LIBRARY
 ---------------------------------------------------------- */
 
@@ -1958,7 +2056,7 @@ html[data-oa-admin-theme="dark"] body.wp-admin .widefat th.sorted.desc .sorting-
 }
 
 html[data-oa-admin-theme="dark"] body.wp-admin .manage-menus,
-html[data-oa-admin-theme="dark"] body.wp-admin .nav-menus-php #post-body,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php #post-body,
 html[data-oa-admin-theme="dark"] body.wp-admin #nav-menu-header,
 html[data-oa-admin-theme="dark"] body.wp-admin #nav-menu-footer,
 html[data-oa-admin-theme="dark"] body.wp-admin .menu-item-handle,
@@ -1974,6 +2072,282 @@ html[data-oa-admin-theme="dark"] body.wp-admin #nav-menu-header,
 html[data-oa-admin-theme="dark"] body.wp-admin #nav-menu-footer,
 html[data-oa-admin-theme="dark"] body.wp-admin .accordion-section-title {
     background: var(--oa-admin-surface-soft);
+}
+
+/*
+Core text and utility states
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .subsubsub .count,
+html[data-oa-admin-theme="dark"] body.wp-admin span.count,
+html[data-oa-admin-theme="dark"] body.wp-admin .displaying-num,
+html[data-oa-admin-theme="dark"] body.wp-admin .description,
+html[data-oa-admin-theme="dark"] body.wp-admin .howto {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .button-link:not(.button-link-delete):not(.is-destructive),
+html[data-oa-admin-theme="dark"] body.wp-admin .row-actions .editinline,
+html[data-oa-admin-theme="dark"] body.wp-admin .oa-admin-footer-link {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .submitdelete,
+html[data-oa-admin-theme="dark"] body.wp-admin .delete-tag,
+html[data-oa-admin-theme="dark"] body.wp-admin .button-link-delete,
+html[data-oa-admin-theme="dark"] body.wp-admin .is-destructive {
+    color: var(--oa-admin-danger);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin code,
+html[data-oa-admin-theme="dark"] body.wp-admin kbd {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin td.colspanchange,
+html[data-oa-admin-theme="dark"] body.wp-admin .no-items td {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface);
+}
+
+/*
+Plugin and theme discovery
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.plugin-install-php .wp-filter,
+html[data-oa-admin-theme="dark"] body.wp-admin.theme-install-php .wp-filter,
+html[data-oa-admin-theme="dark"] body.wp-admin.plugin-install-php .popular-tags {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.plugin-install-php .wp-filter a,
+html[data-oa-admin-theme="dark"] body.wp-admin.theme-install-php .wp-filter a,
+html[data-oa-admin-theme="dark"] body.wp-admin.plugin-install-php .popular-tags a {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.plugin-install-php .wp-filter .current,
+html[data-oa-admin-theme="dark"] body.wp-admin.theme-install-php .wp-filter .current {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme .theme-actions .button:not(.button-primary) {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-wrap,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-header,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-about,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-actions {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-name,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-version,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-author,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-description {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-tags,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-update,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .parent-theme {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .close,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .left,
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .right {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+/*
+Navigation menus
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php #side-sortables,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .tabs-panel,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .menu-settings,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .bulk-select-button,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .menu-item-bar,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .menu-item-settings {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .nav-tab,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .accordion-section-title,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .menu-item-handle {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .nav-tab-active,
+html[data-oa-admin-theme="dark"] body.wp-admin.nav-menus-php .accordion-section.open .accordion-section-title {
+    color: var(--oa-admin-accent-dark);
+    background: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-accent);
+}
+
+/*
+Block-based admin interfaces
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .edit-widgets-header,
+html[data-oa-admin-theme="dark"] body.wp-admin .interface-interface-skeleton__footer,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-breadcrumb,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-document-bar,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .edit-post-meta-boxes-main,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-layout__toggle-publish-panel {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-visual-editor.edit-post-visual-editor.is-iframed {
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .edit-widgets-header .components-text,
+html[data-oa-admin-theme="dark"] body.wp-admin .edit-widgets-header .components-truncate,
+html[data-oa-admin-theme="dark"] body.wp-admin .edit-widgets-welcome-guide__heading,
+html[data-oa-admin-theme="dark"] body.wp-admin .interface-interface-skeleton__footer .components-text,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-breadcrumb .components-button,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-document-bar .components-text,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-document-bar .components-truncate,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .edit-post-meta-boxes-main .handlediv,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .edit-post-meta-boxes-main h2 {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-form-toggle:not(.is-checked) .components-form-toggle__track {
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.font-library-php .boot-layout__stage {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+/*
+Privacy, health, import and information screens
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.options-privacy-php .privacy-settings-header,
+html[data-oa-admin-theme="dark"] body.wp-admin.options-privacy-php .privacy-settings-tabs-wrapper {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.options-privacy-php .privacy-settings-tab {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.options-privacy-php .privacy-settings-tab.active {
+    color: var(--oa-admin-accent-dark);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.import-php .importer-title,
+html[data-oa-admin-theme="dark"] body.wp-admin.site-health-php .badge.blue {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.site-health-php .badge.blue {
+    background: var(--oa-admin-accent-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.options-general-php #site-icon-preview {
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container > .about__header,
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container > .about__header-navigation,
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container .about__section.has-subtle-background-color {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container .about__header-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container .about__section h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container .about__section h3,
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container span.title {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container .about__header-navigation a,
+html[data-oa-admin-theme="dark"] body.wp-admin .about__container .about__section p {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+Customizer controls
+-- The preview iframe is deliberately excluded so the front end stays accurate.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-customizer,
+html[data-oa-admin-theme="dark"] body.wp-customizer #customize-controls,
+html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-sidebar,
+html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-header,
+html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-sidebar-content,
+html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-footer,
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-pane-parent,
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-pane-child,
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-section-title {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-customizer #customize-info .accordion-section-title,
+html[data-oa-admin-theme="dark"] body.wp-customizer .control-section .accordion-section-title,
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-panel-back,
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-section-back {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-control-title,
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-section-title h3,
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-panel-title {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-control-description,
+html[data-oa-admin-theme="dark"] body.wp-customizer .description {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-customizer input:not([type="checkbox"]):not([type="radio"]),
+html[data-oa-admin-theme="dark"] body.wp-customizer select,
+html[data-oa-admin-theme="dark"] body.wp-customizer textarea {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-customizer .button:not(.button-primary) {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border-strong);
 }
 
 /*
@@ -2013,6 +2387,126 @@ html[data-oa-admin-theme="dark"] body.index-php #onetap_missing_alt_text .onetap
 }
 
 html[data-oa-admin-theme="dark"] body.index-php #onetap_missing_alt_text .onetap-dashboard-missing-alt__desc {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-dashboard-block,
+html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-widget-footer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget h3,
+html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget h4,
+html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-blog-title,
+html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .text-large {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-tooltip,
+html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-tooltip::before {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-block,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-chart-block,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-block-settings,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-email-stats-block,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-summary-report-email-block,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-modal,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-settings-menu {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite h2,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite h3,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite h4,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite p,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite label {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-email-stats-table-cell,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-email-stats-table-cell-container {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-dismiss-chart-upgrade,
+html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-summary-report-email-dismiss {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_activity h3 {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_activity .activity-block,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_activity ul,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_activity li {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_activity li:nth-child(odd) {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .community-events,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .community-events-results,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .event,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .event-none,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .rss-widget {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .event-city,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .event-date,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .event-date-time,
+html[data-oa-admin-theme="dark"] body.index-php #dashboard_primary .event-none {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .inside > h2 {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .wf-logo {
+    display: inline-block;
+    padding: 8px;
+    background: #F6F7F7;
+    border-radius: 3px;
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .wf-striped-table,
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .wf-striped-table thead,
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .wf-striped-table tbody,
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .wf-striped-table tr,
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .wf-striped-table th,
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .wf-striped-table td {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #wordfence_activity_report_widget .wf-striped-table th {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #cookieyes_dashboard_widget .cky-center-total-consents-value {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.index-php #cookieyes_dashboard_widget .cky-center-total-consents-label,
+html[data-oa-admin-theme="dark"] body.index-php #cookieyes_dashboard_widget .cky-legend-item {
     color: var(--oa-admin-text-soft);
 }
 

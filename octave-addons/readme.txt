@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.29.17
+Stable tag:        2.30.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,15 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.30.0 =
+* Completed a full core WordPress dark-mode regression pass across lists, Appearance, block editors, the Customizer, plugin and theme installers, privacy, Site Health, import, personal-data, and About screens.
+
+= 2.29.19 =
+* Completed an expanded Dashboard-card dark-mode audit for Rank Math, WP Mail SMTP, Activity, Events, Wordfence, CookieYes, Object Cache Pro, OneTap, and native WordPress widgets.
+
+= 2.29.18 =
+* Restored Featured Image action labels, panel-header titles and icons, and remaining Gutenberg sidebar-control contrast in dark mode.
 
 = 2.29.17 =
 * Restored Gutenberg header and block-toolbar icon contrast and standardised hover, focus, active, pressed, disabled, and separator states in both themes.
