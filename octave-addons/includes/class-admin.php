@@ -138,6 +138,8 @@ class Octave_Addons_Admin {
 			'postTypeMovedText'   => __( 'Post type order updated.', 'octave-addons' ),
 			'newPostTypeText'     => __( 'New post type', 'octave-addons' ),
 			'newSubFieldText'     => __( 'New item field', 'octave-addons' ),
+			'renameKeyTitle'         => __( 'Edit this key?', 'octave-addons' ),
+			'renameKeyAction'        => __( 'Edit key', 'octave-addons' ),
 			'removeDefinitionTitle'  => __( 'Remove definition?', 'octave-addons' ),
 			'removeDefinitionText'   => __( 'Saved content values and terms will remain in the database, but this definition will no longer be registered.', 'octave-addons' ),
 			'removeDefinitionAction' => __( 'Remove', 'octave-addons' ),
@@ -519,6 +521,30 @@ class Octave_Addons_Admin {
 
 		}
 
+		// Settings API notices keep their WordPress styling, so they are printed
+		// in their own wrap above the plugin interface rather than inside it.
+		$notices = '';
+
+		if ( 'dashboard' !== $active_tab ) {
+
+			ob_start();
+			settings_errors();
+			$notices = trim( (string) ob_get_clean() );
+
+		}
+
+		if ( '' !== $notices ) :
+
+		?>
+
+		<div class="wrap oa-notices">
+			<?= $notices; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Settings API markup, already escaped. ?>
+		</div>
+
+		<?php
+
+		endif;
+
 		?>
 
 		<div class="wrap octave-addons-wrap">
@@ -709,8 +735,6 @@ class Octave_Addons_Admin {
 					endif;
 
 					else :
-
-						settings_errors();
 
 					if ( empty( $all ) ) :
 

@@ -140,6 +140,12 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			$this->preserved_collection( $input, 'custom_fields' )
 		);
 
+		// A renamed post type key would otherwise read as an unknown one, so the
+		// assignments pointing at the old key are moved across before validation.
+		$renamed    = $this->renamed_post_types( $input['custom_post_types'] ?? [] );
+		$taxonomies = $this->apply_post_type_renames( $taxonomies, $renamed );
+		$fields     = $this->apply_post_type_renames( $fields, $renamed );
+
 		$submitted_post_types = $this->submitted_row_count( $input['custom_post_types'] ?? [] );
 		$submitted_taxonomies = $this->submitted_row_count( $taxonomies );
 		$submitted_fields     = $this->submitted_row_count( $fields );
@@ -169,6 +175,99 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'custom_taxonomies' => $taxonomies,
 			'custom_fields'     => $fields,
 		];
+
+	}
+
+	/*
+	RENAMED POST TYPES
+	-- Maps the key each unlocked post type was saved under to the key it now
+	-- carries, so a rename is visible to everything that references it.
+	---------------------------------------------------------- */
+
+	protected function renamed_post_types( $post_types ): array {
+
+		if ( ! is_array( $post_types ) ) {
+
+			return [];
+
+		}
+
+		$renamed = [];
+
+		foreach ( $post_types as $index => $post_type ) {
+
+			if ( ! is_array( $post_type ) || ! isset( $post_type['original_post_type'] ) ) {
+
+				continue;
+
+			}
+
+			$original = sanitize_key( wp_unslash( (string) $post_type['original_post_type'] ) );
+			$key      = $this->sanitize_post_type_key( $post_type['post_type'] ?? '', (int) $index );
+
+			if ( '' === $original || $original === $key ) {
+
+				continue;
+
+			}
+
+			$renamed[ $original ] = $key;
+
+		}
+
+		return $renamed;
+
+	}
+
+	/*
+	APPLY POST TYPE RENAMES
+	-- Rewrites taxonomy and field assignments that still name a renamed post
+	-- type, which the normalisers would otherwise drop as unavailable.
+	---------------------------------------------------------- */
+
+	protected function apply_post_type_renames( array $rows, array $renamed ): array {
+
+		if ( empty( $renamed ) ) {
+
+			return $rows;
+
+		}
+
+		foreach ( $rows as $index => $row ) {
+
+			if ( ! is_array( $row ) ) {
+
+				continue;
+
+			}
+
+			if ( isset( $row['post_types'] ) && is_array( $row['post_types'] ) ) {
+
+				foreach ( $row['post_types'] as $slot => $assigned ) {
+
+					$assigned = sanitize_key( wp_unslash( (string) $assigned ) );
+
+					if ( isset( $renamed[ $assigned ] ) ) {
+
+						$rows[ $index ]['post_types'][ $slot ] = $renamed[ $assigned ];
+
+					}
+
+				}
+
+			}
+
+			$owner = sanitize_key( wp_unslash( (string) ( $row['owner_post_type'] ?? '' ) ) );
+
+			if ( '' !== $owner && isset( $renamed[ $owner ] ) ) {
+
+				$rows[ $index ]['owner_post_type'] = $renamed[ $owner ];
+
+			}
+
+		}
+
+		return $rows;
 
 	}
 
@@ -1581,10 +1680,28 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 							<small><?php esc_html_e( 'Used for Add New and Edit labels.', 'octave-addons' ); ?></small>
 						</label>
 
-						<label class="oa-cpt-field oa-cpt-field--full">
+						<label class="oa-cpt-field oa-cpt-field--full<?= $saved ? ' oa-key-field' : ''; ?>">
 							<span><?php esc_html_e( 'Post type key', 'octave-addons' ); ?></span>
-							<input type="text" data-cpt-field="post_type" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_type' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="20" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>>
-							<small><?= $saved ? esc_html__( 'Permanent after saving to protect existing content.', 'octave-addons' ) : esc_html__( 'Use an oa_ prefix; maximum 20 characters.', 'octave-addons' ); ?></small>
+							<span class="oa-key-control">
+								<input type="text" data-cpt-field="post_type" name="<?= esc_attr( $this->cpt_field_name( $index, 'post_type' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="20" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>>
+
+								<?php
+
+								if ( $saved ) {
+
+									$this->render_key_unlock(
+										$this->cpt_field_name( $index, 'original_post_type' ),
+										$key,
+										__( 'Edit post type key', 'octave-addons' ),
+										__( 'Renaming the key registers a new post type. Posts already saved under the old key stay in the database but are hidden until that key is registered again. Category and field assignments follow the rename.', 'octave-addons' )
+									);
+
+								}
+
+								?>
+
+							</span>
+							<small><?= $saved ? esc_html__( 'Locked after saving to protect existing content. Use the edit button to rename it.', 'octave-addons' ) : esc_html__( 'Use an oa_ prefix; maximum 20 characters.', 'octave-addons' ); ?></small>
 						</label>
 
 						<div class="oa-cpt-field oa-cpt-field--full oa-cpt-icon-field">
@@ -1834,6 +1951,25 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
+	RENDER KEY UNLOCK
+	-- Prints the edit control that reopens a key locked by the first save, and
+	-- stores the key it was locked with so a rename can be traced on save.
+	---------------------------------------------------------- */
+
+	protected function render_key_unlock( string $original_name, string $key, string $label, string $warning ): void {
+
+		?>
+
+		<input type="hidden" data-role="original-key" name="<?= esc_attr( $original_name ); ?>" value="<?= esc_attr( $key ); ?>">
+		<button type="button" class="oa-key-edit" data-warning="<?= esc_attr( $warning ); ?>" aria-label="<?= esc_attr( $label ); ?>" title="<?= esc_attr( $label ); ?>">
+			<span class="dashicons dashicons-edit" aria-hidden="true"></span>
+		</button>
+
+		<?php
+
+	}
+
+	/*
 	RENDER TAXONOMY CARD
 	-- Outputs one taxonomy definition with friendly assignment controls.
 	---------------------------------------------------------- */
@@ -1863,7 +1999,43 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					<div class="oa-cpt-fields">
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Plural name', 'octave-addons' ); ?></span><input type="text" data-role="title" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" placeholder="Project Categories" required></label>
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Singular name', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'singular_name' ) ); ?>" value="<?= esc_attr( (string) ( $taxonomy['singular_name'] ?? '' ) ); ?>" placeholder="Project Category" required></label>
-						<label class="oa-cpt-field"><span><?php esc_html_e( 'Taxonomy key', 'octave-addons' ); ?></span><input type="text" data-role="key" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'taxonomy' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="32" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>></label>
+						<label class="oa-cpt-field<?= $saved ? ' oa-key-field' : ''; ?>">
+							<span><?php esc_html_e( 'Taxonomy key', 'octave-addons' ); ?></span>
+							<span class="oa-key-control">
+								<input type="text" data-role="key" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'taxonomy' ) ); ?>" value="<?= esc_attr( $key ); ?>" maxlength="32" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>>
+
+								<?php
+
+								if ( $saved ) {
+
+									$this->render_key_unlock(
+										$this->collection_field_name( 'custom_taxonomies', $index, 'original_taxonomy' ),
+										$key,
+										__( 'Edit taxonomy key', 'octave-addons' ),
+										__( 'Renaming the key registers a new taxonomy. Terms already saved under the old key stay in the database but are hidden until that key is registered again.', 'octave-addons' )
+									);
+
+								}
+
+								?>
+
+							</span>
+
+							<?php
+
+							if ( $saved ) :
+
+							?>
+
+							<small><?php esc_html_e( 'Locked after saving to protect existing terms. Use the edit button to rename it.', 'octave-addons' ); ?></small>
+
+							<?php
+
+							endif;
+
+							?>
+
+						</label>
 						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Hierarchical', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'hierarchical' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['hierarchical'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Enable parent and child terms like Categories.', 'octave-addons' ); ?></small></div>
 						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Public archives', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" class="oa-tax-public-toggle" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'public' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['public'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Expose term archive URLs and navigation options.', 'octave-addons' ); ?></small></div>
 						<label class="oa-cpt-field oa-cpt-field--full oa-tax-url-field<?= empty( $taxonomy['public'] ) ? ' oa-hidden' : ''; ?>"><span><?php esc_html_e( 'URL slug', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'slug' ) ); ?>" value="<?= esc_attr( (string) ( $taxonomy['slug'] ?? '' ) ); ?>" placeholder="project-category" required><small><?php esc_html_e( 'The term archive URL path. Falls back to the singular name when left empty.', 'octave-addons' ); ?></small></label>

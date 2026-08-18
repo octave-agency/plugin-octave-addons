@@ -229,7 +229,7 @@ ADMIN INTERACTIONS
 	}
 
 	// A save that came back with something wrong is worth landing on.
-	var failureNotice = document.querySelector( '.oa-content .notice-error' );
+	var failureNotice = document.querySelector( '.oa-notices .notice-error, .oa-content .notice-error' );
 
 	if ( failureNotice ) {
 
@@ -1447,6 +1447,81 @@ ADMIN INTERACTIONS
 		referer.value = url;
 
 	}
+
+	/*
+	KEY UNLOCK
+	-- A definition key is read-only once it has been saved. The edit button
+	-- reopens it after a confirmation that spells out what a rename costs, and
+	-- a focused editor addressed by the old key follows the new one on save.
+	---------------------------------------------------------- */
+
+	function retargetRenamedDefinition( originalKey, newKey ) {
+
+		var url = new URL( window.location.href );
+
+		if ( '' === originalKey || '' === newKey || url.searchParams.get( 'definition' ) !== originalKey ) {
+
+			return;
+
+		}
+
+		url.searchParams.set( 'definition', newKey );
+		url.searchParams.delete( 'settings-updated' );
+		retargetSaveRedirect( url.toString() );
+
+	}
+
+	document.querySelectorAll( '.oa-key-field' ).forEach( function ( field ) {
+
+		var button = field.querySelector( '.oa-key-edit' );
+		var input = field.querySelector( 'input[type="text"]' );
+		var original = field.querySelector( '[data-role="original-key"]' );
+
+		if ( ! button || ! input || ! original ) {
+
+			return;
+
+		}
+
+		button.addEventListener( 'click', function () {
+
+			if ( ! input.readOnly ) {
+
+				input.focus();
+				input.select();
+
+				return;
+
+			}
+
+			window.oaConfirm( {
+				title: oaAdmin.renameKeyTitle,
+				message: button.dataset.warning,
+				confirmText: oaAdmin.renameKeyAction
+			} ).then( function ( confirmed ) {
+
+				if ( ! confirmed ) {
+
+					return;
+
+				}
+
+				input.readOnly = false;
+				field.classList.add( 'is-unlocked' );
+				input.focus();
+				input.select();
+
+			} );
+
+		} );
+
+		input.addEventListener( 'input', function () {
+
+			retargetRenamedDefinition( original.value, input.value );
+
+		} );
+
+	} );
 
 	/*
 	CONDITIONAL FIELDS

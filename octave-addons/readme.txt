@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.26.0
+Stable tag:        2.27.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.27.0 =
+* Unlocked a saved post type or category key behind an edit button, with a confirmation that says what a rename costs, so a key can be corrected without deleting and rebuilding the definition.
+* Carried category and field assignments across a renamed post type key instead of dropping them as unknown, and kept a focused category editor pointed at the definition after its key changed.
+* Printed WordPress settings notices in their own wrap above the plugin interface, so they keep their native styling instead of half-matching the dark panels.
 
 = 2.26.0 =
 * Returned to the category or field overview after deleting the definition you were editing, instead of leaving you on an editor for something that no longer exists, and confirmed the deletion there.

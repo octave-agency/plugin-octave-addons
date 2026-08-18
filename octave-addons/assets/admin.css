@@ -3613,6 +3613,58 @@ CUSTOM POST TYPE EDITOR
     line-height: 1.4;
 }
 
+/*
+Locked keys
+---------------------------------------------------------- */
+
+.oa-key-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.oa-key-control input[type="text"] {
+    flex: 1;
+    min-width: 0;
+}
+
+.oa-key-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    color: var(--oa-text-muted);
+    border: 1px solid var(--oa-border);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.oa-key-edit:hover,
+.oa-key-edit:focus-visible {
+    color: var(--oa-accent);
+    border-color: var(--oa-accent);
+    background: var(--oa-accent-bg);
+    outline: none;
+}
+
+.oa-key-edit .dashicons {
+    width: 17px;
+    height: 17px;
+    font-size: 17px;
+}
+
+.oa-key-field.is-unlocked .oa-key-edit {
+    color: var(--oa-accent);
+    border-color: var(--oa-accent);
+    background: var(--oa-accent-bg);
+}
+
 .oa-cpt-field textarea {
     resize: vertical;
 }
