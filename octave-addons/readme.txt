@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.23.0
+Stable tag:        2.24.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -64,6 +64,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.24.0 =
+* Fixed the post type, category, and field key fields swallowing an underscore as it was typed; a trailing separator is now kept until the field is left.
+* Split the custom content area into Post Types, Categories, and Content Management tabs, with the open tab restored after saving.
+* Expanded the Categories and Content Management views into full searchable listings showing every key, type, assignment, and state instead of a capped preview.
+* Saved only the module group currently on screen, leaving every other module's stored settings untouched.
 
 = 2.23.0 =
 * Added a Publicly queryable switch beside Public on each custom post type, so a type can stay listed in Breakdance query and template pickers while its own frontend URLs stay unavailable.

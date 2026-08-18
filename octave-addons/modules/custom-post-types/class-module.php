@@ -19,7 +19,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	protected const PAGE_TAXONOMY          = 'octave_page_category';
 	protected const CASE_STUDY_POST_TYPE   = 'octave_case_study';
 	protected const CASE_STUDY_TAXONOMY    = 'octave_case_category';
-	protected const OVERVIEW_PREVIEW_LIMIT = 6;
 
 	protected static ?array $dashicons = null;
 
@@ -272,8 +271,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	RENDER SETTINGS
-	-- Displays built-in controls and stacked Post Types, Categories, and Content
-	-- management boxes.
+	-- Displays built-in controls and a tabbed view of Post Types, Categories,
+	-- and Content Management.
 	---------------------------------------------------------- */
 
 	public function render_settings( array $settings ): void {
@@ -361,43 +360,110 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			<span></span>
 		</div>
 
-		<div class="oa-cpt-section oa-custom-posts-box" id="oa-post-types">
-			<div class="oa-cpt-section-head">
-				<div>
-					<h3><?php esc_html_e( 'Post Types', 'octave-addons' ); ?></h3>
-					<p><?php esc_html_e( 'Add content areas, configure how they behave, and drag them into WordPress admin menu order.', 'octave-addons' ); ?></p>
-				</div>
-				<div class="oa-cpt-section-actions">
-					<button type="button" class="button oa-cpt-add">
-						<span class="oa-cpt-add-icon" aria-hidden="true">+</span>
-						<?php esc_html_e( 'Add post type', 'octave-addons' ); ?>
-					</button>
-				</div>
-			</div>
+		<?php
 
-			<div class="oa-cpt-list" data-empty-text="<?php esc_attr_e( 'No custom post types have been added.', 'octave-addons' ); ?>">
+		$tabs = [
+			[
+				'panel' => 'oa-post-types',
+				'icon'  => 'dashicons-screenoptions',
+				'label' => __( 'Post Types', 'octave-addons' ),
+				'count' => count( $custom_types ),
+			],
+			[
+				'panel' => 'oa-categories',
+				'icon'  => 'dashicons-category',
+				'label' => __( 'Categories', 'octave-addons' ),
+				'count' => count( $custom_taxonomies ),
+			],
+			[
+				'panel' => 'oa-content-management',
+				'icon'  => 'dashicons-feedback',
+				'label' => __( 'Content Management', 'octave-addons' ),
+				'count' => count( $custom_fields ),
+			],
+		];
+
+		?>
+
+		<div class="oa-content-tabs" data-oa-tabs>
+
+			<nav class="oa-content-tabs-nav" role="tablist" aria-label="<?php esc_attr_e( 'Custom content types', 'octave-addons' ); ?>">
 
 				<?php
 
-				foreach ( $custom_types as $index => $post_type ) {
+				foreach ( $tabs as $position => $tab ) :
 
-					$this->render_post_type_card( (string) $index, $post_type, true, $custom_taxonomies, $custom_fields );
-
-				}
+					$is_active = 0 === $position;
 
 				?>
 
-			</div>
-			<div class="oa-cpt-order-status screen-reader-text" role="status" aria-live="polite"></div>
+				<button type="button" role="tab" class="oa-content-tab<?= $is_active ? ' is-active' : ''; ?>" id="oa-content-tab-<?= esc_attr( $tab['panel'] ); ?>" data-oa-tab="<?= esc_attr( $tab['panel'] ); ?>" aria-controls="<?= esc_attr( $tab['panel'] ); ?>" aria-selected="<?= $is_active ? 'true' : 'false'; ?>" tabindex="<?= $is_active ? '0' : '-1'; ?>">
+					<span class="dashicons <?= esc_attr( $tab['icon'] ); ?>" aria-hidden="true"></span>
+					<span class="oa-content-tab-label"><?= esc_html( $tab['label'] ); ?></span>
+					<span class="oa-content-tab-count"><?= esc_html( number_format_i18n( $tab['count'] ) ); ?></span>
+				</button>
 
-			<template class="oa-cpt-template">
-				<?php $this->render_post_type_card( '__INDEX__', $template_values, false ); ?>
-			</template>
+				<?php
+
+				endforeach;
+
+				?>
+
+			</nav>
+
+			<div class="oa-content-tab-panel" id="oa-post-types" role="tabpanel" aria-labelledby="oa-content-tab-oa-post-types" tabindex="0">
+
+				<div class="oa-cpt-section oa-custom-posts-box">
+					<div class="oa-cpt-section-head">
+						<div>
+							<h3><?php esc_html_e( 'Post Types', 'octave-addons' ); ?></h3>
+							<p><?php esc_html_e( 'Add content areas, configure how they behave, and drag them into WordPress admin menu order.', 'octave-addons' ); ?></p>
+						</div>
+						<div class="oa-cpt-section-actions">
+							<button type="button" class="button oa-cpt-add">
+								<span class="oa-cpt-add-icon" aria-hidden="true">+</span>
+								<?php esc_html_e( 'Add post type', 'octave-addons' ); ?>
+							</button>
+						</div>
+					</div>
+
+					<div class="oa-cpt-list" data-empty-text="<?php esc_attr_e( 'No custom post types have been added.', 'octave-addons' ); ?>">
+
+						<?php
+
+						foreach ( $custom_types as $index => $post_type ) {
+
+							$this->render_post_type_card( (string) $index, $post_type, true, $custom_taxonomies, $custom_fields );
+
+						}
+
+						?>
+
+					</div>
+					<div class="oa-cpt-order-status screen-reader-text" role="status" aria-live="polite"></div>
+
+					<template class="oa-cpt-template">
+						<?php $this->render_post_type_card( '__INDEX__', $template_values, false ); ?>
+					</template>
+				</div>
+
+			</div>
+
+			<div class="oa-content-tab-panel oa-hidden" id="oa-categories" role="tabpanel" aria-labelledby="oa-content-tab-oa-categories" tabindex="0">
+
+				<?php $this->render_content_directory( $this->categories_directory( $custom_taxonomies, $post_type_options ) ); ?>
+
+			</div>
+
+			<div class="oa-content-tab-panel oa-hidden" id="oa-content-management" role="tabpanel" aria-labelledby="oa-content-tab-oa-content-management" tabindex="0">
+
+				<?php $this->render_content_directory( $this->content_directory( $custom_types, $custom_fields ) ); ?>
+
+			</div>
+
 		</div>
 
 		<?php
-
-		$this->render_content_overview( $custom_types, $custom_taxonomies, $custom_fields );
 
 		$this->render_preserved_collection( 'custom_taxonomies', $custom_taxonomies );
 		$this->render_preserved_collection( 'custom_fields', $custom_fields );
@@ -405,198 +471,398 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
-	RENDER CONTENT OVERVIEW
-	-- Renders compact stacked inventories beneath the editable Post Types box.
+	CATEGORIES DIRECTORY
+	-- Builds the full category listing shown in the Categories tab.
 	---------------------------------------------------------- */
 
-	protected function render_content_overview( array $post_types, array $taxonomies, array $fields ): void {
+	protected function categories_directory( array $taxonomies, array $post_type_options ): array {
 
-		$library_url   = $this->schema_url( 'library' );
-		$category_tips = [];
-		$content_areas = [];
+		$library_url = $this->schema_url( 'library' );
+		$rows        = [];
 
 		foreach ( $taxonomies as $taxonomy ) {
 
-			$category_tips[] = [
+			$assigned = [];
+
+			foreach ( $taxonomy['post_types'] as $assigned_key ) {
+
+				$assigned[] = $post_type_options[ $assigned_key ] ?? $assigned_key;
+
+			}
+
+			$tags = [
+				[
+					'label' => empty( $taxonomy['hierarchical'] ) ? __( 'Tag', 'octave-addons' ) : __( 'Category', 'octave-addons' ),
+				],
+				[
+					'label' => empty( $taxonomy['public'] ) ? __( 'Admin only', 'octave-addons' ) : __( 'Public', 'octave-addons' ),
+					'quiet' => true,
+				],
+			];
+
+			if ( empty( $taxonomy['enabled'] ) ) {
+
+				$tags[] = [
+					'label' => __( 'Disabled', 'octave-addons' ),
+					'muted' => true,
+				];
+
+			}
+
+			$rows[] = [
 				'label' => $taxonomy['name'],
-				'meta'  => empty( $taxonomy['hierarchical'] ) ? __( 'Tag', 'octave-addons' ) : __( 'Category', 'octave-addons' ),
+				'code'  => $taxonomy['taxonomy'],
+				'meta'  => empty( $assigned )
+					? __( 'Not assigned to a post type', 'octave-addons' )
+					: sprintf(
+						/* translators: %s: comma separated list of post type names. */
+						__( 'Used by %s', 'octave-addons' ),
+						implode( ', ', $assigned )
+					),
+				'tags'  => $tags,
 				'url'   => $this->schema_url( 'taxonomy', $taxonomy['taxonomy'] ),
 			];
 
 		}
 
-		$reusable_count = count( $this->reusable_fields( $fields ) );
-		$content_areas[] = [
-			'label' => __( 'Reusable Fields', 'octave-addons' ),
-			'meta'  => sprintf(
-				/* translators: %s: number of reusable fields. */
-				_n( '%s field', '%s fields', $reusable_count, 'octave-addons' ),
-				number_format_i18n( $reusable_count )
-			),
-			'url'   => $library_url . '#oa-reusable-content-fields',
+		return [
+			'icon'        => 'dashicons-category',
+			'title'       => __( 'Categories', 'octave-addons' ),
+			'summary'     => __( 'Reusable taxonomies that group entries inside one or more post types.', 'octave-addons' ),
+			'search'      => __( 'Search categories', 'octave-addons' ),
+			'no_results'  => __( 'No categories match that search.', 'octave-addons' ),
+			'actions'     => [
+				[
+					'label' => __( 'New category', 'octave-addons' ),
+					'url'   => $this->schema_url( 'taxonomy', 'new' ),
+				],
+				[
+					'label' => __( 'Manage categories', 'octave-addons' ),
+					'url'   => $library_url,
+					'quiet' => true,
+				],
+			],
+			'groups'      => [
+				[
+					'label' => __( 'All categories', 'octave-addons' ),
+					'empty' => __( 'No categories yet. Add one and assign it to a post type.', 'octave-addons' ),
+					'rows'  => $rows,
+				],
+			],
+		];
+
+	}
+
+	/*
+	CONTENT DIRECTORY
+	-- Builds the field listing shown in the Content Management tab, grouped by
+	-- the reusable library and then by each post type.
+	---------------------------------------------------------- */
+
+	protected function content_directory( array $post_types, array $fields ): array {
+
+		$library_url = $this->schema_url( 'library' );
+		$types       = $this->field_types();
+		$groups      = [
+			[
+				'label'  => __( 'Reusable Fields', 'octave-addons' ),
+				'action' => [
+					'label' => __( 'Manage', 'octave-addons' ),
+					'url'   => $library_url . '#oa-reusable-content-fields',
+				],
+				'empty'  => __( 'No reusable fields yet. Create one to share it across post types.', 'octave-addons' ),
+				'rows'   => $this->content_directory_rows( $this->reusable_fields( $fields ), $types, $library_url . '#oa-reusable-content-fields' ),
+			],
 		];
 
 		foreach ( $post_types as $post_type ) {
 
 			$key         = (string) $post_type['post_type'];
-			$field_count = count( $this->definitions_for_post_type( $fields, $key ) );
+			$editor_url  = $this->editor_url( $key, 'fields' );
 
-			$content_areas[] = [
-				'label' => sprintf( __( '%s Fields', 'octave-addons' ), $post_type['name'] ),
-				'meta'  => sprintf(
-					/* translators: %s: number of fields assigned to a post type. */
-					_n( '%s field', '%s fields', $field_count, 'octave-addons' ),
-					number_format_i18n( $field_count )
+			$groups[] = [
+				'label'  => sprintf(
+					/* translators: %s: post type name. */
+					__( '%s Fields', 'octave-addons' ),
+					$post_type['name']
 				),
-				'url'   => $this->editor_url( $key, 'fields' ),
+				'action' => [
+					'label' => __( 'Manage', 'octave-addons' ),
+					'url'   => $editor_url,
+				],
+				'empty'  => __( 'No fields yet for this post type.', 'octave-addons' ),
+				'rows'   => $this->content_directory_rows( $this->definitions_for_post_type( $fields, $key ), $types, $editor_url ),
 			];
+
+		}
+
+		return [
+			'icon'       => 'dashicons-feedback',
+			'title'      => __( 'Content Management', 'octave-addons' ),
+			'summary'    => __( 'Every content field, grouped by the reusable library and by the post type that owns it.', 'octave-addons' ),
+			'search'     => __( 'Search fields', 'octave-addons' ),
+			'no_results' => __( 'No fields match that search.', 'octave-addons' ),
+			'actions'    => [
+				[
+					'label' => __( 'New reusable field', 'octave-addons' ),
+					'url'   => add_query_arg( 'add', 'field', $library_url ),
+				],
+				[
+					'label' => __( 'Manage reusable fields', 'octave-addons' ),
+					'url'   => $library_url . '#oa-reusable-content-fields',
+					'quiet' => true,
+				],
+			],
+			'groups'     => $groups,
+		];
+
+	}
+
+	/*
+	CONTENT DIRECTORY ROWS
+	-- Turns field definitions into directory rows with their type and state.
+	---------------------------------------------------------- */
+
+	protected function content_directory_rows( array $fields, array $types, string $url ): array {
+
+		$rows = [];
+
+		foreach ( $fields as $field ) {
+
+			$tags = [
+				[
+					'label' => $types[ $field['type'] ] ?? $field['type'],
+				],
+			];
+
+			if ( ! empty( $field['required'] ) ) {
+
+				$tags[] = [
+					'label' => __( 'Required', 'octave-addons' ),
+					'quiet' => true,
+				];
+
+			}
+
+			if ( ! empty( $field['sub_fields'] ) ) {
+
+				$count = count( $field['sub_fields'] );
+
+				$tags[] = [
+					'label' => sprintf(
+						/* translators: %s: number of sub fields. */
+						_n( '%s sub field', '%s sub fields', $count, 'octave-addons' ),
+						number_format_i18n( $count )
+					),
+					'quiet' => true,
+				];
+
+			}
+
+			if ( empty( $field['enabled'] ) ) {
+
+				$tags[] = [
+					'label' => __( 'Disabled', 'octave-addons' ),
+					'muted' => true,
+				];
+
+			}
+
+			$rows[] = [
+				'label' => $field['label'],
+				'code'  => $field['name'],
+				'meta'  => $field['description'],
+				'tags'  => $tags,
+				'url'   => $url,
+			];
+
+		}
+
+		return $rows;
+
+	}
+
+	/*
+	RENDER CONTENT DIRECTORY
+	-- Outputs one expanded, filterable listing for a content tab.
+	---------------------------------------------------------- */
+
+	protected function render_content_directory( array $directory ): void {
+
+		$total = 0;
+
+		foreach ( $directory['groups'] as $group ) {
+
+			$total += count( $group['rows'] );
 
 		}
 
 		?>
 
-		<div class="oa-management-stack">
+		<section class="oa-content-directory" data-oa-directory>
 
-			<?php
-
-			$this->render_overview_card(
-				[
-					'icon'    => 'dashicons-category',
-					'title'   => __( 'Categories', 'octave-addons' ),
-					'summary' => __( 'Reusable taxonomies that group entries inside one or more post types.', 'octave-addons' ),
-					'items'   => $category_tips,
-					'empty'   => __( 'No categories yet. Add one and assign it to a post type.', 'octave-addons' ),
-					'more'    => $library_url,
-					'actions' => [
-						[
-							'label' => __( 'New category', 'octave-addons' ),
-							'url'   => $this->schema_url( 'taxonomy', 'new' ),
-						],
-						[
-							'label' => __( 'Manage categories', 'octave-addons' ),
-							'url'   => $library_url,
-							'quiet' => true,
-						],
-					],
-				]
-			);
-
-			$this->render_overview_card(
-				[
-					'icon'    => 'dashicons-feedback',
-					'title'   => __( 'Content', 'octave-addons' ),
-					'summary' => __( 'Choose reusable fields or manage the content schema for one post type.', 'octave-addons' ),
-					'items'   => $content_areas,
-					'empty'   => __( 'Choose Reusable Fields to create the first content field.', 'octave-addons' ),
-					'more'    => $this->settings_url() . '#oa-post-types',
-					'actions' => [
-						[
-							'label' => __( 'New reusable field', 'octave-addons' ),
-							'url'   => add_query_arg( 'add', 'field', $library_url ),
-						],
-						[
-							'label' => __( 'Manage reusable fields', 'octave-addons' ),
-							'url'   => $library_url . '#oa-reusable-content-fields',
-							'quiet' => true,
-						],
-					],
-				]
-			);
-
-			?>
-
-		</div>
-
-		<?php
-
-	}
-
-	/*
-	RENDER OVERVIEW CARD
-	-- Outputs one stacked inventory with its items capped to a readable preview.
-	---------------------------------------------------------- */
-
-	protected function render_overview_card( array $card ): void {
-
-		$items   = $card['items'];
-		$total   = count( $items );
-		$preview = array_slice( $items, 0, self::OVERVIEW_PREVIEW_LIMIT );
-		$hidden  = $total - count( $preview );
-
-		?>
-
-		<article class="oa-overview-card">
-			<div class="oa-overview-card-head">
-				<span class="oa-overview-card-icon" aria-hidden="true"><span class="dashicons <?= esc_attr( $card['icon'] ); ?>"></span></span>
-				<div class="oa-overview-card-copy">
-					<h4><?= esc_html( $card['title'] ); ?></h4>
-					<p><?= esc_html( $card['summary'] ); ?></p>
+			<header class="oa-content-directory-head">
+				<span class="oa-content-directory-icon" aria-hidden="true"><span class="dashicons <?= esc_attr( $directory['icon'] ); ?>"></span></span>
+				<div class="oa-content-directory-copy">
+					<h3><?= esc_html( $directory['title'] ); ?></h3>
+					<p><?= esc_html( $directory['summary'] ); ?></p>
 				</div>
-				<span class="oa-overview-count"><?= esc_html( number_format_i18n( $total ) ); ?></span>
-			</div>
+				<div class="oa-content-directory-actions">
 
-			<div class="oa-overview-items">
+					<?php
 
-				<?php
+					foreach ( $directory['actions'] as $action ) :
 
-				if ( 0 === $total ) :
+						$classes = 'oa-overview-action' . ( empty( $action['quiet'] ) ? '' : ' is-quiet' );
 
-				?>
+					?>
 
-				<p class="oa-overview-empty"><?= esc_html( $card['empty'] ); ?></p>
+					<a href="<?= esc_url( $action['url'] ); ?>" class="<?= esc_attr( $classes ); ?>"><?= empty( $action['quiet'] ) ? '<span aria-hidden="true">+</span>' : ''; ?><?= esc_html( $action['label'] ); ?></a>
 
-				<?php
+					<?php
 
-				endif;
+					endforeach;
 
-				foreach ( $preview as $item ) :
+					?>
 
-				?>
+				</div>
+			</header>
 
-				<a href="<?= esc_url( $item['url'] ); ?>" class="oa-overview-chip">
-					<strong><?= esc_html( $item['label'] ); ?></strong>
-					<span><?= esc_html( $item['meta'] ); ?></span>
-				</a>
+			<div class="oa-content-directory-tools">
+				<label class="oa-content-directory-search">
+					<span class="dashicons dashicons-search" aria-hidden="true"></span>
+					<input type="search" data-oa-directory-search placeholder="<?= esc_attr( $directory['search'] ); ?>" aria-label="<?= esc_attr( $directory['search'] ); ?>">
+				</label>
+				<span class="oa-content-directory-total">
 
-				<?php
-
-				endforeach;
-
-				if ( $hidden > 0 ) :
-
-				?>
-
-				<a href="<?= esc_url( $card['more'] ); ?>" class="oa-overview-chip oa-overview-chip--more">
 					<?php
 
 					printf(
-						/* translators: %d: number of items not shown in the preview. */
-						esc_html__( '+%d more', 'octave-addons' ),
-						(int) $hidden
+						/* translators: %s: total number of listed items. */
+						esc_html( _n( '%s item', '%s items', $total, 'octave-addons' ) ),
+						esc_html( number_format_i18n( $total ) )
 					);
 
 					?>
-				</a>
 
-				<?php
-
-				endif;
-
-				?>
-
+				</span>
 			</div>
 
-			<div class="oa-overview-actions">
+			<div class="oa-content-directory-groups">
 
 				<?php
 
-				foreach ( $card['actions'] as $action ) :
-
-					$classes = 'oa-overview-action' . ( empty( $action['quiet'] ) ? '' : ' is-quiet' );
+				foreach ( $directory['groups'] as $group ) :
 
 				?>
 
-				<a href="<?= esc_url( $action['url'] ); ?>" class="<?= esc_attr( $classes ); ?>"><?= empty( $action['quiet'] ) ? '<span aria-hidden="true">+</span>' : ''; ?><?= esc_html( $action['label'] ); ?></a>
+				<section class="oa-content-directory-group" data-oa-directory-group>
+
+					<div class="oa-content-directory-group-head">
+						<h4><?= esc_html( $group['label'] ); ?></h4>
+						<span class="oa-content-directory-group-count"><?= esc_html( number_format_i18n( count( $group['rows'] ) ) ); ?></span>
+
+						<?php
+
+						if ( ! empty( $group['action'] ) ) :
+
+						?>
+
+						<a href="<?= esc_url( $group['action']['url'] ); ?>" class="oa-content-directory-group-link"><?= esc_html( $group['action']['label'] ); ?></a>
+
+						<?php
+
+						endif;
+
+						?>
+
+					</div>
+
+					<?php
+
+					if ( empty( $group['rows'] ) ) :
+
+					?>
+
+					<p class="oa-content-directory-empty"><?= esc_html( $group['empty'] ); ?></p>
+
+					<?php
+
+					else :
+
+					?>
+
+					<ul class="oa-content-directory-rows">
+
+						<?php
+
+						foreach ( $group['rows'] as $row ) :
+
+							$haystack = strtolower( $row['label'] . ' ' . $row['code'] . ' ' . $row['meta'] );
+
+						?>
+
+						<li class="oa-content-directory-row" data-oa-directory-row data-search="<?= esc_attr( $haystack ); ?>">
+							<a href="<?= esc_url( $row['url'] ); ?>" class="oa-content-directory-row-link">
+								<span class="oa-content-directory-row-main">
+									<strong><?= esc_html( $row['label'] ); ?></strong>
+									<code><?= esc_html( $row['code'] ); ?></code>
+
+									<?php
+
+									if ( '' !== $row['meta'] ) :
+
+									?>
+
+									<span class="oa-content-directory-row-meta"><?= esc_html( $row['meta'] ); ?></span>
+
+									<?php
+
+									endif;
+
+									?>
+
+								</span>
+								<span class="oa-content-directory-row-tags">
+
+									<?php
+
+									foreach ( $row['tags'] as $tag ) :
+
+										$tag_classes = 'oa-content-directory-tag';
+										$tag_classes .= empty( $tag['quiet'] ) ? '' : ' is-quiet';
+										$tag_classes .= empty( $tag['muted'] ) ? '' : ' is-muted';
+
+									?>
+
+									<span class="<?= esc_attr( $tag_classes ); ?>"><?= esc_html( $tag['label'] ); ?></span>
+
+									<?php
+
+									endforeach;
+
+									?>
+
+								</span>
+								<span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+							</a>
+						</li>
+
+						<?php
+
+						endforeach;
+
+						?>
+
+					</ul>
+
+					<?php
+
+					endif;
+
+					?>
+
+				</section>
 
 				<?php
 
@@ -605,7 +871,10 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				?>
 
 			</div>
-		</article>
+
+			<p class="oa-content-directory-no-results oa-hidden" data-oa-directory-empty><?= esc_html( $directory['no_results'] ); ?></p>
+
+		</section>
 
 		<?php
 
@@ -3082,7 +3351,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		}
 
 		$key = preg_replace( '/^oa_+/', '', $key );
-		$key = 'oa_' . ltrim( (string) $key, '_' );
+		$key = 'oa_' . trim( (string) $key, '_' );
 
 		if ( 'oa_' === $key ) {
 

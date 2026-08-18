@@ -117,6 +117,7 @@ class Octave_Addons_Admin {
 		);
 
 		wp_localize_script( 'octave-addons-admin', 'oaAdmin', [
+			'enabledElsewhere'    => $this->enabled_entries_outside_current_tab(),
 			'ajaxUrl'             => admin_url( 'admin-ajax.php' ),
 			'nonce'               => wp_create_nonce( 'oa_icon_picker' ),
 			'breakdanceActive'    => function_exists( 'Breakdance\Icons\find_icons' ),
@@ -141,6 +142,45 @@ class Octave_Addons_Admin {
 			'removeDefinitionText'   => __( 'Saved content values and terms will remain in the database, but this definition will no longer be registered.', 'octave-addons' ),
 			'removeDefinitionAction' => __( 'Remove', 'octave-addons' ),
 		] );
+
+	}
+
+	/*
+	ENABLED ENTRIES OUTSIDE CURRENT TAB
+	-- Counts the active entries the open page does not render, so the browser
+	-- can keep the totals right while only holding one entry's toggles.
+	---------------------------------------------------------- */
+
+	protected function enabled_entries_outside_current_tab(): int {
+
+		$active_tab = $this->current_tab();
+		$count      = 0;
+
+		foreach ( $this->modules->admin_entries() as $entry_id => $entry ) {
+
+			if ( $entry_id === $active_tab ) {
+
+				continue;
+
+			}
+
+			$settings = [];
+
+			foreach ( $entry['modules'] as $module_id => $module ) {
+
+				$settings[ $module_id ] = $this->modules->settings_for( $module_id );
+
+			}
+
+			if ( $this->entry_is_enabled( $entry, $settings ) ) {
+
+				$count++;
+
+			}
+
+		}
+
+		return $count;
 
 	}
 
@@ -677,17 +717,24 @@ class Octave_Addons_Admin {
 
 					<form method="post" action="options.php" class="oa-form">
 						<?php settings_fields( 'octave_addons_settings_group' ); ?>
+						<input type="hidden" name="<?= esc_attr( OCTAVE_ADDONS_OPTION_KEY . '[' . Octave_Addons_Module_Manager::SUBMITTED_FIELD . ']' ); ?>" value="<?= esc_attr( implode( ',', array_keys( $entries[ $active_tab ]['modules'] ?? [] ) ) ); ?>">
 						<?php
 
 						foreach ( $entries as $entry_id => $entry ) :
 
-							$meta      = $this->entry_meta( $entry );
-							$is_group  = '' !== $entry['group'];
-							$is_active = ( $entry_id === $active_tab );
+							// Only the open entry is put in the form, so a save carries its modules alone.
+							if ( $entry_id !== $active_tab ) {
+
+								continue;
+
+							}
+
+							$meta     = $this->entry_meta( $entry );
+							$is_group = '' !== $entry['group'];
 
 						?>
 
-						<div class="oa-entry<?= $is_active ? '' : ' oa-hidden'; ?>" id="oa-entry-<?= esc_attr( $entry_id ); ?>">
+						<div class="oa-entry" id="oa-entry-<?= esc_attr( $entry_id ); ?>">
 
 							<?php
 

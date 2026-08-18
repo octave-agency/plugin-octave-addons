@@ -25,6 +25,14 @@ ADMIN INTERACTIONS
 			}
 
 			var toggles = document.querySelectorAll('.oa-enable-toggle[data-entry="' + navItem.dataset.entry + '"]');
+
+			// Only the open entry is in the form, so every other dot keeps the state the server rendered.
+			if (!toggles.length) {
+
+				return;
+
+			}
+
 			var on = Array.prototype.some.call(toggles, function (toggle) {
 
 				return toggle.checked;
@@ -187,9 +195,10 @@ ADMIN INTERACTIONS
 	function syncEnabledCounts() {
 
 		// Counted per navigation entry so a grouped page adds one, not one per
-		// module hidden inside it.
+		// module hidden inside it. Entries absent from this page are already
+		// totalled by the server, so their count is the starting point.
 		var counted = {};
-		var enabledCount = 0;
+		var enabledCount = window.oaAdmin && oaAdmin.enabledElsewhere ? parseInt( oaAdmin.enabledElsewhere, 10 ) : 0;
 
 		document.querySelectorAll( '.oa-enable-toggle:checked' ).forEach( function ( toggle ) {
 
@@ -1275,6 +1284,224 @@ ADMIN INTERACTIONS
 	};
 
 	/*
+	CONTENT TYPE TABS
+	-- Switches between the Post Types, Categories and Content Management views.
+	-- The open tab is restored from the URL hash, then from the last visit so it
+	-- survives the redirect WordPress performs after saving.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '[data-oa-tabs]' ).forEach( function ( tabs ) {
+
+		var buttons = Array.prototype.slice.call( tabs.querySelectorAll( '.oa-content-tab' ) );
+		var storageKey = 'oaContentTab';
+
+		if ( ! buttons.length ) {
+
+			return;
+
+		}
+
+		function readStoredPanel() {
+
+			try {
+
+				return window.sessionStorage.getItem( storageKey );
+
+			} catch ( error ) {
+
+				return null;
+
+			}
+
+		}
+
+		function storePanel( panelId ) {
+
+			try {
+
+				window.sessionStorage.setItem( storageKey, panelId );
+
+			} catch ( error ) {
+
+				return;
+
+			}
+
+		}
+
+		function activate( panelId, focusTab ) {
+
+			buttons.forEach( function ( button ) {
+
+				var isActive = button.dataset.oaTab === panelId;
+				var panel = document.getElementById( button.dataset.oaTab );
+
+				button.classList.toggle( 'is-active', isActive );
+				button.setAttribute( 'aria-selected', isActive ? 'true' : 'false' );
+				button.tabIndex = isActive ? 0 : -1;
+
+				if ( panel ) {
+
+					panel.classList.toggle( 'oa-hidden', ! isActive );
+
+				}
+
+				if ( isActive && focusTab ) {
+
+					button.focus();
+
+				}
+
+			} );
+
+			storePanel( panelId );
+
+		}
+
+		buttons.forEach( function ( button, index ) {
+
+			button.addEventListener( 'click', function () {
+
+				activate( button.dataset.oaTab, false );
+
+			} );
+
+			button.addEventListener( 'keydown', function ( event ) {
+
+				var offset = 0;
+
+				if ( 'ArrowRight' === event.key || 'ArrowDown' === event.key ) {
+
+					offset = 1;
+
+				}
+
+				if ( 'ArrowLeft' === event.key || 'ArrowUp' === event.key ) {
+
+					offset = -1;
+
+				}
+
+				if ( 0 === offset ) {
+
+					return;
+
+				}
+
+				event.preventDefault();
+
+				var next = ( index + offset + buttons.length ) % buttons.length;
+
+				activate( buttons[ next ].dataset.oaTab, true );
+
+			} );
+
+		} );
+
+		function panelFromHash() {
+
+			var hash = window.location.hash.replace( '#', '' );
+
+			return buttons.some( function ( button ) {
+
+				return button.dataset.oaTab === hash;
+
+			} ) ? hash : '';
+
+		}
+
+		var initial = panelFromHash() || readStoredPanel();
+		var isKnown = buttons.some( function ( button ) {
+
+			return button.dataset.oaTab === initial;
+
+		} );
+
+		activate( isKnown ? initial : buttons[ 0 ].dataset.oaTab, false );
+
+		window.addEventListener( 'hashchange', function () {
+
+			var target = panelFromHash();
+
+			if ( target ) {
+
+				activate( target, false );
+
+			}
+
+		} );
+
+	} );
+
+	/*
+	CONTENT DIRECTORY FILTER
+	-- Narrows a tab listing to the rows matching the search term, hiding any
+	-- group left with nothing to show.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '[data-oa-directory]' ).forEach( function ( directory ) {
+
+		var search = directory.querySelector( '[data-oa-directory-search]' );
+		var groups = Array.prototype.slice.call( directory.querySelectorAll( '[data-oa-directory-group]' ) );
+		var noResults = directory.querySelector( '[data-oa-directory-empty]' );
+
+		if ( ! search || ! noResults ) {
+
+			return;
+
+		}
+
+		function applyFilter() {
+
+			var term = search.value.trim().toLowerCase();
+			var matches = 0;
+
+			groups.forEach( function ( group ) {
+
+				var rows = Array.prototype.slice.call( group.querySelectorAll( '[data-oa-directory-row]' ) );
+				var visible = 0;
+
+				rows.forEach( function ( row ) {
+
+					var isMatch = '' === term || -1 !== row.dataset.search.indexOf( term );
+
+					row.classList.toggle( 'oa-hidden', ! isMatch );
+
+					if ( isMatch ) {
+
+						visible += 1;
+
+					}
+
+				} );
+
+				matches += visible;
+
+				// An empty group still belongs on screen when nothing is being searched for.
+				group.classList.toggle( 'oa-hidden', '' !== term && 0 === visible );
+
+			} );
+
+			noResults.classList.toggle( 'oa-hidden', '' === term || 0 !== matches );
+
+		}
+
+		search.addEventListener( 'input', applyFilter );
+
+		// The listing sits inside the settings form, so Enter must not submit it.
+		search.addEventListener( 'keydown', function ( event ) {
+
+			if ( 'Enter' === event.key ) {
+
+				event.preventDefault();
+
+			}
+
+		} );
+
+	} );
+
+	/*
 	CUSTOM POST TYPE EDITOR
 	-- Adds, removes and accessibly reorders the repeatable post type cards.
 	---------------------------------------------------------- */
@@ -1288,12 +1515,20 @@ ADMIN INTERACTIONS
 		var nextIndex = list.children.length;
 		var draggedItem = null;
 
-		function slugify( value, separator ) {
+		// Trailing separators are kept while typing so a separator keypress is not swallowed before the next character arrives.
+		function slugify( value, separator, keepTrailing ) {
 
-			return value.toLowerCase()
-				.trim()
+			var slug = value.toLowerCase()
 				.replace( /[^a-z0-9]+/g, separator )
-				.replace( new RegExp( '^' + separator + '+|' + separator + '+$', 'g' ), '' );
+				.replace( new RegExp( '^' + separator + '+' ), '' );
+
+			if ( ! keepTrailing ) {
+
+				slug = slug.replace( new RegExp( separator + '+$' ), '' );
+
+			}
+
+			return slug;
 
 		}
 
@@ -1541,6 +1776,13 @@ ADMIN INTERACTIONS
 					keyIsAutomatic = false;
 
 				}
+
+				keyInput.value = slugify( keyInput.value, '_', true ).substring( 0, 20 );
+				keyPreview.textContent = keyInput.value;
+
+			} );
+
+			keyInput.addEventListener( 'blur', function () {
 
 				keyInput.value = slugify( keyInput.value, '_' ).substring( 0, 20 );
 				keyPreview.textContent = keyInput.value;
@@ -1790,9 +2032,18 @@ ADMIN INTERACTIONS
 		var reusableFinderOptions = collection.querySelectorAll( '.oa-reusable-field-option' );
 		var reusableFinderEmpty = collection.querySelector( '.oa-reusable-field-empty' );
 
-		function slugify( value ) {
+		// Trailing underscores are kept while typing so an underscore keypress is not swallowed before the next character arrives.
+		function slugify( value, keepTrailing ) {
 
-			return value.toLowerCase().trim().replace( /[^a-z0-9]+/g, '_' ).replace( /^_+|_+$/g, '' );
+			var slug = value.toLowerCase().replace( /[^a-z0-9]+/g, '_' ).replace( /^_+/, '' );
+
+			if ( ! keepTrailing ) {
+
+				slug = slug.replace( /_+$/, '' );
+
+			}
+
+			return slug;
 
 		}
 
@@ -1990,6 +2241,13 @@ ADMIN INTERACTIONS
 
 						}
 
+						keyInput.value = slugify( keyInput.value, true ).substring( 0, 40 );
+						key.textContent = keyInput.value;
+
+					} );
+
+					keyInput.addEventListener( 'blur', function () {
+
 						keyInput.value = slugify( keyInput.value ).substring( 0, 40 );
 						key.textContent = keyInput.value;
 
@@ -2080,6 +2338,13 @@ ADMIN INTERACTIONS
 					keyIsAutomatic = false;
 
 				}
+
+				keyInput.value = slugify( keyInput.value, true ).substring( 0, 'custom_taxonomies' === collectionKey ? 32 : 40 );
+				keyPreview.textContent = keyInput.value;
+
+			} );
+
+			keyInput.addEventListener( 'blur', function () {
 
 				keyInput.value = slugify( keyInput.value ).substring( 0, 'custom_taxonomies' === collectionKey ? 32 : 40 );
 				keyPreview.textContent = keyInput.value;

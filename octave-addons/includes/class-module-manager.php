@@ -18,6 +18,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Octave_Addons_Module_Manager {
 
 
+	/** Hidden field naming the modules a submission carried. */
+	public const SUBMITTED_FIELD = '__oa_submitted';
+
 	/** @var Octave_Addons_Module[] Keyed by module id. */
 	protected array $modules = [];
 
@@ -214,9 +217,32 @@ class Octave_Addons_Module_Manager {
 
 	}
 
+	/*
+	SUBMITTED MODULE IDS
+	-- Reads the list of modules the form actually carried. Returns null when the
+	-- field is absent, which marks the submission as a full one.
+	---------------------------------------------------------- */
+
+	protected function submitted_module_ids( array $input ): ?array {
+
+		if ( ! isset( $input[ self::SUBMITTED_FIELD ] ) ) {
+
+			return null;
+
+		}
+
+		$raw = $input[ self::SUBMITTED_FIELD ];
+		$ids = is_array( $raw ) ? $raw : explode( ',', (string) $raw );
+		$ids = array_filter( array_map( 'sanitize_key', $ids ) );
+
+		return array_values( $ids );
+
+	}
+
 	/**
-	 * Sanitize a full submission from the settings page — dispatches
-	 * each module's piece to its own sanitize() method.
+	 * Sanitize a submission from the settings page — dispatches each submitted
+	 * module's piece to its own sanitize() method, and carries every module the
+	 * form did not contain straight over from the stored option.
 	 */
 	public function sanitize_all( $input ): array {
 
@@ -227,9 +253,24 @@ class Octave_Addons_Module_Manager {
 
 		}
 
+		$submitted = $this->submitted_module_ids( $input );
+		$stored    = get_option( OCTAVE_ADDONS_OPTION_KEY, [] );
+		$stored    = is_array( $stored ) ? $stored : [];
+
+		unset( $input[ self::SUBMITTED_FIELD ] );
+
 		foreach ( $this->modules as $id => $module ) {
 
-			$piece         = $input[ $id ] ?? [];
+			// A page only submits the modules it displays, so the rest keep the values they already hold.
+			if ( null !== $submitted && ! in_array( $id, $submitted, true ) && isset( $stored[ $id ] ) && is_array( $stored[ $id ] ) ) {
+
+				$clean[ $id ] = $stored[ $id ];
+
+				continue;
+
+			}
+
+			$piece        = $input[ $id ] ?? [];
 			$clean[ $id ] = $module->sanitize( is_array( $piece ) ? $piece : [] );
 
 		}
