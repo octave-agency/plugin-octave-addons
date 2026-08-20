@@ -1966,12 +1966,12 @@ html[data-oa-admin-theme="light"] {
     --oa-surface-3: var(--oa-admin-surface-hover);
     --oa-border: var(--oa-admin-border);
     --oa-border-light: var(--oa-admin-line-soft);
-    --oa-accent: var(--oa-admin-accent);
-    --oa-accent-2: var(--oa-admin-accent-dark);
-    --oa-accent-bg: var(--oa-admin-accent-soft);
-    --oa-green: #16845B;
-    --oa-green-bg: rgba(22, 132, 91, 0.12);
-    --oa-on-accent: var(--oa-admin-on-accent);
+    --oa-accent: #008A4E;
+    --oa-accent-2: #006F3E;
+    --oa-accent-bg: rgba(0, 138, 78, 0.11);
+    --oa-green: #008A4E;
+    --oa-green-bg: rgba(0, 138, 78, 0.12);
+    --oa-on-accent: #FFFFFF;
     --oa-text: var(--oa-admin-text);
     --oa-text-muted: var(--oa-admin-text-soft);
     --oa-text-dim: var(--oa-admin-text-dim);
@@ -1986,12 +1986,12 @@ html[data-oa-admin-theme="dark"] {
     --oa-surface-3: var(--oa-admin-surface-hover);
     --oa-border: var(--oa-admin-border);
     --oa-border-light: var(--oa-admin-line-soft);
-    --oa-accent: var(--oa-admin-accent);
-    --oa-accent-2: var(--oa-admin-accent-dark);
-    --oa-accent-bg: var(--oa-admin-accent-soft);
-    --oa-green: #57D99A;
-    --oa-green-bg: rgba(87, 217, 154, 0.13);
-    --oa-on-accent: var(--oa-admin-on-accent);
+    --oa-accent: #2BFF86;
+    --oa-accent-2: #00D084;
+    --oa-accent-bg: rgba(43, 255, 134, 0.14);
+    --oa-green: #2BFF86;
+    --oa-green-bg: rgba(43, 255, 134, 0.14);
+    --oa-on-accent: #090B0C;
     --oa-text: var(--oa-admin-text);
     --oa-text-muted: var(--oa-admin-text-soft);
     --oa-text-dim: var(--oa-admin-text-dim);
@@ -2016,7 +2016,7 @@ body.wp-admin .octave-addons-wrap--themed {
     width: 228px;
     border-radius: 0;
     border-color: var(--oa-border-light);
-    background: transparent;
+    background: #11161C;
     backdrop-filter: none;
 }
 
@@ -2035,28 +2035,42 @@ body.wp-admin .octave-addons-wrap--themed {
 }
 
 html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
-    filter: none;
-    opacity: 0.78;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
 }
 
 .oa-app--themed .oa-nav {
     padding: 18px 10px;
 }
 
+.octave-addons-wrap .oa-app--themed .oa-brand-name,
+.octave-addons-wrap .oa-app--themed .oa-nav-item,
+.octave-addons-wrap .oa-app--themed .oa-nav-item:visited,
+.octave-addons-wrap .oa-app--themed .oa-sidebar-footer strong {
+    color: #F4F9FF;
+}
+
+.oa-app--themed .oa-brand-version,
+.oa-app--themed .oa-nav-heading,
+.oa-app--themed .oa-sidebar-footer {
+    color: #939BA4;
+}
+
 .oa-app--themed .oa-nav-item:hover {
-    background: var(--oa-surface-3) !important;
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, 0.07) !important;
 }
 
 .oa-app--themed .oa-nav-item.is-active {
-    color: var(--oa-accent);
-    border-color: transparent;
-    background: var(--oa-accent-bg);
+    color: #FFFFFF;
+    border-color: rgba(43, 255, 134, 0.24);
+    background: rgba(43, 255, 134, 0.13);
     box-shadow: none;
 }
 
 .oa-app--themed .oa-sidebar-footer {
-    border-color: var(--oa-border-light);
-    background: var(--oa-surface);
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .oa-app--themed .oa-content {
@@ -2107,11 +2121,24 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
 }
 
 .oa-app--themed .oa-dashboard-setting,
-.oa-app--themed .oa-module-card,
-.oa-app--themed .oa-panel {
+.oa-app--themed .oa-module-card {
     border-color: var(--oa-border);
     background: var(--oa-surface);
     box-shadow: var(--oa-shadow);
+}
+
+.oa-app--themed .oa-panel {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.oa-app--themed .oa-panel + .oa-panel {
+    margin-top: 10px;
+    padding-top: 32px;
+    border-top: 1px solid var(--oa-border-light);
 }
 
 .oa-app--themed .oa-dashboard-setting {
@@ -2140,9 +2167,12 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
     min-height: 170px;
 }
 
-.oa-app--themed .oa-module-card::before,
-.oa-app--themed .oa-panel::before {
+.oa-app--themed .oa-module-card::before {
     background: var(--oa-accent);
+}
+
+.oa-app--themed .oa-panel::before {
+    display: none;
 }
 
 .octave-addons-wrap .oa-app--themed .oa-module-card:hover,
@@ -2224,7 +2254,7 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
     .oa-app--themed .oa-sidebar {
         width: 100%;
         border-radius: 0;
-        background: color-mix(in srgb, var(--oa-surface) 92%, transparent);
+        background: rgba(17, 22, 28, 0.96);
         backdrop-filter: blur(18px);
     }
 
