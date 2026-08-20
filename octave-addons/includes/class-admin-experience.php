@@ -18,7 +18,6 @@ class Octave_Addons_Admin_Experience {
 
 		add_action( 'admin_init',            [ $this, 'register_setting' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
-		add_action( 'admin_bar_menu',        [ $this, 'add_site_icon' ], 997 );
 		add_action( 'admin_bar_menu',        [ $this, 'add_theme_toggle' ], 998 );
 		add_action( 'wp_ajax_oa_save_admin_theme', [ $this, 'ajax_save_theme' ] );
 
@@ -110,39 +109,6 @@ class Octave_Addons_Admin_Experience {
 			'darkModeText'    => __( 'Use dark mode', 'octave-addons' ),
 			'lightModeText'   => __( 'Use light mode', 'octave-addons' ),
 			'mediaSearchText' => __( 'Search media…', 'octave-addons' ),
-		] );
-
-	}
-
-	/*
-	ADD SITE ICON
-	-- Replaces the admin-bar house with the configured site icon when available.
-	---------------------------------------------------------- */
-
-	public function add_site_icon( WP_Admin_Bar $admin_bar ): void {
-
-		if ( ! is_admin() || ! $this->is_enabled() || $this->is_octave_addons_screen() ) {
-
-			return;
-
-		}
-
-		$site_name     = $admin_bar->get_node( 'site-name' );
-		$site_icon_url = get_site_icon_url( 32 );
-
-		if ( ! $site_name || ! $site_icon_url ) {
-
-			return;
-
-		}
-
-		$meta          = (array) $site_name->meta;
-		$meta['class'] = trim( (string) ( $meta['class'] ?? '' ) . ' oa-has-site-icon' );
-
-		$admin_bar->add_node( [
-			'id'    => 'site-name',
-			'title' => '<span class="oa-admin-site-icon" aria-hidden="true"><img src="' . esc_url( $site_icon_url ) . '" alt=""></span>' . $site_name->title,
-			'meta'  => $meta,
 		] );
 
 	}

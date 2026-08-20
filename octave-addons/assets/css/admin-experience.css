@@ -372,28 +372,6 @@ body.wp-admin #wpadminbar #wp-admin-bar-oa-theme-toggle > .ab-item {
     padding: 0;
 }
 
-body.wp-admin #wpadminbar #wp-admin-bar-site-name.oa-has-site-icon > .ab-item::before {
-    display: none;
-}
-
-body.wp-admin #wpadminbar .oa-admin-site-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    margin-right: 6px;
-    vertical-align: middle;
-}
-
-body.wp-admin #wpadminbar .oa-admin-site-icon img {
-    display: block;
-    width: 18px;
-    height: 18px;
-    border-radius: 3px;
-    object-fit: cover;
-}
-
 body.wp-admin #wpadminbar .oa-theme-icon {
     display: none;
     width: 18px;
@@ -623,6 +601,18 @@ body.wp-admin .form-table {
     color: var(--oa-admin-text);
 }
 
+/*
+-- Cells stay transparent so they inherit whichever surface they sit on, the
+-- page on options screens and the card inside a postbox. Pinning it here stops
+-- plugins that hardcode a light cell background showing through in dark mode.
+-- Kept low enough that a deliberate cell highlight still wins.
+---------------------------------------------------------- */
+
+body.wp-admin .form-table th,
+body.wp-admin .form-table td {
+    background: transparent;
+}
+
 body.wp-admin .form-table th {
     padding-top: 22px;
     color: var(--oa-admin-text);
@@ -692,9 +682,9 @@ body.wp-admin #dashboard-widgets-wrap {
     margin: 0 -6px;
 }
 
-body.wp-admin #dashboard_right_now .main,
-body.wp-admin #dashboard_right_now .sub {
-    padding: 12px 16px;
+body.wp-admin #dashboard-widgets .meta-box-sortables {
+    margin-left: 0;
+    margin-right: 0;
 }
 
 body.wp-admin .welcome-panel {
@@ -2219,11 +2209,17 @@ html[data-oa-admin-theme="dark"] body.wp-customizer select option:disabled {
     color: var(--oa-admin-text-dim);
 }
 
+/*
+-- background-color, not the background shorthand: this ties on specificity
+-- with the select chevron rule above, so the shorthand would reset
+-- background-repeat, -position and -size and tile the chevron top-left.
+---------------------------------------------------------- */
+
 html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__button,
 html[data-oa-admin-theme="dark"] body.wp-admin .components-custom-select-control__menu,
 html[data-oa-admin-theme="dark"] body.wp-admin .components-select-control__input {
     color: var(--oa-admin-text);
-    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
     border-color: var(--oa-admin-border-strong);
 }
 
@@ -3135,4 +3131,293 @@ body.wp-admin.rtl .wrap {
         margin-left: 10px;
     }
 
+}
+
+/*
+DASHBOARD WIDGET SPACING
+-- Gives every dashboard widget body one padding box, including widgets
+-- added by plugins later. Full-bleed rows opt out with .oa-widget-bleed.
+---------------------------------------------------------- */
+
+body.wp-admin #dashboard-widgets-wrap {
+    --oa-widget-pad-x: 18px;
+    --oa-widget-pad-y: 14px;
+    --oa-widget-flow: 12px;
+}
+
+/*
+Widget padding box
+-- Covers core, plugin and future widgets from a single rule.
+-- The #dashboard-widgets prefix (1 ID + 3 classes) outranks the
+-- `#widget_id .inside { padding: 0 }` rules WordPress and most plugins ship.
+---------------------------------------------------------- */
+
+body.wp-admin #dashboard-widgets .postbox > .inside {
+    margin: 0;
+    padding: var(--oa-widget-pad-y) var(--oa-widget-pad-x) var(--oa-widget-pad-x);
+}
+
+/*
+Vertical rhythm
+-- One flow value between blocks, with no dead space at either end.
+-- !important is required because core ships
+-- `.postbox .inside > p:last-child { margin-bottom: 1px !important }`.
+---------------------------------------------------------- */
+
+body.wp-admin #dashboard-widgets .postbox > .inside > * {
+    margin-top: 0;
+    margin-bottom: var(--oa-widget-flow);
+}
+
+body.wp-admin #dashboard-widgets .postbox > .inside > :first-child {
+    margin-top: 0 !important;
+}
+
+body.wp-admin #dashboard-widgets .postbox > .inside > :last-child {
+    margin-bottom: 0 !important;
+}
+
+/*
+Trailing non-painting nodes
+-- Widgets frequently append <script> or <template> after their visible content,
+-- which makes :last-child a node that never paints. Zero the last one that does.
+---------------------------------------------------------- */
+
+body.wp-admin #dashboard-widgets .postbox > .inside
+    > :not(script):not(style):not(template):not(:has(~ :not(script):not(style):not(template))) {
+    margin-bottom: 0 !important;
+}
+
+/*
+Full-bleed rows
+-- Dividers, striped tables and charts still run to the card edge, but their
+-- text lines up with the widget gutter.
+-- Put oa-widget-bleed on any new element that needs this.
+---------------------------------------------------------- */
+
+body.wp-admin #dashboard-widgets .postbox > .inside .oa-widget-bleed,
+body.wp-admin #dashboard-widgets .postbox > .inside .activity-block,
+body.wp-admin #dashboard-widgets #dashboard_right_now .main,
+body.wp-admin #dashboard-widgets #dashboard_right_now .sub,
+body.wp-admin #dashboard-widgets #dashboard_primary .rss-widget,
+body.wp-admin #dashboard-widgets #dashboard_primary .community-events,
+body.wp-admin #dashboard-widgets #dashboard_primary .community-events-footer,
+body.wp-admin #dashboard-widgets .wc_status_list,
+body.wp-admin #dashboard-widgets .wp-mail-smtp-dash-widget-block,
+body.wp-admin #dashboard-widgets .wp-mail-smtp-dash-widget-chart-block-container,
+body.wp-admin #dashboard-widgets [class*="objectcache:widget"] {
+    margin-left: calc(var(--oa-widget-pad-x) * -1);
+    margin-right: calc(var(--oa-widget-pad-x) * -1);
+    padding-left: var(--oa-widget-pad-x);
+    padding-right: var(--oa-widget-pad-x);
+    width: auto;
+    max-width: none;
+}
+
+/*
+Widget exceptions
+-- Quick Draft ships its own 12px margin on the form.
+-- Media must never punch through the gutter.
+---------------------------------------------------------- */
+
+body.wp-admin #dashboard-widgets #dashboard_quick_press .inside > form {
+    margin: 0;
+}
+
+body.wp-admin #dashboard-widgets .postbox > .inside img,
+body.wp-admin #dashboard-widgets .postbox > .inside canvas,
+body.wp-admin #dashboard-widgets .postbox > .inside svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/*
+Small screens
+---------------------------------------------------------- */
+
+@media screen and (max-width: 782px) {
+
+    body.wp-admin #dashboard-widgets-wrap {
+        --oa-widget-pad-x: 14px;
+        --oa-widget-pad-y: 12px;
+    }
+
+}
+
+/*
+WORDPRESS DESIGN SYSTEM TOKENS -- DARK MODE
+-- WordPress 7.x ships the @wordpress/components design tokens as an inline
+-- style attribute on <html>, and again on Gutenberg's own token root inside
+-- the editor. Every Emotion-styled component reads those tokens through
+-- hashed classes (.css-hmwkew, .css-jznp7x ...) whose names change on every
+-- WordPress build, so they cannot be targeted directly.
+-- Remapping the tokens fixes all of them at once and survives new hashes.
+-- !important is required because the source declarations are inline styles.
+-- The [style*="..."] selectors catch Gutenberg's inner token roots, which
+-- redeclare the whole set on a hashed <div class="xxxx__root">.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"],
+html[data-oa-admin-theme="dark"] [style*="--wpds-color"],
+html[data-oa-admin-theme="dark"] [style*="--wp-components-color"] {
+
+    /* Foreground: text and icons */
+    --wpds-color-foreground-content-neutral: var(--oa-admin-text) !important;
+    --wpds-color-foreground-content-neutral-weak: var(--oa-admin-text-soft) !important;
+    --wpds-color-foreground-interactive-neutral: var(--oa-admin-text) !important;
+    --wpds-color-foreground-interactive-neutral-active: var(--oa-admin-text) !important;
+    --wpds-color-foreground-interactive-neutral-weak: var(--oa-admin-text-soft) !important;
+    --wpds-color-foreground-interactive-neutral-weak-active: var(--oa-admin-text) !important;
+    --wpds-color-foreground-interactive-neutral-disabled: var(--oa-admin-text-dim) !important;
+    --wpds-color-foreground-interactive-neutral-weak-disabled: var(--oa-admin-text-dim) !important;
+    --wpds-color-foreground-interactive-neutral-strong: var(--oa-admin-text) !important;
+    --wpds-color-foreground-interactive-neutral-strong-active: var(--oa-admin-text) !important;
+    --wpds-color-foreground-interactive-neutral-strong-disabled: var(--oa-admin-text-dim) !important;
+    --wpds-color-foreground-interactive-brand: var(--oa-admin-accent) !important;
+    --wpds-color-foreground-interactive-brand-active: var(--oa-admin-accent-dark) !important;
+    --wpds-color-foreground-interactive-brand-disabled: var(--oa-admin-text-dim) !important;
+    --wpds-color-foreground-interactive-brand-strong: var(--oa-admin-on-accent) !important;
+    --wpds-color-foreground-interactive-brand-strong-active: var(--oa-admin-on-accent) !important;
+    --wpds-color-foreground-interactive-brand-strong-disabled: var(--oa-admin-text-dim) !important;
+
+    /* Background: surfaces */
+    --wpds-color-background-surface-neutral-weak: var(--oa-admin-surface-soft) !important;
+    --wpds-color-background-surface-neutral: var(--oa-admin-surface) !important;
+    --wpds-color-background-surface-neutral-strong: var(--oa-admin-surface-subtle) !important;
+    --wpds-color-background-surface-brand: var(--oa-admin-accent-soft) !important;
+    --wpds-color-background-interactive-neutral-weak-active: var(--oa-admin-surface-hover) !important;
+    --wpds-color-background-interactive-neutral-strong: var(--oa-admin-surface-hover) !important;
+    --wpds-color-background-interactive-neutral-strong-active: var(--oa-admin-surface-selected) !important;
+    --wpds-color-background-interactive-neutral-strong-disabled: var(--oa-admin-line-soft) !important;
+    --wpds-color-background-interactive-brand-strong: var(--oa-admin-accent) !important;
+    --wpds-color-background-interactive-brand-strong-active: var(--oa-admin-accent-dark) !important;
+    --wpds-color-background-interactive-brand-strong-disabled: var(--oa-admin-line-soft) !important;
+    --wpds-color-background-interactive-brand-weak-active: var(--oa-admin-accent-soft) !important;
+
+    /* Background: toggle and range thumbs and tracks */
+    --wpds-color-background-thumb-brand: var(--oa-admin-accent) !important;
+    --wpds-color-background-thumb-brand-active: var(--oa-admin-accent) !important;
+    --wpds-color-background-thumb-brand-disabled: var(--oa-admin-border) !important;
+    --wpds-color-background-thumb-neutral-weak: var(--oa-admin-text-dim) !important;
+    --wpds-color-background-thumb-neutral-weak-active: var(--oa-admin-text-soft) !important;
+    --wpds-color-background-thumb-neutral-weak-disabled: var(--oa-admin-border) !important;
+    --wpds-color-background-track-neutral: var(--oa-admin-border-strong) !important;
+    --wpds-color-background-track-neutral-weak: var(--oa-admin-border) !important;
+
+    /* Strokes: borders and focus rings */
+    --wpds-color-stroke-focus: var(--oa-admin-accent) !important;
+    --wpds-color-stroke-interactive-brand: var(--oa-admin-accent) !important;
+    --wpds-color-stroke-interactive-brand-active: var(--oa-admin-accent-dark) !important;
+    --wpds-color-stroke-interactive-brand-disabled: var(--oa-admin-border) !important;
+    --wpds-color-stroke-interactive-neutral: var(--oa-admin-border-strong) !important;
+    --wpds-color-stroke-interactive-neutral-active: var(--oa-admin-text-dim) !important;
+    --wpds-color-stroke-interactive-neutral-strong: var(--oa-admin-text-dim) !important;
+    --wpds-color-stroke-interactive-neutral-disabled: var(--oa-admin-line-soft) !important;
+    --wpds-color-stroke-surface-brand: var(--oa-admin-accent) !important;
+    --wpds-color-stroke-surface-brand-strong: var(--oa-admin-accent) !important;
+    --wpds-color-stroke-surface-neutral: var(--oa-admin-border) !important;
+    --wpds-color-stroke-surface-neutral-strong: var(--oa-admin-border-strong) !important;
+    --wpds-color-stroke-surface-neutral-weak: var(--oa-admin-line-soft) !important;
+
+    /* The accent aliases point at --wp-admin-theme-color rather than a WPDS
+       token, so they are remapped separately. */
+    --wp-components-color-accent: var(--oa-admin-accent) !important;
+    --wp-components-color-accent-darker-10: var(--oa-admin-accent-dark) !important;
+    --wp-components-color-accent-darker-20: var(--oa-admin-accent-dark) !important;
+    --wp-components-color-accent-inverted: var(--oa-admin-on-accent) !important;
+
+}
+
+/*
+HARDCODED COLOURS CORE DOES NOT TOKENISE
+-- These use stable, non-hashed class names, so they are safe to target.
+---------------------------------------------------------- */
+
+/* Block breadcrumb in the editor footer: core hardcodes #1e1e1e. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-breadcrumb__current,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-breadcrumb__button {
+    color: var(--oa-admin-text);
+}
+
+/* Block card in the inspector: core hardcodes #1e1e1e on the wrapper. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-card {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-card__description {
+    color: var(--oa-admin-text-soft);
+}
+
+/* Block icons in the inserter: .has-colors forces #1e1e1e. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-icon.has-colors,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-icon.has-colors svg {
+    color: var(--oa-admin-text);
+    fill: currentColor;
+}
+
+/* Inserter and list-view sidebar surfaces: core paints these #fff. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .interface-interface-skeleton__secondary-sidebar,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-tabbed-sidebar,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-tabbed-sidebar__close-button,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-contextual-toolbar,
+html[data-oa-admin-theme="dark"] body.wp-admin .editor-layout__toggle-entities-saved-states-panel {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .editor-visual-editor {
+    background: var(--oa-admin-canvas);
+}
+
+/* Media modal: core sets background #fff on the active router tab, and the
+   sheet only ever set its colour, so the label was white on white. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .media-router .active,
+html[data-oa-admin-theme="dark"] body.wp-admin .media-router .active:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .media-router .media-menu-item.active {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-subtle);
+    border-color: var(--oa-admin-border);
+    border-bottom-color: var(--oa-admin-accent);
+}
+
+/* Disabled buttons: core's #e2e2e2 and #8a8a8a pill reads as a light chip. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .button-primary:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin .button-primary[disabled],
+html[data-oa-admin-theme="dark"] body.wp-admin .button-primary.disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin .button:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin .button[disabled] {
+    color: var(--oa-admin-text-dim) !important;
+    background: var(--oa-admin-surface-hover) !important;
+    border-color: var(--oa-admin-border) !important;
+    text-shadow: none !important;
+}
+
+/* Required-field asterisk: core's #b32d2e is too dark on the dark surface. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin span.required,
+html[data-oa-admin-theme="dark"] body.wp-admin .required-field-message {
+    color: var(--oa-admin-danger);
+}
+
+/* ACF Expand Details toggle in the media modal: hardcoded #666. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .acf-expand-details,
+html[data-oa-admin-theme="dark"] body.wp-admin .acf-expand-details .is-closed,
+html[data-oa-admin-theme="dark"] body.wp-admin .acf-expand-details .is-open {
+    color: var(--oa-admin-text-soft);
+}
+
+/* Rank Math Generate Alt button in the attachment details panel. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-generate-alt-button {
+    color: var(--oa-admin-accent);
+    background: var(--oa-admin-accent-soft);
+    border-color: var(--oa-admin-accent);
 }

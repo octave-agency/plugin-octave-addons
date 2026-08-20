@@ -3,6 +3,7 @@
 /*
 USER PROFILE EXPERIENCE
 -- Adds job titles and Media Library avatars to WordPress user profiles.
+-- Both sit in the About Yourself section above the biography.
 -- Custom avatar IDs take priority while native Gravatar and fallback handling
 -- remain untouched whenever no valid custom image is assigned.
 ---------------------------------------------------------- */
@@ -54,14 +55,24 @@ class Octave_Addons_User_Profile {
 
 		}
 
-		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/user-profile.css';
-		$js_path  = OCTAVE_ADDONS_DIR . 'assets/js/user-profile.js';
+		$css_path   = OCTAVE_ADDONS_DIR . 'assets/css/user-profile.css';
+		$js_path    = OCTAVE_ADDONS_DIR . 'assets/js/user-profile.js';
+		$order_path = OCTAVE_ADDONS_DIR . 'assets/js/user-profile-order.js';
 
 		wp_enqueue_style(
 			'octave-addons-user-profile',
 			OCTAVE_ADDONS_URL . 'assets/css/user-profile.css',
 			[],
 			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
+		);
+
+		// Every role sees the relocated fields, so this loads before the upload check.
+		wp_enqueue_script(
+			'octave-addons-user-profile-order',
+			OCTAVE_ADDONS_URL . 'assets/js/user-profile-order.js',
+			[],
+			file_exists( $order_path ) ? (string) filemtime( $order_path ) : OCTAVE_ADDONS_VERSION,
+			true
 		);
 
 		if ( ! current_user_can( 'upload_files' ) ) {
@@ -84,7 +95,9 @@ class Octave_Addons_User_Profile {
 
 	/*
 	RENDER PROFILE FIELDS
-	-- Shows the job title and attachment-backed avatar controls.
+	-- Shows the attachment-backed avatar and job title controls in that order.
+	-- WordPress fires this at the end of the form, so user-profile-order.js
+	-- relocates the rows above the biography.
 	---------------------------------------------------------- */
 
 	public function render_fields( WP_User $user ): void {
@@ -101,13 +114,7 @@ class Octave_Addons_User_Profile {
 		?>
 
 		<table class="form-table oa-user-profile-fields" role="presentation">
-			<tr>
-				<th><label for="oa_job_title"><?= esc_html__( 'Job Title', 'octave-addons' ); ?></label></th>
-				<td>
-					<input type="text" name="oa_job_title" id="oa_job_title" value="<?= esc_attr( $job_title ); ?>" class="regular-text" autocomplete="organization-title">
-				</td>
-			</tr>
-			<tr>
+			<tr class="oa-user-profile-row">
 				<th><span><?= esc_html__( 'Profile Picture', 'octave-addons' ); ?></span></th>
 				<td>
 					<div
@@ -142,6 +149,12 @@ class Octave_Addons_User_Profile {
 						?>
 
 					</div>
+				</td>
+			</tr>
+			<tr class="oa-user-profile-row">
+				<th><label for="oa_job_title"><?= esc_html__( 'Job Title', 'octave-addons' ); ?></label></th>
+				<td>
+					<input type="text" name="oa_job_title" id="oa_job_title" value="<?= esc_attr( $job_title ); ?>" class="regular-text" autocomplete="organization-title">
 				</td>
 			</tr>
 		</table>
