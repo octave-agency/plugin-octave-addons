@@ -203,7 +203,7 @@ class Octave_Addons_Admin_Experience {
 				<span class="oa-dashboard-setting-state">
 					<?= $is_enabled ? esc_html__( 'Enabled', 'octave-addons' ) : esc_html__( 'Disabled', 'octave-addons' ); ?>
 				</span>
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Save', 'octave-addons' ); ?></button>
+				<button type="submit" class="oa-button oa-button--primary"><?php esc_html_e( 'Save', 'octave-addons' ); ?></button>
 			</form>
 		</section>
 
