@@ -3421,3 +3421,45 @@ html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-generate-alt-button {
     background: var(--oa-admin-accent-soft);
     border-color: var(--oa-admin-accent);
 }
+
+/*
+INSERTER SURFACES AND THE ADD-BLOCK BUTTON
+-- Core paints .block-editor-inserter__search #fff, which is the white band
+-- behind the search field in both the inserter sidebar and the quick Add
+-- block popover. The appender's + button and the Browse all bar are
+-- hardcoded #1e1e1e. All of these use stable class names.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-inserter__search,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-tabbed-sidebar__tablist,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-inserter__quick-inserter,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-inserter__panel-header {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+/* Browse all bar at the foot of the quick inserter. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-inserter__quick-inserter-expand.components-button,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-inserter__quick-inserter-expand.components-button:hover {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+    border-top: 1px solid var(--oa-admin-border);
+}
+
+/* The add-block + on the canvas. .components-button is needed in the
+   selector to outrank core's own two-class rule. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-list__empty-block-inserter .block-editor-inserter__toggle.components-button,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-list__insertion-point-inserter .block-editor-inserter__toggle.components-button,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-button-block-appender {
+    color: var(--oa-admin-on-accent);
+    background: var(--oa-admin-accent);
+}
+
+/* The icon inside it is filled by core, not inherited, so it needs its own rule. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-list__empty-block-inserter .block-editor-inserter__toggle.components-button svg,
+html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-list__insertion-point-inserter .block-editor-inserter__toggle.components-button svg {
+    fill: var(--oa-admin-on-accent);
+}

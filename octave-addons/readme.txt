@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.31.2
+Stable tag:        2.31.3
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.31.3 =
+* Themed the block inserter search band, quick inserter, panel header, and tab list in dark mode.
+* Themed the canvas add-block button, its icon, and the quick inserter's Browse all bar in dark mode.
 
 = 2.31.2 =
 * Moved the profile picture and job title fields into the About Yourself section above the biography.
