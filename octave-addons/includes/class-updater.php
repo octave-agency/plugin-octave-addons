@@ -67,18 +67,11 @@ class Octave_Addons_Updater {
 		}
 
 		$release = $this->fetch_release();
+		$remote_version = $release ? $this->get_release_version( $release ) : '';
 
-		if ( ! $release ) {
+		if ( ! $remote_version ) {
 
-			return false;
-
-		}
-
-		$remote_version = $this->get_release_version( $release );
-
-		if ( ! $remote_version || ! version_compare( $remote_version, $this->current_version, '>' ) ) {
-
-			return false;
+			$remote_version = $this->current_version;
 
 		}
 
@@ -87,7 +80,7 @@ class Octave_Addons_Updater {
 			'slug'         => $this->plugin_slug,
 			'version'      => $remote_version,
 			'url'          => $release['html_url'] ?? $this->repository_url,
-			'package'      => $this->get_download_url( $release ),
+			'package'      => $release ? $this->get_download_url( $release ) : '',
 			'requires'     => $plugin_data['RequiresWP'] ?? '',
 			'requires_php' => $plugin_data['RequiresPHP'] ?? '',
 			'icons'        => $this->get_icons(),

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.32.4
+Stable tag:        2.32.5
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.32.5 =
+* Registered current GitHub release metadata with WordPress so native plugin auto-update controls remain available.
 
 = 2.32.4 =
 * Replaced the admin appearance Save control with a dedicated Octave green button.
