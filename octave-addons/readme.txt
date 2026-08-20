@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.31.1
+Stable tag:        2.31.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,14 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.31.2 =
+* Moved the profile picture and job title fields into the About Yourself section above the biography.
+* Rebuilt dashboard widget spacing so core, plugin, and future widgets share one padding box, with full-bleed rows opting out.
+* Remapped the WordPress 7.x design system tokens in dark mode so Gutenberg's hashed component classes theme correctly.
+* Corrected dark mode colours core does not tokenise across the block breadcrumb, inspector card, inserter sidebars, media router tabs, and disabled buttons.
+* Fixed the Gutenberg select chevron tiling from the top left in dark mode.
+* Removed the custom admin bar site icon now that WordPress renders one natively.
 
 = 2.31.1 =
 * Corrected Gutenberg's empty block-inspector tool and no-selection states in dark mode.
