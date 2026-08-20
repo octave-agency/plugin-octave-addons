@@ -2015,8 +2015,8 @@ body.wp-admin .octave-addons-wrap--themed {
 .oa-app--themed .oa-sidebar {
     width: 228px;
     border-radius: 0;
-    border-color: var(--oa-border-light);
-    background: #11161C;
+    border-color: var(--oa-border);
+    background: var(--oa-surface);
     backdrop-filter: none;
 }
 
@@ -2035,6 +2035,11 @@ body.wp-admin .octave-addons-wrap--themed {
 }
 
 html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
+    filter: none;
+    opacity: 0.78;
+}
+
+html[data-oa-admin-theme="dark"] .oa-app--themed .oa-brand-icon {
     filter: brightness(0) invert(1);
     opacity: 0.9;
 }
@@ -2047,30 +2052,30 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
 .octave-addons-wrap .oa-app--themed .oa-nav-item,
 .octave-addons-wrap .oa-app--themed .oa-nav-item:visited,
 .octave-addons-wrap .oa-app--themed .oa-sidebar-footer strong {
-    color: #F4F9FF;
+    color: var(--oa-text);
 }
 
 .oa-app--themed .oa-brand-version,
 .oa-app--themed .oa-nav-heading,
 .oa-app--themed .oa-sidebar-footer {
-    color: #939BA4;
+    color: var(--oa-text-dim);
 }
 
 .oa-app--themed .oa-nav-item:hover {
-    color: #FFFFFF !important;
-    background: rgba(255, 255, 255, 0.07) !important;
+    color: var(--oa-text) !important;
+    background: var(--oa-surface-3) !important;
 }
 
 .oa-app--themed .oa-nav-item.is-active {
-    color: #FFFFFF;
-    border-color: rgba(43, 255, 134, 0.24);
-    background: rgba(43, 255, 134, 0.13);
+    color: var(--oa-text);
+    border-color: color-mix(in srgb, var(--oa-accent) 24%, transparent);
+    background: var(--oa-accent-bg);
     box-shadow: none;
 }
 
 .oa-app--themed .oa-sidebar-footer {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--oa-border-light);
+    background: var(--oa-surface-soft);
 }
 
 .oa-app--themed .oa-content {
@@ -2254,7 +2259,7 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
     .oa-app--themed .oa-sidebar {
         width: 100%;
         border-radius: 0;
-        background: rgba(17, 22, 28, 0.96);
+        background: color-mix(in srgb, var(--oa-surface) 96%, transparent);
         backdrop-filter: blur(18px);
     }
 
