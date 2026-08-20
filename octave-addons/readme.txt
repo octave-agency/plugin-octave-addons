@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.31.3
+Stable tag:        2.32.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.32.0 =
+* Integrated the Octave Addons workspace with the optional light and dark WordPress admin themes.
+* Reworked the plugin dashboard as a native admin layout without the enclosing app card.
 
 = 2.31.3 =
 * Themed the block inserter search band, quick inserter, panel header, and tab list in dark mode.

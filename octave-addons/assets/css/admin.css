@@ -1952,11 +1952,309 @@ CUSTOM SELECTS
     }
 }
 
+/*
+THEMED WORDPRESS ADMIN INTEGRATION
+-- Lets the plugin workspace share the optional light or dark admin canvas.
+-- The original branded dark workspace remains unchanged when it is disabled.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="light"] {
+    --oa-bg: var(--oa-admin-canvas);
+    --oa-bg-soft: var(--oa-admin-surface-soft);
+    --oa-surface: var(--oa-admin-surface);
+    --oa-surface-2: var(--oa-admin-surface-soft);
+    --oa-surface-3: var(--oa-admin-surface-hover);
+    --oa-border: var(--oa-admin-border);
+    --oa-border-light: var(--oa-admin-line-soft);
+    --oa-accent: var(--oa-admin-accent);
+    --oa-accent-2: var(--oa-admin-accent-dark);
+    --oa-accent-bg: var(--oa-admin-accent-soft);
+    --oa-green: #16845B;
+    --oa-green-bg: rgba(22, 132, 91, 0.12);
+    --oa-on-accent: var(--oa-admin-on-accent);
+    --oa-text: var(--oa-admin-text);
+    --oa-text-muted: var(--oa-admin-text-soft);
+    --oa-text-dim: var(--oa-admin-text-dim);
+    --oa-shadow: var(--oa-admin-shadow);
+}
+
+html[data-oa-admin-theme="dark"] {
+    --oa-bg: var(--oa-admin-canvas);
+    --oa-bg-soft: var(--oa-admin-surface-soft);
+    --oa-surface: var(--oa-admin-surface);
+    --oa-surface-2: var(--oa-admin-surface-soft);
+    --oa-surface-3: var(--oa-admin-surface-hover);
+    --oa-border: var(--oa-admin-border);
+    --oa-border-light: var(--oa-admin-line-soft);
+    --oa-accent: var(--oa-admin-accent);
+    --oa-accent-2: var(--oa-admin-accent-dark);
+    --oa-accent-bg: var(--oa-admin-accent-soft);
+    --oa-green: #57D99A;
+    --oa-green-bg: rgba(87, 217, 154, 0.13);
+    --oa-on-accent: var(--oa-admin-on-accent);
+    --oa-text: var(--oa-admin-text);
+    --oa-text-muted: var(--oa-admin-text-soft);
+    --oa-text-dim: var(--oa-admin-text-dim);
+    --oa-shadow: var(--oa-admin-shadow);
+}
+
+body.wp-admin .octave-addons-wrap--themed {
+    max-width: none;
+    margin-top: 0;
+}
+
+.oa-app--themed {
+    min-height: calc(100vh - 80px);
+    margin-top: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.oa-app--themed .oa-sidebar {
+    width: 228px;
+    border-radius: 0;
+    border-color: var(--oa-border-light);
+    background: transparent;
+    backdrop-filter: none;
+}
+
+.oa-app--themed .oa-sidebar-brand {
+    padding: 24px 18px 20px;
+}
+
+.oa-app--themed .oa-brand-mark {
+    border-color: var(--oa-border);
+    background: var(--oa-accent-bg);
+    box-shadow: none;
+}
+
+.oa-app--themed .oa-brand-mark::after {
+    display: none;
+}
+
+html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
+    filter: none;
+    opacity: 0.78;
+}
+
+.oa-app--themed .oa-nav {
+    padding: 18px 10px;
+}
+
+.oa-app--themed .oa-nav-item:hover {
+    background: var(--oa-surface-3) !important;
+}
+
+.oa-app--themed .oa-nav-item.is-active {
+    color: var(--oa-accent);
+    border-color: transparent;
+    background: var(--oa-accent-bg);
+    box-shadow: none;
+}
+
+.oa-app--themed .oa-sidebar-footer {
+    border-color: var(--oa-border-light);
+    background: var(--oa-surface);
+}
+
+.oa-app--themed .oa-content {
+    padding: 28px 36px 48px;
+}
+
+.oa-app--themed .oa-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    margin: 0 0 28px;
+    padding: 4px 0 28px;
+    overflow: visible;
+    border: 0;
+    border-bottom: 1px solid var(--oa-border-light);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.oa-app--themed .oa-hero::before,
+.oa-app--themed .oa-hero-visual {
+    display: none;
+}
+
+.oa-app--themed .oa-eyebrow,
+.oa-app--themed .oa-panel-kicker,
+.oa-app--themed .oa-module-card-link {
+    color: var(--oa-accent);
+}
+
+.oa-app--themed .oa-hero h1 {
+    max-width: none;
+    font-size: clamp(28px, 3vw, 38px);
+}
+
+.oa-app--themed .oa-hero-copy p {
+    max-width: 760px;
+}
+
+.oa-app--themed .oa-hero-stats {
+    max-width: 760px;
+    border-color: var(--oa-border-light);
+    background: var(--oa-border-light);
+}
+
+.oa-app--themed .oa-stat {
+    background: var(--oa-surface);
+}
+
+.oa-app--themed .oa-dashboard-setting,
+.oa-app--themed .oa-module-card,
+.oa-app--themed .oa-panel {
+    border-color: var(--oa-border);
+    background: var(--oa-surface);
+    box-shadow: var(--oa-shadow);
+}
+
+.oa-app--themed .oa-dashboard-setting {
+    margin: 0 0 32px;
+    padding: 20px 22px;
+}
+
+.oa-app--themed .oa-dashboard-setting-icon,
+.oa-app--themed .oa-module-card-icon {
+    color: var(--oa-accent);
+    border-color: var(--oa-border);
+    background: var(--oa-accent-bg);
+}
+
+.oa-app--themed .oa-dashboard-setting .button-primary,
+.oa-app--themed .oa-dashboard-setting .button-primary:hover,
+.oa-app--themed .oa-dashboard-setting .button-primary:focus,
+.oa-app--themed .oa-save-bar .button-primary,
+.oa-app--themed .oa-save-bar .button-primary:hover {
+    color: var(--oa-on-accent);
+    border-color: transparent;
+    background: var(--oa-accent);
+}
+
+.oa-app--themed .oa-module-card {
+    min-height: 170px;
+}
+
+.oa-app--themed .oa-module-card::before,
+.oa-app--themed .oa-panel::before {
+    background: var(--oa-accent);
+}
+
+.octave-addons-wrap .oa-app--themed .oa-module-card:hover,
+.octave-addons-wrap .oa-app--themed .oa-module-card:focus-visible {
+    color: var(--oa-text);
+    border-color: var(--oa-accent);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+.oa-app--themed .oa-enable-wrap,
+.oa-app--themed .oa-settings-locked,
+.oa-app--themed .oa-schema-collection,
+.oa-app--themed .oa-assignment-manager,
+.oa-app--themed .oa-custom-posts-box,
+.oa-app--themed .oa-cpt-editor-nav {
+    background: var(--oa-surface-soft);
+}
+
+.oa-app--themed .oa-assignment-card,
+.oa-app--themed .oa-assignment-option,
+.oa-app--themed .oa-builtin-content-card,
+.oa-app--themed .oa-cpt-editor-context-name code,
+.oa-app--themed .oa-cpt-editor-current-section,
+.oa-app--themed .oa-cpt-icon-picker,
+.oa-app--themed .oa-cpt-item,
+.oa-app--themed .oa-reusable-field-option,
+.oa-app--themed .oa-schema-card,
+.oa-app--themed .oa-spacing-bar,
+.oa-app--themed .oa-sub-field-item {
+    background: var(--oa-surface);
+}
+
+.oa-app--themed .oa-assignment-option:hover {
+    background: var(--oa-surface-hover, var(--oa-surface-3));
+}
+
+.oa-app--themed .oa-form-table input[type="text"],
+.oa-app--themed .oa-form-table input[type="email"],
+.oa-app--themed .oa-form-table input[type="url"],
+.oa-app--themed .oa-form-table input[type="number"],
+.oa-app--themed .oa-form-table input[type="search"],
+.oa-app--themed .oa-form-table select,
+.oa-app--themed .oa-form-table textarea,
+.oa-app--themed .oa-custom-select-trigger,
+.oa-app--themed .oa-cpt-field input,
+.oa-app--themed .oa-cpt-field select,
+.oa-app--themed .oa-cpt-field textarea {
+    color: var(--oa-text);
+    background: var(--oa-surface);
+    box-shadow: none;
+}
+
+.oa-app--themed .oa-form-table input:focus,
+.oa-app--themed .oa-form-table select:focus,
+.oa-app--themed .oa-form-table textarea:focus,
+.oa-app--themed .oa-custom-select.is-open .oa-custom-select-trigger,
+.oa-app--themed .oa-cpt-field input:focus,
+.oa-app--themed .oa-cpt-field select:focus,
+.oa-app--themed .oa-cpt-field textarea:focus {
+    background: var(--oa-surface);
+    box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
+}
+
+.oa-app--themed .oa-custom-select-dropdown,
+.oa-app--themed .oa-toast,
+.oa-app--themed .oa-save-bar {
+    color: var(--oa-text);
+    border-color: var(--oa-border);
+    background: var(--oa-surface);
+}
+
+.oa-app--themed .oa-save-bar {
+    bottom: 14px;
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+@media (max-width: 960px) {
+
+    .oa-app--themed .oa-sidebar {
+        width: 100%;
+        border-radius: 0;
+        background: color-mix(in srgb, var(--oa-surface) 92%, transparent);
+        backdrop-filter: blur(18px);
+    }
+
+    .oa-app--themed .oa-content {
+        padding: 24px 20px 36px;
+    }
+
+}
+
+@media (max-width: 782px) {
+
+    body.wp-admin .octave-addons-wrap--themed {
+        margin-right: 10px;
+    }
+
+    .oa-app--themed .oa-content {
+        padding: 20px 10px 28px;
+    }
+
+    .oa-app--themed .oa-dashboard-setting {
+        padding: 18px;
+    }
+
+}
+
 /* ---- 600 px: hide brand text, compress further ---- */
 
 @media (max-width: 600px) {
 
-    .oa-app {
+    .oa-app:not(.oa-app--themed) {
         --oa-app-radius: 6px;
         margin-top: 8px;
     }

@@ -71,7 +71,7 @@ class Octave_Addons_Admin_Experience {
 
 	public function enqueue_assets( string $hook ): void {
 
-		if ( ! $this->is_enabled() || 'toplevel_page_' . OCTAVE_ADDONS_SLUG === $hook ) {
+		if ( ! $this->is_enabled() ) {
 
 			return;
 
@@ -120,7 +120,7 @@ class Octave_Addons_Admin_Experience {
 
 	public function add_theme_toggle( WP_Admin_Bar $admin_bar ): void {
 
-		if ( ! is_admin() || ! is_user_logged_in() || ! $this->is_enabled() || $this->is_octave_addons_screen() ) {
+		if ( ! is_admin() || ! is_user_logged_in() || ! $this->is_enabled() ) {
 
 			return;
 
@@ -139,19 +139,6 @@ class Octave_Addons_Admin_Experience {
 				'title' => __( 'Toggle light or dark mode', 'octave-addons' ),
 			],
 		] );
-
-	}
-
-	/*
-	IS OCTAVE ADDONS SCREEN
-	-- Keeps the branded plugin workspace separate from the WordPress admin refresh.
-	---------------------------------------------------------- */
-
-	protected function is_octave_addons_screen(): bool {
-
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-
-		return $screen && 'toplevel_page_' . OCTAVE_ADDONS_SLUG === $screen->id;
 
 	}
 
@@ -201,7 +188,7 @@ class Octave_Addons_Admin_Experience {
 				<div>
 					<span class="oa-panel-kicker"><?php esc_html_e( 'Site-wide appearance', 'octave-addons' ); ?></span>
 					<h2><?php esc_html_e( 'Modern WordPress admin', 'octave-addons' ); ?></h2>
-					<p><?php esc_html_e( 'Turn off the custom admin stylesheet and theme script across this site while keeping every functional plugin asset active.', 'octave-addons' ); ?></p>
+					<p><?php esc_html_e( 'Refresh the complete WordPress admin and let each user switch between light and dark mode from the admin bar.', 'octave-addons' ); ?></p>
 				</div>
 			</div>
 

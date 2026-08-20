@@ -497,6 +497,7 @@ class Octave_Addons_Admin {
 		$active_tab    = $this->current_tab();
 		$icon_url      = OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png';
 		$dashboard_url = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG ], admin_url( 'admin.php' ) );
+		$is_themed     = $this->admin_experience->is_enabled();
 
 		$module_settings = [];
 
@@ -544,9 +545,9 @@ class Octave_Addons_Admin {
 
 		</div>
 
-		<div class="wrap octave-addons-wrap">
+		<div class="wrap octave-addons-wrap<?= $is_themed ? ' octave-addons-wrap--themed' : ''; ?>">
 
-			<div class="oa-app">
+			<div class="oa-app<?= $is_themed ? ' oa-app--themed' : ''; ?>">
 
 				<aside class="oa-sidebar">
 					<div class="oa-sidebar-brand">
@@ -640,9 +641,9 @@ class Octave_Addons_Admin {
 
 					<section class="oa-hero">
 						<div class="oa-hero-copy">
-							<span class="oa-eyebrow"><?php esc_html_e( 'Octave site toolkit', 'octave-addons' ); ?></span>
-							<h1><?php esc_html_e( 'Shape a better website experience.', 'octave-addons' ); ?></h1>
-							<p><?php esc_html_e( 'Activate focused enhancements, tune their behaviour, and keep every site capability organised in one place.', 'octave-addons' ); ?></p>
+							<span class="oa-eyebrow"><?php esc_html_e( 'Octave Addons', 'octave-addons' ); ?></span>
+							<h1><?php esc_html_e( 'Manage your site toolkit.', 'octave-addons' ); ?></h1>
+							<p><?php esc_html_e( 'Review what is active, open a module to adjust its settings, and manage the WordPress admin appearance for this site.', 'octave-addons' ); ?></p>
 						</div>
 						<div class="oa-hero-visual" aria-hidden="true">
 							<span class="oa-orbit oa-orbit-one"></span>
