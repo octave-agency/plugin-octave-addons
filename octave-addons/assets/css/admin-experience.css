@@ -958,7 +958,6 @@ CLASSIC AND BLOCK EDITORS
 body.wp-admin.post-php:not(.block-editor-page) .wrap,
 body.wp-admin.post-new-php:not(.block-editor-page) .wrap {
     margin-right: 0;
-    padding-left: 0;
 }
 
 body.wp-admin.rtl.post-php:not(.block-editor-page) .wrap,

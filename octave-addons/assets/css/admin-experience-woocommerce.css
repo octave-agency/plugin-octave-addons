@@ -1612,3 +1612,796 @@ html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-profile-wizard__body
     color: var(--oa-admin-text);
     background: var(--oa-admin-canvas);
 }
+
+/*
+DARK MODE AUDIT ADDITIONS
+-- Every rule below was confirmed against the live admin with dark mode on,
+-- then re-verified after the fix was applied.
+-- Sizing and alignment rules are theme-agnostic and use the body.wp-admin
+-- prefix. Colour rules stay behind the dark attribute, as above.
+---------------------------------------------------------- */
+
+/*
+SETTINGS SHELL
+-- WooCommerce paints the whole wc-settings screen light in its own
+-- admin.css, at a specificity the base sheet does not outrank, so every
+-- field label sat white on light grey.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings #wpcontent,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings #wpbody-content,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings #mainform,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .woocommerce-embedded-layout__primary {
+    background: var(--oa-admin-canvas);
+    background-color: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .nav-tab-wrapper,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .woocommerce-settings-payments-tab .nav-tab-wrapper {
+    background: transparent;
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .nav-tab-wrapper a {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .nav-tab-wrapper .nav-tab-active,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .nav-tab-wrapper .nav-tab-active:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .nav-tab-wrapper .nav-tab-active:focus:active,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .nav-tab-wrapper .nav-tab-active:hover {
+    color: var(--oa-admin-text);
+    border-bottom-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .nav-tab-wrapper .nav-tab:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .nav-tab-wrapper .nav-tab:hover {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings #mainform .subsubsub li {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-settings .wc-settings-marketplace-link {
+    color: var(--oa-admin-text-soft);
+    border-top-color: var(--oa-admin-border);
+}
+
+/*
+PAYMENTS SETTINGS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .settings-payments-main__container .settings-payment-gateways__header-select-container {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .settings-payment-gateways__list,
+html[data-oa-admin-theme="dark"] body.wp-admin .settings-payments-main__container .other-payment-gateways {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-woopayments-payment-methods-logos img:not(.has-background) {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-woopayments-payment-methods-logos-count {
+    background-color: var(--oa-admin-surface-hover);
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-incentive-banner,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-incentive-page {
+    background: var(--oa-admin-surface-subtle);
+    background-color: var(--oa-admin-surface-subtle);
+    border-color: var(--oa-admin-border);
+}
+
+/*
+Status pills and badges
+-- Woo paints these from --Alias-* custom properties it never defines, so
+-- the light hex fallbacks land in dark mode and the sheet's own text
+-- colour sat on a pastel chip.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pill,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-status-badge,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-badge {
+    background: var(--oa-admin-surface-hover);
+    background-color: var(--oa-admin-surface-hover);
+    color: var(--oa-admin-text-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-status-badge--success {
+    background: rgba(122, 208, 141, 0.14);
+    background-color: rgba(122, 208, 141, 0.14);
+    color: #8FD9A2;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-status-badge--warning {
+    background: rgba(246, 185, 95, 0.14);
+    background-color: rgba(246, 185, 95, 0.14);
+    color: var(--oa-admin-warning);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-status-badge--error,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-status-badge--critical {
+    background: rgba(255, 133, 140, 0.14);
+    background-color: rgba(255, 133, 140, 0.14);
+    color: var(--oa-admin-danger);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-status-badge--info {
+    background: var(--oa-admin-accent-soft);
+    background-color: var(--oa-admin-accent-soft);
+    color: var(--oa-admin-accent-dark);
+}
+
+/*
+HOME SCREEN, INBOX AND ACTIVITY PANEL
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-homescreen .woocommerce-activity-panel .components-panel__body,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-homescreen-card.components-panel__body,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-homescreen-card .components-panel__body {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-stats-overview__tabs .components-tab-panel__tabs {
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item .woocommerce-summary__item-delta {
+    background: var(--oa-admin-surface-hover);
+    background-color: var(--oa-admin-surface-hover);
+    color: var(--oa-admin-text-soft);
+}
+
+/* The panel headings are emotion-styled, so the hashed class is never a
+   safe target -- go through the stable wrapper. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__inbox-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__inbox-title .components-text,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__inbox-title .components-truncate,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message__content .woocommerce-inbox-message__title {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message__content .woocommerce-inbox-message__title a {
+    color: var(--oa-admin-text) !important;
+}
+
+/* Inbox skeleton lines. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message .line,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message .second-line,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message .third-line,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message .fourth-line,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message .fifth-line,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message .sixth-line {
+    background: var(--oa-admin-surface-hover);
+    background-color: var(--oa-admin-surface-hover);
+}
+
+/*
+Activity panel tab hover and focus
+-- Woo's :not(:disabled):not([aria-disabled]) rule outranks the base tab
+-- rule and drops the label and icon to #1e1e1e on the dark header.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab.components-button:not(:disabled):not([aria-disabled="true"]):hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab.components-button:not(:disabled):not([aria-disabled="true"]):focus {
+    background: var(--oa-admin-surface-hover);
+    color: var(--oa-admin-text);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab:hover svg,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab.components-button:not(:disabled):not([aria-disabled="true"]):hover svg {
+    fill: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab.components-button:not(:disabled):not([aria-disabled="true"]):focus-visible {
+    box-shadow: inset 0 0 0 1px var(--oa-admin-accent);
+    outline: 2px solid transparent;
+}
+
+/*
+ANALYTICS TABLES, PLACEHOLDERS AND TOURS
+---------------------------------------------------------- */
+
+/* The sorted column ran a light band down every analytics table, under
+   light text. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__header.is-sorted,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__item.is-sorted {
+    background: var(--oa-admin-surface-subtle);
+    background-color: var(--oa-admin-surface-subtle);
+    color: var(--oa-admin-text);
+}
+
+/* Horizontal scroll shadows fade to white. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__table::after,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__table.is-scrollable-right::after,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-legend__total::before {
+    background: linear-gradient(to right, rgba(25, 31, 38, 0), var(--oa-admin-surface));
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__table::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__table.is-scrollable-left::before {
+    background: linear-gradient(to left, rgba(25, 31, 38, 0), var(--oa-admin-surface));
+}
+
+/*
+Loading skeletons
+-- Woo's placeholder mixin paints every skeleton block #f0f0f0. Its
+-- loading-fade keyframe only animates opacity, so recolouring the
+-- background is enough. Scoped to leaf elements so .is-placeholder
+-- containers keep their own card surface.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin span.is-placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__item .is-placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__summary-item .is-placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-container.is-placeholder .woocommerce-summary__item-label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-container.is-placeholder .woocommerce-summary__item-value,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-container.is-placeholder .woocommerce-summary__item-delta,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-container.is-placeholder .woocommerce-summary__item-prev-label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-container.is-placeholder .woocommerce-summary__item-prev-value,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item.is-placeholder .woocommerce-list__item-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item.is-placeholder .woocommerce-list__item-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item.is-placeholder .woocommerce-list__item-before,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item.is-placeholder .woocommerce-list__item-after,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-activity-card.is-loading .is-placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-card.is-loading .is-placeholder {
+    background: var(--oa-admin-surface-hover);
+    background-color: var(--oa-admin-surface-hover);
+    color: transparent;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-preview-loading {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    color: var(--oa-admin-text-soft);
+    border-color: var(--oa-admin-border);
+}
+
+/* Analytics table pagination bar. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table .woocommerce-pagination,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pagination {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pagination__page-arrows-buttons {
+    background: var(--oa-admin-surface-subtle);
+    background-color: var(--oa-admin-surface-subtle);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pagination__page-arrows-buttons button:first-child {
+    border-right-color: var(--oa-admin-border);
+}
+
+/* Analytics data-status bar. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-analytics-import-status-bar {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-analytics-import-status-bar-wrapper__label {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-analytics-import-status-bar__value,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-analytics-import-status-bar__label {
+    color: var(--oa-admin-text-soft);
+}
+
+/* Search control icons ship as raw SVG with fill: black. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control.woocommerce-search svg,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .woocommerce-select-control__control svg,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .woocommerce-select-control__control-icon svg {
+    fill: currentColor;
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control.is-focused .woocommerce-select-control__control svg,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .woocommerce-select-control__control:hover svg {
+    color: var(--oa-admin-text-soft);
+}
+
+/* Tour kit steps: the card is themed, the copy inside is not. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-tour-kit .woocommerce-tour-kit-step__heading {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-tour-kit .woocommerce-tour-kit-step__description {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+MARKETPLACE, EXTENSIONS AND MARKETING CARDS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__details {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card .woocommerce-marketplace__product-card__image,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card--theme .woocommerce-marketplace__product-card__image {
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__header-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__title a,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__rating,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__rating-average,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__tab-button,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__tab-button.is-active {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__price {
+    color: var(--oa-admin-text) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__price-billing,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__vendor,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__product-card__rating-count {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__header-account-trigger {
+    border-color: var(--oa-admin-border);
+}
+
+/* Recommendation cards on the Coupons and Marketing screens. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-admin-marketing-product-icon {
+    background: var(--oa-admin-surface-hover);
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketing-recommended-extensions-item h4 {
+    color: var(--oa-admin-text);
+}
+
+/*
+SHIPPING ZONES
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-zones td.wc-shipping-zone-methods ul li.wc-shipping-zone-method,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-classes td.wc-shipping-zone-methods ul li.wc-shipping-zone-method,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-zone-methods li.wc-shipping-zone-method {
+    background: var(--oa-admin-surface-hover);
+    background-color: var(--oa-admin-surface-hover);
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-zone-methods li.wc-shipping-zone-method.method_disabled {
+    color: var(--oa-admin-text-dim);
+}
+
+/*
+EMAIL PREVIEW
+-- The iframe keeps the real email's own light styling; only the
+-- surrounding chrome is themed, the same way the sheet leaves the
+-- Customizer preview alone.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-settings-email-preview-container {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-settings-email-preview-header {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-bottom-color: var(--oa-admin-border);
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-settings-email-preview-header-subject,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-settings-email-preview-header-from,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-settings-email-preview-header-sender {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-settings-email-preview-header-from span,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-settings-email-preview-header-email {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin button.wc-settings-email-select-image {
+    background: var(--oa-admin-surface-subtle);
+    background-color: var(--oa-admin-surface-subtle);
+    border-color: var(--oa-admin-border-strong);
+    color: var(--oa-admin-text);
+}
+
+/*
+ORDER EDIT SCREEN
+---------------------------------------------------------- */
+
+/* Woo hardcodes #1e1e1e on the order data column, which left every field
+   label invisible on the dark panel. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin #order_data h3,
+html[data-oa-admin-theme="dark"] body.wp-admin #order_data h4,
+html[data-oa-admin-theme="dark"] body.wp-admin #order_data .order_data_column h3,
+html[data-oa-admin-theme="dark"] body.wp-admin #order_data .order_data_column .form-field label,
+html[data-oa-admin-theme="dark"] body.wp-admin #order_data .order_data_column .address strong {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #order_data .order_data_column .address p,
+html[data-oa-admin-theme="dark"] body.wp-admin #order_data .order_data_column .address .none_set {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin ul.order_notes li a.delete_note,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-notes a.delete_note {
+    color: var(--oa-admin-danger);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-notes .add_note {
+    border-bottom-color: var(--oa-admin-border);
+}
+
+/* Custom fields metabox on the order screen. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-orders #postcustomstuff table,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_order #postcustomstuff table,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-orders #postcustomstuff #newmeta,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_order #postcustomstuff #newmeta,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-orders #postcustomstuff #list-table,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_order #postcustomstuff #list-table {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-orders #postcustomstuff th,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_order #postcustomstuff th,
+html[data-oa-admin-theme="dark"] body.wp-admin.woocommerce_page_wc-orders #postcustomstuff td,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_order #postcustomstuff td {
+    background: transparent;
+    background-color: transparent;
+    border-color: var(--oa-admin-border);
+    color: var(--oa-admin-text);
+}
+
+/* Octave's own School Details metabox inlines #f6f7f7 in PHP. Worth fixing
+   at source; this keeps it readable meanwhile. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.oa-school-details-table .oa-school-details__section td {
+    background: var(--oa-admin-surface-subtle);
+    background-color: var(--oa-admin-surface-subtle);
+    border-color: var(--oa-admin-border);
+    color: var(--oa-admin-text);
+}
+
+/*
+Order actions chevron
+-- Woo ships it as a 28x28 icon button, then the base .button padding
+-- squashed the glyph and left it 32px tall beside a 40px select. Square it
+-- off and match the control height.
+---------------------------------------------------------- */
+
+body.wp-admin .order_actions li#actions,
+body.wp-admin #woocommerce-order-actions .inside li#actions {
+    align-items: center;
+}
+
+body.wp-admin .order_actions li#actions .button.wc-reload,
+body.wp-admin #woocommerce-order-actions .inside .button.wc-reload {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px !important;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    line-height: 1;
+    flex: 0 0 auto;
+    border-radius: 3px;
+}
+
+body.wp-admin .order_actions li#actions .button.wc-reload::before,
+body.wp-admin #woocommerce-order-actions .inside .button.wc-reload::before {
+    margin: 0;
+    line-height: 1;
+    width: auto;
+    height: auto;
+}
+
+body.wp-admin .order_actions li#actions select {
+    min-height: 40px;
+    height: 40px;
+    line-height: 1.4;
+    flex: 1 1 auto;
+}
+
+/*
+LEGACY REPORTS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .chart-container,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .chart-container {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .stats_range ul,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .stats_range ul {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .stats_range ul li.active,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .stats_range ul li.active {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .stats_range ul li a,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .stats_range ul li a,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .stats_range .export_csv,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .stats_range .export_csv {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .chart-legend li,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .chart-legend li {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    border-left-color: var(--oa-admin-border-strong);
+}
+
+/*
+SELECT2 -- SIZE PARITY WITH NATIVE SELECTS
+-- Woo's bundled select2 rendered 32px in list-table toolbars and 40px in
+-- metaboxes, against native controls that are 36px and 34px, with a 2px
+-- radius against the 3px used everywhere else. Sizing, so not scoped to
+-- the dark theme.
+---------------------------------------------------------- */
+
+body.wp-admin .select2-container .select2-selection--single {
+    height: 34px;
+    min-height: 34px;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+body.wp-admin .select2-container .select2-selection--single .select2-selection__rendered {
+    height: 32px;
+    line-height: 32px;
+    padding: 0 34px 0 8px;
+    font-size: 14px;
+}
+
+body.wp-admin .select2-container .select2-selection--single .select2-selection__arrow {
+    top: 1px;
+    right: 1px;
+    width: 30px;
+    height: 32px;
+}
+
+body.wp-admin .select2-container .select2-selection--multiple {
+    min-height: 34px;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+/* List-table toolbars run 36px controls. */
+
+body.wp-admin .tablenav .select2-container .select2-selection--single,
+body.wp-admin .search-box .select2-container .select2-selection--single {
+    height: 36px;
+    min-height: 36px;
+}
+
+body.wp-admin .tablenav .select2-container .select2-selection--single .select2-selection__rendered,
+body.wp-admin .search-box .select2-container .select2-selection--single .select2-selection__rendered {
+    height: 34px;
+    line-height: 34px;
+}
+
+body.wp-admin .tablenav .select2-container .select2-selection--single .select2-selection__arrow,
+body.wp-admin .search-box .select2-container .select2-selection--single .select2-selection__arrow {
+    height: 34px;
+}
+
+body.wp-admin .tablenav .select2-container .select2-selection--multiple,
+body.wp-admin .search-box .select2-container .select2-selection--multiple {
+    min-height: 36px;
+}
+
+/* Open and focus states still used the stock WordPress blue. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--open .select2-selection,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--focus .select2-selection {
+    border-color: var(--oa-admin-accent);
+    box-shadow: 0 0 0 1px var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-dropdown {
+    border-color: var(--oa-admin-accent);
+    box-shadow: 0 0 0 1px var(--oa-admin-accent), var(--oa-admin-shadow);
+}
+
+/*
+LIST-TABLE TOOLBAR HEIGHT PARITY
+-- .tablenav .button was already 36px, but the search button, the paging
+-- input and the pagination arrows sat at 32px and 34px beside it, with
+-- mixed 2px and 3px radii.
+---------------------------------------------------------- */
+
+body.wp-admin.post-type-product .search-box .button,
+body.wp-admin.post-type-shop_order .search-box .button,
+body.wp-admin.post-type-shop_coupon .search-box .button,
+body.wp-admin.woocommerce_page_wc-orders .search-box .button,
+body.wp-admin.post-type-product .tablenav-pages .current-page,
+body.wp-admin.post-type-shop_order .tablenav-pages .current-page,
+body.wp-admin.woocommerce_page_wc-orders .tablenav-pages .current-page,
+body.wp-admin.post-type-product .tablenav-pages .page-numbers,
+body.wp-admin.post-type-shop_order .tablenav-pages .page-numbers,
+body.wp-admin.woocommerce_page_wc-orders .tablenav-pages .page-numbers,
+body.wp-admin.post-type-product .tablenav .tablenav-pages a,
+body.wp-admin.post-type-shop_order .tablenav .tablenav-pages a,
+body.wp-admin.woocommerce_page_wc-orders .tablenav .tablenav-pages a {
+    height: 36px;
+    min-height: 36px;
+    border-radius: 3px;
+}
+
+/* Core marks the disabled pagination border !important, so the override has
+   to match it. Note the class-joined .wp-core-ui: that class only ever
+   lives on <body>. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button.disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-secondary.disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-secondary:disabled {
+    border-color: var(--oa-admin-border) !important;
+    color: var(--oa-admin-text-dim) !important;
+    background: var(--oa-admin-surface-soft) !important;
+    background-color: var(--oa-admin-surface-soft) !important;
+}
+
+/*
+CLASSIC EDITOR TITLE PLACEHOLDER
+-- #title-prompt-text is absolutely positioned at 0,0 with its own 10px
+-- padding and an 18px line box, so it sat about 7px above and 5px left of
+-- the text the input actually renders. #title is 52px tall with a 1px
+-- border and 14px side padding, so the placeholder needs a 50px line box
+-- inset by 15px.
+---------------------------------------------------------- */
+
+body.wp-admin #titlediv #title-prompt-text {
+    top: 1px;
+    left: 15px;
+    right: 15px;
+    padding: 0;
+    font-size: 1.65em;
+    line-height: 50px;
+}
+
+/*
+PRODUCT EDIT -- CATEGORY BOX AND CLASSIC EDITOR CHROME
+-- Core paints the active tab and its panel white so they can sit on a
+-- white metabox. The editor content iframe is left alone so the WYSIWYG
+-- stays accurate.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product ul.category-tabs li.tabs,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product ul.add-menu-item-tabs li.tabs,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product .wp-tab-active {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border) var(--oa-admin-border) var(--oa-admin-surface);
+}
+
+/* Core scopes the tab link colour behind #post-body and #side-sortables,
+   so the override needs the id too. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product #post-body ul.category-tabs li.tabs a,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product #side-sortables ul.category-tabs li.tabs a,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product #post-body ul.add-menu-item-tabs li.tabs a {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product .tabs-panel,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product .categorydiv .tabs-panel,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product .tagsdiv .tabs-panel {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product .wp-editor-tabs .wp-switch-editor,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_coupon .wp-editor-tabs .wp-switch-editor {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product .html-active .switch-html,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product .tmce-active .switch-tmce,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_coupon .html-active .switch-html,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_coupon .tmce-active .switch-tmce {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-bottom-color: var(--oa-admin-surface);
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-panel,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_coupon div.mce-panel {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-toolbar-grp,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_coupon div.mce-toolbar-grp {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-widget.mce-btn,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-menubtn,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_coupon div.mce-widget.mce-btn,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_coupon div.mce-menubtn {
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-panel .mce-btn button,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-panel .mce-ico,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-panel .mce-txt {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-panel .mce-btn:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product div.mce-panel .mce-btn.mce-active {
+    background: var(--oa-admin-surface-hover);
+    background-color: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-product #post-status-info,
+html[data-oa-admin-theme="dark"] body.wp-admin.post-type-shop_coupon #post-status-info {
+    background: var(--oa-admin-surface-soft);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+    color: var(--oa-admin-text-soft);
+}

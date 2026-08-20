@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.33.0
+Stable tag:        2.33.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.33.1 =
+* Completed the WooCommerce dark mode pass against a live store, covering the settings shell, payments, home screen, inbox, activity panel, analytics placeholders, marketplace, email preview, order edit, and the classic product editor chrome.
+* Matched WooCommerce select2 controls and list table toolbars to native WordPress control heights and corner radii.
+* Corrected the classic editor title placeholder alignment.
 
 = 2.33.0 =
 * Added WooCommerce dark mode coverage across settings, analytics, orders, products, shipping, tax, status, logs, importers, and the marketplace, loaded only while WooCommerce is active.
