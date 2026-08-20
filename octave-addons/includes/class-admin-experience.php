@@ -78,6 +78,7 @@ class Octave_Addons_Admin_Experience {
 		}
 
 		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience.css';
+		$woo_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience-woocommerce.css';
 		$js_path  = OCTAVE_ADDONS_DIR . 'assets/js/admin-experience.js';
 		$theme    = get_user_meta( get_current_user_id(), 'oa_admin_theme', true );
 
@@ -93,6 +94,17 @@ class Octave_Addons_Admin_Experience {
 			[],
 			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
 		);
+
+		if ( $this->is_woocommerce_active() ) {
+
+			wp_enqueue_style(
+				'octave-addons-admin-experience-woocommerce',
+				OCTAVE_ADDONS_URL . 'assets/css/admin-experience-woocommerce.css',
+				[ 'octave-addons-admin-experience' ],
+				file_exists( $woo_path ) ? (string) filemtime( $woo_path ) : OCTAVE_ADDONS_VERSION
+			);
+
+		}
 
 		wp_enqueue_script(
 			'octave-addons-admin-experience',
@@ -110,6 +122,17 @@ class Octave_Addons_Admin_Experience {
 			'lightModeText'   => __( 'Use light mode', 'octave-addons' ),
 			'mediaSearchText' => __( 'Search media…', 'octave-addons' ),
 		] );
+
+	}
+
+	/*
+	IS WOOCOMMERCE ACTIVE
+	-- Gates the WooCommerce sheet so it never loads on a store-free site.
+	---------------------------------------------------------- */
+
+	public function is_woocommerce_active(): bool {
+
+		return class_exists( 'WooCommerce' );
 
 	}
 

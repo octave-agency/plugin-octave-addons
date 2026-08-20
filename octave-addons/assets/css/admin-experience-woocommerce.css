@@ -1,0 +1,1614 @@
+/*
+WORDPRESS ADMIN EXPERIENCE -- WOOCOMMERCE
+-- Dark mode coverage for every WooCommerce admin surface.
+-- Loaded on top of admin-experience.css, and only while WooCommerce is active.
+-- WooCommerce paints its screens with hardcoded whites and greys rather than
+-- the WordPress design system tokens, so the token remap in the main sheet
+-- cannot reach them. Each section below replaces one screen family.
+---------------------------------------------------------- */
+
+/*
+WOOCOMMERCE TOKENS
+-- WooCommerce declares its own :root palette in admin.css, and every one of
+-- its script bundles re-declares --wp-admin-theme-color at :root, which
+-- overrides the admin colour scheme on every WooCommerce screen.
+-- html[data-oa-admin-theme] outranks :root, so remapping here reaches every
+-- rule that reads a token without needing to target the rules themselves.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] {
+    --woocommerce: var(--oa-admin-accent);
+    --wc-primary: var(--oa-admin-accent);
+    --wc-primary-text: var(--oa-admin-on-accent);
+    --wc-secondary: var(--oa-admin-surface-hover);
+    --wc-secondary-text: var(--oa-admin-text-soft);
+    --wc-highlight: var(--oa-admin-accent);
+    --wc-highligh-text: var(--oa-admin-on-accent);
+    --wc-content-bg: var(--oa-admin-surface);
+    --wc-subtext: var(--oa-admin-text-soft);
+    --wc-form-border-color: var(--oa-admin-border-strong);
+    --wc-blank-state-icon: var(--oa-admin-border-strong);
+    --wc-green: #6FCF97;
+    --wc-red: var(--oa-admin-danger);
+    --wc-orange: var(--oa-admin-warning);
+    --wc-blue: var(--oa-admin-accent);
+    --wc-destructive: var(--oa-admin-danger);
+    --wp-admin-theme-color: var(--oa-admin-accent);
+    --wp-admin-theme-color-darker-10: var(--oa-admin-accent-dark);
+    --wp-admin-theme-color-darker-20: var(--oa-admin-accent-dark);
+    --wp-editor-canvas-background: var(--oa-admin-canvas);
+}
+
+/*
+ADMIN SHELL AND PAGE CHROME
+-- The wc-admin React app draws its own header, footer and page background
+-- inside #wpbody-content on every Analytics, Home and Marketing screen.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.woocommerce-page #wpcontent,
+html[data-oa-admin-theme="dark"] body.woocommerce-page #wpbody-content,
+html[data-oa-admin-theme="dark"] body.woocommerce-admin-page #wpcontent,
+html[data-oa-admin-theme="dark"] body.woocommerce-admin-page #wpbody-content,
+html[data-oa-admin-theme="dark"] body.woocommerce-embed-page #wpbody-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__primary,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-embedded-layout__primary,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-admin-page {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__header,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__header.is-scrolled {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-bottom-color: var(--oa-admin-border);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__header .woocommerce-layout__header-heading,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__header .woocommerce-layout__header-meta-icon,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__header .woocommerce-layout__header-meta-icon:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__header-breadcrumbs,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-admin-breadcrumb {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__header-breadcrumbs a,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-admin-breadcrumb a {
+    color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__footer {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface);
+    border-top-color: var(--oa-admin-border);
+    box-shadow: none;
+}
+
+/*
+Activity panel
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-wrapper,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-popover .components-popover__content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-wrapper.is-open {
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-tabs .woocommerce-layout__activity-panel-tab:hover {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-toggle-bubble.has-unread::after,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout__activity-panel-avatar-flag-overlay .woocommerce-flag {
+    border-color: var(--oa-admin-surface);
+}
+
+/*
+CARDS, SUMMARIES AND CHARTS
+-- The summary numbers on Analytics use nth-of-type selectors to paint their
+-- dividing borders, which outrank a plain theme selector, so the border
+-- colour has to be forced.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-container,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border) !important;
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item.is-selected {
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-prev-label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-delta {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-value {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart__body,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart__footer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart .woocommerce-chart__header,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart__interval-select,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart__footer .woocommerce-legend__direction-column .woocommerce-legend__list {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart-placeholder {
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart__type-button.components-button {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-chart__type-button.components-button.woocommerce-chart__type-button-selected {
+    color: var(--oa-admin-text);
+}
+
+/* Chart axes and grid lines are drawn as SVG by d3 and stroked #f0f0f0. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .grid .tick line {
+    stroke: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .grid .tick:first-child line {
+    stroke: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .focus-grid line {
+    stroke: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .barfocus {
+    fill: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .y-axis.ticktext,
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .tick text {
+    fill: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .d3-chart__empty-message {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .d3-chart__tooltip {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .d3-chart__container .d3-chart__tooltip h4 {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-legend__item button,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-legend__item-title {
+    color: var(--oa-admin-text);
+    background: rgba(0, 0, 0, 0);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-legend__item button:hover {
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-legend__item-total {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+ANALYTICS TABLES
+-- TableCard renders its own table rather than a WordPress list table, so the
+-- .widefat rules in the main sheet do not reach it.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__table,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table .components-card__header,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table .components-card__footer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__table thead th,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__header,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__item.woocommerce-table__header {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__table tbody td,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__item,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__summary-item {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__table tbody tr:hover td {
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__summary {
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__summary-label {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin button.woocommerce-table__download-button,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__empty-item {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-table__item.is-placeholder span,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-summary__item-container.is-placeholder span {
+    background: var(--oa-admin-surface-hover);
+}
+
+/*
+Pagination
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pagination,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pagination__page-arrows-label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pagination__per-page-picker {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pagination__page-picker-input {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+/*
+FILTERS, SEARCH AND SELECT CONTROLS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced .components-card__body,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-date__content-controls,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-filter__content {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced__list-item,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-date__tabs,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-date__content-controls.is-custom,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-filter__content-list-item {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced .components-card__body.is-size-small:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced .components-card__body ul li:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced__list-item:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced__add-dropdown .components-button:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced__add-dropdown .components-button:not(:disabled):not([aria-disabled="true"]):focus {
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced__add-button,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-advanced__remove,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-filter__content.is-mobile .components-popover__header-title {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-filter__content-list-item .woocommerce-filters-filter__button {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-filter__content-list-item.is-selected .woocommerce-filters-filter__button {
+    background-color: var(--oa-admin-surface-selected);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-filters-date__text {
+    color: var(--oa-admin-text-soft);
+    background-color: var(--oa-admin-surface);
+}
+
+/*
+Select and combobox controls
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .components-base-control,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-experimental-select-control__combo-box-wrapper,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search.woocommerce-select-control .woocommerce-select-control__control {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-experimental-select-control__combo-box-wrapper--disabled {
+    background-color: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .components-base-control .woocommerce-select-control__control-input,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-experimental-select-control__selected-items.is-read-only,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control__control-input {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .components-base-control .components-base-control__label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search.woocommerce-select-control .components-base-control .components-base-control__label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .components-base-control i,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .woocommerce-select-control__clear > .clear-icon,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search.woocommerce-select-control .woocommerce-select-control__control-icon {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .woocommerce-select-control__listbox,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search.woocommerce-select-control .woocommerce-select-control__listbox,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-popover.woocommerce-experimental-select-control__popover-menu,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-popover.woocommerce-experimental-select-control__popover-menu .components-popover__content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control__option,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search.woocommerce-select-control .woocommerce-select-control__option {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control__option:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-select-control .woocommerce-select-control__option.is-selected,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search.woocommerce-select-control .woocommerce-select-control__option:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search.woocommerce-select-control .woocommerce-select-control__option.is-selected {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-experimental-select-control__popover-menu-container > .category-field-dropdown__item:not(:first-child) .category-field-dropdown__item-content {
+    border-top-color: var(--oa-admin-border);
+}
+
+/*
+Search list and tree select
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list > [role="menu"],
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list .woocommerce-search-list__item {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__selected,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__search,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list .woocommerce-search-list__item:not(.depth-0) + .depth-0 {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list .woocommerce-search-list__item:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list .woocommerce-search-list__item:active,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list .woocommerce-search-list__item:focus {
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list .woocommerce-search-list__item .woocommerce-search-list__item-prefix,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-search-list__list .woocommerce-search-list__item .woocommerce-search-list__item-count {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-tree-select-control__control-input,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-tree-select-control__main,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-tree-select-control__option {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-tree-select-control__option:hover {
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-pill {
+    color: var(--oa-admin-text-soft);
+    border-color: var(--oa-admin-border-strong);
+}
+
+/*
+DATE RANGE PICKER
+-- WooCommerce bundles react-dates, which paints the whole calendar #f0f0f0.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .DayPicker,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .DayPicker_transitionContainer,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarMonthGrid,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarMonth {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarMonth_caption,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarDay__default,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarDay {
+    color: var(--oa-admin-text);
+    background-color: rgba(0, 0, 0, 0);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .DayPicker_weekHeader,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .DayPicker_weekHeader_li,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarDay__blocked_out_of_range,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarDay__blocked_minimum_nights {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarDay__hovered_span,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarDay__selected_span {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-selected);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarDay__selected,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .CalendarDay__selected:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates.is-core-datepicker .CalendarDay__selected {
+    color: var(--oa-admin-on-accent);
+    background: var(--oa-admin-accent);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .DayPickerNavigation_button,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .DayPickerNavigation_button__default {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .DayPickerNavigation_button__disabled {
+    color: var(--oa-admin-text-dim);
+    border-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__react-dates .DayPickerNavigation_svg__horizontal {
+    fill: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__date-picker-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__input .woocommerce-calendar__input-text {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__input .woocommerce-calendar__input-text::placeholder {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__input .calendar-icon path,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__input.is-empty .calendar-icon path {
+    fill: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-calendar__input-error .components-popover__content {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-hover);
+}
+
+/*
+LISTS, INBOX, TASKS AND MENUS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-experimental-list__item,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-inbox-message,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-stepper,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-timeline-group {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item:not(:first-child) {
+    border-top-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout .components-panel__body > .components-panel__body-title:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout .woocommerce-experimental-list__item:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-layout .woocommerce-inbox-message:hover {
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item .woocommerce-list__item-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-timeline-item__headline {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item .woocommerce-list__item-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item.is-complete .woocommerce-list__item-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-timeline-item__timestamp {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-list__item .woocommerce-list__item-after > svg {
+    fill: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-ellipsis-menu__popover .components-popover__content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-ellipsis-menu__content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-ellipsis-menu__popover .woocommerce-ellipsis-menu__item {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-ellipsis-menu__popover .woocommerce-ellipsis-menu__item:hover {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-ellipsis-menu__popover .components-base-control__label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-ellipsis-menu__popover .woocommerce-ellipsis-menu__title {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-segmented-selection__item,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-segmented-selection__label {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-dismissable-list,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-mobile-app-banner,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-order-attribution-install-banner,
+html[data-oa-admin-theme="dark"] body.wp-admin .site-visibility-settings-slotfill {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-button.woocommerce-dropdown-button {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-button.woocommerce-dropdown-button::after {
+    background: var(--oa-admin-text);
+}
+
+/*
+SETTINGS SCREENS
+-- The classic WooCommerce > Settings tabs, plus the gateway, email and
+-- shipping method tables that sit inside them.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.woocommerce_page_wc-settings #wpbody-content,
+html[data-oa-admin-theme="dark"] body.woocommerce_page_wc-status #wpbody-content,
+html[data-oa-admin-theme="dark"] body.woocommerce_page_wc-reports #wpbody-content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce table.form-table,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-modal-shipping-method-settings form .form-table {
+    color: var(--oa-admin-text);
+    background: rgba(0, 0, 0, 0);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-modal-shipping-method-settings form .form-table tr td,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-modal-shipping-method-settings form .form-table tr th {
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-settings-sub-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce h2.wc-settings-sub-title {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce table.form-table .colorpickpreview {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce table.form-table .iris-picker {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+/*
+Gateway, email and shipping method tables
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_emails,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_gateways,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_shipping {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_emails tr:nth-child(odd) td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_gateways tr:nth-child(odd) td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_shipping tr:nth-child(odd) td {
+    background: var(--oa-admin-surface-subtle);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_emails td.sort .wc-item-reorder-nav::before,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_gateways td.sort .wc-item-reorder-nav::before,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_shipping td.sort .wc-item-reorder-nav::before,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_emails td.sort .wc-item-reorder-nav button,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_gateways td.sort .wc-item-reorder-nav button,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_shipping td.sort .wc-item-reorder-nav button,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_emails .wc-email-settings-table-name span,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_gateways .wc-email-settings-table-name span {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_emails td.sort .wc-item-reorder-nav button:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_gateways td.sort .wc-item-reorder-nav button:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_shipping td.sort .wc-item-reorder-nav button:hover {
+    color: var(--oa-admin-text);
+}
+
+/* WooCommerce forces the disabled arrow colour, so it has to be forced back. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_emails td.sort .wc-item-reorder-nav .wc-move-disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_gateways td.sort .wc-item-reorder-nav .wc-move-disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_shipping td.sort .wc-item-reorder-nav .wc-move-disabled {
+    color: var(--oa-admin-border-strong) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-payment-gateway-method-name,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-settings-payments-section_legacy {
+    color: var(--oa-admin-text);
+    background: rgba(0, 0, 0, 0);
+}
+
+/*
+PRODUCT DATA AND METABOXES
+-- The product data panel is the most heavily hardcoded classic screen:
+-- a #fafafa tab rail, a #fff panel and #eee dividers throughout.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-data .panel-wrap,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-coupon-data .panel-wrap,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-data .wc-metaboxes-wrapper,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_options_panel,
+html[data-oa-admin-theme="dark"] body.wp-admin .panel {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-data ul.wc-tabs,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-coupon-data ul.wc-tabs,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce ul.wc-tabs,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-data ul.wc-tabs::after,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-coupon-data ul.wc-tabs::after,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce ul.wc-tabs::after {
+    background-color: var(--oa-admin-surface-soft);
+    border-right-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-data ul.wc-tabs li a,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-coupon-data ul.wc-tabs li a,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce ul.wc-tabs li a {
+    color: var(--oa-admin-text-soft);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-data ul.wc-tabs li a:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-coupon-data ul.wc-tabs li a:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce ul.wc-tabs li a:hover {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-data ul.wc-tabs li.active a,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-coupon-data ul.wc-tabs li.active a,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce ul.wc-tabs li.active a {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_options_panel .options_group {
+    border-top-color: var(--oa-admin-surface);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_options_panel label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_options_panel legend {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #usage_restriction_coupon_data.woocommerce_options_panel .options_group .hr-section::before,
+html[data-oa-admin-theme="dark"] body.wp-admin #usage_restriction_coupon_data.woocommerce_options_panel .options_group .hr-section::after {
+    background: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #inventory_product_data .notice,
+html[data-oa-admin-theme="dark"] body.wp-admin #variable_product_options #message,
+html[data-oa-admin-theme="dark"] body.wp-admin #variable_product_options .notice {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+/*
+Product gallery and images
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-images .inside #product_images_container ul li.add,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-images .inside #product_images_container ul li.image {
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-images .inside #product_images_container ul li.wc-metabox-sortable-placeholder {
+    border-color: var(--oa-admin-border-strong);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-product-images .inside #product_images_container ul li.wc-metabox-sortable-placeholder::after {
+    color: var(--oa-admin-text-dim);
+}
+
+/*
+VARIATIONS AND ATTRIBUTES
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .wc-metabox,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .wc-metabox table,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_variation,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_variable_attributes {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .wc-metaboxes,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .toolbar,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper :not(#variable_product_options_inner) .toolbar:not(.expand-close-hidden),
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper#product_attributes .toolbar:not(.expand-close-hidden),
+html[data-oa-admin-theme="dark"] body.wp-admin #variable_product_options #variable_product_options_inner > .toolbar:not(.expand-close-hidden) {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .wc-metabox h3,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_variation h3 {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .expand-close,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .wc-metabox .placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_attribute h3 .sort::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_variation h3 .sort::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .variations-pagenav .displaying-num {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .wc-metabox-sortable-placeholder {
+    background-color: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-metaboxes-wrapper .wc-metabox.woocommerce_attribute h3 .woocommerce-attribute-global-badge {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .variations-pagenav a {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .variations-pagenav a.disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin .variations-pagenav a.disabled:hover {
+    color: var(--oa-admin-text-dim);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_options_panel .downloadable_files table td.sort,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce_variations .downloadable_files table td.sort {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-admin-visual-attribute-color-picker-trigger,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-admin-visual-attribute-image-picker-trigger,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-admin-visual-attribute-term-option {
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+/*
+ORDERS LIST AND ORDER EDIT
+-- Covers both the legacy shop_order post type screen and the HPOS
+-- wc-orders screen, which share the same markup and class names.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.post-type-shop_order .wp-list-table tbody tr,
+html[data-oa-admin-theme="dark"] body.woocommerce_page_wc-orders .wp-list-table tbody tr {
+    border-top-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.post-type-shop_order .order_actions li,
+html[data-oa-admin-theme="dark"] body.woocommerce_page_wc-orders .order_actions li {
+    border-top-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widefat .column-order_title time,
+html[data-oa-admin-theme="dark"] body.wp-admin .widefat small.meta,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wp-list-table .row-actions,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wp-list-table span.na,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wp-list-table tbody td.column-handle::before,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wp-list-table .column-order_items table.order_items td.qty,
+html[data-oa-admin-theme="dark"] body.wp-admin .column-order_notes .note-on {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wp-list-table .row-actions span.id {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+Order items panel
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .inside,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .wc-order-data-row,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items thead th {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .refund-actions,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items tbody tr:last-child td {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items tbody th,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items td {
+    border-bottom-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items tbody tr:first-child td {
+    border-top-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items h3 small,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items tbody th input,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items tbody th textarea {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items td.name .wc-order-item-sku,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items td.name .wc-order-item-variation,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items table.display_meta,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items table.meta,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-item-discount,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-item-meta {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items td.thumb .wc-order-item-thumbnail {
+    color: var(--oa-admin-text-dim);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items .split-input,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items .split-input div.input:first-child {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items .split-input div.input label,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items .split-input div.input input {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items .split-input div.input:first-child label,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items .split-input div.input:first-child input,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .wc-order-edit-line-item-actions a,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items tr.fee .thumb div::before,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items tr.refund .thumb div::before,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items tr.shipping .thumb div::before {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .wc-order-edit-line-item-actions a:hover::before,
+html[data-oa-admin-theme="dark"] body.wp-admin #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items td.line_tax .delete-order-tax::before {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-totals,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-item-taxes,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-item-refund-fields {
+    color: var(--oa-admin-text);
+}
+
+/*
+Order notes and preview
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin ul.order_notes li .note_content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-subtle);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin ul.order_notes li .note_header {
+    background: var(--oa-admin-surface-hover);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin ul.order_notes li.system-note .note_content {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin ul.order_notes li p.meta,
+html[data-oa-admin-theme="dark"] body.wp-admin ul.order_notes li.no-items {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview .wc-backbone-modal-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview-table-wrapper,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview-addresses,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview-note {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview-table th,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview-table td {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview-address h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-preview-address strong {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+SHIPPING ZONES, CLASSES AND TAX RATES
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-zones,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-zone-methods,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-classes {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-zones td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-zone-methods td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-classes td {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table th,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates th,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-zones th,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-zone-methods th,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc-shipping-classes th {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table tr.current td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates tr.current td {
+    background-color: var(--oa-admin-surface-selected);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table .ui-sortable:not(.ui-sortable-disabled) td.sort,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates .ui-sortable:not(.ui-sortable-disabled) td.sort {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table .ui-sortable:not(.ui-sortable-disabled) td.sort::before,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates .ui-sortable:not(.ui-sortable-disabled) td.sort::before {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table .ui-sortable:not(.ui-sortable-disabled) td.sort:hover::before,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates .ui-sortable:not(.ui-sortable-disabled) td.sort:hover::before {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table .pagination .current,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates .pagination .current {
+    color: var(--oa-admin-on-accent);
+    background: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-zone-settings td.forminp .wc-shipping-zone-region-select .select2-choices {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-zone-settings .wc-shipping-zone-postcodes .description,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-class-description,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-class-slug,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-class-count {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin td.wc-shipping-zones-blank-state::before,
+html[data-oa-admin-theme="dark"] body.wp-admin td.wc-shipping-zone-method-blank-state::before {
+    color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-zone-method-modal-info,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-class-modal-help-text {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-zone-method-input label {
+    outline-color: var(--oa-admin-border);
+}
+
+/*
+STATUS, TOOLS AND LOGS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table tr:nth-child(2n) td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table tr:nth-child(2n) th {
+    background: var(--oa-admin-surface-subtle);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table td,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table th {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-line-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table td mark.yes,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table th mark.yes {
+    color: var(--wc-green);
+    background: rgba(0, 0, 0, 0);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table td mark.error,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table th mark.error,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table td .red,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_status_table th .red {
+    color: var(--oa-admin-danger);
+    background: rgba(0, 0, 0, 0);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-entries {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-entries .line-content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-left-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-entries .line:target .line-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-search-results .search-match {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-selected);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-entries .line:target .log-level::before {
+    color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-header .file-id {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-search-notice,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-rotation-links,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-logs-single-file-rotations {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+IMPORTER, EXPORTER AND PROGRESS FORMS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter-wrapper .wc-progress-form-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-wrapper .wc-progress-form-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-progress-form-wrapper .wc-progress-form-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border: 1px solid var(--oa-admin-border);
+    box-shadow: var(--oa-admin-shadow);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter-wrapper .wc-progress-form-content h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-wrapper .wc-progress-form-content h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-progress-form-wrapper .wc-progress-form-content h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter h2,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer h2 {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter-wrapper .wc-progress-form-content p,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-wrapper .wc-progress-form-content p,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-progress-form-wrapper .wc-progress-form-content p,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter p,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer p,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter-options label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-options label {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter-wrapper .wc-progress-form-content header,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-wrapper .wc-progress-form-content header,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-progress-form-wrapper .wc-progress-form-content header,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-exporter-wrapper .wc-actions,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-wrapper .wc-actions,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-progress-form-wrapper .wc-actions {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-progress-steps,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-progress-steps li {
+    color: var(--oa-admin-text-dim);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-progress-steps li::before {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-file-url-field-wrapper {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-file-url-field-wrapper code,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-importer-toggle-advanced-options {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-importer-mapping-table,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-importer-error-log-table {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-importer-mapping-table-name .description {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+LEGACY REPORTS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-wide-reports-wrap {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .chart-legend,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .chart-legend {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .chart-legend li,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .chart-legend li {
+    color: var(--oa-admin-text-soft);
+    box-shadow: inset 0 -1px 0 0 var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .chart-legend li strong,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .chart-legend li strong {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .postbox .chart-legend li:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .postbox .chart-legend li:hover {
+    box-shadow: inset 0 -1px 0 0 var(--oa-admin-border), inset 300px 0 0 var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-sidebar,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-main {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wrap .chart-placeholder .pie-chart-legend,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-reports-wide .chart-placeholder .pie-chart-legend {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+MARKETPLACE AND EXTENSIONS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-addons-wrap,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-addons-wrap .top-bar,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-admin-page__extensions,
+html[data-oa-admin-theme="dark"] body.wp-admin .marketplace-content-wrapper {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    box-shadow: inset 0 -1px 0 var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-addons-wrap .marketplace-header__search-form input {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .marketplace-header__tab-link.is-current {
+    color: var(--oa-admin-text);
+    border-bottom-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__header,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__footer,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-marketplace__banner,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-addons__empty {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+/*
+MODALS, POINTERS AND TIPS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal .wc-backbone-modal-content,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal-main,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal-main article,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-shipping-class-modal {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal-main header,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal-main .wc-backbone-modal-header,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal-main footer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal-main .wc-backbone-modal-header h1 {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal-main .modal-close-link {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-pointer,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-pointer-buttons {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-help-tip,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-product-type-tip,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-backbone-modal-main .woocommerce-help-tip {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce table.form-table span.help_tip,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_input_table span.tips,
+html[data-oa-admin-theme="dark"] body.wp-admin table.wc_tax_rates span.tips {
+    color: var(--oa-admin-accent);
+}
+
+/* The jQuery tipTip bubble WooCommerce uses for every help tip. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin #tiptip_holder .tipTip,
+html[data-oa-admin-theme="dark"] body.wp-admin #tiptip_content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #tiptip_holder.tip_top #tiptip_arrow_inner {
+    border-top-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #tiptip_holder.tip_bottom #tiptip_arrow_inner {
+    border-bottom-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #tiptip_holder.tip_left #tiptip_arrow_inner {
+    border-left-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #tiptip_holder.tip_right #tiptip_arrow_inner {
+    border-right-color: var(--oa-admin-surface-hover);
+}
+
+/* The blockUI overlay WooCommerce drops over panels while saving. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .blockUI.blockOverlay {
+    background: var(--oa-admin-canvas) !important;
+}
+
+/*
+SELECT2 ENHANCED SELECTS
+-- WooCommerce ships its own select2 build, so these rules are needed even
+-- where the main sheet already styles native selects.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--single,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--multiple,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--single,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--multiple {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    background-image: none;
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default.select2-container--disabled .select2-selection--single,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default.select2-container--disabled .select2-selection--multiple,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic.select2-container--disabled .select2-selection--single {
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--single .select2-selection__rendered,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--single .select2-selection__rendered {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--single .select2-selection__placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--multiple .select2-selection__placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--single .select2-selection__placeholder {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--single .select2-selection__arrow b,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--single .select2-selection__arrow b {
+    border-top-color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-bottom-color: var(--oa-admin-text-soft);
+    border-top-color: rgba(0, 0, 0, 0);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--single .select2-selection__arrow {
+    background-color: var(--oa-admin-surface-hover);
+    background-image: none;
+    border-left-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--multiple .select2-selection__choice,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--multiple .select2-selection__choice {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--multiple .select2-selection__choice__remove,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--multiple .select2-selection__choice__remove {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .select2-container--classic .select2-selection--multiple .select2-selection__choice__remove:hover {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] .select2-dropdown,
+html[data-oa-admin-theme="dark"] .select2-container--classic .select2-dropdown {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] .select2-container--default .select2-search--dropdown .select2-search__field,
+html[data-oa-admin-theme="dark"] .select2-container--classic .select2-search--dropdown .select2-search__field {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] .select2-container--default .select2-results__option,
+html[data-oa-admin-theme="dark"] .select2-container--classic .select2-results__option {
+    color: var(--oa-admin-text);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+html[data-oa-admin-theme="dark"] .select2-container--default .select2-results__option[aria-selected="true"],
+html[data-oa-admin-theme="dark"] .select2-container--default .select2-results__option[data-selected="true"] {
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] .select2-container--default .select2-results__option--highlighted[aria-selected],
+html[data-oa-admin-theme="dark"] .select2-container--default .select2-results__option--highlighted[data-selected],
+html[data-oa-admin-theme="dark"] .select2-container--classic .select2-results__option--highlighted[aria-selected],
+html[data-oa-admin-theme="dark"] .select2-container--classic .select2-results__option--highlighted[data-selected] {
+    color: var(--oa-admin-on-accent);
+    background-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] .select2-container--default .select2-results__option[aria-disabled="true"] {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] .select2-close-mask {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/*
+BLANK STATES, NOTICES AND STATUS INDICATORS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-BlankState .woocommerce-BlankState-message {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-BlankState .woocommerce-BlankState-message::before {
+    color: var(--oa-admin-border-strong);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-BlankState--api .woocommerce-BlankState-message::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-BlankState--coupons .woocommerce-BlankState-message::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-BlankState--orders .woocommerce-BlankState-message::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-BlankState--webhooks .woocommerce-BlankState-message::before {
+    background-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-message,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-store-alerts {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-store-alerts .components-card__body,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-store-alerts .components-card__footer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-input-toggle.woocommerce-input-toggle--disabled {
+    background-color: var(--oa-admin-border-strong);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-input-toggle::before {
+    background: var(--oa-admin-on-accent);
+}
+
+/* Stock and order status marks, which core paints as flat coloured words. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wp-list-table mark.instock {
+    color: var(--wc-green);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wp-list-table mark.outofstock {
+    color: var(--oa-admin-danger);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin table.wp-list-table mark.onbackorder {
+    color: var(--oa-admin-warning);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-status .status-processing,
+html[data-oa-admin-theme="dark"] body.wp-admin .wc-order-status .status-completed {
+    color: var(--wc-green);
+}
+
+/*
+ONBOARDING AND TASK LIST
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-task-dashboard__container,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-tasks,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-stepper__step,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-lys-homescreen-status-tour-kit,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-lys-status-popover .components-popover__content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-stepper .woocommerce-stepper__step-label,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-stepper .woocommerce-stepper__step-description {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-stepper .woocommerce-stepper__step.is-active .woocommerce-stepper__step-label {
+    color: var(--oa-admin-text);
+}
+
+/*
+Full screen and embedded modes
+-- Setup and Launch Your Store take over the whole viewport, so the canvas
+-- has to be painted on the wrapper rather than on #wpcontent.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.woocommerce-admin-full-screen,
+html[data-oa-admin-theme="dark"] body.woocommerce-admin-full-screen #wpwrap,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-admin-launch-your-store,
+html[data-oa-admin-theme="dark"] body.wp-admin .woocommerce-profile-wizard__body {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}

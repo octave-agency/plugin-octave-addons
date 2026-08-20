@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.32.6
+Stable tag:        2.33.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -74,6 +74,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.33.0 =
+* Added WooCommerce dark mode coverage across settings, analytics, orders, products, shipping, tax, status, logs, importers, and the marketplace, loaded only while WooCommerce is active.
+* Removed the admin experience override of the WordPress #wpcontent padding so plugin layouts are no longer squeezed.
+* Removed the wrap inset on the classic editor so its columns and meta box gutters lay out at full width.
 
 = 2.32.6 =
 * Extended the deactivation confirmation dialog to cover the Octave client specific plugin.
