@@ -794,6 +794,7 @@ body.wp-admin .tablenav-pages-navspan {
     border-radius: 7px;
     line-height: 32px;
     box-sizing: border-box;
+    padding: 0;
 }
 
 body.wp-admin .tablenav-pages .current {

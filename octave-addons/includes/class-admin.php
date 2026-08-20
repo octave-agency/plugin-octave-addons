@@ -202,11 +202,20 @@ class Octave_Addons_Admin {
 	DEACTIVATION GUARD
 	-- Loads the confirmation dialog on the Plugins screen so the plugin
 	-- cannot be deactivated by a single stray click.
+	-- Covers Octave Addons and the client specific plugin when installed.
 	---------------------------------------------------------- */
 
 	public function enqueue_deactivation_guard( string $hook ): void {
 
-		if ( 'plugins.php' !== $hook || ! current_user_can( 'deactivate_plugin', OCTAVE_ADDONS_BASENAME ) ) {
+		if ( 'plugins.php' !== $hook ) {
+
+			return;
+
+		}
+
+		$guarded = $this->get_guarded_plugins();
+
+		if ( empty( $guarded ) ) {
 
 			return;
 
@@ -231,13 +240,74 @@ class Octave_Addons_Admin {
 		);
 
 		wp_localize_script( 'octave-addons-deactivate', 'oaDeactivate', [
-			'basename'    => OCTAVE_ADDONS_BASENAME,
+			'plugins'     => array_values( $guarded ),
 			'title'       => __( 'Are you sure?', 'octave-addons' ),
-			'message'     => __( 'Deactivating Octave Addons turns off every enabled module at once. Custom posts, elements, filtering and animations will stop working, and this can break the site. Are you sure you want to deactivate it?', 'octave-addons' ),
-			'bulkMessage' => __( 'Your selection includes Octave Addons. Deactivating it turns off every enabled module at once, and this can break the site. Are you sure you want to continue?', 'octave-addons' ),
+			'bulkMessage' => __( 'Your selection includes plugins the site depends on. Deactivating them can break the site. Are you sure you want to continue?', 'octave-addons' ),
 			'confirmText' => __( 'Yes, deactivate', 'octave-addons' ),
 			'cancelText'  => __( 'Keep it active', 'octave-addons' ),
 		] );
+
+	}
+
+	/*
+	GUARDED PLUGINS
+	-- Builds the list of plugins the confirmation dialog protects
+	-- Only includes plugins the current user is actually able to deactivate
+	---------------------------------------------------------- */
+
+	private function get_guarded_plugins(): array {
+
+		$guarded = [];
+
+		if ( current_user_can( 'deactivate_plugin', OCTAVE_ADDONS_BASENAME ) ) {
+
+			$guarded[ OCTAVE_ADDONS_BASENAME ] = [
+				'basename' => OCTAVE_ADDONS_BASENAME,
+				'message'  => __( 'Deactivating Octave Addons turns off every enabled module at once. Custom posts, elements, filtering and animations will stop working, and this can break the site. Are you sure you want to deactivate it?', 'octave-addons' ),
+			];
+
+		}
+
+		$client_specific = $this->get_client_specific_basename();
+
+		if ( $client_specific && current_user_can( 'deactivate_plugin', $client_specific ) ) {
+
+			$guarded[ $client_specific ] = [
+				'basename' => $client_specific,
+				'message'  => __( 'Deactivating the Octave client specific plugin turns off the custom functionality built for this site. Post types, templates and site specific features will stop working, and this can break the site. Are you sure you want to deactivate it?', 'octave-addons' ),
+			];
+
+		}
+
+		return $guarded;
+
+	}
+
+	/*
+	CLIENT SPECIFIC BASENAME
+	-- Finds the installed octave-client-specific plugin
+	-- The main file is named per client, so the folder is what we match on
+	---------------------------------------------------------- */
+
+	private function get_client_specific_basename(): string {
+
+		if ( ! function_exists( 'get_plugins' ) ) {
+
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+		}
+
+		foreach ( array_keys( get_plugins() ) as $basename ) {
+
+			if ( 'octave-client-specific' === dirname( $basename ) ) {
+
+				return $basename;
+
+			}
+
+		}
+
+		return '';
 
 	}
 

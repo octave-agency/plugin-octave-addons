@@ -1,8 +1,8 @@
 /*
 DEACTIVATION GUARD
--- Intercepts deactivation of Octave Addons on the Plugins screen and asks
--- for confirmation before letting the request through
--- Covers the row action link and the bulk "Deactivate" action
+-- Intercepts deactivation of the guarded Octave plugins on the Plugins
+-- screen and asks for confirmation before letting the request through
+-- Covers the row action links and the bulk "Deactivate" action
 ---------------------------------------------------------- */
 
 ( function () {
@@ -15,8 +15,8 @@ DEACTIVATION GUARD
 
     }
 
-    var basename = oaDeactivate.basename;
-    var modal    = null;
+    var guarded   = oaDeactivate.plugins || [];
+    var modal     = null;
     var onConfirm = null;
 
     /*
@@ -115,13 +115,23 @@ DEACTIVATION GUARD
     } );
 
     /*
-    ROW ACTION
-    -- Guards the "Deactivate" link in the plugin's own table row
+    ROW ACTIONS
+    -- Guards the "Deactivate" link in each guarded plugin's table row
     ---------------------------------------------------------- */
 
-    var row = document.querySelector( 'tr[data-plugin="' + basename + '"]' );
+    var rows = [];
 
-    if ( row ) {
+    guarded.forEach( function ( plugin ) {
+
+        var row = document.querySelector( 'tr[data-plugin="' + plugin.basename + '"]' );
+
+        if ( ! row ) {
+
+            return;
+
+        }
+
+        rows.push( row );
 
         row.querySelectorAll( 'a' ).forEach( function ( link ) {
 
@@ -135,7 +145,7 @@ DEACTIVATION GUARD
 
                 event.preventDefault();
 
-                openModal( oaDeactivate.message, function () {
+                openModal( plugin.message, function () {
 
                     window.location.href = link.href;
 
@@ -145,20 +155,26 @@ DEACTIVATION GUARD
 
         } );
 
-    }
+    } );
 
     /*
     BULK ACTION
-    -- Guards bulk deactivation whenever this plugin is among the selected rows
+    -- Guards bulk deactivation whenever a guarded plugin is among the selected rows
     ---------------------------------------------------------- */
-
-    var checkbox = row ? row.querySelector( 'input[type="checkbox"]' ) : null;
 
     document.querySelectorAll( 'form#bulk-action-form' ).forEach( function ( form ) {
 
         form.addEventListener( 'submit', function ( event ) {
 
-            if ( ! checkbox || ! checkbox.checked ) {
+            var checked = rows.filter( function ( row ) {
+
+                var checkbox = row.querySelector( 'input[type="checkbox"]' );
+
+                return checkbox && checkbox.checked;
+
+            } );
+
+            if ( ! checked.length ) {
 
                 return;
 
