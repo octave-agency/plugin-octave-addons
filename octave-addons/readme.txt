@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.33.1
+Stable tag:        2.34.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -48,10 +48,12 @@ id from `get_group()` to place it on a shared page.
 The complete WordPress dashboard can receive an Octave visual refresh without
 changing its familiar navigation or workflows. One isolated site-wide switch
 on the plugin dashboard controls the refresh, which is disabled by default.
-Each user starts with their operating-system light or dark preference and can
-save an override from the admin bar. User profiles also support a job title and
-a Media Library profile picture; a valid custom attachment is used before
-Gravatar and the configured WordPress fallback.
+Each browser starts with its operating-system light or dark preference and can
+save an override from the admin bar. The override is stored in a cookie on that
+device, so accounts shared between people keep separate appearance choices.
+User profiles also support a job title and a Media Library profile picture; a
+valid custom attachment is used before Gravatar and the configured WordPress
+fallback.
 
 == GitHub updates ==
 
@@ -74,6 +76,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.34.0 =
+* Moved the admin light and dark mode override from user meta to a per-device cookie so shared accounts keep separate appearance preferences.
+* Removed the theme save AJAX endpoint now the toggle stores the choice in the browser.
+* Extended WooCommerce dark mode to the WooPayments onboarding modal, DataViews list tables, Blueprint import and export, jQuery UI widgets, the log viewer, and the react-dates single date and input variants.
 
 = 2.33.1 =
 * Completed the WooCommerce dark mode pass against a live store, covering the settings shell, payments, home screen, inbox, activity panel, analytics placeholders, marketplace, email preview, order edit, and the classic product editor chrome.

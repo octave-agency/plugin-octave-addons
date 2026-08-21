@@ -58,6 +58,14 @@ html[data-oa-admin-theme="dark"] {
 }
 
 /*
+IMAGIFY BUTTON TEXT SHADOW
+---------------------------------------------------------- */
+
+.imagify-main-content button {
+    text-shadow: none !important;
+}
+
+/*
 FOUNDATIONS
 ---------------------------------------------------------- */
 
@@ -518,9 +526,9 @@ body.wp-customizer select[size="1"] {
     padding-right: 34px;
     appearance: none;
     background-image: url('../images/select-chevron.svg');
-    background-repeat: no-repeat;
-    background-position: right 11px center;
-    background-size: 10px 6px;
+    background-repeat: no-repeat !important;
+    background-position: right 11px center !important;
+    background-size: 10px 6px !important;
 }
 
 body.wp-admin.rtl select:not([multiple]):not([size]),

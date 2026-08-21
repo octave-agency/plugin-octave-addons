@@ -1,6 +1,6 @@
 /*
 WORDPRESS ADMIN EXPERIENCE
--- Applies and persists the current user's light or dark admin appearance.
+-- Applies the light or dark admin appearance and stores it per device in a cookie.
 ---------------------------------------------------------- */
 
 (function () {
@@ -86,35 +86,33 @@ WORDPRESS ADMIN EXPERIENCE
 
     /*
     SAVE THEME
-    -- Stores an explicit preference without interrupting the current screen.
+    -- Writes the choice to a browser cookie so shared accounts stay device specific.
     ---------------------------------------------------------- */
 
     function saveTheme( theme ) {
 
-        if ( ! config.ajaxUrl || ! config.nonce ) {
+        var name = config.cookieName || 'oa_admin_theme';
+        var days = parseInt( config.cookieDays, 10 ) || 365;
+        var cookie = encodeURIComponent( name ) + '=' + encodeURIComponent( theme );
 
-            return;
+        cookie += '; max-age=' + ( days * 86400 );
+        cookie += '; path=' + ( config.cookiePath || '/' );
+
+        if ( config.cookieDomain ) {
+
+            cookie += '; domain=' + config.cookieDomain;
 
         }
 
-        var request = new URLSearchParams();
+        cookie += '; samesite=lax';
 
-        request.append( 'action', 'oa_save_admin_theme' );
-        request.append( 'nonce', config.nonce );
-        request.append( 'theme', theme );
+        if ( config.cookieSecure ) {
 
-        window.fetch( config.ajaxUrl, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-            },
-            body: request.toString()
-        } ).catch( function () {
+            cookie += '; secure';
 
-            // The selected appearance remains active for this page if persistence fails.
+        }
 
-        } );
+        document.cookie = cookie;
 
     }
 

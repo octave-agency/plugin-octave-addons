@@ -2,7 +2,7 @@
 
 /*
 ADMIN EXPERIENCE
--- Owns the optional site-wide WordPress admin refresh and per-user theme.
+-- Owns the optional site-wide WordPress admin refresh and per-device theme.
 -- Keeping the feature isolated makes it safe to disable or remove later.
 ---------------------------------------------------------- */
 
@@ -14,12 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Octave_Addons_Admin_Experience {
 
+	const THEME_COOKIE      = 'oa_admin_theme';
+	const THEME_COOKIE_DAYS = 365;
+
 	public function __construct() {
 
 		add_action( 'admin_init',            [ $this, 'register_setting' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'admin_bar_menu',        [ $this, 'add_theme_toggle' ], 998 );
-		add_action( 'wp_ajax_oa_save_admin_theme', [ $this, 'ajax_save_theme' ] );
 
 	}
 
@@ -80,13 +82,7 @@ class Octave_Addons_Admin_Experience {
 		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience.css';
 		$woo_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience-woocommerce.css';
 		$js_path  = OCTAVE_ADDONS_DIR . 'assets/js/admin-experience.js';
-		$theme    = get_user_meta( get_current_user_id(), 'oa_admin_theme', true );
-
-		if ( ! in_array( $theme, [ 'light', 'dark' ], true ) ) {
-
-			$theme = 'system';
-
-		}
+		$theme    = $this->get_theme();
 
 		wp_enqueue_style(
 			'octave-addons-admin-experience',
@@ -115,9 +111,12 @@ class Octave_Addons_Admin_Experience {
 		);
 
 		wp_localize_script( 'octave-addons-admin-experience', 'oaAdminExperience', [
-			'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-			'nonce'           => wp_create_nonce( 'oa_admin_theme' ),
 			'theme'           => $theme,
+			'cookieName'      => self::THEME_COOKIE,
+			'cookieDays'      => (string) self::THEME_COOKIE_DAYS,
+			'cookiePath'      => $this->get_cookie_path(),
+			'cookieDomain'    => defined( 'COOKIE_DOMAIN' ) && COOKIE_DOMAIN ? (string) COOKIE_DOMAIN : '',
+			'cookieSecure'    => is_ssl() ? '1' : '',
 			'darkModeText'    => __( 'Use dark mode', 'octave-addons' ),
 			'lightModeText'   => __( 'Use light mode', 'octave-addons' ),
 			'mediaSearchText' => __( 'Search media…', 'octave-addons' ),
@@ -166,29 +165,38 @@ class Octave_Addons_Admin_Experience {
 	}
 
 	/*
-	SAVE THEME
-	-- Persists an explicit light or dark choice for the current user.
+	GET THEME
+	-- Reads the appearance choice from the browser so shared accounts stay per device.
 	---------------------------------------------------------- */
 
-	public function ajax_save_theme(): void {
+	public function get_theme(): string {
 
-		check_ajax_referer( 'oa_admin_theme', 'nonce' );
-
-		$theme = isset( $_POST['theme'] ) ? sanitize_key( wp_unslash( $_POST['theme'] ) ) : '';
+		$theme = isset( $_COOKIE[ self::THEME_COOKIE ] ) ? sanitize_key( wp_unslash( $_COOKIE[ self::THEME_COOKIE ] ) ) : '';
 
 		if ( ! in_array( $theme, [ 'light', 'dark' ], true ) ) {
 
-			wp_send_json_error( [
-				'message' => __( 'That appearance choice is not available.', 'octave-addons' ),
-			], 400 );
+			return 'system';
 
 		}
 
-		update_user_meta( get_current_user_id(), 'oa_admin_theme', $theme );
+		return $theme;
 
-		wp_send_json_success( [
-			'theme' => $theme,
-		] );
+	}
+
+	/*
+	GET COOKIE PATH
+	-- Scopes the cookie to the whole install so wp-admin and the front end agree.
+	---------------------------------------------------------- */
+
+	public function get_cookie_path(): string {
+
+		if ( defined( 'SITECOOKIEPATH' ) && SITECOOKIEPATH ) {
+
+			return (string) SITECOOKIEPATH;
+
+		}
+
+		return '/';
 
 	}
 
