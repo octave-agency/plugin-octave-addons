@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.35.0
+Stable tag:        2.36.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -31,6 +31,9 @@ Octave Addons ships with a growing collection of focused modules:
 *   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
     every Breakdance Lazy Load toggle off so images, backgrounds and
     embeds are left to the site's third-party performance plugin.
+*   **Breakdance Launcher Styles** – always on and hidden from the admin.
+    Declares Breakdance's launcher stylesheet as a block editor style so it
+    reaches the block editor canvas iframe, which an admin stylesheet cannot.
 *   **Post Types** – can display Posts as Blogs and provides separate managers for
     post types, reusable taxonomies, and typed post fields. Fields use registered
     WordPress post meta and are available in Breakdance Dynamic Data.
@@ -76,6 +79,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.36.0 =
+* Added Breakdance Launcher Styles, an always-on hidden module that declares Breakdance's launcher stylesheet as a block editor style. Breakdance registers its launcher block in JavaScript only and enqueues that sheet on admin_enqueue_scripts, which reaches the editor page but not the canvas iframe, so the "Edit in Breakdance" block rendered with browser default buttons and no card.
+
+= 2.35.1 =
+* Made the WooCommerce settings screen content well transparent in both themes so the page canvas shows through it.
 
 = 2.35.0 =
 * Added a disabled-module callback to the module API so a module can clear what it leaves on the page, and used it to remove the Empty Link Highlighter admin bar counter when the module is switched off, including the node left by the standalone plugin it was ported from.

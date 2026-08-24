@@ -3045,3 +3045,13 @@ html[data-oa-admin-theme="dark"] body.wp-admin .DateRangePickerInput_arrow_svg {
     color: var(--oa-admin-text-soft);
     fill: var(--oa-admin-text-soft);
 }
+
+/*
+SETTINGS SCREEN CONTENT WELL
+-- Lets the page canvas show through the WooCommerce settings content well in
+-- both themes, rather than the screen painting its own surface behind the form.
+---------------------------------------------------------- */
+
+body.woocommerce_page_wc-settings #wpbody-content {
+    background: transparent !important;
+}
