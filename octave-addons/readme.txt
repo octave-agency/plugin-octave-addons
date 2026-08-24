@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.34.0
+Stable tag:        2.35.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -76,6 +76,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 2.35.0 =
+* Added a disabled-module callback to the module API so a module can clear what it leaves on the page, and used it to remove the Empty Link Highlighter admin bar counter when the module is switched off, including the node left by the standalone plugin it was ported from.
+* Kept the Octave Addons logo mark on its dark chip with the white icon in light mode, matching dark mode.
+* Corrected light mode for the surfaces appended outside the workspace: action toasts, the confirmation dialog, and the icon picker dialog.
+* Corrected light mode for the colour picker trigger, popover, swatch and slider handles, and for the media image field plate.
 
 = 2.34.0 =
 * Moved the admin light and dark mode override from user meta to a per-device cookie so shared accounts keep separate appearance preferences.

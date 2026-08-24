@@ -2046,12 +2046,21 @@ body.wp-admin .octave-addons-wrap--themed {
     display: none;
 }
 
-html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-icon {
-    filter: none;
-    opacity: 0.78;
+/*
+Brand mark
+-- The logo chip keeps its dark treatment in light mode. The tint and surface
+-- are the dark theme's own values, layered so the browser resolves the same
+-- colour the dark theme paints, rather than a flattened copy of it.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
+    border-color: #303A45;
+    background:
+        linear-gradient(rgba(43, 255, 134, 0.14), rgba(43, 255, 134, 0.14)),
+        #191F26;
 }
 
-html[data-oa-admin-theme="dark"] .oa-app--themed .oa-brand-icon {
+.oa-app--themed .oa-brand-icon {
     filter: brightness(0) invert(1);
     opacity: 0.9;
 }
@@ -2248,7 +2257,6 @@ html[data-oa-admin-theme="dark"] .oa-app--themed .oa-brand-icon {
 }
 
 .oa-app--themed .oa-custom-select-dropdown,
-.oa-app--themed .oa-toast,
 .oa-app--themed .oa-save-bar {
     color: var(--oa-text);
     border-color: var(--oa-border);
@@ -5313,4 +5321,129 @@ Responsive
         max-width: none;
     }
 
+}
+
+/*
+LIGHT MODE OVERLAYS AND FLOATING SURFACES
+-- Toasts, dialogs and the colour popover are appended to <body>, so the
+-- .oa-app--themed scope never reaches them and they kept the branded dark
+-- palette while the rest of the workspace turned light. Theme tokens live on
+-- the <html> element, so these rules reach every one of them.
+---------------------------------------------------------- */
+
+/*
+Action toasts
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] .oa-toast {
+    color: var(--oa-text);
+    border-color: var(--oa-border);
+    background: var(--oa-surface);
+    box-shadow: var(--oa-shadow);
+    backdrop-filter: none;
+}
+
+html[data-oa-admin-theme] .oa-toast.is-error {
+    border-left-color: var(--oa-admin-danger);
+}
+
+/*
+Confirmation dialog
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="light"] .oa-confirm-overlay {
+    background: rgba(29, 39, 51, 0.42);
+}
+
+html[data-oa-admin-theme="light"] .oa-confirm-dialog {
+    border-color: var(--oa-border);
+    background: var(--oa-surface);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme] .oa-confirm-dialog::before {
+    background: linear-gradient(90deg, transparent, var(--oa-accent), transparent);
+}
+
+html[data-oa-admin-theme="light"] .oa-confirm-button:hover {
+    border-color: var(--oa-accent);
+    background: var(--oa-accent-bg);
+}
+
+html[data-oa-admin-theme] .oa-confirm-button:focus-visible {
+    box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
+}
+
+/*
+Icon picker dialog
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="light"] .oa-ipm-overlay {
+    background: rgba(29, 39, 51, 0.42);
+}
+
+html[data-oa-admin-theme="light"] .oa-ipm-dialog {
+    background: var(--oa-surface);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme="light"] .oa-ipm-close:hover {
+    background: var(--oa-surface-3);
+}
+
+html[data-oa-admin-theme] .oa-ipm-set-select:focus,
+html[data-oa-admin-theme] .oa-ipm-search:focus {
+    box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
+}
+
+/*
+Colour picker
+-- The trigger, its popover and the swatch borders were painted with fixed
+-- near-black values, so both sat as dark chips on the light workspace.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] .oa-color-trigger {
+    background: var(--oa-surface);
+}
+
+html[data-oa-admin-theme] .oa-color-trigger[aria-expanded="true"] {
+    border-color: var(--oa-accent);
+    box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
+}
+
+html[data-oa-admin-theme] .oa-color-popover {
+    border-color: var(--oa-border);
+    background: var(--oa-surface);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme="light"] .oa-color-swatch {
+    border-color: var(--oa-border);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="light"] .oa-color-thumb,
+html[data-oa-admin-theme="light"] .oa-color-hue::-webkit-slider-thumb {
+    box-shadow: 0 1px 4px rgba(29, 39, 51, 0.4);
+}
+
+html[data-oa-admin-theme="light"] .oa-color-hue::-moz-range-thumb {
+    box-shadow: 0 1px 4px rgba(29, 39, 51, 0.4);
+}
+
+/*
+Media image field
+-- Shares the picker's fixed near-black plate, so it is corrected here too.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] .oa-media-preview {
+    background-color: var(--oa-surface-2);
+}
+
+html[data-oa-admin-theme="light"] .oa-media-preview {
+    background-image:
+        linear-gradient(45deg, rgba(29, 39, 51, 0.05) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(29, 39, 51, 0.05) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(29, 39, 51, 0.05) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(29, 39, 51, 0.05) 75%);
 }

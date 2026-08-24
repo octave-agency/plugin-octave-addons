@@ -82,6 +82,17 @@ abstract class Octave_Addons_Module {
 	 */
 	abstract public function run( array $settings ): void;
 
+	/*
+	RUN DISABLED
+	-- Called on every request the module is switched off, so a module that
+	-- leaves something behind on the page — an admin bar node, a body class —
+	-- can clear it. Most modules need nothing here.
+	---------------------------------------------------------- */
+
+	public function run_disabled( array $settings ): void {
+
+	}
+
 	/**
 	 * Render the settings fields for this module's admin tab.
 	 *

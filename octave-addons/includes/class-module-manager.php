@@ -200,18 +200,24 @@ class Octave_Addons_Module_Manager {
 	}
 
 	/**
-	 * Boot every enabled module so it can register its hooks.
+	 * Boot every enabled module so it can register its hooks, and give every
+	 * disabled module a chance to clear anything it may have left on the page.
 	 */
 	public function run_enabled(): void {
 
 		foreach ( $this->modules as $id => $module ) {
 
 			$settings = $this->settings_for( $id );
+
 			if ( $module->is_always_enabled() || ! empty( $settings['enabled'] ) ) {
 
 				$module->run( $settings );
 
+				continue;
+
 			}
+
+			$module->run_disabled( $settings );
 
 		}
 

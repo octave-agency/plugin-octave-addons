@@ -202,6 +202,40 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 			$this->admin_bar_node( $bar, $s );
 		}, 999 );
 
+		// The counter is only ever added when the toggle is on, so a node left
+		// by an earlier request or by the standalone plugin is cleared too.
+		if ( empty( $s['show_admin_bar'] ) ) {
+
+			add_action( 'admin_bar_menu', [ __CLASS__, 'remove_counter_nodes' ], 1000 );
+
+		}
+
+	}
+
+	/*
+	RUN DISABLED
+	-- The counter is a persistent admin bar node, so switching the module off
+	-- has to take it away as well as stop adding it. This also clears the node
+	-- printed by the standalone Empty Link Highlighter plugin this module was
+	-- ported from, which otherwise keeps a counter in the bar on its own.
+	---------------------------------------------------------- */
+
+	public function run_disabled( array $s ): void {
+
+		add_action( 'admin_bar_menu', [ __CLASS__, 'remove_counter_nodes' ], 1000 );
+
+	}
+
+	/*
+	REMOVE COUNTER NODES
+	-- Drops both the module's node and the standalone plugin's legacy node.
+	---------------------------------------------------------- */
+
+	public static function remove_counter_nodes( WP_Admin_Bar $bar ): void {
+
+		$bar->remove_node( 'oa-elh-counter' );
+		$bar->remove_node( 'elh-counter' );
+
 	}
 
 	protected function inject_assets( array $s ): void {
