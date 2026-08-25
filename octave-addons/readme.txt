@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        2.36.0
+Stable tag:        3.0.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -79,6 +79,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.0.0 =
+* Shortened the built-in Page Categories taxonomy identifier from `octave_page_category` to `oa_page_category` while retaining the existing `octave_addons_settings` option and all admin, metadata, hook, shortcode, and JavaScript integration keys.
+* Removed the former built-in and legacy Case Studies definitions; Case Studies can be created through the custom post type and taxonomy setup when needed.
 
 = 2.36.0 =
 * Added Breakdance Launcher Styles, an always-on hidden module that declares Breakdance's launcher stylesheet as a block editor style. Breakdance registers its launcher block in JavaScript only and enqueues that sheet on admin_enqueue_scripts, which reaches the editor page but not the canvas iframe, so the "Edit in Breakdance" block rendered with browser default buttons and no card.

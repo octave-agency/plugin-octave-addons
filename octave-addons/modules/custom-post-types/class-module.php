@@ -3,7 +3,6 @@
 /*
 MODULE: CUSTOM POSTS
 -- Manages custom post types, reusable taxonomies, and typed post fields.
--- Existing Case Studies settings retain their original database identifiers.
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,9 +15,7 @@ require_once __DIR__ . '/class-post-fields.php';
 
 class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
-	protected const PAGE_TAXONOMY          = 'octave_page_category';
-	protected const CASE_STUDY_POST_TYPE   = 'octave_case_study';
-	protected const CASE_STUDY_TAXONOMY    = 'octave_case_category';
+	protected const PAGE_TAXONOMY = 'oa_page_category';
 
 	protected static ?array $dashicons = null;
 
@@ -86,8 +83,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	GET SETTINGS
-	-- Converts the former single Case Studies fields into the repeatable schema
-	-- without changing the post type or taxonomy stored in the database.
+	-- Normalises saved repeatable post type, taxonomy, and field definitions.
 	---------------------------------------------------------- */
 
 	public function get_settings( array $saved ): array {
@@ -97,12 +93,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		if ( ! array_key_exists( 'blog_labels', $saved ) && ! empty( $saved['enabled'] ) ) {
 
 			$settings['blog_labels'] = true;
-
-		}
-
-		if ( ! array_key_exists( 'custom_post_types', $saved ) && $this->has_legacy_case_study_settings( $saved ) ) {
-
-			$settings['custom_post_types'] = [ $this->legacy_case_study( $saved ) ];
 
 		}
 
@@ -3232,9 +3222,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			}
 
-			$taxonomy     = self::CASE_STUDY_POST_TYPE === $key
-				? self::CASE_STUDY_TAXONOMY
-				: substr( $key . '_category', 0, 32 );
+			$taxonomy                = substr( $key . '_category', 0, 32 );
 			$taxonomy_name          = sanitize_text_field( wp_unslash( (string) ( $post_type['taxonomy_name'] ?? '' ) ) );
 			$taxonomy_singular_name = sanitize_text_field( wp_unslash( (string) ( $post_type['taxonomy_singular_name'] ?? '' ) ) );
 			$taxonomy_slug          = self::sanitize_rewrite_path( $post_type['taxonomy_slug'] ?? '', $post_slug . '-category' );
@@ -3307,11 +3295,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			$singular = sanitize_text_field( wp_unslash( (string) ( $taxonomy['singular_name'] ?? '' ) ) );
 			$key      = substr( sanitize_key( wp_unslash( (string) ( $taxonomy['taxonomy'] ?? '' ) ) ), 0, 32 );
 
-			if ( self::CASE_STUDY_TAXONOMY !== $key ) {
-
-				$key = 'oa_' . ltrim( preg_replace( '/^oa_+/', '', $key ), '_' );
-
-			}
+			$key = 'oa_' . ltrim( preg_replace( '/^oa_+/', '', $key ), '_' );
 
 			if ( 'oa_' === $key ) {
 
@@ -3682,18 +3666,12 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	SANITIZE POST TYPE KEY
-	-- Allows the legacy Case Studies key and prefixes new keys with oa_.
+	-- Prefixes custom post type keys with oa_.
 	---------------------------------------------------------- */
 
 	protected function sanitize_post_type_key( $value, int $index ): string {
 
 		$key = substr( sanitize_key( wp_unslash( (string) $value ) ), 0, 20 );
-
-		if ( self::CASE_STUDY_POST_TYPE === $key ) {
-
-			return $key;
-
-		}
 
 		$key = preg_replace( '/^oa_+/', '', $key );
 		$key = 'oa_' . trim( (string) $key, '_' );
@@ -3705,65 +3683,6 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		}
 
 		return substr( $key, 0, 20 );
-
-	}
-
-	/*
-	DEFAULT CASE STUDY
-	-- Defines the original type using its existing database identifiers.
-	---------------------------------------------------------- */
-
-	protected function default_case_study(): array {
-
-		return [
-			'enabled'                => true,
-			'name'                   => __( 'Case Studies', 'octave-addons' ),
-			'singular_name'          => __( 'Case Study', 'octave-addons' ),
-			'post_type'              => self::CASE_STUDY_POST_TYPE,
-			'menu_icon'              => 'dashicons-portfolio',
-			'post_slug'              => 'case-study',
-			'public'                 => true,
-			'publicly_queryable'     => true,
-			'has_archive'            => true,
-			'archive_slug'           => 'case-studies',
-			'categories'             => true,
-			'taxonomy'               => self::CASE_STUDY_TAXONOMY,
-			'taxonomy_name'          => __( 'Case Study Categories', 'octave-addons' ),
-			'taxonomy_singular_name' => __( 'Case Study Category', 'octave-addons' ),
-			'taxonomy_slug'          => 'case-studies/category',
-		];
-
-	}
-
-	/*
-	LEGACY CASE STUDY
-	-- Maps the former flat settings keys into one collection entry.
-	---------------------------------------------------------- */
-
-	protected function legacy_case_study( array $saved ): array {
-
-		$case_study = $this->default_case_study();
-
-		$case_study['enabled']      = ! empty( $saved['case_studies'] );
-		$case_study['post_slug']    = self::sanitize_rewrite_slug( $saved['case_study_post_slug'] ?? '', 'case-study' );
-		$case_study['archive_slug'] = self::sanitize_rewrite_slug( $saved['case_study_archive_slug'] ?? '', 'case-studies' );
-		$case_study['categories']   = ! empty( $saved['case_study_categories'] );
-
-		return $case_study;
-
-	}
-
-	/*
-	HAS LEGACY CASE STUDY SETTINGS
-	-- Detects saved settings created before the repeatable editor existed.
-	---------------------------------------------------------- */
-
-	protected function has_legacy_case_study_settings( array $saved ): bool {
-
-		return array_key_exists( 'case_studies', $saved )
-			|| array_key_exists( 'case_study_post_slug', $saved )
-			|| array_key_exists( 'case_study_archive_slug', $saved )
-			|| array_key_exists( 'case_study_categories', $saved );
 
 	}
 
