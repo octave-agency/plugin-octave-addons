@@ -3,11 +3,12 @@
 /*
 MODULE: ANIMATIONS
 -- Enqueues the Octave scroll-animation CSS/JS on the frontend. Both can
--- be individually toggled on/off, and either can be fully overridden by
--- entering custom CSS or JS in the admin. When the override field is
--- non-empty it is used verbatim *instead of* the bundled asset, which
--- lets the animation behaviour be tweaked per-site without editing
--- plugin source.
+-- be individually toggled on/off, and either can be extended by entering
+-- custom CSS or JS in the admin. The CSS override prints after the
+-- bundled sheet when Load CSS is on, and stands in for it when Load CSS
+-- is off. The JS override is used verbatim *instead of* the bundled
+-- script, so the animation behaviour can be tweaked per-site without
+-- editing plugin source.
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -129,8 +130,8 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						'class'       => 'oa-code-editor',
 						'rows'        => 12,
 						'spellcheck'  => false,
-						'placeholder' => __( 'Replaces the bundled animation.css.', 'octave-addons' ),
-						'help'        => __( 'Used as the main animation CSS instead of the bundled file, even when Load CSS is disabled.', 'octave-addons' ),
+						'placeholder' => __( 'Added on top of the bundled animation.css.', 'octave-addons' ),
+						'help'        => __( 'Printed after the bundled animation.css, or used on its own when Load CSS is disabled.', 'octave-addons' ),
 					] );
 
 				},
@@ -195,21 +196,29 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 		}
 
 		// -------- CSS --------
-		$css_handle   = 'octave-addons-animations';
-		$css_override = (string) ( $s['css_override'] ?? '' );
+		$css_handle       = 'octave-addons-animations';
+		$css_override     = (string) ( $s['css_override'] ?? '' );
+		$has_css_override = '' !== trim( $css_override );
 
-		if ( '' !== trim( $css_override ) ) {
-
-			wp_register_style( $css_handle, false, [], null );
-			wp_enqueue_style( $css_handle );
-			wp_add_inline_style( $css_handle, $css_override );
-
-		} elseif ( ! empty( $s['load_css'] ) ) {
+		if ( ! empty( $s['load_css'] ) ) {
 
 			$css_url = OCTAVE_ADDONS_URL . 'modules/animations/assets/animation.css';
 			$css_ver = $this->file_version( OCTAVE_ADDONS_DIR . 'modules/animations/assets/animation.css' );
 
 			wp_enqueue_style( $css_handle, $css_url, [], $css_ver );
+
+		} elseif ( $has_css_override ) {
+
+			wp_register_style( $css_handle, false, [], null );
+			wp_enqueue_style( $css_handle );
+
+		}
+
+		// Inline styles print after the file they are attached to, so the
+		// override tops up the bundled sheet rather than replacing it.
+		if ( $has_css_override && wp_style_is( $css_handle, 'enqueued' ) ) {
+
+			wp_add_inline_style( $css_handle, $css_override );
 
 		}
 

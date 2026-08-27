@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.0.0
+Stable tag:        3.0.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -79,6 +79,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.0.1 =
+* Fixed the Scroll Animations CSS override replacing the bundled animation.css instead of adding to it, which left frontend animations without their base styles whenever a site had entered any custom CSS. The override now prints after the bundled sheet when Load CSS is on, and is only used on its own when Load CSS is off.
 
 = 3.0.0 =
 * Shortened the built-in Page Categories taxonomy identifier from `octave_page_category` to `oa_page_category` while retaining the existing `octave_addons_settings` option and all admin, metadata, hook, shortcode, and JavaScript integration keys.
