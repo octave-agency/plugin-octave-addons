@@ -311,7 +311,7 @@ ADMIN INTERACTIONS
 	/*
 	REVEAL FIELD
 	-- Opens whatever is hiding a control: an inactive content tab, a collapsed
-	-- definition card, or a closed sub field.
+	-- definition card, a disclosure, or a closed sub field.
 	---------------------------------------------------------- */
 
 	function revealField( field ) {
@@ -319,6 +319,12 @@ ADMIN INTERACTIONS
 		var node = field;
 
 		while ( node && node !== document.body ) {
+
+			if ( 'DETAILS' === node.tagName && ! node.open ) {
+
+				node.open = true;
+
+			}
 
 			if ( node.classList && node.classList.contains( 'oa-content-tab-panel' ) && node.classList.contains( 'oa-hidden' ) ) {
 
@@ -1564,7 +1570,7 @@ ADMIN INTERACTIONS
 
 	/*
 	CONTENT TYPE TABS
-	-- Switches between the Post Types, Categories and Content Management views.
+	-- Switches between the Post Types, Taxonomies and Fields views.
 	-- The open tab is restored from the URL hash, then from the last visit so it
 	-- survives the redirect WordPress performs after saving.
 	---------------------------------------------------------- */
@@ -1823,8 +1829,20 @@ ADMIN INTERACTIONS
 
 				} );
 
-				item.querySelector( '.oa-cpt-move-up' ).disabled = 0 === index;
-				item.querySelector( '.oa-cpt-move-down' ).disabled = items.length - 1 === index;
+				var moveUpButton = item.querySelector( '.oa-cpt-move-up' );
+				var moveDownButton = item.querySelector( '.oa-cpt-move-down' );
+
+				if ( moveUpButton ) {
+
+					moveUpButton.disabled = 0 === index;
+
+				}
+
+				if ( moveDownButton ) {
+
+					moveDownButton.disabled = items.length - 1 === index;
+
+				}
 
 			} );
 
@@ -2167,35 +2185,43 @@ ADMIN INTERACTIONS
 
 			} );
 
-			moveUpButton.addEventListener( 'click', function () {
+			if ( moveUpButton ) {
 
-				var previous = item.previousElementSibling;
+				moveUpButton.addEventListener( 'click', function () {
 
-				if ( previous ) {
+					var previous = item.previousElementSibling;
 
-					list.insertBefore( item, previous );
-					reindexItems();
-					announceOrderChange();
-					moveUpButton.focus();
+					if ( previous ) {
 
-				}
+						list.insertBefore( item, previous );
+						reindexItems();
+						announceOrderChange();
+						moveUpButton.focus();
 
-			} );
+					}
 
-			moveDownButton.addEventListener( 'click', function () {
+				} );
 
-				var next = item.nextElementSibling;
+			}
 
-				if ( next ) {
+			if ( moveDownButton ) {
 
-					list.insertBefore( next, item );
-					reindexItems();
-					announceOrderChange();
-					moveDownButton.focus();
+				moveDownButton.addEventListener( 'click', function () {
 
-				}
+					var next = item.nextElementSibling;
 
-			} );
+					if ( next ) {
+
+						list.insertBefore( next, item );
+						reindexItems();
+						announceOrderChange();
+						moveDownButton.focus();
+
+					}
+
+				} );
+
+			}
 
 			item.addEventListener( 'dragstart', function ( event ) {
 
@@ -2291,6 +2317,145 @@ ADMIN INTERACTIONS
 
 		input.addEventListener( 'change', syncAssignment );
 		syncAssignment();
+
+	} );
+
+	/*
+	TAXONOMY ORDER
+	-- Stores a separate drag order for every custom post type.
+	---------------------------------------------------------- */
+
+	document.querySelectorAll( '.oa-taxonomy-order-list' ).forEach( function ( list ) {
+
+		var draggedItem = null;
+		var orderStatus = list.parentElement.querySelector( '.oa-taxonomy-order-status' );
+
+		function reindexTaxonomies() {
+
+			list.querySelectorAll( '.oa-taxonomy-order-item' ).forEach( function ( item, index ) {
+
+				item.querySelector( '.oa-taxonomy-order-value' ).value = index;
+
+			} );
+
+		}
+
+		function announceTaxonomyOrder() {
+
+			reindexTaxonomies();
+			orderStatus.textContent = '';
+
+			window.requestAnimationFrame( function () {
+
+				orderStatus.textContent = oaAdmin.taxonomyMovedText;
+
+			} );
+
+			list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		}
+
+		list.querySelectorAll( '.oa-taxonomy-order-item' ).forEach( function ( item ) {
+
+			var handle = item.querySelector( '.oa-taxonomy-drag-handle' );
+
+			handle.addEventListener( 'pointerdown', function () {
+
+				item.draggable = true;
+
+			} );
+
+			handle.addEventListener( 'pointerup', function () {
+
+				item.draggable = false;
+
+			} );
+
+			handle.addEventListener( 'pointercancel', function () {
+
+				item.draggable = false;
+
+			} );
+
+			handle.addEventListener( 'keydown', function ( event ) {
+
+				var sibling;
+
+				if ( 'ArrowUp' === event.key ) {
+
+					sibling = item.previousElementSibling;
+
+					if ( sibling ) {
+
+						list.insertBefore( item, sibling );
+
+					}
+
+				} else if ( 'ArrowDown' === event.key ) {
+
+					sibling = item.nextElementSibling;
+
+					if ( sibling ) {
+
+						list.insertBefore( sibling, item );
+
+					}
+
+				} else {
+
+					return;
+
+				}
+
+				event.preventDefault();
+				announceTaxonomyOrder();
+				handle.focus();
+
+			} );
+
+			item.addEventListener( 'dragstart', function ( event ) {
+
+				draggedItem = item;
+				item.classList.add( 'is-dragging' );
+				event.dataTransfer.effectAllowed = 'move';
+				event.dataTransfer.setData( 'text/plain', '' );
+
+			} );
+
+			item.addEventListener( 'dragend', function () {
+
+				item.classList.remove( 'is-dragging' );
+				item.draggable = false;
+				draggedItem = null;
+				announceTaxonomyOrder();
+
+			} );
+
+		} );
+
+		list.addEventListener( 'dragover', function ( event ) {
+
+			if ( ! draggedItem ) {
+
+				return;
+
+			}
+
+			event.preventDefault();
+
+			var target = Array.prototype.find.call( list.querySelectorAll( '.oa-taxonomy-order-item:not(.is-dragging)' ), function ( item ) {
+
+				var box = item.getBoundingClientRect();
+
+				return event.clientY < box.top + box.height / 2;
+
+			} );
+
+			list.insertBefore( draggedItem, target || null );
+
+		} );
+
+		reindexTaxonomies();
 
 	} );
 

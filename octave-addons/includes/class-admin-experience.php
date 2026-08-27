@@ -79,16 +79,24 @@ class Octave_Addons_Admin_Experience {
 
 		}
 
-		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience.css';
-		$woo_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience-woocommerce.css';
-		$js_path  = OCTAVE_ADDONS_DIR . 'assets/js/admin-experience.js';
-		$theme    = $this->get_theme();
+		$css_path          = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience.css';
+		$integrations_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience-integrations.css';
+		$woo_path          = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience-woocommerce.css';
+		$js_path           = OCTAVE_ADDONS_DIR . 'assets/js/admin-experience.js';
+		$theme             = $this->get_theme();
 
 		wp_enqueue_style(
 			'octave-addons-admin-experience',
 			OCTAVE_ADDONS_URL . 'assets/css/admin-experience.css',
 			[],
 			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
+		);
+
+		wp_enqueue_style(
+			'octave-addons-admin-experience-integrations',
+			OCTAVE_ADDONS_URL . 'assets/css/admin-experience-integrations.css',
+			[ 'octave-addons-admin-experience' ],
+			file_exists( $integrations_path ) ? (string) filemtime( $integrations_path ) : OCTAVE_ADDONS_VERSION
 		);
 
 		if ( $this->is_woocommerce_active() ) {

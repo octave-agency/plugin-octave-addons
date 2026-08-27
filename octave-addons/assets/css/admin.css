@@ -1197,6 +1197,15 @@ ACTION TOASTS
     transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
 }
 
+.oa-app .oa-save-button,
+.oa-app .oa-save-button:hover,
+.oa-app .oa-save-button:focus,
+.oa-app .oa-save-button:active {
+    color: var(--oa-on-accent) !important;
+    border-color: var(--oa-green) !important;
+    background: var(--oa-green) !important;
+}
+
 /*
 -- WordPress repaints .button-primary text white on hover, focus and active,
 -- so each of those states restates the button's own on-accent colour.
@@ -2028,7 +2037,7 @@ body.wp-admin .octave-addons-wrap--themed {
     width: 228px;
     border-radius: 0;
     border-color: var(--oa-border);
-    background: var(--oa-surface);
+    background: transparent;
     backdrop-filter: none;
 }
 
@@ -2256,6 +2265,27 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
     box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
 }
 
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field input[type="text"],
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field select,
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field textarea,
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field input[type="text"]:hover,
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field select:hover,
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field textarea:hover {
+    color: var(--oa-text);
+    border-color: var(--oa-border);
+    background: var(--oa-surface);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field input[type="text"]:focus,
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field select:focus,
+html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field textarea:focus {
+    color: var(--oa-text);
+    border-color: var(--oa-accent);
+    background: var(--oa-surface);
+    box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
+}
+
 .oa-app--themed .oa-custom-select-dropdown,
 .oa-app--themed .oa-save-bar {
     color: var(--oa-text);
@@ -2273,8 +2303,8 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
     .oa-app--themed .oa-sidebar {
         width: 100%;
         border-radius: 0;
-        background: color-mix(in srgb, var(--oa-surface) 96%, transparent);
-        backdrop-filter: blur(18px);
+        background: transparent;
+        backdrop-filter: none;
     }
 
     .oa-app--themed .oa-content {
@@ -2600,7 +2630,7 @@ BUILT-IN WORDPRESS CONTENT
 ---------------------------------------------------------- */
 
 .oa-builtin-content {
-    margin: 22px 0 0;
+    margin: 22px 0 18px;
     overflow: hidden;
     border: 1px solid var(--oa-border-light);
     border-radius: 15px;
@@ -2609,30 +2639,48 @@ BUILT-IN WORDPRESS CONTENT
 
 .oa-builtin-content-head {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 20px;
-    padding: 20px 22px;
-    border-bottom: 1px solid var(--oa-border-light);
+    padding: 14px 18px;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
+    cursor: pointer;
+    list-style: none;
+}
+
+.oa-builtin-content-head::-webkit-details-marker {
+    display: none;
+}
+
+.oa-builtin-content-head:focus-visible,
+.oa-cpt-advanced-summary:focus-visible {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: -3px;
+}
+
+.oa-builtin-content[open] .oa-builtin-content-head {
+    border-bottom: 1px solid var(--oa-border-light);
 }
 
 .oa-builtin-content-head h3 {
-    margin: 4px 0 6px;
+    margin: 3px 0 4px;
     color: var(--oa-text);
-    font-size: 19px;
+    font-size: 15px;
 }
 
 .oa-builtin-content-head p {
     margin: 0;
     color: var(--oa-text-muted);
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.5;
 }
 
-.oa-builtin-content-badge {
+.oa-builtin-content-summary-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     flex-shrink: 0;
-    padding: 5px 9px;
+    padding: 6px 9px;
     color: var(--oa-text-dim);
     border: 1px solid var(--oa-border-light);
     border-radius: 999px;
@@ -2641,6 +2689,17 @@ BUILT-IN WORDPRESS CONTENT
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+}
+
+.oa-builtin-content-summary-action .dashicons {
+    width: 15px;
+    height: 15px;
+    font-size: 15px;
+    transition: transform 0.15s ease;
+}
+
+.oa-builtin-content[open] .oa-builtin-content-summary-action .dashicons {
+    transform: rotate(180deg);
 }
 
 .oa-builtin-content-grid {
@@ -2709,37 +2768,16 @@ BUILT-IN WORDPRESS CONTENT
     margin-top: 5px;
 }
 
-.oa-content-area-divider {
-    display: grid;
-    grid-template-columns: minmax(20px, 1fr) auto minmax(20px, 1fr);
-    align-items: center;
-    gap: 12px;
-    margin: 25px 0 18px;
-}
-
-.oa-content-area-divider span {
-    height: 1px;
-    background: var(--oa-border-light);
-}
-
-.oa-content-area-divider strong {
-    color: var(--oa-text-dim);
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
 /*
 CONTENT TYPE TABS
--- Splits Post Types, Categories, and Content Management into one view each.
+-- Splits Post Types, Taxonomies, and Fields into one view each.
 ---------------------------------------------------------- */
 
 .oa-content-tabs-nav {
     display: flex;
     flex-wrap: wrap;
     gap: 7px;
-    margin-bottom: 18px;
+    margin: 0 0 18px;
     padding: 6px;
     border: 1px solid var(--oa-border-light);
     border-radius: 12px;
@@ -2810,7 +2848,7 @@ CONTENT TYPE TABS
 
 /*
 CONTENT DIRECTORY
--- Expanded, filterable listings for the Categories and Content tabs.
+-- Expanded, filterable listings for the Taxonomies and Fields tabs.
 ---------------------------------------------------------- */
 
 .oa-content-directory {
@@ -3251,6 +3289,44 @@ CONTENT SCHEMA LIBRARY
     grid-template-columns: auto minmax(0, 1fr) auto auto;
 }
 
+.oa-taxonomy-order-item {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+}
+
+.oa-taxonomy-order-item.is-dragging {
+    border-color: var(--oa-accent);
+    opacity: 0.5;
+}
+
+.oa-taxonomy-drag-handle {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 34px;
+    padding: 0;
+    color: var(--oa-text-dim);
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    cursor: grab;
+}
+
+.oa-taxonomy-drag-handle:hover,
+.oa-taxonomy-drag-handle:focus-visible {
+    color: var(--oa-accent);
+    background: var(--oa-accent-bg);
+}
+
+.oa-taxonomy-drag-handle:active {
+    cursor: grabbing;
+}
+
+.oa-taxonomy-drag-handle .dashicons {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+}
+
 .oa-assignment-card.is-assigned {
     border-color: rgba(43, 255, 134, 0.32);
     background: var(--oa-accent-bg);
@@ -3640,8 +3716,8 @@ CUSTOM POST TYPE EDITOR
 .oa-cpt-item-head {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
+    gap: 12px;
+    padding: 11px 12px;
     border-bottom: 1px solid var(--oa-border-light);
 }
 
@@ -3711,6 +3787,26 @@ CUSTOM POST TYPE EDITOR
     text-align: left;
 }
 
+.oa-post-type-item .oa-cpt-expand {
+    display: inline-flex;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 0 9px;
+    color: var(--oa-text-muted);
+    border: 1px solid var(--oa-border-light);
+    background: var(--oa-surface-3);
+    font-size: 10.5px;
+    font-weight: 650;
+}
+
+.oa-post-type-item .oa-cpt-expand:hover {
+    color: var(--oa-accent);
+    border-color: rgba(43, 255, 134, 0.32);
+    background: var(--oa-accent-bg);
+}
+
 .oa-cpt-expand:disabled {
     opacity: 0.45;
     cursor: default;
@@ -3721,6 +3817,59 @@ CUSTOM POST TYPE EDITOR
     align-items: center;
     gap: 9px;
     min-width: 0;
+}
+
+.oa-post-type-item .oa-cpt-expand-copy {
+    flex: 1 1 220px;
+}
+
+.oa-cpt-row-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.oa-app .oa-cpt-row-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 28px;
+    padding: 0 8px;
+    color: var(--oa-text-muted) !important;
+    border: 1px solid var(--oa-border-light);
+    border-radius: 7px;
+    background: transparent;
+    font-size: 10px;
+    font-weight: 650;
+    text-decoration: none;
+}
+
+.oa-app .oa-cpt-row-links a:hover,
+.oa-app .oa-cpt-row-links a:focus {
+    color: var(--oa-accent) !important;
+    border-color: rgba(43, 255, 134, 0.3);
+    background: var(--oa-accent-bg);
+}
+
+.oa-cpt-row-links .dashicons {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+}
+
+.oa-cpt-row-links a > span:last-child {
+    min-width: 17px;
+    padding: 2px 5px;
+    color: var(--oa-accent);
+    border-radius: 999px;
+    background: var(--oa-accent-bg);
+    font-size: 9px;
+    text-align: center;
+}
+
+.oa-cpt-expand-label {
+    white-space: nowrap;
 }
 
 .oa-cpt-item-icon {
@@ -3916,69 +4065,6 @@ CUSTOM POST TYPE EDITOR
     padding: 16px;
 }
 
-.oa-cpt-content-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    align-items: center;
-    gap: 10px;
-    margin: 10px 12px 12px;
-    padding: 14px;
-    border: 1px solid rgba(43, 255, 134, 0.22);
-    border-radius: 10px;
-    background: var(--oa-accent-bg);
-}
-
-.oa-cpt-content-actions > div {
-    display: grid;
-    gap: 3px;
-}
-
-.oa-cpt-content-actions strong {
-    color: var(--oa-text);
-    font-size: 12px;
-}
-
-.oa-cpt-content-actions span {
-    color: var(--oa-text-muted);
-    font-size: 10.5px;
-}
-
-.oa-cpt-content-link {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 6px;
-    min-height: 34px !important;
-    color: var(--oa-text) !important;
-    border-color: var(--oa-border) !important;
-    border-radius: 8px !important;
-    background: var(--oa-surface-3) !important;
-}
-
-.oa-cpt-content-link:hover {
-    color: var(--oa-accent) !important;
-    border-color: rgba(43, 255, 134, 0.4) !important;
-}
-
-.oa-cpt-content-link .dashicons {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-}
-
-.oa-cpt-content-actions .oa-cpt-content-count {
-    display: inline-grid;
-    place-items: center;
-    min-width: 20px;
-    height: 20px;
-    line-height: 20px;
-    padding: 0 5px;
-    color: var(--oa-on-accent);
-    border-radius: 999px;
-    background: var(--oa-accent);
-    font-size: 10px;
-    font-weight: 700;
-}
-
 .oa-cpt-starter {
     border-color: rgba(43, 255, 134, 0.24) !important;
     background: var(--oa-accent-bg);
@@ -3996,6 +4082,66 @@ CUSTOM POST TYPE EDITOR
     border: 1px solid var(--oa-border-light);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.018);
+}
+
+.oa-cpt-advanced {
+    overflow: hidden;
+    border: 1px solid var(--oa-border-light);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.018);
+}
+
+.oa-cpt-advanced-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 14px;
+    color: var(--oa-text);
+    cursor: pointer;
+    list-style: none;
+}
+
+.oa-cpt-advanced-summary::-webkit-details-marker {
+    display: none;
+}
+
+.oa-cpt-advanced-summary > span:first-child {
+    display: grid;
+    gap: 3px;
+}
+
+.oa-cpt-advanced-summary strong {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.oa-cpt-advanced-summary small {
+    color: var(--oa-text-dim);
+    font-size: 10.5px;
+}
+
+.oa-cpt-advanced-summary > .dashicons {
+    width: 16px;
+    height: 16px;
+    color: var(--oa-text-dim);
+    font-size: 16px;
+    transition: transform 0.15s ease;
+}
+
+.oa-cpt-advanced[open] > .oa-cpt-advanced-summary {
+    border-bottom: 1px solid var(--oa-border-light);
+}
+
+.oa-cpt-advanced[open] > .oa-cpt-advanced-summary > .dashicons {
+    transform: rotate(180deg);
+}
+
+.oa-cpt-advanced-body {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
 }
 
 .oa-cpt-group legend {
@@ -4701,6 +4847,20 @@ body.oa-confirm-open {
 
 @media (max-width: 700px) {
 
+    .oa-post-type-item .oa-cpt-item-head {
+        flex-wrap: wrap;
+    }
+
+    .oa-post-type-item .oa-cpt-expand-copy {
+        flex-basis: calc(100% - 80px);
+    }
+
+    .oa-post-type-item .oa-cpt-row-links {
+        order: 10;
+        width: 100%;
+        padding-left: 42px;
+    }
+
     .oa-cpt-section-actions,
     .oa-assignment-manager-actions,
     .oa-schema-collection-head,
@@ -4714,11 +4874,20 @@ body.oa-confirm-open {
         grid-template-columns: auto minmax(0, 1fr);
     }
 
+    .oa-taxonomy-order-item {
+        grid-template-columns: auto auto minmax(0, 1fr);
+    }
+
     .oa-schema-edit,
     .oa-assignment-edit,
     .oa-assignment-toggle {
         grid-column: 2;
         justify-self: start;
+    }
+
+    .oa-taxonomy-order-item .oa-assignment-edit,
+    .oa-taxonomy-order-item .oa-assignment-toggle {
+        grid-column: 3;
     }
 
     .oa-cpt-editor-context {
@@ -4835,14 +5004,6 @@ body.oa-confirm-open {
 
     .oa-assignment-grid {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    .oa-cpt-content-actions {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .oa-cpt-content-link {
-        justify-content: center;
     }
 
     .oa-sub-field-toolbar {

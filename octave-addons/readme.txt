@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.0.1
+Stable tag:        3.2.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -79,6 +79,17 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.2.0 =
+* Simplified Post Types into compact rows with direct Taxonomies and Fields links, clearer terminology, and advanced settings hidden until requested.
+* Collapsed optional WordPress defaults and removed empty field groups from the Fields directory so the page is faster to scan.
+* Removed the themed sidebar fill while retaining its navigation structure and active states.
+
+= 3.1.0 =
+* Added per-post-type drag and keyboard ordering for reusable taxonomies.
+* Kept custom post type inputs on the correct themed surface while hovering and editing in light mode.
+* Made the Octave Addons save button consistently use the Octave green brand colour.
+* Added a reusable admin theme integration layer for Breeze, WP Rocket, and Imagify, including full Breeze dark-mode surface and text coverage.
 
 = 3.0.1 =
 * Fixed the Scroll Animations CSS override replacing the bundled animation.css instead of adding to it, which left frontend animations without their base styles whenever a site had entered any custom CSS. The override now prints after the bundled sheet when Load CSS is on, and is only used on its own when Load CSS is off.

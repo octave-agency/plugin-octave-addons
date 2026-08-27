@@ -1,0 +1,101 @@
+/*
+ADMIN EXPERIENCE INTEGRATIONS
+-- Bridges third-party plugin interfaces onto the shared Octave admin tokens.
+---------------------------------------------------------- */
+
+/*
+Shared plugin colour aliases
+---------------------------------------------------------- */
+
+body.wp-admin :is(.breeze-box, .wpr-wrap, .imagify-settings, .imagify-main-content) {
+    --oa-plugin-accent: var(--oa-admin-accent);
+    --oa-plugin-accent-strong: var(--oa-admin-accent-dark);
+    --oa-plugin-accent-soft: var(--oa-admin-accent-soft);
+    --oa-plugin-surface: var(--oa-admin-surface);
+    --oa-plugin-surface-soft: var(--oa-admin-surface-soft);
+    --oa-plugin-surface-hover: var(--oa-admin-surface-hover);
+    --oa-plugin-border: var(--oa-admin-border);
+    --oa-plugin-text: var(--oa-admin-text);
+    --oa-plugin-text-soft: var(--oa-admin-text-soft);
+}
+
+/*
+BREEZE
+-- Replaces its fixed white and blue panels without changing the layout.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-options,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-link.br-active,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-link.br-active a {
+    color: var(--oa-plugin-text);
+    background-color: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-link,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-link a,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-options section .br-section-title,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-options section .br-option-item .br-label .br-option-text,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-options section .br-option-group .section-title {
+    color: var(--oa-plugin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-link,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-options section .br-section-title,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-options section .br-option-item {
+    border-color: var(--oa-plugin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-link:hover {
+    background-color: var(--oa-plugin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-options section .br-option-item p:not(.br-important),
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-one-click-optimization-section .br-section-title + p {
+    color: var(--oa-plugin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-box .br-options section .br-option-group .br-option-item,
+html[data-oa-admin-theme="dark"] body.settings_page_breeze .breeze-top-notice.optimization-notice {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+    background-color: var(--oa-plugin-surface-soft);
+}
+
+body.settings_page_breeze .breeze-box .br-link.br-active,
+body.settings_page_breeze .breeze-box .br-link.br-active a {
+    color: var(--oa-plugin-accent-strong);
+}
+
+body.settings_page_breeze .breeze-box .br-options .br-submit input,
+body.settings_page_breeze .breeze-top-notice.optimization-notice .explore-optimization {
+    color: var(--oa-admin-on-accent);
+    border-color: var(--oa-plugin-accent);
+    background: var(--oa-plugin-accent);
+}
+
+/*
+WP ROCKET AND IMAGIFY
+-- Covers the shared cards, settings panels, and primary actions used by the
+-- companion WP Media interfaces while preserving their own page structure.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(.wpr-page, .wpr-card, .wpr-fieldset, .wpr-sidebar, .imagify-card, .imagify-settings-section, .imagify-options) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(h1, h2, h3, h4, label, legend, .wpr-title, .wpr-optionHeader) {
+    color: var(--oa-plugin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(p, .description, .wpr-description, .imagify-help) {
+    color: var(--oa-plugin-text-soft);
+}
+
+body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(.button-primary, .wpr-button--primary, .imagify-button-primary) {
+    color: var(--oa-admin-on-accent);
+    border-color: var(--oa-plugin-accent);
+    background: var(--oa-plugin-accent);
+    text-shadow: none;
+}
