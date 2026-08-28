@@ -117,6 +117,12 @@ STRUCTURED CONTENT EDITOR
 
 	function isEmptyValue( field, value ) {
 
+		if ( 'html' === field.type ) {
+
+			return false;
+
+		}
+
 		if ( 'group' === field.type ) {
 
 			return isRowEmpty( field.sub_fields, value );
@@ -168,6 +174,12 @@ STRUCTURED CONTENT EDITOR
 	---------------------------------------------------------- */
 
 	function missingLabels( field, value, prefix ) {
+
+		if ( 'html' === field.type ) {
+
+			return [];
+
+		}
 
 		var label = ( prefix || '' ) + field.label;
 
@@ -692,6 +704,26 @@ STRUCTURED CONTENT EDITOR
 	function FieldControl( props ) {
 
 		var field    = props.field;
+
+		if ( 'html' === field.type ) {
+
+			if ( String( field.default_value || '' ).trim() ) {
+
+				return createElement( 'section', {
+					className: 'oa-field oa-field--html',
+					dangerouslySetInnerHTML: { __html: field.default_value }
+				} );
+
+			}
+
+			return createElement(
+				'section',
+				{ className: 'oa-field oa-field--html' },
+				createElement( 'h2', null, field.label )
+			);
+
+		}
+
 		var value    = props.value;
 		var choices  = parseChoices( field.choices );
 		var isEmpty  = isEmptyValue( field, value );
@@ -879,9 +911,21 @@ STRUCTURED CONTENT EDITOR
 			return 'auto-draft' === select( 'core/editor' ).getEditedPostAttribute( 'status' );
 
 		}, [] );
+		var postTitle = wp.data.useSelect( function ( select ) {
+
+			return select( 'core/editor' ).getEditedPostAttribute( 'title' ) || '';
+
+		}, [] );
+		var editingLabel = postTitle ? strings.editingNamed.replace( '{{title}}', postTitle ) : strings.editing;
 
 		var missing = [];
 		var entries = fields.map( function ( field ) {
+
+			if ( 'html' === field.type ) {
+
+				return { field: field, value: field.default_value };
+
+			}
 
 			var isStored = touched[ field.meta_key ] || Object.prototype.hasOwnProperty.call( storedKeys, field.meta_key );
 			var value    = isStored ? meta[ field.meta_key ] : field.default_value;
@@ -920,14 +964,20 @@ STRUCTURED CONTENT EDITOR
 			createElement(
 				'div',
 				{ className: 'oa-structured-content__header' },
-				createElement( 'div', { className: 'oa-structured-content__title' }, strings.title ),
+				createElement(
+					'div',
+					{ className: 'oa-structured-content__heading' },
+					createElement( 'div', { className: 'oa-structured-content__eyebrow' }, editingLabel ),
+					createElement( 'div', { className: 'oa-structured-content__title' }, strings.title ),
+					createElement( 'p', { className: 'oa-structured-content__intro' }, strings.intro )
+				),
 				missing.length
 					? createElement(
 						'div',
 						{ className: 'oa-structured-content__status oa-structured-content__status--invalid' },
 						1 === missing.length ? strings.requiredSingle : strings.requiredPlural.replace( '%d', missing.length )
 					)
-					: createElement( 'div', { className: 'oa-structured-content__status' }, strings.blocksOff )
+					: createElement( 'div', { className: 'oa-structured-content__status oa-structured-content__status--ready' }, strings.ready )
 			),
 			fields.length
 				? createElement( 'div', { className: 'oa-fields' }, entries.map( function ( entry ) {

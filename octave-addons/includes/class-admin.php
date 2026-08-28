@@ -153,6 +153,8 @@ class Octave_Addons_Admin {
 			'categoryRemovedText'    => __( 'Taxonomy removed. Save settings to apply it.', 'octave-addons' ),
 			'fieldAddedText'         => __( 'Content field added. Save settings to create it.', 'octave-addons' ),
 			'fieldRemovedText'       => __( 'Content field removed. Save settings to apply it.', 'octave-addons' ),
+			'fieldMovedText'         => __( 'Content field order updated. Save settings to apply it.', 'octave-addons' ),
+			'fieldGroupedText'       => __( 'Field moved into the group. Save settings to apply it.', 'octave-addons' ),
 			'subFieldAddedText'      => __( 'Item field added. Save settings to create it.', 'octave-addons' ),
 			'subFieldRemovedText'    => __( 'Item field removed. Save settings to apply it.', 'octave-addons' ),
 			'invalidFormText'        => __( 'Nothing was saved. Some settings still need attention — the first one has been opened for you.', 'octave-addons' ),

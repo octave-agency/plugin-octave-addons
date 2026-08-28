@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.3.2
+Stable tag:        3.4.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -79,6 +79,18 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.4.1 =
+* Clarified the structured-content editor with the current content type and entry title, useful save guidance, compact controls, sentence-case labels, and a stable two-column card layout.
+
+= 3.4.0 =
+* Added drag-and-drop and keyboard ordering for content-field definitions.
+* Added presentation-only HTML section markers for organising long structured-content forms.
+* Added a group action that moves an existing compatible field into the group while preserving its definition.
+* Changed the structured-content launcher to a stable two-column layout with responsive section dividers.
+
+= 3.3.3 =
+* Packed repeatable Post Types settings before submission to avoid PHP and hosting request-variable limits on large field schemas.
 
 = 3.3.2 =
 * Matched the password visibility button height to the login input and applied the configured primary colour.

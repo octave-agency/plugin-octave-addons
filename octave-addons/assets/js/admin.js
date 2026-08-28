@@ -170,6 +170,147 @@ ADMIN INTERACTIONS
 	var saveStateText = document.querySelector( '.oa-save-state-text' );
 	var saveButton = document.querySelector( '.oa-save-button' );
 
+	/*
+	PACK SETTINGS VALUE
+	-- Places one form value into the nested object represented by its bracketed
+	-- field name.
+	---------------------------------------------------------- */
+
+	function packSettingsValue( target, tokens, value ) {
+
+		var node = target;
+
+		tokens.forEach( function ( token, index ) {
+
+			var isLast = index === tokens.length - 1;
+			var nextToken = tokens[ index + 1 ];
+
+			if ( isLast ) {
+
+				if ( '' === token ) {
+
+					node.push( value );
+
+				} else {
+
+					node[ token ] = value;
+
+				}
+
+				return;
+
+			}
+
+			if ( ! Object.prototype.hasOwnProperty.call( node, token ) ) {
+
+				node[ token ] = '' === nextToken ? [] : {};
+
+			}
+
+			node = node[ token ];
+
+		} );
+
+	}
+
+	/*
+	ENCODE SETTINGS PAYLOAD
+	-- Converts UTF-8 JSON to base64 so hosting security layers see one opaque
+	-- value instead of hundreds of deeply nested request variables.
+	---------------------------------------------------------- */
+
+	function encodeSettingsPayload( payload ) {
+
+		var encoded = encodeURIComponent( JSON.stringify( payload ) ).replace( /%([0-9A-F]{2})/g, function ( match, hex ) {
+
+			return String.fromCharCode( parseInt( hex, 16 ) );
+
+		} );
+
+		return window.btoa( encoded );
+
+	}
+
+	/*
+	PACK SETTINGS COLLECTIONS
+	-- Collapses repeatable post type data immediately before submission to stay
+	-- below PHP and web-application-firewall request-variable limits.
+	---------------------------------------------------------- */
+
+	function packSettingsCollections( form ) {
+
+		var namespace = 'octave_addons_settings[custom-post-types]';
+		var collections = [ 'custom_post_types', 'custom_taxonomies', 'custom_fields' ];
+		var formData = new FormData( form );
+		var packages = [];
+
+		collections.forEach( function ( collection ) {
+
+			var prefix = namespace + '[' + collection + ']';
+			var controls = Array.prototype.filter.call( form.elements, function ( control ) {
+
+				return control.name && 0 === control.name.indexOf( prefix + '[' );
+
+			} );
+
+			if ( ! controls.length ) {
+
+				return;
+
+			}
+
+			var payload = {};
+
+			formData.forEach( function ( value, name ) {
+
+				if ( 0 !== name.indexOf( prefix + '[' ) ) {
+
+					return;
+
+				}
+
+				var tokens = [];
+				var tokenPattern = /\[([^\]]*)\]/g;
+				var suffix = name.slice( prefix.length );
+				var match;
+
+				while ( ( match = tokenPattern.exec( suffix ) ) ) {
+
+					tokens.push( match[1] );
+
+				}
+
+				packSettingsValue( payload, tokens, value );
+
+			} );
+
+			packages.push( {
+				collection: collection,
+				controls: controls,
+				value: encodeSettingsPayload( payload )
+			} );
+
+		} );
+
+		packages.forEach( function ( settingsPackage ) {
+
+			var hidden = document.createElement( 'input' );
+
+			hidden.type = 'hidden';
+			hidden.name = namespace + '[packed_' + settingsPackage.collection + ']';
+			hidden.value = settingsPackage.value;
+			form.appendChild( hidden );
+
+			settingsPackage.controls.forEach( function ( control ) {
+
+				control.disabled = true;
+
+			} );
+
+		} );
+
+	}
+
 	function setSaveState( state ) {
 
 		if ( ! saveBar || ! saveStateText || ! window.oaAdmin ) {
@@ -253,6 +394,8 @@ ADMIN INTERACTIONS
 		} );
 
 		settingsForm.addEventListener( 'submit', function () {
+
+			packSettingsCollections( settingsForm );
 
 			setSaveState( 'saving' );
 
@@ -2471,6 +2614,9 @@ ADMIN INTERACTIONS
 		var addButtons = collection.querySelectorAll( '.oa-collection-add' );
 		var collectionKey = collection.dataset.collection;
 		var isTaxonomyCollection = 'custom_taxonomies' === collectionKey;
+		var isFieldCollection = 'custom_fields' === collectionKey;
+		var draggedCollectionItem = null;
+		var fieldOrderChanged = false;
 		var overviewHead = document.querySelector( '[data-oa-overview-url]' );
 		var overviewUrl = overviewHead ? overviewHead.dataset.oaOverviewUrl : '';
 		var nextIndex = list.querySelectorAll( '.oa-collection-item' ).length;
@@ -2509,6 +2655,20 @@ ADMIN INTERACTIONS
 				} );
 
 			} );
+
+			if ( isFieldCollection ) {
+
+				list.querySelectorAll( '.oa-collection-item' ).forEach( function ( fieldItem ) {
+
+					if ( fieldItem.oaSyncExistingFields ) {
+
+						fieldItem.oaSyncExistingFields();
+
+					}
+
+				} );
+
+			}
 
 		}
 
@@ -2560,6 +2720,7 @@ ADMIN INTERACTIONS
 			var contextAssignment = item.querySelector( '[data-context-assignment="true"]' );
 			var publicToggle = item.querySelector( '.oa-tax-public-toggle' );
 			var urlField = item.querySelector( '.oa-tax-url-field' );
+			var dragHandle = item.querySelector( '.oa-field-drag-handle' );
 			var keyIsAutomatic = 'false' === item.dataset.saved;
 
 			function syncEnabled() {
@@ -2605,8 +2766,11 @@ ADMIN INTERACTIONS
 				var choices = item.querySelector( '.oa-field-choices' );
 				var defaultField = item.querySelector( '.oa-field-default' );
 				var subFieldEditor = item.querySelector( '.oa-sub-field-editor' );
+				var requiredField = item.querySelector( '.oa-field-required' );
+				var existingPicker = item.querySelector( '.oa-existing-field-picker' );
 				var needsChoices = [ 'select', 'multiselect', 'radio' ].indexOf( typeInput.value ) !== -1;
 				var isContainer = [ 'group', 'repeater' ].indexOf( typeInput.value ) !== -1;
+				var isHtml = 'html' === typeInput.value;
 				var hidesDefault = isContainer || 'gallery' === typeInput.value;
 
 				choices.classList.toggle( 'oa-hidden', ! needsChoices );
@@ -2614,12 +2778,39 @@ ADMIN INTERACTIONS
 				if ( defaultField ) {
 
 					defaultField.classList.toggle( 'oa-hidden', hidesDefault );
+					defaultField.querySelector( 'span' ).textContent = isHtml ? defaultField.dataset.htmlLabel : defaultField.dataset.defaultLabel;
+					defaultField.querySelector( 'small' ).textContent = isHtml ? defaultField.dataset.htmlHelp : defaultField.dataset.defaultHelp;
+					defaultField.querySelector( '[data-field-default-control]' ).rows = isHtml ? 6 : 2;
+
+				}
+
+				if ( requiredField ) {
+
+					requiredField.classList.toggle( 'oa-hidden', isHtml );
+
+					if ( isHtml ) {
+
+						requiredField.querySelector( 'input' ).checked = false;
+
+					}
 
 				}
 
 				if ( subFieldEditor ) {
 
 					subFieldEditor.classList.toggle( 'oa-hidden', ! isContainer );
+
+				}
+
+				if ( existingPicker ) {
+
+					existingPicker.classList.toggle( 'oa-hidden', 'group' !== typeInput.value );
+
+				}
+
+				if ( item.oaSyncExistingFields ) {
+
+					item.oaSyncExistingFields();
 
 				}
 
@@ -2638,7 +2829,55 @@ ADMIN INTERACTIONS
 				var subList = editor.querySelector( '.oa-sub-field-list' );
 				var subTemplate = editor.querySelector( '.oa-sub-field-template' );
 				var subAdd = editor.querySelector( '.oa-sub-field-add' );
+				var existingSelect = editor.querySelector( '[data-existing-field]' );
+				var existingAdd = editor.querySelector( '.oa-existing-field-add' );
 				var nextSubIndex = subList.children.length;
+				var draggedSubItem = null;
+
+				function syncExistingFields() {
+
+					if ( ! existingSelect ) {
+
+						return;
+
+					}
+
+					var selected = existingSelect.value;
+					var childKeys = Array.prototype.map.call( subList.querySelectorAll( '[data-sub-role="key"]' ), function ( childKey ) {
+
+						return childKey.value;
+
+					} );
+
+					existingSelect.length = 1;
+
+					list.querySelectorAll( '.oa-collection-item' ).forEach( function ( sourceItem ) {
+
+						var sourceType = sourceItem.querySelector( '[data-field-type]' );
+						var sourceKey = sourceItem.querySelector( '[data-role="key"]' );
+						var sourceTitle = sourceItem.querySelector( '[data-role="title"]' );
+						var sourceEnabled = sourceItem.querySelector( '[data-role="enabled"]' );
+
+						if ( sourceItem === item || ! sourceType || ! sourceKey || ! sourceEnabled || ! sourceEnabled.checked || -1 !== childKeys.indexOf( sourceKey.value ) || [ 'group', 'repeater', 'html' ].indexOf( sourceType.value ) !== -1 ) {
+
+							return;
+
+						}
+
+						var option = document.createElement( 'option' );
+
+						option.value = sourceKey.value;
+						option.textContent = ( sourceTitle.value || sourceKey.value ) + ' · ' + sourceType.options[ sourceType.selectedIndex ].textContent;
+						existingSelect.appendChild( option );
+
+					} );
+
+					existingSelect.value = selected;
+					existingAdd.disabled = ! existingSelect.value;
+
+				}
+
+				item.oaSyncExistingFields = syncExistingFields;
 
 				function reindexSubFields() {
 
@@ -2652,6 +2891,12 @@ ADMIN INTERACTIONS
 
 					} );
 
+					if ( item.oaSyncExistingFields ) {
+
+						item.oaSyncExistingFields();
+
+					}
+
 				}
 
 				function wireSubItem( subItem ) {
@@ -2664,6 +2909,7 @@ ADMIN INTERACTIONS
 					var typeSelect = subItem.querySelector( '[data-sub-field-type]' );
 					var title = subItem.querySelector( '.oa-sub-field-title' );
 					var key = subItem.querySelector( '.oa-sub-field-key' );
+					var dragHandle = subItem.querySelector( '.oa-sub-field-drag-handle' );
 					var automaticKey = 'false' === subItem.dataset.saved;
 
 					function syncSubType() {
@@ -2734,11 +2980,69 @@ ADMIN INTERACTIONS
 
 					} );
 
+					dragHandle.addEventListener( 'mousedown', function () {
+
+						subItem.draggable = true;
+
+					} );
+
+					dragHandle.addEventListener( 'mouseup', function () {
+
+						subItem.draggable = false;
+
+					} );
+
+					dragHandle.addEventListener( 'keydown', function ( event ) {
+
+						var sibling = 'ArrowUp' === event.key ? subItem.previousElementSibling : subItem.nextElementSibling;
+
+						if ( ! sibling || [ 'ArrowUp', 'ArrowDown' ].indexOf( event.key ) === -1 ) {
+
+							return;
+
+						}
+
+						event.preventDefault();
+
+						if ( 'ArrowUp' === event.key ) {
+
+							subList.insertBefore( subItem, sibling );
+
+						} else {
+
+							subList.insertBefore( sibling, subItem );
+
+						}
+
+						reindexSubFields();
+						subList.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+						oaNotify( oaAdmin.fieldMovedText, 'success' );
+
+					} );
+
+					subItem.addEventListener( 'dragstart', function ( event ) {
+
+						draggedSubItem = subItem;
+						subItem.classList.add( 'is-dragging' );
+						event.dataTransfer.effectAllowed = 'move';
+
+					} );
+
+					subItem.addEventListener( 'dragend', function () {
+
+						subItem.classList.remove( 'is-dragging' );
+						subItem.draggable = false;
+						draggedSubItem = null;
+						reindexSubFields();
+						subList.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+					} );
+
 					syncSubType();
 
 				}
 
-				subAdd.addEventListener( 'click', function () {
+				function createSubItem( values, saved ) {
 
 					var html = subTemplate.innerHTML.split( '__SUB_INDEX__' ).join( 'new_' + nextSubIndex );
 					var holder = document.createElement( 'div' );
@@ -2748,12 +3052,157 @@ ADMIN INTERACTIONS
 
 					var subItem = holder.firstElementChild;
 
+					subItem.dataset.saved = saved ? 'true' : 'false';
+
+					subItem.querySelectorAll( '[name]' ).forEach( function ( control ) {
+
+						var match = control.name.match( /\[([^\]]+)\]$/ );
+						var key = match ? match[1] : '';
+
+						if ( ! Object.prototype.hasOwnProperty.call( values, key ) ) {
+
+							return;
+
+						}
+
+						if ( 'checkbox' === control.type ) {
+
+							control.checked = !! values[ key ];
+
+						} else {
+
+							control.value = values[ key ];
+
+						}
+
+					} );
+
+					if ( saved ) {
+
+						subItem.querySelector( '[data-sub-role="key"]' ).readOnly = true;
+
+					}
+
+					subItem.querySelector( '.oa-sub-field-title' ).textContent = values.label || oaAdmin.newSubFieldText;
+					subItem.querySelector( '.oa-sub-field-key' ).textContent = values.name || '';
 					subList.appendChild( subItem );
 					wireSubItem( subItem );
 					reindexSubFields();
+					reindex();
+
+					return subItem;
+
+				}
+
+				subAdd.addEventListener( 'click', function () {
+
+					var subItem = createSubItem( {}, false );
+
 					subItem.querySelector( '[data-sub-role="title"]' ).focus();
 					subList.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 					oaNotify( oaAdmin.subFieldAddedText, 'success' );
+
+				} );
+
+				if ( existingSelect && existingAdd ) {
+
+					existingSelect.addEventListener( 'change', function () {
+
+						existingAdd.disabled = ! existingSelect.value;
+
+					} );
+
+					existingAdd.addEventListener( 'click', function () {
+
+						var sourceItem = Array.prototype.find.call( list.querySelectorAll( '.oa-collection-item' ), function ( candidate ) {
+
+							var candidateKey = candidate.querySelector( '[data-role="key"]' );
+
+							return candidateKey && candidateKey.value === existingSelect.value;
+
+						} );
+
+						if ( ! sourceItem ) {
+
+							return;
+
+						}
+
+						function moveField() {
+
+							var values = {};
+
+							sourceItem.querySelectorAll( '[name]' ).forEach( function ( control ) {
+
+								var match = control.name.match( /\[([^\]]+)\]$/ );
+								var key = match ? match[1] : '';
+
+								if ( [ 'label', 'name', 'type', 'default_value', 'choices', 'description', 'required' ].indexOf( key ) === -1 ) {
+
+									return;
+
+								}
+
+								values[ key ] = 'checkbox' === control.type ? control.checked : control.value;
+
+							} );
+
+							createSubItem( values, 'true' === sourceItem.dataset.saved );
+							sourceItem.remove();
+							reindex();
+							subList.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+							oaNotify( oaAdmin.fieldGroupedText, 'success' );
+
+						}
+
+						if ( 'true' !== sourceItem.dataset.saved ) {
+
+							moveField();
+
+							return;
+
+						}
+
+						window.oaConfirm( {
+							title: existingAdd.dataset.confirmTitle,
+							message: existingAdd.dataset.confirmMessage,
+							confirmText: existingAdd.dataset.confirmAction,
+							destructive: false
+						} ).then( function ( confirmed ) {
+
+							if ( confirmed ) {
+
+								moveField();
+
+							}
+
+						} );
+
+					} );
+
+					syncExistingFields();
+
+				}
+
+				subList.addEventListener( 'dragover', function ( event ) {
+
+					if ( ! draggedSubItem ) {
+
+						return;
+
+					}
+
+					event.preventDefault();
+
+					var target = Array.prototype.find.call( subList.querySelectorAll( '.oa-sub-field-item:not(.is-dragging)' ), function ( subItem ) {
+
+						var box = subItem.getBoundingClientRect();
+
+						return event.clientY < box.top + box.height / 2;
+
+					} );
+
+					subList.insertBefore( draggedSubItem, target || null );
 
 				} );
 
@@ -2834,6 +3283,87 @@ ADMIN INTERACTIONS
 			if ( publicToggle ) {
 
 				publicToggle.addEventListener( 'change', syncPublicUrls );
+
+			}
+
+			if ( dragHandle ) {
+
+				dragHandle.addEventListener( 'mousedown', function () {
+
+					item.draggable = true;
+
+				} );
+
+				dragHandle.addEventListener( 'mouseup', function () {
+
+					item.draggable = false;
+
+				} );
+
+				dragHandle.addEventListener( 'keydown', function ( event ) {
+
+					var sibling = 'ArrowUp' === event.key ? item.previousElementSibling : item.nextElementSibling;
+
+					if ( ! sibling || [ 'ArrowUp', 'ArrowDown' ].indexOf( event.key ) === -1 ) {
+
+						return;
+
+					}
+
+					event.preventDefault();
+
+					if ( 'ArrowUp' === event.key ) {
+
+						list.insertBefore( item, sibling );
+
+					} else {
+
+						list.insertBefore( sibling, item );
+
+					}
+
+					reindex();
+					list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+					oaNotify( oaAdmin.fieldMovedText, 'success' );
+
+				} );
+
+				item.addEventListener( 'dragstart', function ( event ) {
+
+					if ( event.target !== item ) {
+
+						return;
+
+					}
+
+					draggedCollectionItem = item;
+					fieldOrderChanged = false;
+					item.classList.add( 'is-dragging' );
+					event.dataTransfer.effectAllowed = 'move';
+
+				} );
+
+				item.addEventListener( 'dragend', function ( event ) {
+
+					if ( event.target !== item ) {
+
+						return;
+
+					}
+
+					item.classList.remove( 'is-dragging' );
+					item.draggable = false;
+					draggedCollectionItem = null;
+
+					if ( fieldOrderChanged ) {
+
+						reindex();
+						list.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+						oaNotify( oaAdmin.fieldMovedText, 'success' );
+
+					}
+
+				} );
 
 			}
 
@@ -2970,6 +3500,39 @@ ADMIN INTERACTIONS
 					assignment.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 
 				} );
+
+			} );
+
+		}
+
+		if ( isFieldCollection ) {
+
+			list.addEventListener( 'dragover', function ( event ) {
+
+				if ( ! draggedCollectionItem ) {
+
+					return;
+
+				}
+
+				event.preventDefault();
+
+				var target = Array.prototype.find.call( list.querySelectorAll( '.oa-collection-item:not(.is-dragging)' ), function ( fieldItem ) {
+
+					var box = fieldItem.getBoundingClientRect();
+
+					return event.clientY < box.top + box.height / 2;
+
+				} );
+
+				var next = target || null;
+
+				if ( draggedCollectionItem.nextElementSibling !== next ) {
+
+					list.insertBefore( draggedCollectionItem, next );
+					fieldOrderChanged = true;
+
+				}
 
 			} );
 

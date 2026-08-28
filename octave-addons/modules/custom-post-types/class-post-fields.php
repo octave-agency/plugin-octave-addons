@@ -220,6 +220,12 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $fields as $field ) {
 
+			if ( 'html' === $field['type'] ) {
+
+				continue;
+
+			}
+
 			if ( $post_id && metadata_exists( 'post', $post_id, $field['meta_key'] ) ) {
 
 				$stored_keys[ $field['meta_key'] ] = true;
@@ -239,8 +245,14 @@ class Octave_Addons_Custom_Post_Fields {
 				'strings'    => [
 					'blockTitle'      => __( 'Octave Content Fields', 'octave-addons' ),
 					/* translators: %s: singular post type name. */
-					'title'           => sprintf( __( '%s content', 'octave-addons' ), $singular ),
-					'blocksOff'       => __( 'Block editor off', 'octave-addons' ),
+					'editing'         => sprintf( __( 'Editing %s', 'octave-addons' ), $singular ),
+					/* translators: %s: singular post type name. {{title}} is replaced with the current entry title in the editor. */
+					'editingNamed'    => sprintf( __( 'Editing %s: {{title}}', 'octave-addons' ), $singular ),
+					/* translators: %s: singular post type name. */
+					'title'           => sprintf( __( '%s details', 'octave-addons' ), $singular ),
+					/* translators: %s: lowercase singular post type name. */
+					'intro'           => sprintf( __( 'Update the structured information below. These changes are saved when you update this %s.', 'octave-addons' ), strtolower( $singular ) ),
+					'ready'           => __( 'Ready to update', 'octave-addons' ),
 					'emptyFields'     => __( 'No content fields are assigned to this post type yet. Add fields in Octave Addons, then return here to populate them.', 'octave-addons' ),
 					'required'        => __( 'Required', 'octave-addons' ),
 					'fieldRequired'   => __( 'This field is required.', 'octave-addons' ),
@@ -284,7 +296,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields as $field ) {
 
-			if ( empty( $field['enabled'] ) ) {
+			if ( empty( $field['enabled'] ) || 'html' === $field['type'] ) {
 
 				continue;
 
@@ -528,6 +540,12 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields_for_post_type( $post->post_type ) as $field ) {
 
+			if ( 'html' === $field['type'] ) {
+
+				continue;
+
+			}
+
 			if ( ! array_key_exists( $field['meta_key'], $submitted ) ) {
 
 				continue;
@@ -618,6 +636,22 @@ class Octave_Addons_Custom_Post_Fields {
 		$is_wide     = in_array( $type, [ 'textarea', 'wysiwyg', 'gallery' ], true );
 		$choices     = $this->parse_choices( $field['choices'] );
 		$description = (string) $field['description'];
+
+		if ( 'html' === $type ) {
+
+			$content = trim( (string) $field['default_value'] );
+
+			?>
+
+			<section class="oa-post-field oa-post-field--wide oa-post-field-html">
+				<?= '' !== $content ? wp_kses_post( $content ) : '<h3>' . esc_html( $field['label'] ) . '</h3>'; ?>
+			</section>
+
+			<?php
+
+			return;
+
+		}
 
 		if ( in_array( $type, [ 'group', 'repeater' ], true ) ) {
 
@@ -1054,6 +1088,12 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields_for_post_type( $post->post_type ) as $field ) {
 
+			if ( 'html' === $field['type'] ) {
+
+				continue;
+
+			}
+
 			$raw   = $submitted[ $field['name'] ] ?? ( in_array( $field['type'], [ 'multiselect', 'group', 'repeater', 'gallery' ], true ) ? [] : '' );
 			$value = $this->sanitize_value( $raw, $field );
 
@@ -1381,7 +1421,7 @@ class Octave_Addons_Custom_Post_Fields {
 				$this->fields,
 				static function ( array $field ): bool {
 
-					return ! empty( $field['enabled'] );
+					return ! empty( $field['enabled'] ) && 'html' !== $field['type'];
 
 				}
 			)

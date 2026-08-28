@@ -77,6 +77,33 @@ POST FIELDS EDITOR
     grid-column: 1 / -1;
 }
 
+.oa-post-field-html {
+    margin-top: 8px;
+    padding: 20px 0 8px;
+    border-width: 1px 0 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.oa-post-field-html h2,
+.oa-post-field-html h3,
+.oa-post-field-html h4,
+.oa-post-field-html p {
+    margin-top: 0;
+}
+
+.oa-post-field-html h2,
+.oa-post-field-html h3,
+.oa-post-field-html h4 {
+    margin-bottom: 5px;
+}
+
+.oa-post-field-html p {
+    margin-bottom: 0;
+    color: #646970;
+}
+
 .oa-post-field-label {
     display: flex;
     align-items: center;
