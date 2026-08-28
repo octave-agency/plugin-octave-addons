@@ -1,10 +1,11 @@
-/* =========================================================
-   Octave Addons – Custom Login Page
-   Loaded only on the WordPress login page.
-   Override tokens via wp_add_inline_style() in class-module.php.
-   ========================================================= */
+/*
+CUSTOM LOGIN PAGE
+-- Styles the WordPress login page and supports configurable design tokens
+---------------------------------------------------------- */
 
-/* --- Tokens ------------------------------------------------ */
+/*
+TOKENS
+---------------------------------------------------------- */
 
 :root {
     --oa-login-bg:          #f0f2f5;
@@ -17,24 +18,21 @@
     --oa-login-error:       #ef4444;
     --oa-login-radius:      10px;
 
-    /* Link colour for elements that sit on the page background
-       (lost password, back to site). PHP overrides this to a
-       light value when a dark background colour is chosen.   */
     --oa-login-page-link:       #6b7280;
     --oa-login-page-link-hover: var(--oa-login-primary);
 
-    /* Pre-computed shadows for the default primary — overridden
-       inline when the user picks a custom primary colour.    */
     --oa-login-primary-shadow-sm:  rgba(79, 142, 247, 0.25);
     --oa-login-primary-shadow-lg:  rgba(79, 142, 247, 0.40);
     --oa-login-primary-focus-ring: rgba(79, 142, 247, 0.20);
 }
 
-/* --- Page body — flexbox centres the card ------------------- */
+/*
+PAGE LAYOUT
+---------------------------------------------------------- */
 
 html,
 body.login {
-    height: 100%;
+    min-height: 100%;
     margin: 0;
     padding: 0;
 }
@@ -45,22 +43,26 @@ body.login {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     min-height: 100vh;
     padding: 32px 16px;
     box-sizing: border-box;
 }
 
-/* --- Container --------------------------------------------- */
+/*
+CONTAINER
+---------------------------------------------------------- */
 
 #login {
     width: 420px;
     max-width: 100%;
     padding: 0;
-    margin: 0;
+    margin: auto 0;
 }
 
-/* --- Logo -------------------------------------------------- */
+/*
+LOGO
+---------------------------------------------------------- */
 
 #login h1 {
     margin-bottom: 0;
@@ -81,7 +83,9 @@ body.login {
     outline: none;
 }
 
-/* --- Card -------------------------------------------------- */
+/*
+CARD
+---------------------------------------------------------- */
 
 #loginform,
 .login .wp-login-lost-password-form,
@@ -94,7 +98,9 @@ body.login {
     margin-top: 16px;
 }
 
-/* --- Form field rows --------------------------------------- */
+/*
+FORM FIELD ROWS
+---------------------------------------------------------- */
 
 #loginform {
     display: flex;
@@ -106,7 +112,9 @@ body.login {
     margin: 0;
 }
 
-/* --- Labels ------------------------------------------------ */
+/*
+LABELS
+---------------------------------------------------------- */
 
 .login label {
     font-size: 13px;
@@ -115,7 +123,9 @@ body.login {
     letter-spacing: 0.01em;
 }
 
-/* --- Inputs ------------------------------------------------ */
+/*
+INPUTS
+---------------------------------------------------------- */
 
 .login input[type="text"],
 .login input[type="password"],
@@ -143,7 +153,20 @@ body.login {
     background: #fff;
 }
 
-/* --- Remember me ------------------------------------------ */
+.login .button.wp-hide-pw {
+    color: var(--oa-login-primary);
+    height: 44px;
+    min-height: 44px;
+}
+
+.login .button.wp-hide-pw:hover,
+.login .button.wp-hide-pw:focus {
+    color: var(--oa-login-primary);
+}
+
+/*
+REMEMBER ME
+---------------------------------------------------------- */
 
 .login .forgetmenot {
     display: flex;
@@ -157,7 +180,9 @@ body.login {
     color: var(--oa-login-muted);
 }
 
-/* --- Submit button ---------------------------------------- */
+/*
+SUBMIT BUTTON
+---------------------------------------------------------- */
 
 .login p.submit {
     margin-bottom: 0;
@@ -195,7 +220,9 @@ body.login {
     outline-offset: 2px;
 }
 
-/* --- Navigation links (sit on the page background) --------- */
+/*
+NAVIGATION LINKS
+---------------------------------------------------------- */
 
 #nav,
 #backtoblog {
@@ -217,7 +244,9 @@ body.login {
     text-decoration: underline;
 }
 
-/* --- Notices ---------------------------------------------- */
+/*
+NOTICES
+---------------------------------------------------------- */
 
 .login .message,
 .login .success {
@@ -243,7 +272,9 @@ body.login {
     box-shadow: none;
 }
 
-/* --- Privacy policy link ---------------------------------- */
+/*
+PRIVACY POLICY LINK
+---------------------------------------------------------- */
 
 .login #login_privacy_policy_link {
     font-size: 12px;

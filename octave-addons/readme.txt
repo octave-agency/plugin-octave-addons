@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.3.0
+Stable tag:        3.3.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -79,6 +79,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.3.2 =
+* Matched the password visibility button height to the login input and applied the configured primary colour.
+
+= 3.3.1 =
+* Fixed the custom login page so tall forms remain scrollable on short-height devices while staying vertically centred when space allows.
 
 = 3.3.0 =
 * Added a Gallery post field type: bulk selection from the Media Library, thumbnail previews, and drag or arrow-key reordering in both the meta box and the block editor canvas.
