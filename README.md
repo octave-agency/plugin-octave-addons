@@ -10,5 +10,3 @@ toggleable add-ons, and native WordPress updates powered by GitHub Releases.
 Install `octave-addons.zip` through **WordPress → Plugins → Add Plugin → Upload Plugin**. The package extracts to the stable `octave-addons` plugin directory.
 
 Do not use GitHub's **Code → Download ZIP** option. That button downloads GitHub's automatically generated repository source archive, named `plugin-octave-addons-main.zip`, rather than the installable WordPress package.
-
-Version-numbered packages are available from the [GitHub Releases page](https://github.com/octave-agency/plugin-octave-addons/releases/latest).
