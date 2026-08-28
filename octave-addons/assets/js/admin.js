@@ -2607,12 +2607,13 @@ ADMIN INTERACTIONS
 				var subFieldEditor = item.querySelector( '.oa-sub-field-editor' );
 				var needsChoices = [ 'select', 'multiselect', 'radio' ].indexOf( typeInput.value ) !== -1;
 				var isContainer = [ 'group', 'repeater' ].indexOf( typeInput.value ) !== -1;
+				var hidesDefault = isContainer || 'gallery' === typeInput.value;
 
 				choices.classList.toggle( 'oa-hidden', ! needsChoices );
 
 				if ( defaultField ) {
 
-					defaultField.classList.toggle( 'oa-hidden', isContainer );
+					defaultField.classList.toggle( 'oa-hidden', hidesDefault );
 
 				}
 
@@ -2668,9 +2669,16 @@ ADMIN INTERACTIONS
 					function syncSubType() {
 
 						var choices = subItem.querySelector( '.oa-sub-field-choices' );
+						var defaultField = subItem.querySelector( '.oa-sub-field-default' );
 						var visible = [ 'select', 'multiselect', 'radio' ].indexOf( typeSelect.value ) !== -1;
 
 						choices.classList.toggle( 'oa-hidden', ! visible );
+
+						if ( defaultField ) {
+
+							defaultField.classList.toggle( 'oa-hidden', 'gallery' === typeSelect.value );
+
+						}
 
 					}
 

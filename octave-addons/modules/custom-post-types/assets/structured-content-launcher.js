@@ -123,7 +123,7 @@ STRUCTURED CONTENT EDITOR
 
 		}
 
-		if ( 'repeater' === field.type || 'multiselect' === field.type ) {
+		if ( 'repeater' === field.type || 'multiselect' === field.type || 'gallery' === field.type ) {
 
 			return ! ( Array.isArray( value ) && value.length );
 
@@ -296,6 +296,200 @@ STRUCTURED CONTENT EDITOR
 						: null
 				)
 			)
+		);
+
+	}
+
+	/*
+	GALLERY CONTROL
+	-- Selects many attachments at once and stores their IDs in display order.
+	-- Choosing again adds to the gallery rather than replacing it, so an order
+	-- arranged by dragging survives every later trip to the Media Library.
+	---------------------------------------------------------- */
+
+	function GalleryControl( props ) {
+
+		var ids = ( Array.isArray( props.value ) ? props.value : [] ).map( function ( id ) {
+
+			return parseInt( id, 10 ) || 0;
+
+		} ).filter( Boolean );
+
+		var dragIndex = wp.element.useRef( null );
+		var attachments = wp.data.useSelect( function ( select ) {
+
+			var found = {};
+
+			ids.forEach( function ( id ) {
+
+				found[ id ] = select( 'core' ).getMedia( id );
+
+			} );
+
+			return found;
+
+		}, [ ids.join( ',' ) ] );
+
+		function previewUrl( id ) {
+
+			var attachment = attachments[ id ];
+			var sizes = attachment && attachment.media_details ? attachment.media_details.sizes : null;
+
+			if ( sizes && sizes.thumbnail ) {
+
+				return sizes.thumbnail.source_url;
+
+			}
+
+			return attachment && attachment.source_url ? attachment.source_url : '';
+
+		}
+
+		function moveImage( from, to ) {
+
+			if ( 0 > to || to >= ids.length || from === to ) {
+
+				return;
+
+			}
+
+			var next = ids.slice();
+			var moved = next.splice( from, 1 )[0];
+
+			next.splice( to, 0, moved );
+			props.onChange( next );
+
+		}
+
+		return createElement(
+			'div',
+			{ className: 'oa-gallery' },
+			ids.length
+				? createElement( 'ul', { className: 'oa-gallery__items' }, ids.map( function ( id, index ) {
+
+					var url = previewUrl( id );
+
+					return createElement(
+						'li',
+						{
+							'aria-label': strings.galleryItem.replace( '%d', index + 1 ),
+							className: 'oa-gallery__item',
+							draggable: true,
+							key: id,
+							tabIndex: 0,
+							onDragStart: function () {
+
+								dragIndex.current = index;
+
+							},
+							onDragOver: function ( event ) {
+
+								event.preventDefault();
+
+							},
+							onDrop: function ( event ) {
+
+								event.preventDefault();
+
+								if ( null !== dragIndex.current ) {
+
+									moveImage( dragIndex.current, index );
+									dragIndex.current = null;
+
+								}
+
+							},
+							onKeyDown: function ( event ) {
+
+								if ( 'ArrowLeft' === event.key ) {
+
+									event.preventDefault();
+									moveImage( index, index - 1 );
+
+								}
+
+								if ( 'ArrowRight' === event.key ) {
+
+									event.preventDefault();
+									moveImage( index, index + 1 );
+
+								}
+
+							}
+						},
+						createElement( 'span', { className: 'oa-gallery__position' }, index + 1 ),
+						url
+							? createElement( 'img', { alt: '', className: 'oa-gallery__preview', src: url } )
+							: createElement( 'span', { className: 'oa-gallery__placeholder', 'aria-hidden': 'true' } ),
+						createElement( components.Button, {
+							className: 'oa-gallery__remove',
+							icon: 'no-alt',
+							label: strings.removeImage,
+							size: 'small',
+							onClick: function () {
+
+								props.onChange( ids.filter( function ( item, position ) {
+
+									return position !== index;
+
+								} ) );
+
+							}
+						} )
+					);
+
+				} ) )
+				: createElement( 'div', { className: 'oa-gallery__empty' }, strings.noImages ),
+			createElement(
+				'div',
+				{ className: 'oa-gallery__actions' },
+				createElement( wp.blockEditor.MediaUploadCheck, null, createElement( wp.blockEditor.MediaUpload, {
+					allowedTypes: [ 'image' ],
+					multiple: 'add',
+					value: ids,
+					onSelect: function ( selection ) {
+
+						var next = ids.slice();
+
+						( Array.isArray( selection ) ? selection : [ selection ] ).forEach( function ( media ) {
+
+							var id = media && media.id ? parseInt( media.id, 10 ) : 0;
+
+							if ( id && -1 === next.indexOf( id ) ) {
+
+								next.push( id );
+
+							}
+
+						} );
+
+						props.onChange( next );
+
+					},
+					render: function ( renderProps ) {
+
+						return createElement(
+							components.Button,
+							{ variant: 'secondary', size: 'compact', onClick: renderProps.open },
+							strings.addImages
+						);
+
+					}
+				} ) ),
+				ids.length
+					? createElement( components.Button, {
+						isDestructive: true,
+						size: 'compact',
+						variant: 'tertiary',
+						onClick: function () {
+
+							props.onChange( [] );
+
+						}
+					}, strings.clearGallery )
+					: null
+			),
+			ids.length ? createElement( 'p', { className: 'oa-gallery__hint' }, strings.galleryHint ) : null
 		);
 
 	}
@@ -591,6 +785,10 @@ STRUCTURED CONTENT EDITOR
 				},
 				value: '' === String( value || '' ) ? undefined : Number( value )
 			} );
+
+		} else if ( 'gallery' === field.type ) {
+
+			control = createElement( GalleryControl, props );
 
 		} else if ( 'image' === field.type || 'file' === field.type ) {
 

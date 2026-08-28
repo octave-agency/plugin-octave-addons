@@ -1,6 +1,7 @@
 /*
 POST FIELDS EDITOR
--- Provides media-library controls for Octave fields on post edit screens.
+-- Provides media-library controls for Octave fields on post edit screens,
+-- including the orderable gallery grid.
 ---------------------------------------------------------- */
 
 (function ( $ ) {
@@ -93,6 +94,240 @@ POST FIELDS EDITOR
 	}
 
 	/*
+	WIRE GALLERY FIELD
+	-- Connects one gallery control: bulk Media Library selection, per-image
+	-- removal, and reordering by drag or by arrow key. The visible tile order is
+	-- the source of truth and is written back to the hidden input after every
+	-- change, so the stored array always matches what the editor sees.
+	---------------------------------------------------------- */
+
+	function wireGalleryField( field ) {
+
+		if ( 'true' === field.dataset.wired ) {
+
+			return;
+
+		}
+
+		field.dataset.wired = 'true';
+
+		var input = field.querySelector( 'input[type="hidden"]' );
+		var list = field.querySelector( '.oa-gallery-items' );
+		var selectButton = field.querySelector( '.oa-gallery-select' );
+		var clearButton = field.querySelector( '.oa-gallery-clear' );
+		var dragged = null;
+
+		function currentIds() {
+
+			return Array.prototype.map.call( list.children, function ( item ) {
+
+				return item.dataset.id;
+
+			} );
+
+		}
+
+		function sync() {
+
+			var ids = currentIds();
+
+			input.value = ids.join( ',' );
+			field.classList.toggle( 'has-items', 0 !== ids.length );
+
+			Array.prototype.forEach.call( list.children, function ( item, index ) {
+
+				item.querySelector( '.oa-gallery-item-position' ).textContent = index + 1;
+				item.setAttribute( 'aria-label', octavePostFields.galleryItemLabel.replace( '%d', index + 1 ) );
+
+			} );
+
+			input.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+
+		}
+
+		function moveItem( item, offset ) {
+
+			var items = Array.prototype.slice.call( list.children );
+			var target = items.indexOf( item ) + offset;
+
+			if ( 0 > target || target >= items.length ) {
+
+				return;
+
+			}
+
+			if ( 0 < offset ) {
+
+				list.insertBefore( item, items[ target ].nextSibling );
+
+			} else {
+
+				list.insertBefore( item, items[ target ] );
+
+			}
+
+			item.focus();
+			sync();
+
+		}
+
+		function wireItem( item ) {
+
+			item.querySelector( '.oa-gallery-remove' ).addEventListener( 'click', function () {
+
+				item.remove();
+				sync();
+
+			} );
+
+			item.addEventListener( 'keydown', function ( event ) {
+
+				if ( 'ArrowLeft' === event.key ) {
+
+					event.preventDefault();
+					moveItem( item, -1 );
+
+				}
+
+				if ( 'ArrowRight' === event.key ) {
+
+					event.preventDefault();
+					moveItem( item, 1 );
+
+				}
+
+			} );
+
+			item.addEventListener( 'dragstart', function ( event ) {
+
+				dragged = item;
+				item.classList.add( 'is-dragging' );
+				event.dataTransfer.effectAllowed = 'move';
+				event.dataTransfer.setData( 'text/plain', item.dataset.id );
+
+			} );
+
+			item.addEventListener( 'dragend', function () {
+
+				item.classList.remove( 'is-dragging' );
+				dragged = null;
+				sync();
+
+			} );
+
+			item.addEventListener( 'dragover', function ( event ) {
+
+				if ( ! dragged || dragged === item ) {
+
+					return;
+
+				}
+
+				event.preventDefault();
+				event.dataTransfer.dropEffect = 'move';
+
+				var box = item.getBoundingClientRect();
+				var isAfter = event.clientX > box.left + ( box.width / 2 );
+
+				list.insertBefore( dragged, isAfter ? item.nextSibling : item );
+
+			} );
+
+			item.addEventListener( 'drop', function ( event ) {
+
+				event.preventDefault();
+
+			} );
+
+		}
+
+		function addItem( attachment ) {
+
+			var item = document.createElement( 'li' );
+			var position = document.createElement( 'span' );
+			var thumbnail = attachment.sizes && attachment.sizes.thumbnail ? attachment.sizes.thumbnail.url : attachment.url;
+			var remove = document.createElement( 'button' );
+			var removeIcon = document.createElement( 'span' );
+			var preview;
+
+			item.className = 'oa-gallery-item';
+			item.draggable = true;
+			item.tabIndex = 0;
+			item.dataset.id = String( attachment.id );
+			position.className = 'oa-gallery-item-position';
+
+			if ( thumbnail ) {
+
+				preview = document.createElement( 'img' );
+				preview.src = thumbnail;
+				preview.alt = '';
+
+			} else {
+
+				preview = document.createElement( 'span' );
+				preview.className = 'dashicons dashicons-format-image';
+				preview.setAttribute( 'aria-hidden', 'true' );
+
+			}
+
+			remove.type = 'button';
+			remove.className = 'oa-gallery-remove';
+			remove.setAttribute( 'aria-label', octavePostFields.removeImage );
+			removeIcon.className = 'dashicons dashicons-no-alt';
+			removeIcon.setAttribute( 'aria-hidden', 'true' );
+			remove.append( removeIcon );
+
+			item.append( position, preview, remove );
+			list.append( item );
+			wireItem( item );
+
+		}
+
+		selectButton.addEventListener( 'click', function () {
+
+			var frame = wp.media( {
+				title: octavePostFields.chooseImages,
+				button: { text: octavePostFields.useImages },
+				library: { type: 'image' },
+				multiple: 'add'
+			} );
+
+			frame.on( 'select', function () {
+
+				var existing = currentIds();
+
+				frame.state().get( 'selection' ).toJSON().forEach( function ( attachment ) {
+
+					if ( -1 === existing.indexOf( String( attachment.id ) ) ) {
+
+						existing.push( String( attachment.id ) );
+						addItem( attachment );
+
+					}
+
+				} );
+
+				sync();
+
+			} );
+
+			frame.open();
+
+		} );
+
+		clearButton.addEventListener( 'click', function () {
+
+			list.replaceChildren();
+			sync();
+
+		} );
+
+		Array.prototype.forEach.call( list.children, wireItem );
+		sync();
+
+	}
+
+	/*
 	INITIALIZE WYSIWYG
 	-- Turns nested textareas into WordPress editors after unique IDs exist.
 	---------------------------------------------------------- */
@@ -169,6 +404,7 @@ POST FIELDS EDITOR
 			var remove = row.querySelector( '.oa-repeater-remove' );
 
 			row.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
+			row.querySelectorAll( '.oa-post-field-gallery' ).forEach( wireGalleryField );
 			initializeWysiwyg( row );
 
 			up.addEventListener( 'click', function () {
@@ -245,6 +481,7 @@ POST FIELDS EDITOR
 	} );
 
 	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
+	document.querySelectorAll( '.oa-post-field-gallery' ).forEach( wireGalleryField );
 	initializeWysiwyg( document );
 
 })( jQuery );

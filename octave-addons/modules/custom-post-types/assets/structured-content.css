@@ -223,6 +223,7 @@ Invalid state
 .oa-field.is-invalid .oa-rich-text,
 .oa-field.is-invalid .oa-checkbox-group,
 .oa-field.is-invalid .oa-media,
+.oa-field.is-invalid .oa-gallery__empty,
 .oa-field.is-invalid .oa-row-fields,
 .oa-field.is-invalid .oa-repeater__empty {
     border-color: var(--oa-error);
@@ -281,6 +282,99 @@ Media
     display: flex;
     align-items: center;
     gap: 4px;
+}
+
+/*
+Gallery
+---------------------------------------------------------- */
+
+.oa-gallery__items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 10px;
+    list-style: none;
+    border: 1px solid var(--oa-line);
+    border-radius: 4px;
+    background: #fff;
+}
+
+.oa-gallery__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--oa-line);
+    border-radius: 3px;
+    background: var(--oa-line-soft);
+    cursor: grab;
+}
+
+.oa-gallery__preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.oa-gallery__placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--oa-line-soft);
+}
+
+.oa-gallery__position {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 1;
+    min-width: 20px;
+    padding: 1px 5px;
+    color: #fff;
+    font-size: 11px;
+    text-align: center;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.oa-gallery__item .oa-gallery__remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    z-index: 1;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.oa-gallery__item .oa-gallery__remove:hover {
+    color: #fff;
+    background: var(--oa-error);
+}
+
+.oa-gallery__empty {
+    margin-bottom: 10px;
+    padding: 22px 14px;
+    color: var(--oa-ink-muted);
+    font-size: 13px;
+    text-align: center;
+    border: 1px dashed var(--oa-line);
+    border-radius: 4px;
+    background: #fff;
+}
+
+.oa-gallery__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.oa-gallery__hint {
+    margin: 8px 0 0;
+    color: var(--oa-ink-muted);
+    font-size: 12px;
 }
 
 /*

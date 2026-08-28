@@ -262,6 +262,13 @@ class Octave_Addons_Custom_Post_Fields {
 					'chooseMedia'     => __( 'Choose', 'octave-addons' ),
 					'replaceMedia'    => __( 'Replace', 'octave-addons' ),
 					'removeMedia'     => __( 'Remove', 'octave-addons' ),
+					'addImages'       => __( 'Add images', 'octave-addons' ),
+					'clearGallery'    => __( 'Remove all', 'octave-addons' ),
+					'noImages'        => __( 'No images selected yet.', 'octave-addons' ),
+					'galleryHint'     => __( 'Drag a thumbnail to reorder, or focus one and use the left and right arrow keys.', 'octave-addons' ),
+					/* translators: %d: image number. */
+					'galleryItem'     => __( 'Image %d', 'octave-addons' ),
+					'removeImage'     => __( 'Remove image', 'octave-addons' ),
 				],
 			]
 		);
@@ -301,16 +308,28 @@ class Octave_Addons_Custom_Post_Fields {
 					},
 				];
 
-				if ( in_array( $field['type'], [ 'multiselect', 'repeater' ], true ) ) {
+				if ( in_array( $field['type'], [ 'multiselect', 'repeater', 'gallery' ], true ) ) {
+
+					if ( 'repeater' === $field['type'] ) {
+
+						$items = [ 'type' => 'object', 'additionalProperties' => true ];
+
+					} elseif ( 'gallery' === $field['type'] ) {
+
+						$items = [ 'type' => 'integer' ];
+
+					} else {
+
+						$items = [ 'type' => 'string' ];
+
+					}
 
 					$args['single']       = true;
 					$args['type']         = 'array';
 					$args['show_in_rest'] = [
 						'schema' => [
 							'type'  => 'array',
-							'items' => 'repeater' === $field['type']
-								? [ 'type' => 'object', 'additionalProperties' => true ]
-								: [ 'type' => 'string' ],
+							'items' => $items,
 						],
 					];
 
@@ -596,7 +615,7 @@ class Octave_Addons_Custom_Post_Fields {
 		$name        = 'octave_post_fields[' . $field['name'] . ']';
 		$id          = 'octave_post_field_' . $field['name'];
 		$type        = $field['type'];
-		$is_wide     = in_array( $type, [ 'textarea', 'wysiwyg' ], true );
+		$is_wide     = in_array( $type, [ 'textarea', 'wysiwyg', 'gallery' ], true );
 		$choices     = $this->parse_choices( $field['choices'] );
 		$description = (string) $field['description'];
 
@@ -681,6 +700,10 @@ class Octave_Addons_Custom_Post_Fields {
 
 				<?php
 
+			} elseif ( 'gallery' === $type ) {
+
+				$this->render_gallery_control( is_array( $value ) ? $value : [], $name, $id );
+
 			} elseif ( in_array( $type, [ 'image', 'file' ], true ) ) {
 
 				$attachment_id = absint( $value );
@@ -733,6 +756,98 @@ class Octave_Addons_Custom_Post_Fields {
 			?>
 
 		</div>
+
+		<?php
+
+	}
+
+	/*
+	RENDER GALLERY CONTROL
+	-- Shows the chosen attachments as ordered thumbnails backed by one hidden
+	-- input holding the ID order, which keeps the control safe to duplicate and
+	-- reindex inside a repeater row where names change after every move.
+	---------------------------------------------------------- */
+
+	protected function render_gallery_control( array $attachment_ids, string $name, string $id ): void {
+
+		$attachment_ids = array_values(
+			array_filter(
+				array_map( 'absint', $attachment_ids )
+			)
+		);
+
+		?>
+
+		<div class="oa-post-field-gallery<?= empty( $attachment_ids ) ? '' : ' has-items'; ?>" data-gallery>
+			<input type="hidden" id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>" value="<?= esc_attr( implode( ',', $attachment_ids ) ); ?>">
+
+			<ul class="oa-gallery-items">
+
+				<?php
+
+				foreach ( $attachment_ids as $position => $attachment_id ) {
+
+					$this->render_gallery_item( (int) $attachment_id, (int) $position + 1 );
+
+				}
+
+				?>
+
+			</ul>
+
+			<p class="oa-gallery-empty"><?php esc_html_e( 'No images selected yet. Use “Add images” to choose from the Media Library.', 'octave-addons' ); ?></p>
+
+			<div class="oa-post-field-media-actions">
+				<button type="button" class="button oa-gallery-select"><?php esc_html_e( 'Add images', 'octave-addons' ); ?></button>
+				<button type="button" class="button-link-delete oa-gallery-clear"><?php esc_html_e( 'Remove all', 'octave-addons' ); ?></button>
+			</div>
+
+			<p class="description oa-gallery-hint"><?php esc_html_e( 'Drag a thumbnail to reorder, or focus one and use the left and right arrow keys.', 'octave-addons' ); ?></p>
+		</div>
+
+		<?php
+
+	}
+
+	/*
+	RENDER GALLERY ITEM
+	-- Outputs one thumbnail tile. A missing attachment still renders so the
+	-- editor can see and clear the broken entry instead of losing it silently.
+	---------------------------------------------------------- */
+
+	protected function render_gallery_item( int $attachment_id, int $position ): void {
+
+		$thumbnail = wp_get_attachment_image_url( $attachment_id, 'thumbnail' );
+
+		?>
+
+		<li class="oa-gallery-item" draggable="true" tabindex="0" data-id="<?= esc_attr( (string) $attachment_id ); ?>" aria-label="<?= esc_attr( sprintf( __( 'Image %d', 'octave-addons' ), $position ) ); ?>">
+			<span class="oa-gallery-item-position"><?= esc_html( (string) $position ); ?></span>
+
+			<?php
+
+			if ( $thumbnail ) :
+
+			?>
+
+			<img src="<?= esc_url( $thumbnail ); ?>" alt="">
+
+			<?php
+
+			else :
+
+			?>
+
+			<span class="dashicons dashicons-format-image" aria-hidden="true"></span>
+
+			<?php
+
+			endif;
+
+			?>
+
+			<button type="button" class="oa-gallery-remove" aria-label="<?php esc_attr_e( 'Remove image', 'octave-addons' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
+		</li>
 
 		<?php
 
@@ -853,7 +968,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		$type    = $field['type'];
 		$choices = $this->parse_choices( $field['choices'] );
-		$is_wide = in_array( $type, [ 'textarea', 'wysiwyg' ], true );
+		$is_wide = in_array( $type, [ 'textarea', 'wysiwyg', 'gallery' ], true );
 
 		?>
 
@@ -877,7 +992,11 @@ class Octave_Addons_Custom_Post_Fields {
 			<div class="oa-post-field-options" id="<?= esc_attr( $id ); ?>"><?php foreach ( $choices as $choice_value => $choice_label ) : ?><label><input type="radio" name="<?= esc_attr( $name ); ?>" value="<?= esc_attr( $choice_value ); ?>"<?= checked( (string) $value, $choice_value, false ); ?>> <span><?= esc_html( $choice_label ); ?></span></label><?php endforeach; ?></div>
 			<?php elseif ( 'checkbox' === $type ) : ?>
 			<label class="oa-post-field-checkbox" for="<?= esc_attr( $id ); ?>"><input type="checkbox" id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>" value="1"<?= checked( ! empty( $value ), true, false ); ?>><span><?php esc_html_e( 'Yes', 'octave-addons' ); ?></span></label>
-			<?php elseif ( in_array( $type, [ 'image', 'file' ], true ) ) :
+			<?php elseif ( 'gallery' === $type ) :
+
+				$this->render_gallery_control( is_array( $value ) ? $value : [], $name, $id );
+
+			elseif ( in_array( $type, [ 'image', 'file' ], true ) ) :
 
 				$attachment_id = absint( $value );
 				$file_name     = $attachment_id ? basename( (string) get_attached_file( $attachment_id ) ) : '';
@@ -935,7 +1054,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields_for_post_type( $post->post_type ) as $field ) {
 
-			$raw   = $submitted[ $field['name'] ] ?? ( in_array( $field['type'], [ 'multiselect', 'group', 'repeater' ], true ) ? [] : '' );
+			$raw   = $submitted[ $field['name'] ] ?? ( in_array( $field['type'], [ 'multiselect', 'group', 'repeater', 'gallery' ], true ) ? [] : '' );
 			$value = $this->sanitize_value( $raw, $field );
 
 			if ( $this->should_store_value( $value, $field ) ) {
@@ -1054,6 +1173,27 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
+		if ( 'gallery' === $type ) {
+
+			$submitted = is_array( $value ) ? $value : preg_split( '/[^0-9]+/', (string) $value );
+			$ids       = [];
+
+			foreach ( (array) $submitted as $submitted_id ) {
+
+				$submitted_id = absint( $submitted_id );
+
+				if ( $submitted_id && ! in_array( $submitted_id, $ids, true ) ) {
+
+					$ids[] = $submitted_id;
+
+				}
+
+			}
+
+			return array_slice( $ids, 0, 200 );
+
+		}
+
 		if ( in_array( $type, [ 'image', 'file' ], true ) ) {
 
 			return (string) absint( $value );
@@ -1116,7 +1256,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
-		if ( in_array( $type, [ 'repeater', 'multiselect' ], true ) ) {
+		if ( in_array( $type, [ 'repeater', 'multiselect', 'gallery' ], true ) ) {
 
 			return empty( $value );
 
@@ -1167,7 +1307,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $sub_fields as $sub_field ) {
 
-			$raw = $row[ $sub_field['name'] ] ?? ( 'multiselect' === $sub_field['type'] ? [] : '' );
+			$raw = $row[ $sub_field['name'] ] ?? ( in_array( $sub_field['type'], [ 'multiselect', 'gallery' ], true ) ? [] : '' );
 
 			$clean[ $sub_field['name'] ] = $this->sanitize_value( $raw, $sub_field );
 
@@ -1217,8 +1357,12 @@ class Octave_Addons_Custom_Post_Fields {
 			[
 				'chooseImage'          => __( 'Choose an image', 'octave-addons' ),
 				'chooseFile'           => __( 'Choose a file', 'octave-addons' ),
+				'chooseImages'         => __( 'Add images to the gallery', 'octave-addons' ),
 				'useMedia'             => __( 'Use this media', 'octave-addons' ),
+				'useImages'            => __( 'Add to gallery', 'octave-addons' ),
 				'replace'              => __( 'Replace', 'octave-addons' ),
+				'removeImage'          => __( 'Remove image', 'octave-addons' ),
+				'galleryItemLabel'     => __( 'Image %d', 'octave-addons' ),
 				'itemLabel'            => __( 'Item %d', 'octave-addons' ),
 			]
 		);
@@ -1303,6 +1447,10 @@ class Octave_Addons_Custom_Post_Fields {
 
 				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Image_Field( $field ) );
 
+			} elseif ( 'gallery' === $field['type'] && class_exists( 'Octave_Addons_Breakdance_Gallery_Field', false ) ) {
+
+				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Gallery_Field( $field ) );
+
 			} elseif ( class_exists( 'Octave_Addons_Breakdance_String_Field', false ) ) {
 
 				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_String_Field( $field ) );
@@ -1332,6 +1480,10 @@ class Octave_Addons_Custom_Post_Fields {
 			if ( 'image' === $sub_field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
 
 				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Image_Field( $sub_field ) );
+
+			} elseif ( 'gallery' === $sub_field['type'] && class_exists( 'Octave_Addons_Breakdance_Gallery_Field', false ) ) {
+
+				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Gallery_Field( $sub_field ) );
 
 			} elseif ( class_exists( 'Octave_Addons_Breakdance_String_Field', false ) ) {
 

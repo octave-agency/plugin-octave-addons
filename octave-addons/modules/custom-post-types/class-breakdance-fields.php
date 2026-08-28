@@ -2,7 +2,8 @@
 
 /*
 BREAKDANCE CUSTOM POST FIELDS
--- Implements scalar, image, group-child, and repeater Dynamic Data fields.
+-- Implements scalar, image, gallery, group-child, and repeater Dynamic Data
+-- fields.
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -176,6 +177,73 @@ class Octave_Addons_Breakdance_Image_Field extends \Breakdance\DynamicData\Image
 		$value = Octave_Addons_Breakdance_Value_Resolver::get( $this->field_data );
 
 		return \Breakdance\DynamicData\ImageData::fromAttachmentId( absint( $value ) );
+
+	}
+
+}
+
+}
+
+if ( class_exists( '\\Breakdance\\DynamicData\\GalleryField' ) ) {
+
+class Octave_Addons_Breakdance_Gallery_Field extends \Breakdance\DynamicData\GalleryField {
+
+	protected array $field_data;
+
+	public function __construct( array $field_data ) {
+
+		$this->field_data = $field_data;
+
+	}
+
+	public function label() {
+
+		return $this->field_data['label'];
+
+	}
+
+	public function category() {
+
+		return __( 'Octave', 'octave-addons' );
+
+	}
+
+	public function proOnly() {
+
+		return false;
+
+	}
+
+	public function slug() {
+
+		return 'octave_post_field_' . ( $this->field_data['dynamic_name'] ?? $this->field_data['name'] );
+
+	}
+
+	public function availableForPostType( $post_type ) {
+
+		return in_array( $post_type, $this->field_data['post_types'], true );
+
+	}
+
+	public function handler( $attributes ): \Breakdance\DynamicData\GalleryData {
+
+		$value   = Octave_Addons_Breakdance_Value_Resolver::get( $this->field_data );
+		$gallery = new \Breakdance\DynamicData\GalleryData();
+
+		foreach ( is_array( $value ) ? $value : [] as $attachment_id ) {
+
+			$attachment_id = absint( $attachment_id );
+
+			if ( $attachment_id ) {
+
+				$gallery->images[] = \Breakdance\DynamicData\ImageData::fromAttachmentId( $attachment_id );
+
+			}
+
+		}
+
+		return $gallery;
 
 	}
 
