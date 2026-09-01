@@ -19,19 +19,59 @@ BREAKDANCE VALUE RESOLVER
 
 class Octave_Addons_Breakdance_Value_Resolver {
 
+	/*
+	META KEY
+	-- Names the key the post actually holds this field under. Values written
+	-- before the key dropped its _octave_ prefix are still stored that way, so
+	-- the legacy key answers whenever the canonical one has no row.
+	---------------------------------------------------------- */
+
+	public static function meta_key( array $field_data, $post_id ): string {
+
+		$post_id = (int) $post_id;
+		$keys    = [ (string) $field_data['meta_key'] ];
+		$legacy  = (string) ( $field_data['legacy_meta_key'] ?? '' );
+
+		if ( '' !== $legacy && ! in_array( $legacy, $keys, true ) ) {
+
+			$keys[] = $legacy;
+
+		}
+
+		if ( $post_id ) {
+
+			foreach ( $keys as $key ) {
+
+				if ( metadata_exists( 'post', $post_id, $key ) ) {
+
+					return $key;
+
+				}
+
+			}
+
+		}
+
+		return '';
+
+	}
+
 	public static function get( array $field_data ) {
+
+		$post_id = (int) get_the_ID();
 
 		if ( empty( $field_data['parent_type'] ) ) {
 
-			$value = get_post_meta( get_the_ID(), $field_data['meta_key'], true );
+			$key = self::meta_key( $field_data, $post_id );
 
-			return metadata_exists( 'post', get_the_ID(), $field_data['meta_key'] ) ? $value : $field_data['default_value'];
+			return '' === $key ? $field_data['default_value'] : get_post_meta( $post_id, $key, true );
 
 		}
 
 		if ( 'group' === $field_data['parent_type'] ) {
 
-			$group = get_post_meta( get_the_ID(), $field_data['meta_key'], true );
+			$key   = self::meta_key( $field_data, $post_id );
+			$group = '' === $key ? [] : get_post_meta( $post_id, $key, true );
 			$group = is_array( $group ) ? $group : [];
 
 			return array_key_exists( $field_data['name'], $group ) ? $group[ $field_data['name'] ] : $field_data['default_value'];
@@ -298,8 +338,7 @@ class Octave_Addons_Breakdance_Repeater_Field extends \Breakdance\DynamicData\Re
 
 	public function hasSubFields( $post_id = null ) {
 
-		$rows = get_post_meta( $post_id ?: get_the_ID(), $this->field_data['meta_key'], true );
-		$rows = is_array( $rows ) ? array_values( $rows ) : [];
+		$rows = $this->rows( (int) ( $post_id ?: get_the_ID() ) );
 		$row  = $rows[ $this->current_index ] ?? false;
 
 		if ( ! is_array( $row ) ) {
@@ -320,8 +359,7 @@ class Octave_Addons_Breakdance_Repeater_Field extends \Breakdance\DynamicData\Re
 
 	public function setSubFieldIndex( $index ) {
 
-		$rows = get_post_meta( get_the_ID(), $this->field_data['meta_key'], true );
-		$rows = is_array( $rows ) ? array_values( $rows ) : [];
+		$rows = $this->rows( (int) get_the_ID() );
 
 		$this->loop->set( $rows[ $index ] ?? [] );
 		$this->current_index = (int) $index;
@@ -336,9 +374,22 @@ class Octave_Addons_Breakdance_Repeater_Field extends \Breakdance\DynamicData\Re
 
 	public function handler( $attributes ): \Breakdance\DynamicData\RepeaterData {
 
-		$rows = get_post_meta( get_the_ID(), $this->field_data['meta_key'], true );
+		return \Breakdance\DynamicData\RepeaterData::fromArray( $this->rows( (int) get_the_ID() ) );
 
-		return \Breakdance\DynamicData\RepeaterData::fromArray( is_array( $rows ) ? array_values( $rows ) : [] );
+	}
+
+	/*
+	ROWS
+	-- Reads the repeater's stored rows through the same key resolution the
+	-- scalar fields use, so a legacy prefixed value still drives the loop.
+	---------------------------------------------------------- */
+
+	protected function rows( int $post_id ): array {
+
+		$key  = Octave_Addons_Breakdance_Value_Resolver::meta_key( $this->field_data, $post_id );
+		$rows = '' === $key ? [] : get_post_meta( $post_id, $key, true );
+
+		return is_array( $rows ) ? array_values( $rows ) : [];
 
 	}
 

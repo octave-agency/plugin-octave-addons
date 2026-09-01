@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.5.0
+Stable tag:        3.6.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -79,6 +79,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.6.0 =
+* Fixed content fields reading as blank in the structured editor and in Breakdance Dynamic Data by storing each value under the field name itself rather than an undocumented _octave_ prefixed key.
+* Changed field values saved under the older prefixed key to be read as a fallback and rewritten under the field name on the next save, so existing content carries across untouched.
+* Changed the structured-content editor to hide the block toolbar, breadcrumb, and insertion-point popovers Gutenberg floats over the locked field canvas.
 
 = 3.5.0 =
 * Added a tab content-field type that splits long editing screens into panels without storing any post meta of its own.

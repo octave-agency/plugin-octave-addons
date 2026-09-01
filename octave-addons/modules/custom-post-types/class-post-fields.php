@@ -20,6 +20,7 @@ class Octave_Addons_Custom_Post_Fields {
 	protected array $fields;
 	protected array $post_type_labels;
 	protected array $structured_post_types;
+	protected array $fields_by_meta_key;
 
 	/*
 	CONSTRUCTOR
@@ -31,6 +32,19 @@ class Octave_Addons_Custom_Post_Fields {
 		$this->fields                = $fields;
 		$this->post_type_labels      = $post_type_labels;
 		$this->structured_post_types = [];
+		$this->fields_by_meta_key    = [];
+
+		foreach ( $fields as $field ) {
+
+			if ( empty( $field['enabled'] ) || self::is_presentational( $field ) ) {
+
+				continue;
+
+			}
+
+			$this->fields_by_meta_key[ (string) $field['meta_key'] ] = $field;
+
+		}
 
 		foreach ( $post_types as $post_type ) {
 
@@ -62,6 +76,8 @@ class Octave_Addons_Custom_Post_Fields {
 
 		$this->register_meta();
 
+		add_filter( 'default_post_metadata', [ $this, 'read_legacy_meta' ], 10, 4 );
+		add_filter( 'is_protected_meta', [ $this, 'protect_field_meta' ], 10, 3 );
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ $this, 'save_post' ], 10, 2 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
@@ -83,6 +99,130 @@ class Octave_Addons_Custom_Post_Fields {
 	protected static function is_presentational( array $field ): bool {
 
 		return in_array( (string) ( $field['type'] ?? '' ), [ 'html', 'tab' ], true );
+
+	}
+
+	/*
+	META KEYS
+	-- Lists every key a field's value may live under, canonical first. Values
+	-- written before the key dropped its _octave_ prefix are still in place on
+	-- existing sites, so the legacy key stays readable until the next save
+	-- rewrites the value under the canonical one.
+	---------------------------------------------------------- */
+
+	protected static function meta_keys( array $field ): array {
+
+		$keys   = [ (string) $field['meta_key'] ];
+		$legacy = (string) ( $field['legacy_meta_key'] ?? '' );
+
+		if ( '' !== $legacy && ! in_array( $legacy, $keys, true ) ) {
+
+			$keys[] = $legacy;
+
+		}
+
+		return $keys;
+
+	}
+
+	/*
+	STORED META KEY
+	-- Names the key this post actually holds a row for, or an empty string when
+	-- the field has never been saved. metadata_exists() is deliberate: an empty
+	-- string is a legitimate saved value and must not read as unsaved.
+	---------------------------------------------------------- */
+
+	protected static function stored_meta_key( int $post_id, array $field ): string {
+
+		if ( ! $post_id ) {
+
+			return '';
+
+		}
+
+		foreach ( self::meta_keys( $field ) as $key ) {
+
+			if ( metadata_exists( 'post', $post_id, $key ) ) {
+
+				return $key;
+
+			}
+
+		}
+
+		return '';
+
+	}
+
+	/*
+	FIELD VALUE
+	-- Returns the stored value, falling back to the field default only while
+	-- nothing at all is stored under either key.
+	---------------------------------------------------------- */
+
+	protected static function field_value( int $post_id, array $field ) {
+
+		$key = self::stored_meta_key( $post_id, $field );
+
+		return '' === $key ? $field['default_value'] : get_post_meta( $post_id, $key, true );
+
+	}
+
+	/*
+	READ LEGACY META
+	-- Serves the legacy value whenever the canonical key holds no row of its
+	-- own. WordPress fires this only after the real lookup misses, so one hook
+	-- covers get_post_meta(), the REST meta object the block editor binds to,
+	-- and anything else reading the field, without touching stored rows.
+	---------------------------------------------------------- */
+
+	public function read_legacy_meta( $value, $object_id, $meta_key, $single ) {
+
+		$field = $this->fields_by_meta_key[ (string) $meta_key ] ?? null;
+
+		if ( ! $field ) {
+
+			return $value;
+
+		}
+
+		if ( ! in_array( (string) get_post_type( $object_id ), $field['post_types'], true ) ) {
+
+			return $value;
+
+		}
+
+		$legacy = (string) ( $field['legacy_meta_key'] ?? '' );
+
+		if ( '' === $legacy || $legacy === (string) $meta_key || ! metadata_exists( 'post', $object_id, $legacy ) ) {
+
+			return $value;
+
+		}
+
+		$stored = get_post_meta( $object_id, $legacy, true );
+
+		return $single ? $stored : [ $stored ];
+
+	}
+
+	/*
+	PROTECT FIELD META
+	-- Field keys are no longer underscore prefixed, so this keeps them out of
+	-- the built-in Custom Fields panel. register_post_meta() supplies its own
+	-- auth callback for each key, which is what REST and the block editor check
+	-- when they write, so protecting the key here costs them nothing.
+	---------------------------------------------------------- */
+
+	public function protect_field_meta( $protected, $meta_key, $meta_type ) {
+
+		if ( 'post' !== $meta_type ) {
+
+			return $protected;
+
+		}
+
+		return isset( $this->fields_by_meta_key[ (string) $meta_key ] ) ? true : $protected;
 
 	}
 
@@ -239,7 +379,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 			}
 
-			if ( $post_id && metadata_exists( 'post', $post_id, $field['meta_key'] ) ) {
+			if ( '' !== self::stored_meta_key( $post_id, $field ) ) {
 
 				$stored_keys[ $field['meta_key'] ] = true;
 
@@ -452,9 +592,9 @@ class Octave_Addons_Custom_Post_Fields {
 
 				$value = $this->sanitize_value( $submitted[ $field['meta_key'] ], $field );
 
-			} elseif ( $post_id && metadata_exists( 'post', $post_id, $field['meta_key'] ) ) {
+			} elseif ( '' !== self::stored_meta_key( $post_id, $field ) ) {
 
-				$value = get_post_meta( $post_id, $field['meta_key'], true );
+				$value = self::field_value( $post_id, $field );
 
 			} else {
 
@@ -566,15 +706,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 			$value = $this->sanitize_value( $submitted[ $field['meta_key'] ], $field );
 
-			if ( $this->should_store_value( $value, $field ) ) {
-
-				update_post_meta( $post->ID, $field['meta_key'], $value );
-
-			} else {
-
-				delete_post_meta( $post->ID, $field['meta_key'] );
-
-			}
+			$this->store_value( $post->ID, $field, $value );
 
 		}
 
@@ -755,9 +887,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 	protected function render_field( WP_Post $post, array $field ): void {
 
-		$stored      = get_post_meta( $post->ID, $field['meta_key'], true );
-		$has_value   = metadata_exists( 'post', $post->ID, $field['meta_key'] );
-		$value       = $has_value ? $stored : $field['default_value'];
+		$value       = self::field_value( $post->ID, $field );
 		$name        = 'octave_post_fields[' . $field['name'] . ']';
 		$id          = 'octave_post_field_' . $field['name'];
 		$type        = $field['type'];
@@ -1192,6 +1322,33 @@ class Octave_Addons_Custom_Post_Fields {
 	}
 
 	/*
+	STORE VALUE
+	-- Writes one field to its canonical key and clears any legacy row left over
+	-- from the prefixed key, so a post carries exactly one copy of the value
+	-- once it has been saved through the editor.
+	---------------------------------------------------------- */
+
+	protected function store_value( int $post_id, array $field, $value ): void {
+
+		if ( $this->should_store_value( $value, $field ) ) {
+
+			update_post_meta( $post_id, $field['meta_key'], $value );
+
+		} else {
+
+			delete_post_meta( $post_id, $field['meta_key'] );
+
+		}
+
+		foreach ( array_slice( self::meta_keys( $field ), 1 ) as $legacy ) {
+
+			delete_post_meta( $post_id, $legacy );
+
+		}
+
+	}
+
+	/*
 	SAVE POST
 	-- Validates the editor request and updates only fields assigned to the post.
 	---------------------------------------------------------- */
@@ -1231,15 +1388,7 @@ class Octave_Addons_Custom_Post_Fields {
 			$raw   = $submitted[ $field['name'] ] ?? ( in_array( $field['type'], [ 'multiselect', 'group', 'repeater', 'gallery' ], true ) ? [] : '' );
 			$value = $this->sanitize_value( $raw, $field );
 
-			if ( $this->should_store_value( $value, $field ) ) {
-
-				update_post_meta( $post_id, $field['meta_key'], $value );
-
-			} else {
-
-				delete_post_meta( $post_id, $field['meta_key'] );
-
-			}
+			$this->store_value( $post_id, $field, $value );
 
 		}
 
@@ -1644,12 +1793,13 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $parent['sub_fields'] as $sub_field ) {
 
-			$sub_field['meta_key']      = $parent['meta_key'];
-			$sub_field['post_types']    = $parent['post_types'];
-			$sub_field['parent_type']   = $parent['type'];
-			$sub_field['parent_name']   = $parent['name'];
-			$sub_field['dynamic_name'] = $parent['name'] . '_' . $sub_field['name'];
-			$sub_field['label']        = $parent['label'] . ' · ' . $sub_field['label'];
+			$sub_field['meta_key']        = $parent['meta_key'];
+			$sub_field['legacy_meta_key'] = $parent['legacy_meta_key'] ?? '';
+			$sub_field['post_types']      = $parent['post_types'];
+			$sub_field['parent_type']     = $parent['type'];
+			$sub_field['parent_name']     = $parent['name'];
+			$sub_field['dynamic_name']    = $parent['name'] . '_' . $sub_field['name'];
+			$sub_field['label']           = $parent['label'] . ' · ' . $sub_field['label'];
 
 			if ( 'image' === $sub_field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
 

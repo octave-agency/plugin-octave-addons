@@ -2482,7 +2482,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			<div class="oa-cpt-groups oa-collection-body<?= $saved ? ' oa-hidden' : ''; ?>">
 				<fieldset class="oa-cpt-group">
 					<legend><?php esc_html_e( 'Field settings', 'octave-addons' ); ?></legend>
-					<p class="oa-cpt-group-description"><?php esc_html_e( 'The field name becomes the permanent, namespaced post-meta key after saving.', 'octave-addons' ); ?></p>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'The field name becomes the permanent post-meta key after saving. Values saved under the older _octave_ prefixed key are still read.', 'octave-addons' ); ?></p>
 					<div class="oa-cpt-fields">
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Label', 'octave-addons' ); ?></span><input type="text" data-role="title" name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'label' ) ); ?>" value="<?= esc_attr( $label ); ?>" placeholder="Client name" required></label>
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Field name', 'octave-addons' ); ?></span><input type="text" data-role="key" name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" maxlength="40" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>></label>
@@ -3602,7 +3602,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				'enabled'         => ! empty( $field['enabled'] ),
 				'label'           => $label,
 				'name'            => $name,
-				'meta_key'        => '_octave_' . $name,
+				'meta_key'        => $name,
+				'legacy_meta_key' => '_octave_' . $name,
 				'type'            => $type,
 				'default_value'   => $is_list
 					? []
