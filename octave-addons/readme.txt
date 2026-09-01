@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.7.1
+Stable tag:        3.8.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -20,6 +20,8 @@ Octave Addons ships with a growing collection of focused modules:
     `href` or `href="#"` so editors can spot broken navigation.
 *   **Disable Comments** – removes comment support site-wide
     (post types, REST endpoint, admin menus, admin bar).
+*   **Featured Image Column** – adds a featured image thumbnail column to
+    the admin post tables, for the post types, position and size chosen.
 *   **Scroll Animations** – enqueues Octave's fade/slide-in CSS and
     IntersectionObserver JS, with an editable override for each file.
 *   **Breakdance AJAX Filtering** – adds server-backed filtering and
@@ -79,6 +81,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.8.0 =
+* Added a Featured Image Column module that puts a thumbnail column in the admin post tables, with per-post-type selection, column position, heading, image size, width, an edit link, and an outline for entries with no image.
+* Changed Breakdance Dynamic Data to list a repeater as a single entry rather than repeating its title across one entry per sub field.
 
 = 3.7.1 =
 * Fixed multiple enabled taxonomy filters not all appearing in the admin toolbar when some taxonomies had no terms.

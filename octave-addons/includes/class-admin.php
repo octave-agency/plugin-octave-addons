@@ -550,6 +550,7 @@ class Octave_Addons_Admin {
 			'custom-post-types'          => 'layers',
 			'disable-comments'           => 'message-off',
 			'empty-link-highlighter'     => 'unlink',
+			'featured-image-column'      => 'image',
 			'mobile-contact-popup'       => 'smartphone',
 		];
 
