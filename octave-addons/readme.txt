@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.6.0
+Stable tag:        3.7.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -80,10 +80,14 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.7.0 =
+* Added per-taxonomy controls for showing a sortable admin post-table column and an optional toolbar filter, with existing taxonomy columns remaining enabled by default.
+
 = 3.6.0 =
 * Fixed content fields reading as blank in the structured editor and in Breakdance Dynamic Data by storing each value under the field name itself rather than an undocumented _octave_ prefixed key.
 * Changed field values saved under the older prefixed key to be read as a fallback and rewritten under the field name on the next save, so existing content carries across untouched.
 * Changed the structured-content editor to hide the block toolbar, breadcrumb, and insertion-point popovers Gutenberg floats over the locked field canvas.
+* Fixed gallery drag-and-drop reordering in the structured-content editor, which never started a drag because the drag data store was left empty, and added the drag and drop-target feedback the control was missing.
 
 = 3.5.0 =
 * Added a tab content-field type that splits long editing screens into panels without storing any post meta of its own.

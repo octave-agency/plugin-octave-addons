@@ -5139,7 +5139,6 @@ Card
     padding: 14px 16px;
     border: 1px solid var(--oa-border);
     border-radius: 12px;
-    background: linear-gradient(145deg, rgba(23, 27, 28, 0.92), rgba(15, 18, 19, 0.92));
     transition: border-color 0.18s ease, opacity 0.18s ease;
 }
 

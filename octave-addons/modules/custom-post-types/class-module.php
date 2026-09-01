@@ -19,6 +19,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	protected static ?array $dashicons = null;
 
+	protected array $admin_taxonomies = [];
+
 	/*
 	CONSTRUCTOR
 	-- Refreshes rewrite rules only when custom routing changes.
@@ -2067,15 +2069,17 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	protected function render_taxonomy_editor( array $taxonomies, array $post_types, string $primary_post_type = '', bool $single = false, bool $start_new = false ): void {
 
 		$template = [
-			'enabled'         => true,
-			'name'            => '',
-			'singular_name'   => '',
-			'taxonomy'        => 'oa_category',
-			'slug'            => '',
-			'hierarchical'    => true,
-			'public'          => true,
-			'post_types'      => '' !== $primary_post_type ? [ $primary_post_type ] : [],
-			'post_type_order' => [],
+			'enabled'           => true,
+			'name'              => '',
+			'singular_name'     => '',
+			'taxonomy'          => 'oa_category',
+			'slug'              => '',
+			'hierarchical'      => true,
+			'public'            => true,
+			'show_admin_column' => true,
+			'show_admin_filter' => false,
+			'post_types'        => '' !== $primary_post_type ? [ $primary_post_type ] : [],
+			'post_type_order'   => [],
 		];
 
 		if ( $start_new ) {
@@ -2212,6 +2216,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 						</label>
 						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Hierarchical', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'hierarchical' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['hierarchical'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Enable parent and child terms like Categories.', 'octave-addons' ); ?></small></div>
 						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Public archives', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" class="oa-tax-public-toggle" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'public' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['public'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Expose term archive URLs and navigation options.', 'octave-addons' ); ?></small></div>
+						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Show in admin column', 'octave-addons' ); ?></span><input type="hidden" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'show_admin_column' ) ); ?>" value="0"><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'show_admin_column' ) ); ?>" value="1"<?= checked( ! array_key_exists( 'show_admin_column', $taxonomy ) || ! empty( $taxonomy['show_admin_column'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Show a sortable taxonomy column in assigned post type tables.', 'octave-addons' ); ?></small></div>
+						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Show in admin filter', 'octave-addons' ); ?></span><input type="hidden" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'show_admin_filter' ) ); ?>" value="0"><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'show_admin_filter' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['show_admin_filter'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Add a term dropdown above assigned post type tables.', 'octave-addons' ); ?></small></div>
 						<label class="oa-cpt-field oa-cpt-field--full oa-tax-url-field<?= empty( $taxonomy['public'] ) ? ' oa-hidden' : ''; ?>"><span><?php esc_html_e( 'URL slug', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'slug' ) ); ?>" value="<?= esc_attr( (string) ( $taxonomy['slug'] ?? '' ) ); ?>" placeholder="project-category" required><small><?php esc_html_e( 'The term archive URL path. Falls back to the singular name when left empty.', 'octave-addons' ); ?></small></label>
 					</div>
 				</fieldset>
@@ -2976,6 +2982,33 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			if ( ! empty( $taxonomy['enabled'] ) ) {
 
 				$this->register_custom_taxonomy( $taxonomy, $post_types );
+				$this->admin_taxonomies[ $taxonomy['taxonomy'] ] = $taxonomy;
+
+			}
+
+		}
+
+		if ( is_admin() && ! empty( $this->admin_taxonomies ) ) {
+
+			add_action( 'restrict_manage_posts', [ $this, 'render_custom_taxonomy_filters' ], 10, 2 );
+			add_action( 'pre_get_posts', [ $this, 'prepare_taxonomy_admin_query' ] );
+			add_filter( 'posts_clauses', [ $this, 'order_posts_by_taxonomy' ], 10, 2 );
+
+			$admin_post_types = [];
+
+			foreach ( $this->admin_taxonomies as $taxonomy ) {
+
+				foreach ( $taxonomy['post_types'] as $post_type ) {
+
+					$admin_post_types[ $post_type ] = true;
+
+				}
+
+			}
+
+			foreach ( array_keys( $admin_post_types ) as $post_type ) {
+
+				add_filter( "manage_edit-{$post_type}_sortable_columns", [ $this, 'make_taxonomy_columns_sortable' ] );
 
 			}
 
@@ -3102,6 +3135,213 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				'hide_if_empty'   => true,
 			]
 		);
+
+	}
+
+	/*
+	RENDER CUSTOM TAXONOMY FILTERS
+	-- Adds enabled taxonomy dropdowns to the top of assigned post type tables.
+	---------------------------------------------------------- */
+
+	public function render_custom_taxonomy_filters( $post_type, $which = 'top' ): void {
+
+		if ( 'top' !== $which ) {
+
+			return;
+
+		}
+
+		foreach ( $this->admin_taxonomies as $taxonomy => $definition ) {
+
+			if ( empty( $definition['show_admin_filter'] ) || ! in_array( $post_type, $definition['post_types'], true ) ) {
+
+				continue;
+
+			}
+
+			?>
+
+			<label class="screen-reader-text" for="<?= esc_attr( $taxonomy ); ?>">
+				<?= esc_html( sprintf( __( 'Filter by %s', 'octave-addons' ), $definition['singular_name'] ) ); ?>
+			</label>
+
+			<?php
+
+			wp_dropdown_categories(
+				[
+					'show_option_all' => sprintf( __( 'All %s', 'octave-addons' ), $definition['name'] ),
+					'taxonomy'        => $taxonomy,
+					'name'            => $taxonomy,
+					'id'              => $taxonomy,
+					'value_field'     => 'slug',
+					'selected'        => $this->get_current_taxonomy_filter( $taxonomy ),
+					'hierarchical'    => ! empty( $definition['hierarchical'] ),
+					'depth'           => ! empty( $definition['hierarchical'] ) ? 3 : 0,
+					'orderby'         => 'name',
+					'show_count'      => true,
+					'hide_empty'      => false,
+					'hide_if_empty'   => true,
+				]
+			);
+
+		}
+
+	}
+
+	/*
+	MAKE TAXONOMY COLUMNS SORTABLE
+	-- Maps each visible managed taxonomy column to its admin query order key.
+	---------------------------------------------------------- */
+
+	public function make_taxonomy_columns_sortable( array $columns ): array {
+
+		foreach ( $this->admin_taxonomies as $taxonomy => $definition ) {
+
+			$column = 'taxonomy-' . $taxonomy;
+
+			if ( ! empty( $definition['show_admin_column'] ) && isset( $columns[ $column ] ) ) {
+
+				$columns[ $column ] = 'oa_taxonomy__' . $taxonomy;
+
+			}
+
+		}
+
+		return $columns;
+
+	}
+
+	/*
+	PREPARE TAXONOMY ADMIN QUERY
+	-- Applies selected toolbar terms and records sortable taxonomy requests.
+	---------------------------------------------------------- */
+
+	public function prepare_taxonomy_admin_query( $query ): void {
+
+		if ( ! $query->is_main_query() ) {
+
+			return;
+
+		}
+
+		$post_type     = sanitize_key( (string) $query->get( 'post_type' ) );
+		$raw_tax_query = $query->get( 'tax_query' );
+		$tax_query     = is_array( $raw_tax_query ) ? $raw_tax_query : [];
+
+		if ( '' === $post_type ) {
+
+			global $typenow;
+
+			$post_type = sanitize_key( (string) $typenow );
+
+		}
+
+		foreach ( $this->admin_taxonomies as $taxonomy => $definition ) {
+
+			if ( empty( $definition['show_admin_filter'] ) || ! in_array( $post_type, $definition['post_types'], true ) ) {
+
+				continue;
+
+			}
+
+			$term = $this->get_current_taxonomy_filter( $taxonomy );
+
+			if ( '' !== $term ) {
+
+				$tax_query[] = [
+					'taxonomy' => $taxonomy,
+					'field'    => 'slug',
+					'terms'    => $term,
+				];
+
+			}
+
+		}
+
+		if ( ! empty( $tax_query ) ) {
+
+			$query->set( 'tax_query', $tax_query );
+
+		}
+
+		$orderby = (string) $query->get( 'orderby' );
+		$prefix  = 'oa_taxonomy__';
+
+		if ( 0 !== strpos( $orderby, $prefix ) ) {
+
+			return;
+
+		}
+
+		$taxonomy = sanitize_key( substr( $orderby, strlen( $prefix ) ) );
+
+		if (
+			isset( $this->admin_taxonomies[ $taxonomy ] )
+			&& ! empty( $this->admin_taxonomies[ $taxonomy ]['show_admin_column'] )
+			&& in_array( $post_type, $this->admin_taxonomies[ $taxonomy ]['post_types'], true )
+		) {
+
+			$query->set( 'oa_orderby_taxonomy', $taxonomy );
+
+		}
+
+	}
+
+	/*
+	ORDER POSTS BY TAXONOMY
+	-- Sorts the main admin list query by the first alphabetical assigned term.
+	---------------------------------------------------------- */
+
+	public function order_posts_by_taxonomy( array $clauses, $query ): array {
+
+		$taxonomy = sanitize_key( (string) $query->get( 'oa_orderby_taxonomy' ) );
+
+		if ( '' === $taxonomy || ! isset( $this->admin_taxonomies[ $taxonomy ] ) ) {
+
+			return $clauses;
+
+		}
+
+		global $wpdb;
+
+		$suffix              = substr( md5( $taxonomy ), 0, 8 );
+		$relationships_alias = 'oa_tr_' . $suffix;
+		$taxonomy_alias      = 'oa_tt_' . $suffix;
+		$terms_alias         = 'oa_t_' . $suffix;
+		$order               = 'DESC' === strtoupper( (string) $query->get( 'order' ) ) ? 'DESC' : 'ASC';
+
+		$clauses['join'] .= " LEFT JOIN {$wpdb->term_relationships} AS {$relationships_alias} ON ({$wpdb->posts}.ID = {$relationships_alias}.object_id)";
+		$clauses['join'] .= $wpdb->prepare(
+			" LEFT JOIN {$wpdb->term_taxonomy} AS {$taxonomy_alias} ON ({$relationships_alias}.term_taxonomy_id = {$taxonomy_alias}.term_taxonomy_id AND {$taxonomy_alias}.taxonomy = %s)",
+			$taxonomy
+		);
+		$clauses['join'] .= " LEFT JOIN {$wpdb->terms} AS {$terms_alias} ON ({$taxonomy_alias}.term_id = {$terms_alias}.term_id)";
+
+		$clauses['groupby'] = '' === $clauses['groupby']
+			? "{$wpdb->posts}.ID"
+			: $clauses['groupby'] . ", {$wpdb->posts}.ID";
+		$clauses['orderby'] = "MIN({$terms_alias}.name) {$order}, {$wpdb->posts}.post_title ASC";
+
+		return $clauses;
+
+	}
+
+	/*
+	GET CURRENT TAXONOMY FILTER
+	-- Returns a safe term slug from a read-only admin list request.
+	---------------------------------------------------------- */
+
+	protected function get_current_taxonomy_filter( string $taxonomy ): string {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list table filter.
+		if ( empty( $_GET[ $taxonomy ] ) ) {
+
+			return '';
+
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list table filter.
+		return sanitize_title( wp_unslash( (string) $_GET[ $taxonomy ] ) );
 
 	}
 
@@ -3302,16 +3542,17 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			$taxonomy,
 			$definition['post_types'],
 			[
-				'labels'            => $labels,
-				'description'       => sprintf( __( 'Octave-managed %s.', 'octave-addons' ), $name ),
-				'public'            => ! empty( $definition['public'] ),
-				'hierarchical'      => ! empty( $definition['hierarchical'] ),
-				'show_ui'           => true,
-				'show_admin_column' => true,
-				'show_in_nav_menus' => ! empty( $definition['public'] ),
-				'show_tagcloud'     => false,
-				'show_in_rest'      => true,
-				'query_var'         => ! empty( $definition['public'] ),
+				'labels'             => $labels,
+				'description'        => sprintf( __( 'Octave-managed %s.', 'octave-addons' ), $name ),
+				'public'             => ! empty( $definition['public'] ),
+				'hierarchical'       => ! empty( $definition['hierarchical'] ),
+				'show_ui'            => true,
+				'show_admin_column'  => ! empty( $definition['show_admin_column'] ),
+				'show_in_quick_edit' => true,
+				'show_in_nav_menus'  => ! empty( $definition['public'] ),
+				'show_tagcloud'      => false,
+				'show_in_rest'       => true,
+				'query_var'          => ! empty( $definition['public'] ),
 				'rewrite'           => ! empty( $definition['public'] )
 					? [
 						'slug'         => $definition['slug'],
@@ -3514,15 +3755,17 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			$used[ $key ] = true;
 			$clean[]      = [
-				'enabled'         => ! empty( $taxonomy['enabled'] ),
-				'name'            => $name,
-				'singular_name'   => $singular,
-				'taxonomy'        => $key,
-				'slug'            => self::sanitize_rewrite_path( $taxonomy['slug'] ?? '', sanitize_title( $singular ) ),
-				'hierarchical'    => ! empty( $taxonomy['hierarchical'] ),
-				'public'          => ! empty( $taxonomy['public'] ),
-				'post_types'      => $assigned,
-				'post_type_order' => $order,
+				'enabled'           => ! empty( $taxonomy['enabled'] ),
+				'name'              => $name,
+				'singular_name'     => $singular,
+				'taxonomy'          => $key,
+				'slug'              => self::sanitize_rewrite_path( $taxonomy['slug'] ?? '', sanitize_title( $singular ) ),
+				'hierarchical'      => ! empty( $taxonomy['hierarchical'] ),
+				'public'            => ! empty( $taxonomy['public'] ),
+				'show_admin_column' => ! array_key_exists( 'show_admin_column', $taxonomy ) || ! empty( $taxonomy['show_admin_column'] ),
+				'show_admin_filter' => ! empty( $taxonomy['show_admin_filter'] ),
+				'post_types'        => $assigned,
+				'post_type_order'   => $order,
 			];
 
 		}
@@ -3706,14 +3949,16 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			}
 
 			$taxonomies[] = [
-				'enabled'       => true,
-				'name'          => $post_type['taxonomy_name'],
-				'singular_name' => $post_type['taxonomy_singular_name'],
-				'taxonomy'      => $post_type['taxonomy'],
-				'slug'          => $post_type['taxonomy_slug'],
-				'hierarchical'  => true,
-				'public'        => ! empty( $post_type['public'] ),
-				'post_types'    => [ $post_type['post_type'] ],
+				'enabled'           => true,
+				'name'              => $post_type['taxonomy_name'],
+				'singular_name'     => $post_type['taxonomy_singular_name'],
+				'taxonomy'          => $post_type['taxonomy'],
+				'slug'              => $post_type['taxonomy_slug'],
+				'hierarchical'      => true,
+				'public'            => ! empty( $post_type['public'] ),
+				'show_admin_column' => true,
+				'show_admin_filter' => false,
+				'post_types'        => [ $post_type['post_type'] ],
 			];
 
 		}

@@ -483,6 +483,21 @@ Gallery
     cursor: grab;
 }
 
+.oa-gallery__item.is-dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+}
+
+.oa-gallery__item.is-drop-target {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: -2px;
+}
+
+.oa-gallery__item:focus-visible {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: -2px;
+}
+
 .oa-gallery__preview {
     width: 100%;
     height: 100%;

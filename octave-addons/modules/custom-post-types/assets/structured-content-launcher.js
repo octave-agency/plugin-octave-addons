@@ -335,7 +335,11 @@ STRUCTURED CONTENT EDITOR
 
 		} ).filter( Boolean );
 
-		var dragIndex = wp.element.useRef( null );
+		var dragIndex   = wp.element.useRef( null );
+		var dragState   = wp.element.useState( { from: null, over: null } );
+		var dragging    = dragState[0];
+		var setDragging = dragState[1];
+
 		var attachments = wp.data.useSelect( function ( select ) {
 
 			var found = {};
@@ -381,6 +385,13 @@ STRUCTURED CONTENT EDITOR
 
 		}
 
+		function endDrag() {
+
+			dragIndex.current = null;
+			setDragging( { from: null, over: null } );
+
+		}
+
 		return createElement(
 			'div',
 			{ className: 'oa-gallery' },
@@ -393,18 +404,52 @@ STRUCTURED CONTENT EDITOR
 						'li',
 						{
 							'aria-label': strings.galleryItem.replace( '%d', index + 1 ),
-							className: 'oa-gallery__item',
+							className: 'oa-gallery__item'
+								+ ( dragging.from === index ? ' is-dragging' : '' )
+								+ ( dragging.over === index && dragging.from !== index ? ' is-drop-target' : '' ),
 							draggable: true,
 							key: id,
 							tabIndex: 0,
-							onDragStart: function () {
+							onDragStart: function ( event ) {
 
 								dragIndex.current = index;
+
+								// A drag whose data store is left empty is cancelled before
+								// any drop can land, so the id is written even though the
+								// reorder itself reads the index off the ref.
+								event.dataTransfer.effectAllowed = 'move';
+								event.dataTransfer.setData( 'text/plain', String( id ) );
+
+								setDragging( { from: index, over: null } );
+
+							},
+							onDragEnter: function ( event ) {
+
+								if ( null === dragIndex.current ) {
+
+									return;
+
+								}
+
+								event.preventDefault();
+
+								setDragging( function ( current ) {
+
+									return { from: current.from, over: index };
+
+								} );
 
 							},
 							onDragOver: function ( event ) {
 
+								if ( null === dragIndex.current ) {
+
+									return;
+
+								}
+
 								event.preventDefault();
+								event.dataTransfer.dropEffect = 'move';
 
 							},
 							onDrop: function ( event ) {
@@ -414,11 +459,13 @@ STRUCTURED CONTENT EDITOR
 								if ( null !== dragIndex.current ) {
 
 									moveImage( dragIndex.current, index );
-									dragIndex.current = null;
 
 								}
 
+								endDrag();
+
 							},
+							onDragEnd: endDrag,
 							onKeyDown: function ( event ) {
 
 								if ( 'ArrowLeft' === event.key ) {
@@ -439,7 +486,7 @@ STRUCTURED CONTENT EDITOR
 						},
 						createElement( 'span', { className: 'oa-gallery__position' }, index + 1 ),
 						url
-							? createElement( 'img', { alt: '', className: 'oa-gallery__preview', src: url } )
+							? createElement( 'img', { alt: '', className: 'oa-gallery__preview', draggable: false, src: url } )
 							: createElement( 'span', { className: 'oa-gallery__placeholder', 'aria-hidden': 'true' } ),
 						createElement( components.Button, {
 							className: 'oa-gallery__remove',
