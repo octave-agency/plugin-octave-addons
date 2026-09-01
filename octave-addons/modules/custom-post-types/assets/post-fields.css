@@ -57,6 +57,58 @@ POST FIELDS EDITOR
     color: #646970;
 }
 
+/*
+Tabs
+-- Tab fields split the meta box into panels. Hidden panels stay in the form so
+-- their values still save.
+---------------------------------------------------------- */
+
+.oa-post-fields-tablist {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 0 24px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--oa-field-border);
+    background: #fff;
+}
+
+.oa-post-fields-grid + .oa-post-fields-tabs .oa-post-fields-tablist {
+    border-top: 1px solid var(--oa-field-border);
+}
+
+.oa-post-fields-tab {
+    margin-bottom: -1px;
+    padding: 12px 2px;
+    color: #646970;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.oa-post-fields-tab:hover {
+    color: #1d2327;
+}
+
+.oa-post-fields-tab:focus-visible {
+    outline: 2px solid var(--oa-field-accent);
+    outline-offset: -2px;
+}
+
+.oa-post-fields-tab.is-active {
+    color: var(--oa-field-accent);
+    border-bottom-color: var(--oa-field-accent);
+}
+
+.oa-post-fields-grid[hidden] {
+    display: none;
+}
+
 .oa-post-fields-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

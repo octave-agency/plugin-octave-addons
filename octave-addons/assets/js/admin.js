@@ -2771,7 +2771,9 @@ ADMIN INTERACTIONS
 				var needsChoices = [ 'select', 'multiselect', 'radio' ].indexOf( typeInput.value ) !== -1;
 				var isContainer = [ 'group', 'repeater' ].indexOf( typeInput.value ) !== -1;
 				var isHtml = 'html' === typeInput.value;
-				var hidesDefault = isContainer || 'gallery' === typeInput.value;
+				var isTab = 'tab' === typeInput.value;
+				var hidesDefault = isContainer || isTab || 'gallery' === typeInput.value;
+				var hidesRequired = isHtml || isTab;
 
 				choices.classList.toggle( 'oa-hidden', ! needsChoices );
 
@@ -2786,9 +2788,9 @@ ADMIN INTERACTIONS
 
 				if ( requiredField ) {
 
-					requiredField.classList.toggle( 'oa-hidden', isHtml );
+					requiredField.classList.toggle( 'oa-hidden', hidesRequired );
 
-					if ( isHtml ) {
+					if ( hidesRequired ) {
 
 						requiredField.querySelector( 'input' ).checked = false;
 
@@ -2858,7 +2860,7 @@ ADMIN INTERACTIONS
 						var sourceTitle = sourceItem.querySelector( '[data-role="title"]' );
 						var sourceEnabled = sourceItem.querySelector( '[data-role="enabled"]' );
 
-						if ( sourceItem === item || ! sourceType || ! sourceKey || ! sourceEnabled || ! sourceEnabled.checked || -1 !== childKeys.indexOf( sourceKey.value ) || [ 'group', 'repeater', 'html' ].indexOf( sourceType.value ) !== -1 ) {
+						if ( sourceItem === item || ! sourceType || ! sourceKey || ! sourceEnabled || ! sourceEnabled.checked || -1 !== childKeys.indexOf( sourceKey.value ) || [ 'group', 'repeater', 'html', 'tab' ].indexOf( sourceType.value ) !== -1 ) {
 
 							return;
 

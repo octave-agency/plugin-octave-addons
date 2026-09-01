@@ -14,13 +14,11 @@ STRUCTURED CONTENT EDITOR
 .oa-structured-content {
     --oa-accent: #00d084;
     --oa-accent-ink: #0a7a4a;
-    --oa-accent-soft: rgba(0, 208, 132, 0.12);
     --oa-line: #e0e0e0;
     --oa-line-soft: #f0f0f1;
     --oa-ink: #1e1e1e;
     --oa-ink-muted: #757575;
     --oa-error: #cc1818;
-    --oa-error-soft: rgba(204, 24, 24, 0.08);
     color: var(--oa-ink);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 13px;
@@ -30,34 +28,14 @@ STRUCTURED CONTENT EDITOR
 
 /*
 Header
--- Names both the content type and current entry before explaining when these
--- structured values are saved.
+-- Names the content type before explaining when these structured values are
+-- saved.
 ---------------------------------------------------------- */
 
 .oa-structured-content__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 18px 20px;
-    border: 1px solid var(--oa-line);
-    border-left: 4px solid var(--oa-accent);
-    border-radius: 6px;
-    background: #fff;
-}
-
-.oa-structured-content__heading {
     min-width: 0;
-}
-
-.oa-structured-content__eyebrow {
-    margin-bottom: 3px;
-    color: var(--oa-accent-ink);
-    font-size: 11px !important;
-    font-weight: 650;
-    line-height: 1.4;
-    text-transform: uppercase;
-    letter-spacing: 0.055em;
+    padding: 0 0 14px;
+    border-bottom: 1px solid var(--oa-line);
 }
 
 .oa-structured-content__title {
@@ -76,40 +54,6 @@ Header
     line-height: 1.5;
 }
 
-.oa-structured-content__status {
-    flex-shrink: 0;
-    margin-top: 2px;
-    padding: 4px 10px;
-    color: var(--oa-ink-muted);
-    border-radius: 999px;
-    background: var(--oa-line-soft);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-.oa-structured-content__status--ready {
-    color: var(--oa-accent-ink);
-    background: var(--oa-accent-soft);
-}
-
-.oa-structured-content__status--invalid {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    color: var(--oa-error);
-    background: var(--oa-error-soft);
-}
-
-.oa-structured-content__status--invalid::before {
-    content: "";
-    display: block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-}
-
 /*
 Editor chrome
 ---------------------------------------------------------- */
@@ -121,20 +65,95 @@ Editor chrome
 }
 
 /*
-Field grid
--- Uses a stable two-column rhythm so long forms remain easy to scan. Section
--- markers and wide controls break the grid deliberately where needed.
+Tabs
+-- Tab fields split the list into panels. Each button reports how many required
+-- fields are still outstanding inside its own panel, so a locked save is never
+-- hidden behind an inactive tab.
 ---------------------------------------------------------- */
+
+.oa-tabs {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: 2px;
+    border-bottom: 1px solid var(--oa-line);
+}
+
+.oa-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: -1px;
+    padding: 10px 4px !important;
+    color: var(--oa-ink-muted) !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    box-shadow: none;
+    font-family: inherit;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1.4;
+    text-transform: none !important;
+    cursor: pointer;
+}
+
+.oa-tab + .oa-tab {
+    margin-left: 20px;
+}
+
+.oa-tab:hover {
+    color: var(--oa-ink) !important;
+}
+
+.oa-tab:focus-visible {
+    outline: 2px solid var(--oa-accent-ink);
+    outline-offset: 2px;
+}
+
+.oa-tab.is-active {
+    color: var(--oa-ink) !important;
+    box-shadow: inset 0 -2px 0 var(--oa-ink);
+}
+
+.oa-tab__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    color: #fff;
+    border-radius: 999px;
+    background: var(--oa-error);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.oa-fields + .oa-tabs {
+    margin-top: 10px;
+}
+
+/*
+Field list
+-- One row per field: label and help text on the left, control on the right,
+-- with hairline dividers instead of cards. Controls that need the full width
+-- stack their label above instead, and so do sub fields inside a group or
+-- repeater cell.
+---------------------------------------------------------- */
+
+.oa-fields[hidden] {
+    display: none;
+}
 
 .oa-fields {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 14px;
-    margin-top: 16px;
-    padding: 14px;
-    border: 1px solid var(--oa-line);
-    border-radius: 6px;
-    background: #f6f7f7;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0;
+    margin-top: 0;
+    padding: 0;
+    background: transparent;
 }
 
 .oa-fields__empty {
@@ -147,34 +166,66 @@ Field grid
 }
 
 .oa-field {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    align-items: start;
+    gap: 2px 32px;
     min-width: 0;
-    padding: 15px;
-    border: 1px solid var(--oa-line);
-    border-radius: 5px;
-    background: #fff;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--oa-line);
 }
 
-.oa-field--textarea,
-.oa-field--wysiwyg,
-.oa-field--group,
-.oa-field--repeater,
-.oa-field--multiselect,
-.oa-field--html {
-    grid-column: 1 / -1;
+.oa-fields > .oa-field:last-child {
+    border-bottom: 0;
 }
 
+.oa-field__label {
+    grid-area: 1 / 1;
+    padding-top: 11px;
+}
+
+.oa-field__description {
+    grid-area: 2 / 1;
+}
+
+.oa-field__control {
+    grid-area: 1 / 2;
+    min-width: 0;
+}
+
+.oa-field__error {
+    grid-area: 2 / 2;
+}
+
+.oa-field--stacked,
+.oa-row-fields .oa-field {
+    display: block;
+    border-bottom: 0;
+}
+
+.oa-field--stacked > .oa-field__label,
+.oa-row-fields .oa-field > .oa-field__label {
+    padding-top: 0;
+    margin-bottom: 8px;
+}
+
+.oa-row-fields .oa-field {
+    padding: 0;
+}
+
+/*
+Section headings
+-- HTML fields mark a break in the list rather than collecting a value, so they
+-- carry their own spacing and lean on the divider above them.
+---------------------------------------------------------- */
+
 .oa-field--html {
-    margin: 8px 0 -2px;
-    padding: 20px 2px 8px;
-    border-width: 1px 0 0;
-    border-radius: 0;
-    background: transparent;
+    padding: 26px 0 10px;
+    border-bottom: 0;
 }
 
 .oa-field--html:first-child {
-    margin-top: -8px;
-    padding-top: 8px;
-    border-top: 0;
+    padding-top: 4px;
 }
 
 .oa-field--html h2,
@@ -195,11 +246,11 @@ Field grid
 }
 
 .oa-field--html h2 {
-    font-size: 17px !important;
+    font-size: 15px !important;
 }
 
 .oa-field--html h3 {
-    font-size: 15px !important;
+    font-size: 14px !important;
 }
 
 .oa-field--html p {
@@ -211,8 +262,9 @@ Field grid
 .oa-field__label {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    margin-bottom: 0;
     color: var(--oa-ink);
     font-size: 13px !important;
     font-weight: 650;
@@ -231,7 +283,7 @@ Field grid
 }
 
 .oa-field__description {
-    margin: 6px 0 0 !important;
+    margin: 5px 0 0 !important;
     color: var(--oa-ink-muted);
     font-size: 12px !important;
     font-style: normal;
@@ -239,7 +291,7 @@ Field grid
 }
 
 .oa-field__error {
-    margin-top: 6px;
+    margin-top: 5px;
     color: var(--oa-error);
     font-size: 12px !important;
     line-height: 1.5;
@@ -555,20 +607,15 @@ Groups and repeaters
 Narrow screens
 ---------------------------------------------------------- */
 
-@media (max-width: 600px) {
+@media (max-width: 782px) {
 
-    .oa-fields {
-        grid-template-columns: minmax(0, 1fr) !important;
+    .oa-field {
+        display: block;
     }
 
-    .oa-structured-content__header {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .oa-structured-content__status {
-        margin-top: 0;
+    .oa-field > .oa-field__label {
+        padding-top: 0;
+        margin-bottom: 8px;
     }
 
 }

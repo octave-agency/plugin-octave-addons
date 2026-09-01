@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.4.1
+Stable tag:        3.5.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -79,6 +79,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.5.0 =
+* Added a tab content-field type that splits long editing screens into panels without storing any post meta of its own.
+* Changed the structured-content editor to a divided list with the label and instructions beside each control, replacing the card grid and its grey backing.
 
 = 3.4.1 =
 * Clarified the structured-content editor with the current content type and entry title, useful save guidance, compact controls, sentence-case labels, and a stable two-column card layout.

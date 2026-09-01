@@ -74,6 +74,19 @@ class Octave_Addons_Custom_Post_Fields {
 	}
 
 	/*
+	IS PRESENTATIONAL
+	-- Marks the field types that only shape the editing screen. They never
+	-- register post meta, never validate, never save, and never reach Dynamic
+	-- Data, so every runtime loop skips them through this one check.
+	---------------------------------------------------------- */
+
+	protected static function is_presentational( array $field ): bool {
+
+		return in_array( (string) ( $field['type'] ?? '' ), [ 'html', 'tab' ], true );
+
+	}
+
+	/*
 	REGISTER STRUCTURED CONTENT BLOCK
 	-- Provides the Gutenberg-native canvas used when standard content is off.
 	-- The canvas stylesheet is declared as the block's editor style, which is
@@ -220,7 +233,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $fields as $field ) {
 
-			if ( 'html' === $field['type'] ) {
+			if ( self::is_presentational( $field ) ) {
 
 				continue;
 
@@ -245,22 +258,15 @@ class Octave_Addons_Custom_Post_Fields {
 				'strings'    => [
 					'blockTitle'      => __( 'Octave Content Fields', 'octave-addons' ),
 					/* translators: %s: singular post type name. */
-					'editing'         => sprintf( __( 'Editing %s', 'octave-addons' ), $singular ),
-					/* translators: %s: singular post type name. {{title}} is replaced with the current entry title in the editor. */
-					'editingNamed'    => sprintf( __( 'Editing %s: {{title}}', 'octave-addons' ), $singular ),
-					/* translators: %s: singular post type name. */
 					'title'           => sprintf( __( '%s details', 'octave-addons' ), $singular ),
 					/* translators: %s: lowercase singular post type name. */
 					'intro'           => sprintf( __( 'Update the structured information below. These changes are saved when you update this %s.', 'octave-addons' ), strtolower( $singular ) ),
-					'ready'           => __( 'Ready to update', 'octave-addons' ),
 					'emptyFields'     => __( 'No content fields are assigned to this post type yet. Add fields in Octave Addons, then return here to populate them.', 'octave-addons' ),
+					'tabsLabel'       => __( 'Field sections', 'octave-addons' ),
 					'required'        => __( 'Required', 'octave-addons' ),
 					'fieldRequired'   => __( 'This field is required.', 'octave-addons' ),
 					/* translators: %s: comma separated list of field names. */
 					'requiredNotice'  => __( 'Saving is paused until these required fields are filled in: %s', 'octave-addons' ),
-					'requiredSingle'  => __( '1 required field', 'octave-addons' ),
-					/* translators: %d: number of unfilled required fields. */
-					'requiredPlural'  => __( '%d required fields', 'octave-addons' ),
 					'selectOption'    => __( 'Select an option', 'octave-addons' ),
 					'yes'             => __( 'Yes', 'octave-addons' ),
 					/* translators: %d: item number. */
@@ -296,7 +302,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields as $field ) {
 
-			if ( empty( $field['enabled'] ) || 'html' === $field['type'] ) {
+			if ( empty( $field['enabled'] ) || self::is_presentational( $field ) ) {
 
 				continue;
 
@@ -436,6 +442,12 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields_for_post_type( $post_type ) as $field ) {
 
+			if ( self::is_presentational( $field ) ) {
+
+				continue;
+
+			}
+
 			if ( array_key_exists( $field['meta_key'], $submitted ) ) {
 
 				$value = $this->sanitize_value( $submitted[ $field['meta_key'] ], $field );
@@ -540,7 +552,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields_for_post_type( $post->post_type ) as $field ) {
 
-			if ( 'html' === $field['type'] ) {
+			if ( self::is_presentational( $field ) ) {
 
 				continue;
 
@@ -576,6 +588,7 @@ class Octave_Addons_Custom_Post_Fields {
 	public function render_meta_box( WP_Post $post ): void {
 
 		$fields = $this->fields_for_post_type( $post->post_type );
+		$layout = $this->split_field_tabs( $fields );
 
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_NAME );
 
@@ -591,32 +604,147 @@ class Octave_Addons_Custom_Post_Fields {
 				</div>
 			</div>
 
-			<div class="oa-post-fields-grid">
-
 			<?php
 
 			if ( empty( $fields ) ) :
 
 			?>
 
-			<p class="oa-post-fields-empty"><?php esc_html_e( 'No content fields are assigned yet. Add fields to this post type in Octave Addons, then return here to populate them.', 'octave-addons' ); ?></p>
+			<div class="oa-post-fields-grid">
+				<p class="oa-post-fields-empty"><?php esc_html_e( 'No content fields are assigned yet. Add fields to this post type in Octave Addons, then return here to populate them.', 'octave-addons' ); ?></p>
+			</div>
 
 			<?php
 
 			endif;
 
-			foreach ( $fields as $field ) {
-
-				$this->render_field( $post, $field );
-
-			}
+			if ( ! empty( $layout['lead'] ) ) :
 
 			?>
 
+			<div class="oa-post-fields-grid">
+
+				<?php
+
+				foreach ( $layout['lead'] as $field ) {
+
+					$this->render_field( $post, $field );
+
+				}
+
+				?>
+
 			</div>
+
+			<?php
+
+			endif;
+
+			if ( ! empty( $layout['panels'] ) ) :
+
+			?>
+
+			<div class="oa-post-fields-tabs" data-oa-field-tabs>
+
+				<div class="oa-post-fields-tablist" role="tablist" aria-label="<?php esc_attr_e( 'Field sections', 'octave-addons' ); ?>">
+
+					<?php
+
+					foreach ( $layout['panels'] as $index => $panel ) :
+
+						$is_first = 0 === $index;
+
+					?>
+
+					<button type="button" role="tab" class="oa-post-fields-tab<?= $is_first ? ' is-active' : ''; ?>" id="oa-post-tab-<?= esc_attr( $panel['name'] ); ?>" aria-controls="oa-post-tab-panel-<?= esc_attr( $panel['name'] ); ?>" aria-selected="<?= $is_first ? 'true' : 'false'; ?>" tabindex="<?= $is_first ? '0' : '-1'; ?>"><?= esc_html( $panel['label'] ); ?></button>
+
+					<?php
+
+					endforeach;
+
+					?>
+
+				</div>
+
+				<?php
+
+				foreach ( $layout['panels'] as $index => $panel ) :
+
+				?>
+
+				<div class="oa-post-fields-grid" role="tabpanel" id="oa-post-tab-panel-<?= esc_attr( $panel['name'] ); ?>" aria-labelledby="oa-post-tab-<?= esc_attr( $panel['name'] ); ?>"<?= 0 === $index ? '' : ' hidden'; ?>>
+
+					<?php
+
+					foreach ( $panel['fields'] as $field ) {
+
+						$this->render_field( $post, $field );
+
+					}
+
+					?>
+
+				</div>
+
+				<?php
+
+				endforeach;
+
+				?>
+
+			</div>
+
+			<?php
+
+			endif;
+
+			?>
+
 		</div>
 
 		<?php
+
+	}
+
+	/*
+	SPLIT FIELD TABS
+	-- Groups the ordered field list on every tab marker. Fields placed before
+	-- the first tab have no panel to belong to, so they stay above the strip
+	-- and remain visible whichever tab is open.
+	---------------------------------------------------------- */
+
+	protected function split_field_tabs( array $fields ): array {
+
+		$lead   = [];
+		$panels = [];
+
+		foreach ( $fields as $field ) {
+
+			if ( 'tab' === $field['type'] ) {
+
+				$panels[] = [
+					'fields' => [],
+					'label'  => (string) $field['label'],
+					'name'   => (string) $field['name'],
+				];
+
+				continue;
+
+			}
+
+			if ( empty( $panels ) ) {
+
+				$lead[] = $field;
+
+				continue;
+
+			}
+
+			$panels[ count( $panels ) - 1 ]['fields'][] = $field;
+
+		}
+
+		return [ 'lead' => $lead, 'panels' => $panels ];
 
 	}
 
@@ -636,6 +764,12 @@ class Octave_Addons_Custom_Post_Fields {
 		$is_wide     = in_array( $type, [ 'textarea', 'wysiwyg', 'gallery' ], true );
 		$choices     = $this->parse_choices( $field['choices'] );
 		$description = (string) $field['description'];
+
+		if ( 'tab' === $type ) {
+
+			return;
+
+		}
 
 		if ( 'html' === $type ) {
 
@@ -1088,7 +1222,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $this->fields_for_post_type( $post->post_type ) as $field ) {
 
-			if ( 'html' === $field['type'] ) {
+			if ( self::is_presentational( $field ) ) {
 
 				continue;
 
@@ -1421,7 +1555,7 @@ class Octave_Addons_Custom_Post_Fields {
 				$this->fields,
 				static function ( array $field ): bool {
 
-					return ! empty( $field['enabled'] ) && 'html' !== $field['type'];
+					return ! empty( $field['enabled'] ) && ! self::is_presentational( $field );
 
 				}
 			)

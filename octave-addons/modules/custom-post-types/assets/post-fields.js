@@ -480,6 +480,119 @@ POST FIELDS EDITOR
 
 	} );
 
+	/*
+	WIRE FIELD TABS
+	-- Switches panels from the tab strip and keeps arrow key navigation working.
+	-- Panels stay in the form while hidden, so a required control the browser
+	-- refuses to submit reveals its own panel before the browser reports it.
+	---------------------------------------------------------- */
+
+	function wireFieldTabs( tabs ) {
+
+		var buttons = Array.prototype.slice.call( tabs.querySelectorAll( '.oa-post-fields-tab' ) );
+		var panels  = Array.prototype.slice.call( tabs.querySelectorAll( '[role="tabpanel"]' ) );
+
+		if ( ! buttons.length ) {
+
+			return;
+
+		}
+
+		function activate( index, moveFocus ) {
+
+			buttons.forEach( function ( button, position ) {
+
+				var isActive = position === index;
+
+				button.classList.toggle( 'is-active', isActive );
+				button.setAttribute( 'aria-selected', isActive ? 'true' : 'false' );
+				button.tabIndex = isActive ? 0 : -1;
+
+			} );
+
+			panels.forEach( function ( panel, position ) {
+
+				panel.hidden = position !== index;
+
+			} );
+
+			if ( moveFocus && buttons[ index ] ) {
+
+				buttons[ index ].focus();
+
+			}
+
+		}
+
+		buttons.forEach( function ( button, index ) {
+
+			button.addEventListener( 'click', function () {
+
+				activate( index, false );
+
+			} );
+
+			button.addEventListener( 'keydown', function ( event ) {
+
+				var last = buttons.length - 1;
+				var next = null;
+
+				if ( 'ArrowRight' === event.key || 'ArrowDown' === event.key ) {
+
+					next = index === last ? 0 : index + 1;
+
+				} else if ( 'ArrowLeft' === event.key || 'ArrowUp' === event.key ) {
+
+					next = index === 0 ? last : index - 1;
+
+				} else if ( 'Home' === event.key ) {
+
+					next = 0;
+
+				} else if ( 'End' === event.key ) {
+
+					next = last;
+
+				}
+
+				if ( null === next ) {
+
+					return;
+
+				}
+
+				event.preventDefault();
+				activate( next, true );
+
+			} );
+
+		} );
+
+		var form = tabs.closest( 'form' );
+
+		if ( ! form ) {
+
+			return;
+
+		}
+
+		form.addEventListener( 'invalid', function ( event ) {
+
+			panels.forEach( function ( panel, position ) {
+
+				if ( panel.contains( event.target ) ) {
+
+					activate( position, false );
+
+				}
+
+			} );
+
+		}, true );
+
+	}
+
+	document.querySelectorAll( '[data-oa-field-tabs]' ).forEach( wireFieldTabs );
 	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 	document.querySelectorAll( '.oa-post-field-gallery' ).forEach( wireGalleryField );
 	initializeWysiwyg( document );

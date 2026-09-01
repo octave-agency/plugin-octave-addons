@@ -41,6 +41,13 @@ STRUCTURED CONTENT EDITOR
 	var unsubscribe   = null;
 	var isResetting   = false;
 
+	// Controls that need the whole row width, so their label sits above them
+	// instead of in the left hand column.
+	var STACKED_TYPES = [ 'textarea', 'wysiwyg', 'group', 'repeater', 'multiselect', 'gallery' ];
+
+	// Types that only shape the screen and hold no post meta of their own.
+	var PRESENTATIONAL_TYPES = [ 'html', 'tab' ];
+
 	/*
 	IS TARGET EDITOR
 	-- Ensures cached or combined assets cannot affect another post type.
@@ -117,7 +124,7 @@ STRUCTURED CONTENT EDITOR
 
 	function isEmptyValue( field, value ) {
 
-		if ( 'html' === field.type ) {
+		if ( -1 !== PRESENTATIONAL_TYPES.indexOf( field.type ) ) {
 
 			return false;
 
@@ -175,7 +182,7 @@ STRUCTURED CONTENT EDITOR
 
 	function missingLabels( field, value, prefix ) {
 
-		if ( 'html' === field.type ) {
+		if ( -1 !== PRESENTATIONAL_TYPES.indexOf( field.type ) ) {
 
 			return [];
 
@@ -224,11 +231,12 @@ STRUCTURED CONTENT EDITOR
 
 	function FieldWrapper( props ) {
 
-		var field = props.field;
+		var field   = props.field;
+		var stacked = -1 !== STACKED_TYPES.indexOf( field.type );
 
 		return createElement(
 			'div',
-			{ className: 'oa-field oa-field--' + field.type + ( props.invalid ? ' is-invalid' : '' ) },
+			{ className: 'oa-field oa-field--' + field.type + ( stacked ? ' oa-field--stacked' : '' ) + ( props.invalid ? ' is-invalid' : '' ) },
 			createElement(
 				'div',
 				{ className: 'oa-field__label' },
@@ -705,6 +713,12 @@ STRUCTURED CONTENT EDITOR
 
 		var field    = props.field;
 
+		if ( 'tab' === field.type ) {
+
+			return null;
+
+		}
+
 		if ( 'html' === field.type ) {
 
 			if ( String( field.default_value || '' ).trim() ) {
@@ -889,6 +903,61 @@ STRUCTURED CONTENT EDITOR
 	}
 
 	/*
+	BUILD PANELS
+	-- Splits the ordered field list on every tab marker. Fields placed before
+	-- the first tab have no panel to belong to, so they stay visible above the
+	-- tab strip.
+	---------------------------------------------------------- */
+
+	function buildPanels( entries ) {
+
+		var panels = [];
+		var lead   = [];
+
+		entries.forEach( function ( entry ) {
+
+			if ( 'tab' === entry.field.type ) {
+
+				panels.push( { entries: [], field: entry.field } );
+
+				return;
+
+			}
+
+			if ( ! panels.length ) {
+
+				lead.push( entry );
+
+				return;
+
+			}
+
+			panels[ panels.length - 1 ].entries.push( entry );
+
+		} );
+
+		return { lead: lead, panels: panels };
+
+	}
+
+	/*
+	TAB IDS
+	-- Ties each tab button to the panel it controls.
+	---------------------------------------------------------- */
+
+	function tabId( field ) {
+
+		return 'oa-tab-' + field.name;
+
+	}
+
+	function panelId( field ) {
+
+		return 'oa-tab-panel-' + field.name;
+
+	}
+
+	/*
 	STRUCTURED CONTENT
 	-- Binds the visible controls directly to registered Gutenberg post meta.
 	-- REST reports unset meta as an empty value, so the field default is shown
@@ -906,35 +975,36 @@ STRUCTURED CONTENT EDITOR
 		var touchState = wp.element.useState( {} );
 		var touched    = touchState[0];
 		var setTouched = touchState[1];
+		var tabState   = wp.element.useState( 0 );
+		var activeTab  = tabState[0];
+		var setTab     = tabState[1];
 		var isNewPost  = wp.data.useSelect( function ( select ) {
 
 			return 'auto-draft' === select( 'core/editor' ).getEditedPostAttribute( 'status' );
 
 		}, [] );
-		var postTitle = wp.data.useSelect( function ( select ) {
-
-			return select( 'core/editor' ).getEditedPostAttribute( 'title' ) || '';
-
-		}, [] );
-		var editingLabel = postTitle ? strings.editingNamed.replace( '{{title}}', postTitle ) : strings.editing;
 
 		var missing = [];
 		var entries = fields.map( function ( field ) {
 
-			if ( 'html' === field.type ) {
+			if ( -1 !== PRESENTATIONAL_TYPES.indexOf( field.type ) ) {
 
-				return { field: field, value: field.default_value };
+				return { field: field, missing: [], value: field.default_value };
 
 			}
 
-			var isStored = touched[ field.meta_key ] || Object.prototype.hasOwnProperty.call( storedKeys, field.meta_key );
-			var value    = isStored ? meta[ field.meta_key ] : field.default_value;
+			var isStored     = touched[ field.meta_key ] || Object.prototype.hasOwnProperty.call( storedKeys, field.meta_key );
+			var value        = isStored ? meta[ field.meta_key ] : field.default_value;
+			var fieldMissing = missingLabels( field, value, '' );
 
-			missing = missing.concat( missingLabels( field, value, '' ) );
+			missing = missing.concat( fieldMissing );
 
-			return { field: field, value: value };
+			return { field: field, missing: fieldMissing, value: value };
 
 		} );
+
+		var layout      = buildPanels( entries );
+		var activeIndex = layout.panels.length ? Math.min( activeTab, layout.panels.length - 1 ) : 0;
 
 		useSaveLock( missing.length ? strings.requiredNotice.replace( '%s', missing.join( ', ' ) ) : '' );
 
@@ -958,44 +1028,145 @@ STRUCTURED CONTENT EDITOR
 
 		}
 
+		function showsErrors( entry ) {
+
+			return ! isNewPost || !! touched[ entry.field.meta_key ];
+
+		}
+
+		function renderEntry( entry ) {
+
+			return createElement( FieldControl, {
+				field: entry.field,
+				key: entry.field.meta_key,
+				showErrors: showsErrors( entry ),
+				value: entry.value,
+				onChange: function ( nextValue ) {
+
+					onFieldChange( entry.field, nextValue );
+
+				}
+			} );
+
+		}
+
+		function renderPanel( panel, index ) {
+
+			return createElement(
+				'div',
+				{
+					'aria-labelledby': tabId( panel.field ),
+					className: 'oa-fields',
+					hidden: index !== activeIndex,
+					id: panelId( panel.field ),
+					key: panel.field.name,
+					role: 'tabpanel',
+					tabIndex: 0
+				},
+				panel.entries.map( renderEntry )
+			);
+
+		}
+
+		function onTabKeyDown( event ) {
+
+			var last = layout.panels.length - 1;
+			var next = null;
+
+			if ( 'ArrowRight' === event.key || 'ArrowDown' === event.key ) {
+
+				next = activeIndex === last ? 0 : activeIndex + 1;
+
+			} else if ( 'ArrowLeft' === event.key || 'ArrowUp' === event.key ) {
+
+				next = activeIndex === 0 ? last : activeIndex - 1;
+
+			} else if ( 'Home' === event.key ) {
+
+				next = 0;
+
+			} else if ( 'End' === event.key ) {
+
+				next = last;
+
+			}
+
+			if ( null === next ) {
+
+				return;
+
+			}
+
+			event.preventDefault();
+			setTab( next );
+
+			var buttons = event.currentTarget.querySelectorAll( '.oa-tab' );
+
+			if ( buttons[ next ] ) {
+
+				buttons[ next ].focus();
+
+			}
+
+		}
+
+		function renderTab( panel, index ) {
+
+			var count = panel.entries.reduce( function ( total, entry ) {
+
+				return total + ( showsErrors( entry ) ? entry.missing.length : 0 );
+
+			}, 0 );
+
+			return createElement(
+				'button',
+				{
+					'aria-controls': panelId( panel.field ),
+					'aria-selected': index === activeIndex ? 'true' : 'false',
+					className: 'oa-tab' + ( index === activeIndex ? ' is-active' : '' ),
+					id: tabId( panel.field ),
+					key: panel.field.name,
+					role: 'tab',
+					tabIndex: index === activeIndex ? 0 : -1,
+					type: 'button',
+					onClick: function () {
+
+						setTab( index );
+
+					}
+				},
+				createElement( 'span', { className: 'oa-tab__label' }, panel.field.label ),
+				count ? createElement( 'span', { className: 'oa-tab__count' }, count ) : null
+			);
+
+		}
+
 		return createElement(
 			Fragment,
 			null,
 			createElement(
 				'div',
 				{ className: 'oa-structured-content__header' },
-				createElement(
-					'div',
-					{ className: 'oa-structured-content__heading' },
-					createElement( 'div', { className: 'oa-structured-content__eyebrow' }, editingLabel ),
-					createElement( 'div', { className: 'oa-structured-content__title' }, strings.title ),
-					createElement( 'p', { className: 'oa-structured-content__intro' }, strings.intro )
-				),
-				missing.length
-					? createElement(
-						'div',
-						{ className: 'oa-structured-content__status oa-structured-content__status--invalid' },
-						1 === missing.length ? strings.requiredSingle : strings.requiredPlural.replace( '%d', missing.length )
-					)
-					: createElement( 'div', { className: 'oa-structured-content__status oa-structured-content__status--ready' }, strings.ready )
+				createElement( 'div', { className: 'oa-structured-content__title' }, strings.title ),
+				createElement( 'p', { className: 'oa-structured-content__intro' }, strings.intro )
 			),
-			fields.length
-				? createElement( 'div', { className: 'oa-fields' }, entries.map( function ( entry ) {
-
-					return createElement( FieldControl, {
-						field: entry.field,
-						key: entry.field.meta_key,
-						showErrors: ! isNewPost || !! touched[ entry.field.meta_key ],
-						value: entry.value,
-						onChange: function ( nextValue ) {
-
-							onFieldChange( entry.field, nextValue );
-
-						}
-					} );
-
-				} ) )
-				: createElement( 'div', { className: 'oa-fields__empty' }, strings.emptyFields )
+			fields.length ? null : createElement( 'div', { className: 'oa-fields__empty' }, strings.emptyFields ),
+			layout.lead.length
+				? createElement( 'div', { className: 'oa-fields' }, layout.lead.map( renderEntry ) )
+				: null,
+			layout.panels.length
+				? createElement(
+					'div',
+					{
+						'aria-label': strings.tabsLabel,
+						className: 'oa-tabs',
+						role: 'tablist',
+						onKeyDown: onTabKeyDown
+					},
+					layout.panels.map( renderTab )
+				)
+				: null,
+			layout.panels.map( renderPanel )
 		);
 
 	}
