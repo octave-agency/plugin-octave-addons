@@ -3180,7 +3180,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					'orderby'         => 'name',
 					'show_count'      => true,
 					'hide_empty'      => false,
-					'hide_if_empty'   => true,
+					'hide_if_empty'   => false,
 				]
 			);
 
@@ -3197,11 +3197,14 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		foreach ( $this->admin_taxonomies as $taxonomy => $definition ) {
 
-			$column = 'taxonomy-' . $taxonomy;
+			if ( ! empty( $definition['show_admin_column'] ) ) {
 
-			if ( ! empty( $definition['show_admin_column'] ) && isset( $columns[ $column ] ) ) {
-
-				$columns[ $column ] = 'oa_taxonomy__' . $taxonomy;
+				$columns[ 'taxonomy-' . $taxonomy ] = [
+					'oa_taxonomy__' . $taxonomy,
+					false,
+					$definition['name'],
+					sprintf( __( 'Table ordered by %s.', 'octave-addons' ), $definition['name'] ),
+				];
 
 			}
 

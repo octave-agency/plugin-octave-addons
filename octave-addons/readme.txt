@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.7.0
+Stable tag:        3.7.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -79,6 +79,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.7.1 =
+* Fixed multiple enabled taxonomy filters not all appearing in the admin toolbar when some taxonomies had no terms.
+* Fixed taxonomy admin columns not receiving sortable links and ascending or descending indicators.
 
 = 3.7.0 =
 * Added per-taxonomy controls for showing a sortable admin post-table column and an optional toolbar filter, with existing taxonomy columns remaining enabled by default.
