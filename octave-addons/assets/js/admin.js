@@ -91,10 +91,13 @@ ADMIN INTERACTIONS
 
 	} );
 
-	/* Field row show/hide — control attributes accept comma-separated IDs */
-	document.querySelectorAll( '[data-controls-row]' ).forEach( function ( checkbox ) {
+	/* Field row show/hide — control attributes accept comma-separated IDs.
+	   A control carrying data-controls-value shows its rows while it holds that
+	   value, so a select can drive a row as well as a checkbox can. */
+	document.querySelectorAll( '[data-controls-row]' ).forEach( function ( control ) {
 
-		var ids = checkbox.dataset.controlsRow.split( ',' );
+		var ids = control.dataset.controlsRow.split( ',' );
+		var match = control.dataset.controlsValue;
 		var rows = ids.map( function ( id ) {
 
 			return document.getElementById( id.trim() );
@@ -109,16 +112,18 @@ ADMIN INTERACTIONS
 
 		function sync() {
 
+			var isVisible = undefined === match ? control.checked : match === control.value;
+
 			rows.forEach( function ( row ) {
 
-				row.classList.toggle( 'oa-hidden', ! checkbox.checked );
+				row.classList.toggle( 'oa-hidden', ! isVisible );
 
 			} );
 
 		}
 
 		sync();
-		checkbox.addEventListener( 'change', sync );
+		control.addEventListener( 'change', sync );
 
 	} );
 
@@ -1189,7 +1194,15 @@ ADMIN INTERACTIONS
 
 	}
 
-	document.querySelectorAll( '.oa-color-picker-wrap' ).forEach( function ( wrap ) {
+	function initColourPicker( wrap ) {
+
+		if ( wrap.dataset.oaColourReady ) {
+
+			return;
+
+		}
+
+		wrap.dataset.oaColourReady = 'true';
 
 		var input = wrap.querySelector( '.oa-color-input' );
 		var trigger = wrap.querySelector( '.oa-color-trigger' );
@@ -1375,7 +1388,37 @@ ADMIN INTERACTIONS
 
 		renderColour( false );
 
-	} );
+	}
+
+	document.querySelectorAll( '.oa-color-picker-wrap' ).forEach( initColourPicker );
+
+	// A repeater card cloned from a template arrives after this pass, so new
+	// pickers are wired the moment they land in the page.
+	new MutationObserver( function ( mutations ) {
+
+		mutations.forEach( function ( mutation ) {
+
+			mutation.addedNodes.forEach( function ( node ) {
+
+				if ( Node.ELEMENT_NODE !== node.nodeType ) {
+
+					return;
+
+				}
+
+				if ( node.matches( '.oa-color-picker-wrap' ) ) {
+
+					initColourPicker( node );
+
+				}
+
+				node.querySelectorAll( '.oa-color-picker-wrap' ).forEach( initColourPicker );
+
+			} );
+
+		} );
+
+	} ).observe( document.querySelector( '.oa-app' ), { childList: true, subtree: true } );
 
 	/*
 	CONFIRMATION DIALOG
@@ -3907,5 +3950,327 @@ BREAKDANCE SPACING GRID
 	elementRows.forEach( syncRow );
 	syncTabs();
 	syncPreview();
+
+})();
+
+/*
+BACKGROUND FIELDS
+-- Swaps between the solid and gradient halves of a background control and
+-- keeps the swatch previewing the value that will actually be saved.
+---------------------------------------------------------- */
+
+(function () {
+
+	'use strict';
+
+	var app = document.querySelector( '.oa-app' );
+
+	if ( ! app ) {
+
+		return;
+
+	}
+
+	function partValue( field, key ) {
+
+		var input = field.querySelector( '[name$="[' + key + ']"]' );
+
+		return input ? input.value : '';
+
+	}
+
+	function syncBackground( field ) {
+
+		var type = field.querySelector( '.oa-background-type' );
+		var preview = field.querySelector( '.oa-background-preview' );
+		var solid = field.querySelector( '.oa-background-solid' );
+		var gradient = field.querySelector( '.oa-background-gradient' );
+		var isGradient = type && 'gradient' === type.value;
+
+		solid.classList.toggle( 'oa-hidden', isGradient );
+		gradient.classList.toggle( 'oa-hidden', ! isGradient );
+
+		preview.style.background = isGradient
+			? 'linear-gradient(' + ( partValue( field, 'angle' ) || '135' ) + 'deg, ' + partValue( field, 'from' ) + ', ' + partValue( field, 'to' ) + ')'
+			: partValue( field, 'color' );
+
+		field.dispatchEvent( new CustomEvent( 'oa-background-change', { bubbles: true } ) );
+
+	}
+
+	function syncFromTarget( target ) {
+
+		if ( ! target || ! target.closest ) {
+
+			return;
+
+		}
+
+		var field = target.closest( '[data-oa-background]' );
+
+		if ( field ) {
+
+			syncBackground( field );
+
+			return;
+
+		}
+
+		// A cloned repeater card announces itself rather than each of its
+		// controls, so its fields are found by looking inside it.
+		if ( target.querySelectorAll ) {
+
+			target.querySelectorAll( '[data-oa-background]' ).forEach( syncBackground );
+
+		}
+
+	}
+
+	app.addEventListener( 'input', function ( event ) {
+
+		syncFromTarget( event.target );
+
+	} );
+
+	app.addEventListener( 'change', function ( event ) {
+
+		syncFromTarget( event.target );
+
+	} );
+
+	app.querySelectorAll( '[data-oa-background]' ).forEach( syncBackground );
+
+})();
+
+/*
+NOTIFICATIONS BAR BANNERS
+-- Adds, removes and expands the repeatable banner cards, and keeps every
+-- collapsed card showing the message, schedule and colour it holds.
+---------------------------------------------------------- */
+
+(function () {
+
+	'use strict';
+
+	var section = document.querySelector( '[data-oa-nb-repeater]' );
+
+	if ( ! section ) {
+
+		return;
+
+	}
+
+	var list = section.querySelector( '.oa-nb-list' );
+	var template = section.querySelector( '.oa-nb-template' );
+	var addButton = section.querySelector( '.oa-nb-add' );
+	var defaultType = document.getElementById( 'oa-notifications-bar-bg' );
+	var defaultField = defaultType ? defaultType.closest( '[data-oa-background]' ) : null;
+	var defaultPreview = defaultField ? defaultField.querySelector( '.oa-background-preview' ) : null;
+	var nextIndex = list.children.length;
+
+	function cards() {
+
+		return Array.prototype.slice.call( list.querySelectorAll( '[data-oa-nb-card]' ) );
+
+	}
+
+	function reindex() {
+
+		cards().forEach( function ( card, index ) {
+
+			card.querySelectorAll( '[name]' ).forEach( function ( field ) {
+
+				field.name = field.name.replace( /\[banners\]\[[^\]]*\]/, '[banners][' + index + ']' );
+
+			} );
+
+		} );
+
+	}
+
+	function scheduleLabel( card ) {
+
+		var from = card.querySelector( '[name$="[date_from]"]' );
+		var to = card.querySelector( '[name$="[date_to]"]' );
+		var fromValue = from ? from.value : '';
+		var toValue = to ? to.value : '';
+
+		if ( ! fromValue && ! toValue ) {
+
+			return oaAdmin.bannerAlwaysOnText;
+
+		}
+
+		if ( ! toValue ) {
+
+			return oaAdmin.bannerFromText.replace( '%s', fromValue );
+
+		}
+
+		if ( ! fromValue ) {
+
+			return oaAdmin.bannerUntilText.replace( '%s', toValue );
+
+		}
+
+		return oaAdmin.bannerRangeText.replace( '%1$s', fromValue ).replace( '%2$s', toValue );
+
+	}
+
+	function syncCard( card ) {
+
+		var message = card.querySelector( '[data-oa-nb-title]' );
+		var title = card.querySelector( '.oa-nb-item-title' );
+		var dates = card.querySelector( '.oa-nb-item-dates' );
+		var swatch = card.querySelector( '.oa-nb-swatch' );
+		var appearance = card.querySelector( '.oa-nb-appearance' );
+		var enabled = card.querySelector( '.oa-nb-enabled-toggle' );
+		var isCustom = appearance && 'custom' === appearance.value;
+		var source = isCustom ? card.querySelector( '.oa-background-preview' ) : defaultPreview;
+		var text = message ? message.value.replace( /<[^>]*>/g, '' ).trim() : '';
+
+		title.textContent = text || oaAdmin.newBannerText;
+		dates.textContent = scheduleLabel( card );
+		card.classList.toggle( 'is-disabled', enabled && ! enabled.checked );
+
+		card.querySelectorAll( '.oa-nb-field--custom' ).forEach( function ( field ) {
+
+			field.classList.toggle( 'oa-hidden', ! isCustom );
+
+		} );
+
+		if ( swatch && source ) {
+
+			swatch.style.background = source.style.background;
+
+		}
+
+	}
+
+	function syncAll() {
+
+		cards().forEach( syncCard );
+
+	}
+
+	function addBanner() {
+
+		var card = template.content.firstElementChild.cloneNode( true );
+
+		card.querySelectorAll( '[name]' ).forEach( function ( field ) {
+
+			field.name = field.name.replace( '[banners][__INDEX__]', '[banners][' + nextIndex + ']' );
+
+		} );
+
+		nextIndex++;
+		list.appendChild( card );
+		reindex();
+		syncCard( card );
+
+		// Announced as a change so the background controls inside the new card
+		// draw their previews and the save bar notices the edit.
+		card.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+
+		var firstField = card.querySelector( '[data-oa-nb-title]' );
+
+		if ( firstField ) {
+
+			firstField.focus();
+
+		}
+
+		window.oaNotify( oaAdmin.bannerAddedText );
+
+	}
+
+	function removeBanner( card ) {
+
+		window.oaConfirm( {
+			title: oaAdmin.removeBannerTitle,
+			message: oaAdmin.removeBannerText,
+			confirmText: oaAdmin.removeBannerAction,
+			destructive: true
+		} ).then( function ( confirmed ) {
+
+			if ( ! confirmed ) {
+
+				return;
+
+			}
+
+			card.remove();
+			reindex();
+			list.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+			window.oaNotify( oaAdmin.bannerRemovedText );
+
+		} );
+
+	}
+
+	addButton.addEventListener( 'click', addBanner );
+
+	section.addEventListener( 'click', function ( event ) {
+
+		var expand = event.target.closest( '.oa-nb-expand' );
+
+		if ( expand ) {
+
+			var open = 'true' === expand.getAttribute( 'aria-expanded' );
+
+			expand.setAttribute( 'aria-expanded', open ? 'false' : 'true' );
+			expand.closest( '[data-oa-nb-card]' ).querySelector( '.oa-nb-groups' ).classList.toggle( 'oa-hidden', open );
+
+			return;
+
+		}
+
+		var remove = event.target.closest( '.oa-nb-remove' );
+
+		if ( remove ) {
+
+			removeBanner( remove.closest( '[data-oa-nb-card]' ) );
+
+		}
+
+	} );
+
+	section.addEventListener( 'input', function ( event ) {
+
+		var card = event.target.closest( '[data-oa-nb-card]' );
+
+		if ( card ) {
+
+			syncCard( card );
+
+		}
+
+	} );
+
+	section.addEventListener( 'change', function ( event ) {
+
+		var card = event.target.closest( '[data-oa-nb-card]' );
+
+		if ( card ) {
+
+			syncCard( card );
+
+		}
+
+	} );
+
+	// The module default background drives every card left on the defaults, so
+	// editing it refreshes their swatches too.
+	document.addEventListener( 'oa-background-change', function ( event ) {
+
+		if ( ! event.target.closest( '[data-oa-nb-card]' ) ) {
+
+			syncAll();
+
+		}
+
+	} );
+
+	syncAll();
 
 })();

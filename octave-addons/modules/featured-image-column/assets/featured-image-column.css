@@ -1,0 +1,137 @@
+/*
+FEATURED IMAGE COLUMN
+-- The thumbnail cell in the admin post tables and its hover controls.
+-- The thumbnail edge is published by the module as --oa-fic-size, so the
+-- column and every box inside it stay in step with one number.
+---------------------------------------------------------- */
+
+.wp-list-table th.column-oa_featured_image,
+.wp-list-table td.column-oa_featured_image {
+    width: calc(var(--oa-fic-size, 60px) + 16px);
+}
+
+.oa-fic {
+    display: inline-block;
+    position: relative;
+    width: var(--oa-fic-size, 60px);
+    height: var(--oa-fic-size, 60px);
+    line-height: 0;
+}
+
+.oa-fic__link {
+    display: block;
+    line-height: 0;
+}
+
+.oa-fic__thumb {
+    display: block;
+    width: var(--oa-fic-size, 60px);
+    height: var(--oa-fic-size, 60px);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    object-fit: cover;
+}
+
+.oa-fic__empty {
+    display: block;
+    width: var(--oa-fic-size, 60px);
+    height: var(--oa-fic-size, 60px);
+    border: 1px dashed rgba(0, 0, 0, 0.18);
+    border-radius: 4px;
+}
+
+/*
+Hover controls
+---------------------------------------------------------- */
+
+/* The backdrop never takes the pointer, so clicking the thumbnail around the
+   buttons still opens the post the way it does with no controls present. */
+.oa-fic__actions {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.oa-fic:hover .oa-fic__actions,
+.oa-fic:focus-within .oa-fic__actions {
+    opacity: 1;
+}
+
+.oa-fic:hover .oa-fic__action,
+.oa-fic:focus-within .oa-fic__action {
+    pointer-events: auto;
+}
+
+.oa-fic.is-empty .oa-fic__actions {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+.oa-fic__action {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    color: #ffffff;
+    border: 0;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    pointer-events: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.oa-fic.is-empty .oa-fic__action {
+    color: #50575e;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.oa-fic__action:hover,
+.oa-fic__action:focus-visible {
+    background: #2271b1;
+    color: #ffffff;
+}
+
+.oa-fic__action--remove:hover,
+.oa-fic__action--remove:focus-visible {
+    background: #b32d2e;
+}
+
+.oa-fic__action .dashicons {
+    width: 17px;
+    height: 17px;
+    font-size: 17px;
+}
+
+/*
+Saving
+---------------------------------------------------------- */
+
+.oa-fic.is-updating {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/*
+Stacked table rows
+-- WordPress drops the fixed column layout on small screens, so the cell has
+-- to give its width back or it fights the stacked label.
+---------------------------------------------------------- */
+
+@media screen and (max-width: 782px) {
+
+    .wp-list-table th.column-oa_featured_image,
+    .wp-list-table td.column-oa_featured_image {
+        width: auto;
+    }
+
+}

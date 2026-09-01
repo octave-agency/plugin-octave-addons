@@ -1,0 +1,149 @@
+/*
+NOTIFICATIONS BAR
+-- Frontend styles for the stacked announcement banners.
+-- Colours arrive as custom properties set inline by the module, so a banner
+-- with its own background simply overrides them on itself.
+---------------------------------------------------------- */
+
+.oa-nb {
+    position: relative;
+    z-index: 9999996;
+    width: 100%;
+}
+
+.oa-nb--sticky {
+    position: sticky;
+    top: 0;
+}
+
+.oa-nb--bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/*
+Banner
+---------------------------------------------------------- */
+
+.oa-nb__banner {
+    position: relative;
+    background: var(--oa-nb-bg, #111827);
+    color: var(--oa-nb-text, #ffffff);
+    transition: opacity 0.2s ease;
+}
+
+.oa-nb__banner.is-closing {
+    opacity: 0;
+}
+
+.oa-nb__banner + .oa-nb__banner {
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.oa-nb__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    max-width: var(--oa-nb-width, 1180px);
+    margin: 0 auto;
+    padding: 12px 52px;
+}
+
+/*
+Message
+---------------------------------------------------------- */
+
+.oa-nb__text {
+    margin: 0;
+    color: inherit;
+    font-size: 15px;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.oa-nb__text a {
+    color: var(--oa-nb-link, currentColor);
+    text-decoration: underline;
+}
+
+.oa-nb__text--link {
+    color: var(--oa-nb-link, currentColor);
+    text-decoration: none;
+}
+
+.oa-nb__text--link:hover,
+.oa-nb__text--link:focus-visible {
+    text-decoration: underline;
+}
+
+/*
+Button
+-- Everything but the overrides the module writes inline is left to the
+-- Breakdance global button styles this class list opts into.
+---------------------------------------------------------- */
+
+.oa-nb__button {
+    flex-shrink: 0;
+}
+
+/*
+Close
+---------------------------------------------------------- */
+
+.oa-nb__close {
+    display: grid;
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    color: var(--oa-nb-close, currentColor);
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    opacity: 0.75;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.oa-nb__close:hover,
+.oa-nb__close:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+    opacity: 1;
+}
+
+.oa-nb__close svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+/*
+Small screens
+---------------------------------------------------------- */
+
+@media (max-width: 600px) {
+
+    .oa-nb__inner {
+        flex-direction: column;
+        padding: 14px 46px;
+    }
+
+    .oa-nb__text {
+        font-size: 14px;
+    }
+
+    .oa-nb__close {
+        top: 8px;
+        transform: none;
+    }
+
+}

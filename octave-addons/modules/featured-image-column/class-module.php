@@ -2,9 +2,13 @@
 
 /*
 MODULE: FEATURED IMAGE COLUMN
--- Adds a featured image thumbnail column to the admin post list tables, so a
+-- Adds a featured image thumbnail column to every admin post list table, so a
 -- library of posts can be scanned by image rather than by title alone.
--- Only post types that declare thumbnail support are offered or hooked.
+-- Covers every post type that declares thumbnail support, and sits directly
+-- after the date column, ahead of any SEO plugin's own columns.
+-- Hovering a cell reveals controls to swap the image through the media
+-- library or clear it, both applied over AJAX without leaving the table.
+-- Always on and hidden from the admin — there is nothing to configure.
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,11 +22,24 @@ class Octave_Addons_Module_Featured_Image_Column extends Octave_Addons_Module {
 	/** Column key added to each list table. */
 	const COLUMN = 'oa_featured_image';
 
-	/** Where the column may sit relative to the title column. */
-	const POSITIONS = [ 'before_title', 'after_title', 'end' ];
+	/** Action and nonce name for the inline image updates. */
+	const ACTION = 'oa_featured_image_update';
 
-	/** Settings the current request runs with, shared with the column callbacks. */
-	protected array $settings = [];
+	/** Rendered thumbnail edge, in pixels. */
+	protected const SIZE = 60;
+
+	/** Registered image size the thumbnail is loaded at. */
+	protected const IMAGE_SIZE = 'thumbnail';
+
+	/*
+	SEO COLUMN PREFIXES
+	-- Column keys belonging to an SEO plugin. The thumbnail is placed before
+	-- the first of them, so the run of SEO columns is left intact at the end
+	-- of the row wherever the plugin chose to add them.
+	---------------------------------------------------------- */
+
+	protected const SEO_PREFIXES = [ 'rank_math', 'wpseo', 'aioseo', 'seopress' ];
+
 
 	public function get_id(): string {
 
@@ -38,54 +55,30 @@ class Octave_Addons_Module_Featured_Image_Column extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Shows a featured image thumbnail column in the admin post tables, so entries can be scanned by image and missing images are obvious.', 'octave-addons' );
-
-	}
-
-	public function get_defaults(): array {
-
-		return [
-			'enabled'          => false,
-			'post_types'       => [],             // empty = every post type supporting thumbnails
-			'position'         => 'before_title', // before_title | after_title | end
-			'label'            => '',             // empty = "Image"
-			'size'             => 'thumbnail',    // registered image size used for the <img>
-			'width'            => 60,             // rendered column width in pixels
-			'link_to_edit'     => true,           // wrap the thumbnail in the post edit link
-			'show_placeholder' => true,           // draw an outline when a post has no image
-		];
+		return __( 'Shows a featured image thumbnail column in every admin post table, with hover controls to swap or clear the image in place.', 'octave-addons' );
 
 	}
 
 	/*
-	SANITIZE
-	-- Keeps the stored post types and image size to values the site actually
-	-- registers, so a renamed post type or removed size cannot persist.
+	SHOW IN ADMIN
+	-- Hidden: the column is the same on every site, so there is nothing to
+	-- present on the settings screen.
 	---------------------------------------------------------- */
 
-	public function sanitize( $input ): array {
+	public function show_in_admin(): bool {
 
-		$clean = $this->get_defaults();
-		$input = is_array( $input ) ? $input : [];
+		return false;
 
-		$clean['enabled']          = ! empty( $input['enabled'] );
-		$clean['link_to_edit']     = ! empty( $input['link_to_edit'] );
-		$clean['show_placeholder'] = ! empty( $input['show_placeholder'] );
+	}
 
-		$eligible          = array_keys( $this->eligible_post_types() );
-		$submitted         = is_array( $input['post_types'] ?? null ) ? $input['post_types'] : [];
-		$clean['post_types'] = array_values( array_intersect( $eligible, array_map( 'sanitize_key', $submitted ) ) );
+	/*
+	IS ALWAYS ENABLED
+	-- Runs regardless of saved settings.
+	---------------------------------------------------------- */
 
-		$clean['position'] = in_array( $input['position'] ?? '', self::POSITIONS, true )
-			? $input['position'] : 'before_title';
+	public function is_always_enabled(): bool {
 
-		$size           = sanitize_key( $input['size'] ?? '' );
-		$clean['size']  = in_array( $size, array_keys( $this->image_sizes() ), true ) ? $size : 'thumbnail';
-
-		$clean['label'] = sanitize_text_field( $input['label'] ?? '' );
-		$clean['width'] = min( 200, max( 30, absint( $input['width'] ?? 60 ) ) );
-
-		return $clean;
+		return true;
 
 	}
 
@@ -107,265 +100,11 @@ class Octave_Addons_Module_Featured_Image_Column extends Octave_Addons_Module {
 
 			}
 
-			$types[ $post_type->name ] = $post_type->labels->name ?? $post_type->name;
+			$types[] = $post_type->name;
 
 		}
 
 		return $types;
-
-	}
-
-	/*
-	ACTIVE POST TYPES
-	-- Resolves the saved selection, treating an empty selection as every
-	-- eligible post type so the module is useful the moment it is switched on.
-	---------------------------------------------------------- */
-
-	protected function active_post_types( array $settings ): array {
-
-		$eligible = array_keys( $this->eligible_post_types() );
-		$saved    = is_array( $settings['post_types'] ?? null ) ? $settings['post_types'] : [];
-
-		if ( empty( $saved ) ) {
-
-			return $eligible;
-
-		}
-
-		return array_values( array_intersect( $eligible, $saved ) );
-
-	}
-
-	/*
-	IMAGE SIZES
-	-- Registered sizes the thumbnail can be rendered at, labelled with their
-	-- dimensions so a size that is far too large to sit in a table is obvious.
-	---------------------------------------------------------- */
-
-	protected function image_sizes(): array {
-
-		$sizes = [];
-
-		foreach ( get_intermediate_image_sizes() as $size ) {
-
-			$sizes[ $size ] = $size;
-
-		}
-
-		if ( ! isset( $sizes['thumbnail'] ) ) {
-
-			$sizes = array_merge( [ 'thumbnail' => 'thumbnail' ], $sizes );
-
-		}
-
-		ksort( $sizes );
-
-		return $sizes;
-
-	}
-
-	/*
-	COLUMN LABEL
-	-- Falls back to a neutral heading when no custom label is stored.
-	---------------------------------------------------------- */
-
-	protected function column_label( array $settings ): string {
-
-		$label = trim( (string) ( $settings['label'] ?? '' ) );
-
-		return '' !== $label ? $label : __( 'Image', 'octave-addons' );
-
-	}
-
-	public function render_settings( array $s ): void {
-
-		$eligible = $this->eligible_post_types();
-		$active   = is_array( $s['post_types'] ?? null ) ? $s['post_types'] : [];
-		$sizes    = $this->image_sizes();
-
-		$positions = [
-			'before_title' => __( 'Before the title', 'octave-addons' ),
-			'after_title'  => __( 'After the title', 'octave-addons' ),
-			'end'          => __( 'At the end of the row', 'octave-addons' ),
-		];
-
-		?>
-
-		<table class="form-table oa-form-table" role="presentation">
-
-			<?php
-
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Post types', 'octave-addons' ),
-				'field' => function () use ( $eligible, $active ) {
-
-					?>
-
-					<fieldset>
-						<div class="oa-assignment-grid">
-
-							<?php
-
-							if ( empty( $eligible ) ) :
-
-							?>
-
-							<p class="oa-assignment-empty"><?php esc_html_e( 'No post type on this site supports featured images.', 'octave-addons' ); ?></p>
-
-							<?php
-
-							endif;
-
-							foreach ( $eligible as $post_type => $label ) :
-
-							?>
-
-							<label class="oa-assignment-option">
-								<input type="checkbox" name="<?= esc_attr( $this->field_name( 'post_types' ) ); ?>[]" value="<?= esc_attr( $post_type ); ?>"<?= checked( in_array( $post_type, $active, true ), true, false ); ?>>
-								<span class="oa-assignment-check" aria-hidden="true"></span>
-								<span class="oa-assignment-copy"><strong><?= esc_html( $label ); ?></strong><small><?= esc_html( $post_type ); ?></small></span>
-							</label>
-
-							<?php
-
-							endforeach;
-
-							?>
-
-						</div>
-					</fieldset>
-					<span class="oa-help"><?php esc_html_e( 'Only post types that support featured images are listed. Leave every box clear to cover all of them.', 'octave-addons' ); ?></span>
-
-					<?php
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'for'   => $this->field_id( 'position' ),
-				'label' => __( 'Column position', 'octave-addons' ),
-				'field' => function () use ( $s, $positions ) {
-
-					?>
-
-					<select id="<?= esc_attr( $this->field_id( 'position' ) ); ?>" name="<?= esc_attr( $this->field_name( 'position' ) ); ?>">
-
-						<?php
-
-						foreach ( $positions as $value => $label ) :
-
-						?>
-
-						<option value="<?= esc_attr( $value ); ?>"<?php selected( $s['position'], $value ); ?>><?= esc_html( $label ); ?></option>
-
-						<?php
-
-						endforeach;
-
-						?>
-
-					</select>
-					<span class="oa-help"><?php esc_html_e( 'Where the thumbnail sits in the row. Before the title keeps it next to the checkbox.', 'octave-addons' ); ?></span>
-
-					<?php
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'for'   => $this->field_id( 'label' ),
-				'label' => __( 'Column heading', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::text( [
-						'id'          => $this->field_id( 'label' ),
-						'name'        => $this->field_name( 'label' ),
-						'value'       => $s['label'],
-						'placeholder' => __( 'Image', 'octave-addons' ),
-						'class'       => 'regular-text',
-						'help'        => __( 'Heading shown above the column. Leave empty for "Image".', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'for'   => $this->field_id( 'size' ),
-				'label' => __( 'Image size', 'octave-addons' ),
-				'field' => function () use ( $s, $sizes ) {
-
-					?>
-
-					<select id="<?= esc_attr( $this->field_id( 'size' ) ); ?>" name="<?= esc_attr( $this->field_name( 'size' ) ); ?>">
-
-						<?php
-
-						foreach ( $sizes as $value => $label ) :
-
-						?>
-
-						<option value="<?= esc_attr( $value ); ?>"<?php selected( $s['size'], $value ); ?>><?= esc_html( $label ); ?></option>
-
-						<?php
-
-						endforeach;
-
-						?>
-
-					</select>
-					<span class="oa-help"><?php esc_html_e( 'Registered size the thumbnail is loaded at. Thumbnail keeps the table light.', 'octave-addons' ); ?></span>
-
-					<?php
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'for'   => $this->field_id( 'width' ),
-				'label' => __( 'Column width', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					?>
-
-					<input type="number" id="<?= esc_attr( $this->field_id( 'width' ) ); ?>" name="<?= esc_attr( $this->field_name( 'width' ) ); ?>" value="<?= esc_attr( (string) $s['width'] ); ?>" min="30" max="200" step="1" class="small-text">
-					<span class="oa-help"><?php esc_html_e( 'Width of the rendered thumbnail in pixels, between 30 and 200.', 'octave-addons' ); ?></span>
-
-					<?php
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Link to editor', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'name'    => $this->field_name( 'link_to_edit' ),
-						'checked' => ! empty( $s['link_to_edit'] ),
-						'help'    => __( 'Make the thumbnail open the post for editing, the same as clicking its title.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Missing images', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'name'    => $this->field_name( 'show_placeholder' ),
-						'checked' => ! empty( $s['show_placeholder'] ),
-						'help'    => __( 'Draw an empty outline for posts with no featured image, rather than leaving the cell blank.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			?>
-
-		</table>
-
-		<?php
 
 	}
 
@@ -377,24 +116,25 @@ class Octave_Addons_Module_Featured_Image_Column extends Octave_Addons_Module {
 
 		}
 
-		$this->settings = $s;
-
 		add_action( 'admin_init', [ $this, 'register_columns' ] );
-		add_action( 'admin_head-edit.php', [ $this, 'print_styles' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'wp_ajax_' . self::ACTION, [ $this, 'ajax_update_thumbnail' ] );
 
 	}
 
 	/*
 	REGISTER COLUMNS
-	-- Hooks each selected post type. The per-post-type filters cover pages and
+	-- Hooks every eligible post type. The per-post-type filters cover pages and
 	-- custom post types as well as posts, so one pair of hooks is enough.
+	-- A late priority gives an SEO plugin the chance to add its own columns
+	-- first, so they are already present when the order is worked out.
 	---------------------------------------------------------- */
 
 	public function register_columns(): void {
 
-		foreach ( $this->active_post_types( $this->settings ) as $post_type ) {
+		foreach ( $this->eligible_post_types() as $post_type ) {
 
-			add_filter( "manage_{$post_type}_posts_columns", [ $this, 'add_column' ] );
+			add_filter( "manage_{$post_type}_posts_columns", [ $this, 'add_column' ], 20 );
 			add_action( "manage_{$post_type}_posts_custom_column", [ $this, 'render_column' ], 10, 2 );
 
 		}
@@ -403,41 +143,41 @@ class Octave_Addons_Module_Featured_Image_Column extends Octave_Addons_Module {
 
 	/*
 	ADD COLUMN
-	-- Rebuilds the column map so the thumbnail can be placed around the title
-	-- column, which array_merge alone cannot do without losing the order.
+	-- Places the thumbnail immediately after the date column, and before the
+	-- first SEO column when a plugin has put one ahead of the date. Falls back
+	-- to the end of the row for a table carrying neither.
 	---------------------------------------------------------- */
 
 	public function add_column( $columns ): array {
 
-		$columns  = is_array( $columns ) ? $columns : [];
-		$position = $this->settings['position'] ?? 'before_title';
-		$label    = $this->column_label( $this->settings );
-
-		if ( 'end' === $position || ! isset( $columns['title'] ) ) {
-
-			$columns[ self::COLUMN ] = $label;
-
-			return $columns;
-
-		}
-
+		$columns = is_array( $columns ) ? $columns : [];
+		$label   = __( 'Image', 'octave-addons' );
 		$ordered = [];
+		$placed  = false;
 
 		foreach ( $columns as $key => $value ) {
 
-			if ( 'title' === $key && 'before_title' === $position ) {
+			if ( ! $placed && $this->is_seo_column( (string) $key ) ) {
 
 				$ordered[ self::COLUMN ] = $label;
+				$placed                  = true;
 
 			}
 
 			$ordered[ $key ] = $value;
 
-			if ( 'title' === $key && 'after_title' === $position ) {
+			if ( ! $placed && 'date' === $key ) {
 
 				$ordered[ self::COLUMN ] = $label;
+				$placed                  = true;
 
 			}
+
+		}
+
+		if ( ! $placed ) {
+
+			$ordered[ self::COLUMN ] = $label;
 
 		}
 
@@ -445,11 +185,21 @@ class Octave_Addons_Module_Featured_Image_Column extends Octave_Addons_Module {
 
 	}
 
-	/*
-	RENDER COLUMN
-	-- Prints one cell. The thumbnail is sized by CSS rather than by the
-	-- requested size so a large registered size still fits the table.
-	---------------------------------------------------------- */
+	protected function is_seo_column( string $key ): bool {
+
+		foreach ( self::SEO_PREFIXES as $prefix ) {
+
+			if ( 0 === strpos( $key, $prefix ) ) {
+
+				return true;
+
+			}
+
+		}
+
+		return false;
+
+	}
 
 	public function render_column( $column, $post_id ): void {
 
@@ -459,98 +209,229 @@ class Octave_Addons_Module_Featured_Image_Column extends Octave_Addons_Module {
 
 		}
 
-		$post_id   = (int) $post_id;
-		$size      = $this->settings['size'] ?? 'thumbnail';
-		$thumbnail = has_post_thumbnail( $post_id )
-			? get_the_post_thumbnail( $post_id, $size, [ 'class' => 'oa-featured-image-thumb', 'loading' => 'lazy' ] )
-			: '';
-
-		if ( '' === $thumbnail ) {
-
-			if ( ! empty( $this->settings['show_placeholder'] ) ) {
-
-				printf(
-					'<span class="oa-featured-image-empty" aria-label="%s"></span>',
-					esc_attr__( 'No featured image', 'octave-addons' )
-				);
-
-			} else {
-
-				echo '<span aria-hidden="true">&mdash;</span>';
-
-			}
-
-			return;
-
-		}
-
-		$edit_link = ! empty( $this->settings['link_to_edit'] ) ? get_edit_post_link( $post_id ) : '';
-
-		if ( $edit_link ) {
-
-			printf(
-				'<a href="%1$s" class="oa-featured-image-link" aria-label="%2$s">%3$s</a>',
-				esc_url( $edit_link ),
-				/* translators: %s: post title. */
-				esc_attr( sprintf( __( 'Edit %s', 'octave-addons' ), get_the_title( $post_id ) ) ),
-				$thumbnail
-			);
-
-			return;
-
-		}
-
-		echo $thumbnail;
+		echo $this->cell_html( (int) $post_id ); // phpcs:ignore WordPress.Security.EscapeOutput -- built and escaped in cell_html().
 
 	}
 
 	/*
-	PRINT STYLES
-	-- Sizes the column on the list tables only. The width is a saved number, so
-	-- the rule is built from it directly rather than enqueuing a stylesheet.
+	CELL HTML
+	-- One complete cell, used both when the table is drawn and when an update
+	-- comes back over AJAX, so the two can never drift apart.
+	-- The hover controls are only drawn for someone who may edit the post.
 	---------------------------------------------------------- */
 
-	public function print_styles(): void {
+	protected function cell_html( int $post_id ): string {
 
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$can_edit  = current_user_can( 'edit_post', $post_id );
+		$title     = get_the_title( $post_id );
+		$thumbnail = has_post_thumbnail( $post_id )
+			? get_the_post_thumbnail( $post_id, self::IMAGE_SIZE, [ 'class' => 'oa-fic__thumb', 'loading' => 'lazy' ] )
+			: '';
 
-		if ( ! $screen || ! in_array( $screen->post_type, $this->active_post_types( $this->settings ), true ) ) {
+		$classes = 'oa-fic' . ( '' === $thumbnail ? ' is-empty' : '' );
+
+		$html = sprintf(
+			'<div class="%1$s" data-post-id="%2$d">',
+			esc_attr( $classes ),
+			$post_id
+		);
+
+		$html .= $this->image_html( $post_id, $thumbnail, $title, $can_edit );
+
+		if ( $can_edit ) {
+
+			$html .= $this->actions_html( $title, '' !== $thumbnail );
+
+		}
+
+		return $html . '</div>';
+
+	}
+
+	/*
+	IMAGE HTML
+	-- The thumbnail itself, linked to the post editor when the current user can
+	-- open it, or the dashed outline standing in for a post with no image.
+	---------------------------------------------------------- */
+
+	protected function image_html( int $post_id, string $thumbnail, string $title, bool $can_edit ): string {
+
+		if ( '' === $thumbnail ) {
+
+			return sprintf(
+				'<span class="oa-fic__empty" aria-label="%s"></span>',
+				esc_attr__( 'No featured image', 'octave-addons' )
+			);
+
+		}
+
+		$edit_link = $can_edit ? get_edit_post_link( $post_id ) : '';
+
+		if ( ! $edit_link ) {
+
+			return $thumbnail;
+
+		}
+
+		return sprintf(
+			'<a href="%1$s" class="oa-fic__link" aria-label="%2$s">%3$s</a>',
+			esc_url( $edit_link ),
+			/* translators: %s: post title. */
+			esc_attr( sprintf( __( 'Edit %s', 'octave-addons' ), $title ) ),
+			$thumbnail
+		);
+
+	}
+
+	/*
+	ACTIONS HTML
+	-- The hover controls. Remove is only offered when there is an image to
+	-- take away, so the control set always matches the state of the cell.
+	---------------------------------------------------------- */
+
+	protected function actions_html( string $title, bool $has_image ): string {
+
+		$html = '<div class="oa-fic__actions">';
+
+		$html .= sprintf(
+			'<button type="button" class="oa-fic__action oa-fic__action--edit" data-oa-fic-action="edit" aria-label="%1$s" title="%2$s"><span class="dashicons dashicons-edit" aria-hidden="true"></span></button>',
+			esc_attr(
+				$has_image
+					/* translators: %s: post title. */
+					? sprintf( __( 'Change the featured image for %s', 'octave-addons' ), $title )
+					/* translators: %s: post title. */
+					: sprintf( __( 'Set a featured image for %s', 'octave-addons' ), $title )
+			),
+			$has_image ? esc_attr__( 'Change image', 'octave-addons' ) : esc_attr__( 'Set image', 'octave-addons' )
+		);
+
+		if ( $has_image ) {
+
+			$html .= sprintf(
+				'<button type="button" class="oa-fic__action oa-fic__action--remove" data-oa-fic-action="remove" aria-label="%1$s" title="%2$s"><span class="dashicons dashicons-trash" aria-hidden="true"></span></button>',
+				/* translators: %s: post title. */
+				esc_attr( sprintf( __( 'Remove the featured image from %s', 'octave-addons' ), $title ) ),
+				esc_attr__( 'Remove image', 'octave-addons' )
+			);
+
+		}
+
+		return $html . '</div>';
+
+	}
+
+	/*
+	ENQUEUE ASSETS
+	-- Loads on the post list tables only, and only for a post type carrying the
+	-- column. The media library is pulled in because the edit control opens it.
+	---------------------------------------------------------- */
+
+	public function enqueue_assets( $hook ): void {
+
+		if ( 'edit.php' !== $hook ) {
 
 			return;
 
 		}
 
-		$width  = (int) ( $this->settings['width'] ?? 60 );
-		$column = self::COLUMN;
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		?>
+		if ( ! $screen || ! in_array( $screen->post_type, $this->eligible_post_types(), true ) ) {
 
-		<style id="oa-featured-image-column">
-			.wp-list-table th.column-<?= esc_html( $column ); ?> { width: <?= (int) ( $width + 16 ); ?>px; }
-			.wp-list-table td.column-<?= esc_html( $column ); ?> { width: <?= (int) ( $width + 16 ); ?>px; }
-			.oa-featured-image-thumb {
-				display: block;
-				width: <?= $width; ?>px;
-				height: <?= $width; ?>px;
-				object-fit: cover;
-				border-radius: 4px;
-				background: rgba(0, 0, 0, 0.04);
-			}
-			.oa-featured-image-link { display: inline-block; line-height: 0; }
-			.oa-featured-image-empty {
-				display: block;
-				width: <?= $width; ?>px;
-				height: <?= $width; ?>px;
-				border: 1px dashed rgba(0, 0, 0, 0.18);
-				border-radius: 4px;
-			}
-			@media screen and (max-width: 782px) {
-				.wp-list-table th.column-<?= esc_html( $column ); ?>,
-				.wp-list-table td.column-<?= esc_html( $column ); ?> { width: auto; }
-			}
-		</style>
+			return;
 
-		<?php
+		}
+
+		$base_dir = OCTAVE_ADDONS_DIR . 'modules/featured-image-column/assets/';
+		$base_url = OCTAVE_ADDONS_URL . 'modules/featured-image-column/assets/';
+
+		$css_path = $base_dir . 'featured-image-column.css';
+		$js_path  = $base_dir . 'featured-image-column.js';
+
+		wp_enqueue_style(
+			'octave-featured-image-column',
+			$base_url . 'featured-image-column.css',
+			[],
+			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
+		);
+
+		wp_add_inline_style(
+			'octave-featured-image-column',
+			sprintf( ':root{--oa-fic-size:%dpx;}', self::SIZE )
+		);
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+
+			return;
+
+		}
+
+		wp_enqueue_media();
+
+		wp_enqueue_script(
+			'octave-featured-image-column',
+			$base_url . 'featured-image-column.js',
+			[],
+			file_exists( $js_path ) ? (string) filemtime( $js_path ) : OCTAVE_ADDONS_VERSION,
+			true
+		);
+
+		wp_localize_script( 'octave-featured-image-column', 'oaFeaturedImage', [
+			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+			'action'        => self::ACTION,
+			'nonce'         => wp_create_nonce( self::ACTION ),
+			'frameTitle'    => __( 'Choose a featured image', 'octave-addons' ),
+			'frameButton'   => __( 'Set featured image', 'octave-addons' ),
+			'confirmRemove' => __( 'Remove the featured image from this entry?', 'octave-addons' ),
+			'errorText'     => __( 'The featured image could not be updated. Please reload the page and try again.', 'octave-addons' ),
+		] );
+
+	}
+
+	/*
+	AJAX UPDATE THUMBNAIL
+	-- Sets or clears one post's featured image and hands back the rebuilt cell,
+	-- so the table shows exactly what the next page load would.
+	-- An attachment id of zero is the request to clear the image.
+	---------------------------------------------------------- */
+
+	public function ajax_update_thumbnail(): void {
+
+		check_ajax_referer( self::ACTION, 'nonce' );
+
+		$post_id       = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+		$post          = $post_id ? get_post( $post_id ) : null;
+
+		if ( ! $post || ! in_array( $post->post_type, $this->eligible_post_types(), true ) ) {
+
+			wp_send_json_error( [ 'message' => __( 'That entry cannot carry a featured image.', 'octave-addons' ) ], 400 );
+
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+
+			wp_send_json_error( [ 'message' => __( 'You are not allowed to edit this entry.', 'octave-addons' ) ], 403 );
+
+		}
+
+		if ( 0 === $attachment_id ) {
+
+			delete_post_thumbnail( $post_id );
+
+			wp_send_json_success( [ 'html' => $this->cell_html( $post_id ) ] );
+
+		}
+
+		if ( ! wp_attachment_is_image( $attachment_id ) ) {
+
+			wp_send_json_error( [ 'message' => __( 'That file is not an image.', 'octave-addons' ) ], 400 );
+
+		}
+
+		set_post_thumbnail( $post_id, $attachment_id );
+
+		wp_send_json_success( [ 'html' => $this->cell_html( $post_id ) ] );
 
 	}
 

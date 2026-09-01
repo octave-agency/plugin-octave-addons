@@ -158,6 +158,19 @@ class Octave_Addons_Admin {
 			'subFieldAddedText'      => __( 'Item field added. Save settings to create it.', 'octave-addons' ),
 			'subFieldRemovedText'    => __( 'Item field removed. Save settings to apply it.', 'octave-addons' ),
 			'invalidFormText'        => __( 'Nothing was saved. Some settings still need attention — the first one has been opened for you.', 'octave-addons' ),
+			'newBannerText'          => __( 'New banner', 'octave-addons' ),
+			'bannerAlwaysOnText'     => __( 'Always on', 'octave-addons' ),
+			/* translators: %s: start date. */
+			'bannerFromText'         => __( 'From %s', 'octave-addons' ),
+			/* translators: %s: end date. */
+			'bannerUntilText'        => __( 'Until %s', 'octave-addons' ),
+			/* translators: 1: start date, 2: end date. */
+			'bannerRangeText'        => __( '%1$s to %2$s', 'octave-addons' ),
+			'bannerAddedText'        => __( 'Banner added. Save settings to publish it.', 'octave-addons' ),
+			'bannerRemovedText'      => __( 'Banner removed. Save settings to apply it.', 'octave-addons' ),
+			'removeBannerTitle'      => __( 'Remove banner?', 'octave-addons' ),
+			'removeBannerText'       => __( 'This banner and its schedule will be deleted when the settings are saved.', 'octave-addons' ),
+			'removeBannerAction'     => __( 'Remove banner', 'octave-addons' ),
 		] );
 
 	}
@@ -550,8 +563,8 @@ class Octave_Addons_Admin {
 			'custom-post-types'          => 'layers',
 			'disable-comments'           => 'message-off',
 			'empty-link-highlighter'     => 'unlink',
-			'featured-image-column'      => 'image',
 			'mobile-contact-popup'       => 'smartphone',
+			'notifications-bar'          => 'megaphone',
 		];
 
 		return $icons[ $id ] ?? 'sliders';

@@ -463,4 +463,282 @@ class Octave_Addons_Fields {
 
     }
 
+
+    /**
+     * Date input.
+     *
+     * @param array $args {
+
+     *     @type string $name   Field name (required).
+     *     @type string $id     Optional id.
+     *     @type string $value  Current value as YYYY-MM-DD.
+     *     @type string $min    Optional earliest selectable date.
+     *     @type string $max    Optional latest selectable date.
+     *     @type string $class  CSS class (default: oa-date-input).
+     *     @type string $help   Optional description as .oa-help span.
+     * }
+     */
+    public static function date( array $args ): void {
+
+        $name  = $args['name']  ?? '';
+        $id    = $args['id']    ?? '';
+        $value = $args['value'] ?? '';
+        $min   = $args['min']   ?? '';
+        $max   = $args['max']   ?? '';
+        $class = $args['class'] ?? 'oa-date-input';
+        $help  = $args['help']  ?? '';
+        ?>
+
+        <input type="date"<?= $id ? ' id="' . esc_attr( $id ) . '"' : ''; ?>
+               name="<?= esc_attr( $name ); ?>"
+               value="<?= esc_attr( $value ); ?>"
+               class="<?= esc_attr( $class ); ?>"<?php
+               echo $min ? ' min="' . esc_attr( $min ) . '"' : '';
+               echo $max ? ' max="' . esc_attr( $max ) . '"' : '';
+               ?>>
+        <?php
+
+        if ( $help ) :
+
+        ?>
+
+        <span class="oa-help"><?= esc_html( $help ); ?></span>
+        <?php
+
+        endif;
+
+    }
+
+    /**
+     * Number input.
+     *
+     * @param array $args {
+
+     *     @type string $name   Field name (required).
+     *     @type string $id     Optional id.
+     *     @type int    $value  Current value.
+     *     @type int    $min    Smallest accepted value.
+     *     @type int    $max    Largest accepted value.
+     *     @type int    $step   Increment (default: 1).
+     *     @type string $suffix Optional unit shown after the input.
+     *     @type string $class  CSS class (default: small-text).
+     *     @type string $help   Optional description as .oa-help span.
+     * }
+     */
+    public static function number( array $args ): void {
+
+        $name   = $args['name']   ?? '';
+        $id     = $args['id']     ?? '';
+        $value  = $args['value']  ?? '';
+        $step   = $args['step']   ?? 1;
+        $suffix = $args['suffix'] ?? '';
+        $class  = $args['class']  ?? 'small-text';
+        $help   = $args['help']   ?? '';
+        ?>
+
+        <span class="oa-number-field">
+            <input type="number"<?= $id ? ' id="' . esc_attr( $id ) . '"' : ''; ?>
+                   name="<?= esc_attr( $name ); ?>"
+                   value="<?= esc_attr( (string) $value ); ?>"
+                   class="<?= esc_attr( $class ); ?>"
+                   step="<?= esc_attr( (string) $step ); ?>"<?php
+                   echo isset( $args['min'] ) ? ' min="' . esc_attr( (string) $args['min'] ) . '"' : '';
+                   echo isset( $args['max'] ) ? ' max="' . esc_attr( (string) $args['max'] ) . '"' : '';
+                   ?>>
+            <?php
+
+            if ( $suffix ) :
+
+            ?>
+
+            <span class="oa-number-suffix"><?= esc_html( $suffix ); ?></span>
+            <?php
+
+            endif;
+
+            ?>
+
+        </span>
+        <?php
+
+        if ( $help ) :
+
+        ?>
+
+        <span class="oa-help"><?= esc_html( $help ); ?></span>
+        <?php
+
+        endif;
+
+    }
+
+    /*
+    BACKGROUND
+    -- One control covering a solid colour and a two-stop linear gradient.
+    -- The type select decides which half of the control is shown, and the
+    -- swatch previews the compiled CSS value while it is being edited.
+    -- Values submit as an array under the supplied base name, so a caller
+    -- reads $input[<key>]['type'], ['color'], ['from'], ['to'] and ['angle'].
+    ---------------------------------------------------------- */
+
+    public static function background( array $args ): void {
+
+        $name  = $args['name']  ?? '';
+        $id    = $args['id']    ?? '';
+        $value = is_array( $args['value'] ?? null ) ? $args['value'] : [];
+        $help  = $args['help']  ?? '';
+
+        $type  = 'gradient' === ( $value['type'] ?? '' ) ? 'gradient' : 'solid';
+        $color = sanitize_hex_color( $value['color'] ?? '' ) ?: '#111827';
+        $from  = sanitize_hex_color( $value['from'] ?? '' ) ?: '#111827';
+        $to    = sanitize_hex_color( $value['to'] ?? '' ) ?: '#2563EB';
+        $angle = isset( $value['angle'] ) ? max( 0, min( 360, (int) $value['angle'] ) ) : 135;
+
+        $preview = 'gradient' === $type
+            ? sprintf( 'linear-gradient(%ddeg, %s, %s)', $angle, $from, $to )
+            : $color;
+        ?>
+
+        <div class="oa-background-field" data-oa-background>
+            <div class="oa-background-head">
+                <span class="oa-background-preview" style="background: <?= esc_attr( $preview ); ?>;" aria-hidden="true"></span>
+                <select class="oa-background-type"<?= $id ? ' id="' . esc_attr( $id ) . '"' : ''; ?>
+                        name="<?= esc_attr( $name . '[type]' ); ?>"
+                        aria-label="<?php esc_attr_e( 'Background type', 'octave-addons' ); ?>">
+                    <option value="solid"<?php selected( $type, 'solid' ); ?>><?php esc_html_e( 'Solid colour', 'octave-addons' ); ?></option>
+                    <option value="gradient"<?php selected( $type, 'gradient' ); ?>><?php esc_html_e( 'Gradient', 'octave-addons' ); ?></option>
+                </select>
+            </div>
+
+            <div class="oa-background-solid<?= 'solid' === $type ? '' : ' oa-hidden'; ?>">
+                <div class="oa-background-stop">
+                    <span><?php esc_html_e( 'Colour', 'octave-addons' ); ?></span>
+                    <?php
+
+                    self::color( [
+                        'name'  => $name . '[color]',
+                        'value' => $color,
+                    ] );
+
+                    ?>
+
+                </div>
+            </div>
+
+            <div class="oa-background-gradient<?= 'gradient' === $type ? '' : ' oa-hidden'; ?>">
+                <div class="oa-background-stop">
+                    <span><?php esc_html_e( 'From', 'octave-addons' ); ?></span>
+                    <?php
+
+                    self::color( [
+                        'name'  => $name . '[from]',
+                        'value' => $from,
+                    ] );
+
+                    ?>
+
+                </div>
+                <div class="oa-background-stop">
+                    <span><?php esc_html_e( 'To', 'octave-addons' ); ?></span>
+                    <?php
+
+                    self::color( [
+                        'name'  => $name . '[to]',
+                        'value' => $to,
+                    ] );
+
+                    ?>
+
+                </div>
+                <label class="oa-background-stop oa-background-angle">
+                    <span><?php esc_html_e( 'Angle', 'octave-addons' ); ?></span>
+                    <?php
+
+                    self::number( [
+                        'name'   => $name . '[angle]',
+                        'value'  => $angle,
+                        'min'    => 0,
+                        'max'    => 360,
+                        'step'   => 5,
+                        'suffix' => 'deg',
+                    ] );
+
+                    ?>
+
+                </label>
+            </div>
+        </div>
+        <?php
+
+        if ( $help ) :
+
+        ?>
+
+        <span class="oa-help"><?= esc_html( $help ); ?></span>
+        <?php
+
+        endif;
+
+    }
+
+    /*
+    BACKGROUND CSS
+    -- Compiles a value stored by ::background() into one CSS background value.
+    -- Returns an empty string when the array carries nothing usable, so a
+    -- caller can fall back to its own default rather than print "background: ".
+    ---------------------------------------------------------- */
+
+    public static function background_css( $value ): string {
+
+        if ( ! is_array( $value ) ) {
+
+            return '';
+
+        }
+
+        if ( 'gradient' === ( $value['type'] ?? '' ) ) {
+
+            $from = sanitize_hex_color( $value['from'] ?? '' );
+            $to   = sanitize_hex_color( $value['to'] ?? '' );
+
+            if ( ! $from || ! $to ) {
+
+                return '';
+
+            }
+
+            return sprintf(
+                'linear-gradient(%ddeg, %s, %s)',
+                max( 0, min( 360, (int) ( $value['angle'] ?? 135 ) ) ),
+                $from,
+                $to
+            );
+
+        }
+
+        return (string) ( sanitize_hex_color( $value['color'] ?? '' ) ?: '' );
+
+    }
+
+    /*
+    SANITIZE BACKGROUND
+    -- Normalises a submitted background array against a set of defaults, so a
+    -- module's sanitize() can hand the raw input straight through.
+    ---------------------------------------------------------- */
+
+    public static function sanitize_background( $input, array $defaults ): array {
+
+        $input = is_array( $input ) ? $input : [];
+
+        return [
+            'type'  => 'gradient' === ( $input['type'] ?? '' ) ? 'gradient' : 'solid',
+            'color' => sanitize_hex_color( $input['color'] ?? '' ) ?: $defaults['color'],
+            'from'  => sanitize_hex_color( $input['from'] ?? '' )  ?: $defaults['from'],
+            'to'    => sanitize_hex_color( $input['to'] ?? '' )    ?: $defaults['to'],
+            'angle' => max( 0, min( 360, (int) ( $input['angle'] ?? $defaults['angle'] ) ) ),
+        ];
+
+    }
+
+
 }

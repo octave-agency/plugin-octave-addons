@@ -2227,6 +2227,7 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
 .oa-app--themed .oa-cpt-editor-current-section,
 .oa-app--themed .oa-cpt-icon-picker,
 .oa-app--themed .oa-cpt-item,
+.oa-app--themed .oa-nb-item,
 .oa-app--themed .oa-reusable-field-option,
 .oa-app--themed .oa-schema-card,
 .oa-app--themed .oa-spacing-bar,
@@ -2248,7 +2249,10 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
 .oa-app--themed .oa-custom-select-trigger,
 .oa-app--themed .oa-cpt-field input,
 .oa-app--themed .oa-cpt-field select,
-.oa-app--themed .oa-cpt-field textarea {
+.oa-app--themed .oa-cpt-field textarea,
+.oa-app--themed .oa-nb-field input,
+.oa-app--themed .oa-nb-field select,
+.oa-app--themed .oa-nb-field textarea {
     color: var(--oa-text);
     background: var(--oa-surface);
     box-shadow: none;
@@ -2260,7 +2264,10 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
 .oa-app--themed .oa-custom-select.is-open .oa-custom-select-trigger,
 .oa-app--themed .oa-cpt-field input:focus,
 .oa-app--themed .oa-cpt-field select:focus,
-.oa-app--themed .oa-cpt-field textarea:focus {
+.oa-app--themed .oa-cpt-field textarea:focus,
+.oa-app--themed .oa-nb-field input:focus,
+.oa-app--themed .oa-nb-field select:focus,
+.oa-app--themed .oa-nb-field textarea:focus {
     background: var(--oa-surface);
     box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
 }
@@ -5669,4 +5676,437 @@ html[data-oa-admin-theme="light"] .oa-media-preview {
         linear-gradient(-45deg, rgba(29, 39, 51, 0.05) 25%, transparent 25%),
         linear-gradient(45deg, transparent 75%, rgba(29, 39, 51, 0.05) 75%),
         linear-gradient(-45deg, transparent 75%, rgba(29, 39, 51, 0.05) 75%);
+}
+
+/*
+NUMBER AND DATE FIELDS
+---------------------------------------------------------- */
+
+.oa-number-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.oa-number-suffix {
+    color: var(--oa-text-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.oa-form-table textarea.oa-code-area {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    tab-size: 4;
+}
+
+.oa-form-table input[type="date"] {
+    min-height: 38px;
+    padding: 7px 11px;
+    color: var(--oa-text);
+    border: 1px solid var(--oa-border);
+    border-radius: 9px;
+    background: rgba(8, 11, 12, 0.58);
+}
+
+/*
+BACKGROUND FIELD
+-- The solid or gradient control shared by the module default and each banner.
+---------------------------------------------------------- */
+
+.oa-background-field {
+    display: grid;
+    gap: 12px;
+    max-width: 420px;
+    padding: 12px;
+    border: 1px solid var(--oa-border-light);
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.018);
+}
+
+.oa-background-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.oa-background-preview {
+    width: 42px;
+    height: 34px;
+    border: 1px solid var(--oa-border);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.oa-background-solid,
+.oa-background-gradient {
+    display: grid;
+    gap: 10px;
+}
+
+.oa-background-gradient {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.oa-background-solid.oa-hidden,
+.oa-background-gradient.oa-hidden {
+    display: none;
+}
+
+.oa-background-stop {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+}
+
+.oa-background-stop > span:first-child {
+    color: var(--oa-text-muted);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.oa-background-angle {
+    grid-column: 1 / -1;
+}
+
+/*
+NOTIFICATIONS BAR BANNERS
+-- Repeatable banner cards, sharing the visual language of the post type
+-- editor without borrowing its behaviour.
+---------------------------------------------------------- */
+
+.oa-nb-section {
+    margin: 4px 0 26px;
+}
+
+.oa-nb-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 16px;
+}
+
+.oa-nb-section-head h3 {
+    margin: 4px 0 6px;
+    color: var(--oa-text);
+    font-size: 19px;
+}
+
+.oa-nb-section-head p {
+    max-width: 640px;
+    margin: 0;
+    color: var(--oa-text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.oa-nb-add {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-shrink: 0;
+    min-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 14px !important;
+    color: var(--oa-text) !important;
+    border: 1px solid var(--oa-border) !important;
+    border-radius: 9px !important;
+    background: var(--oa-surface-3) !important;
+    box-shadow: none !important;
+    font-size: 12px !important;
+    font-weight: 600;
+    line-height: 1 !important;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.oa-nb-add:hover {
+    color: var(--oa-accent) !important;
+    border-color: rgba(43, 255, 134, 0.4) !important;
+    background: var(--oa-accent-bg) !important;
+}
+
+.oa-nb-add-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 16px;
+    transform: translateY(-0.5px);
+}
+
+.oa-nb-list {
+    display: grid;
+    gap: 12px;
+}
+
+.oa-nb-list:empty::before {
+    content: attr(data-empty-text);
+    display: block;
+    padding: 24px;
+    color: var(--oa-text-dim);
+    border: 1px dashed var(--oa-border);
+    border-radius: 12px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.oa-nb-item {
+    border: 1px solid var(--oa-border);
+    border-radius: 13px;
+    background: rgba(8, 11, 12, 0.38);
+    transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.oa-nb-item.is-disabled {
+    opacity: 0.55;
+}
+
+.oa-nb-item-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--oa-border-light);
+}
+
+.oa-nb-expand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    min-height: 34px;
+    padding: 3px 5px;
+    color: inherit;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+}
+
+.oa-nb-expand-copy {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.oa-nb-swatch {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    border: 1px solid var(--oa-border);
+    border-radius: 5px;
+    background: var(--oa-surface-3);
+}
+
+.oa-nb-item-title {
+    overflow: hidden;
+    color: var(--oa-text);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.oa-nb-item-dates {
+    flex-shrink: 0;
+    padding: 3px 8px;
+    color: var(--oa-text-dim);
+    border: 1px solid var(--oa-border-light);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.oa-nb-expand-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--oa-text-dim);
+    font-size: 16px;
+    transition: transform 0.15s ease;
+}
+
+.oa-nb-expand[aria-expanded="true"] .oa-nb-expand-icon {
+    transform: rotate(180deg);
+}
+
+.oa-nb-enabled-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    color: var(--oa-text-muted);
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.oa-nb-remove {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    color: var(--oa-text-dim);
+    border: 1px solid var(--oa-border-light);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.oa-nb-remove:hover {
+    color: #ff7b7b;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.oa-nb-remove .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+}
+
+.oa-nb-groups {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+}
+
+.oa-nb-groups.oa-hidden {
+    display: none !important;
+}
+
+.oa-nb-group {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--oa-border-light);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.018);
+}
+
+.oa-nb-group legend {
+    float: left;
+    width: 100%;
+    padding: 13px 14px 0;
+    color: var(--oa-text);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.oa-nb-group-description {
+    clear: both;
+    margin: 0;
+    padding: 4px 14px 12px;
+    color: var(--oa-text-dim);
+    border-bottom: 1px solid var(--oa-border-light);
+    font-size: 10.5px;
+    line-height: 1.45;
+}
+
+.oa-nb-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 18px;
+    clear: both;
+    padding: 14px;
+}
+
+.oa-nb-field {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+    color: var(--oa-text) !important;
+}
+
+.oa-nb-field.oa-hidden {
+    display: none !important;
+}
+
+.oa-nb-field--full {
+    grid-column: 1 / -1;
+}
+
+.oa-nb-field--switch {
+    align-self: end;
+}
+
+.oa-nb-field > span:first-child {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.oa-nb-field input[type="text"],
+.oa-nb-field input[type="url"],
+.oa-nb-field input[type="date"],
+.oa-nb-field select,
+.oa-nb-field textarea {
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 11px;
+    color: var(--oa-text);
+    border: 1px solid var(--oa-border);
+    border-radius: 9px;
+    background: rgba(8, 11, 12, 0.58);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.oa-nb-field input[type="text"]:focus,
+.oa-nb-field input[type="url"]:focus,
+.oa-nb-field input[type="date"]:focus,
+.oa-nb-field select:focus,
+.oa-nb-field textarea:focus {
+    color: var(--oa-text);
+    border-color: var(--oa-accent);
+    outline: none;
+    background: rgba(11, 14, 15, 0.9);
+    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.15);
+}
+
+.oa-nb-field textarea {
+    min-height: 62px;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.oa-nb-field small {
+    color: var(--oa-text-dim);
+    font-size: 10.5px;
+    line-height: 1.4;
+}
+
+.oa-nb-field .oa-background-field {
+    max-width: none;
+}
+
+@media (max-width: 782px) {
+
+    .oa-nb-section-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .oa-nb-fields,
+    .oa-background-gradient {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
 }

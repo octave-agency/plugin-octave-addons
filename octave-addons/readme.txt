@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.8.0
+Stable tag:        3.10.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -20,10 +20,17 @@ Octave Addons ships with a growing collection of focused modules:
     `href` or `href="#"` so editors can spot broken navigation.
 *   **Disable Comments** – removes comment support site-wide
     (post types, REST endpoint, admin menus, admin bar).
-*   **Featured Image Column** – adds a featured image thumbnail column to
-    the admin post tables, for the post types, position and size chosen.
+*   **Featured Image Column** – always on and hidden from the admin. Adds a
+    featured image thumbnail column to every admin post table that supports
+    featured images, sitting after the date column and before any SEO plugin
+    columns. Hovering a thumbnail reveals controls to swap the image through
+    the media library or clear it, applied without leaving the table.
 *   **Scroll Animations** – enqueues Octave's fade/slide-in CSS and
     IntersectionObserver JS, with an editable override for each file.
+*   **Notifications Bar** – shows scheduled announcement banners across the
+    top or bottom of the site. Each banner carries its own message, button,
+    link, show from and show to dates and background, closes to a cookie for
+    a set number of days, and only appears while it is in date.
 *   **Breakdance AJAX Filtering** – adds server-backed filtering and
     pagination to Breakdance loops with a Filter Bar.
 *   **Breakdance Default Spacing** – sets the default bottom margin for
@@ -81,6 +88,18 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.10.0 =
+* Changed Featured Image Column to always on and hidden from the admin, covering every post type that supports featured images rather than a chosen set.
+* Changed the column to sit directly after the date column and before any Rank Math, Yoast, All in One SEO or SEOPress columns.
+* Added hover controls on the thumbnail to swap the featured image through the media library or remove it, applied over AJAX without leaving the list table.
+* Added the same controls to entries with no featured image, so one can be set from the table.
+
+= 3.9.0 =
+* Added a Notifications Bar module: repeatable announcement banners for the top or bottom of the site, each with its own message, optional Breakdance button, link, show from and show to dates, and background.
+* Added per-banner dismissal that remembers the choice in a cookie for a configurable number of days, cleared before the page paints so a cached page never flashes a closed banner.
+* Added module defaults for the banner background, text, link and close colours, optional overrides for the Breakdance button colours and corner radius, and a custom CSS area applied to the bar.
+* Added solid or gradient background, date and number controls to the shared field library, available to every module.
 
 = 3.8.0 =
 * Added a Featured Image Column module that puts a thumbnail column in the admin post tables, with per-post-type selection, column position, heading, image size, width, an edit link, and an outline for entries with no image.

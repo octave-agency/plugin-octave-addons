@@ -39,6 +39,7 @@ class Octave_Addons_Icons {
 		'sliders'    => '<path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/>',
 		'grid'       => '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>',
 		'image'      => '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+		'megaphone'  => '<path d="M3 11v2a1 1 0 0 0 1 1h2.5L14 19V5L6.5 10H4a1 1 0 0 0-1 1z"/><path d="M18 9a3 3 0 0 1 0 6"/><path d="M7 14v4a2 2 0 0 0 4 0v-2"/>',
 
 		// Shared interface icons.
 		'arrow-right'  => '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>',
