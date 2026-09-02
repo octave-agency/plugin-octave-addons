@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.11.1
+Stable tag:        3.11.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -95,6 +95,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.11.2 =
+* Fixed each module on a grouped settings page running into the next in the refreshed admin, where the panel card was flattened to no background, border or padding. Panels are cards again in both looks, so a group reads as one card per module.
 
 = 3.11.1 =
 * Changed Custom Login URL back to its own module and tab rather than sitting inside Branding & Design.

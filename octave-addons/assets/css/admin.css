@@ -2049,18 +2049,14 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
     box-shadow: var(--oa-shadow);
 }
 
-.oa-app--themed .oa-panel {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-}
+/* A panel stays a card in the refreshed admin, so a grouped page reads as one
+   card per module instead of one long column. Only the colours are swapped —
+   padding and radius come from the base rule, which keeps its responsive
+   steps working, and the border already resolves through the themed token. */
 
-.oa-app--themed .oa-panel + .oa-panel {
-    margin-top: 10px;
-    padding-top: 32px;
-    border-top: 1px solid var(--oa-border-light);
+.oa-app--themed .oa-panel {
+    background: var(--oa-surface);
+    box-shadow: var(--oa-shadow);
 }
 
 .oa-app--themed .oa-module-card-icon {
