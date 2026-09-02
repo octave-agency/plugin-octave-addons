@@ -12,13 +12,17 @@ STRUCTURED CONTENT EDITOR
 ---------------------------------------------------------- */
 
 .oa-structured-content {
-    --oa-accent: #00d084;
-    --oa-accent-ink: #0a7a4a;
-    --oa-line: #e0e0e0;
-    --oa-line-soft: #f0f0f1;
-    --oa-ink: #1e1e1e;
-    --oa-ink-muted: #757575;
-    --oa-error: #cc1818;
+    --oa-accent: var(--oa-admin-accent, #00d084);
+    --oa-accent-ink: var(--oa-admin-accent-dark, #0a7a4a);
+    --oa-line: var(--oa-admin-border, #e0e0e0);
+    --oa-line-strong: var(--oa-admin-border-strong, #949494);
+    --oa-line-soft: var(--oa-admin-line-soft, #f0f0f1);
+    --oa-surface: var(--oa-admin-surface, #fff);
+    --oa-surface-soft: var(--oa-admin-surface-soft, #fbfbfc);
+    --oa-ink: var(--oa-admin-text, #1e1e1e);
+    --oa-ink-muted: var(--oa-admin-text-soft, #757575);
+    --oa-on-accent: var(--oa-admin-on-accent, #fff);
+    --oa-error: var(--oa-admin-danger, #cc1818);
     color: var(--oa-ink);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 13px;
@@ -132,7 +136,7 @@ Tabs
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
-    color: #fff;
+    color: var(--oa-on-accent);
     border-radius: 999px;
     background: var(--oa-error);
     font-size: 11px;
@@ -168,7 +172,7 @@ Field list
     margin: 24px 0 0 !important;
     padding: 28px;
     color: var(--oa-ink-muted);
-    border: 1px dashed #c3c4c7;
+    border: 1px dashed var(--oa-line-strong);
     border-radius: 4px;
     text-align: center;
 }
@@ -332,7 +336,8 @@ Section headings
 .oa-field select,
 .oa-field textarea {
     width: 100%;
-    background: #fff;
+    color: var(--oa-ink);
+    background: var(--oa-surface);
 }
 
 .oa-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
@@ -363,9 +368,10 @@ Section headings
 .oa-rich-text {
     min-height: 120px;
     padding: 10px 12px;
-    border: 1px solid #949494;
+    color: var(--oa-ink);
+    border: 1px solid var(--oa-line-strong);
     border-radius: 2px;
-    background: #fff;
+    background: var(--oa-surface);
     font-size: 13px;
     line-height: 1.6;
 }
@@ -377,7 +383,7 @@ Section headings
     padding: 12px 14px;
     border: 1px solid var(--oa-line);
     border-radius: 4px;
-    background: #fff;
+    background: var(--oa-surface);
 }
 
 /*
@@ -417,7 +423,7 @@ Media
     padding: 10px;
     border: 1px solid var(--oa-line);
     border-radius: 4px;
-    background: #fff;
+    background: var(--oa-surface);
 }
 
 .oa-media__preview,
@@ -466,7 +472,7 @@ Gallery
     list-style: none;
     border: 1px solid var(--oa-line);
     border-radius: 4px;
-    background: #fff;
+    background: var(--oa-surface);
 }
 
 .oa-gallery__item {
@@ -517,7 +523,7 @@ Gallery
     z-index: 1;
     min-width: 20px;
     padding: 1px 5px;
-    color: #fff;
+    color: var(--oa-on-accent);
     font-size: 11px;
     text-align: center;
     border-radius: 20px;
@@ -529,12 +535,12 @@ Gallery
     top: 2px;
     right: 2px;
     z-index: 1;
-    color: #fff;
+    color: var(--oa-on-accent);
     background: rgba(0, 0, 0, 0.65);
 }
 
 .oa-gallery__item .oa-gallery__remove:hover {
-    color: #fff;
+    color: var(--oa-on-accent);
     background: var(--oa-error);
 }
 
@@ -546,7 +552,7 @@ Gallery
     text-align: center;
     border: 1px dashed var(--oa-line);
     border-radius: 4px;
-    background: #fff;
+    background: var(--oa-surface);
 }
 
 .oa-gallery__actions {
@@ -572,7 +578,7 @@ Groups and repeaters
     padding: 18px;
     border: 1px solid var(--oa-line);
     border-radius: 4px;
-    background: #fff;
+    background: var(--oa-surface);
 }
 
 .oa-repeater {
@@ -585,7 +591,7 @@ Groups and repeaters
     overflow: hidden;
     border: 1px solid var(--oa-line);
     border-radius: 4px;
-    background: #fff;
+    background: var(--oa-surface);
 }
 
 .oa-repeater__head {
@@ -595,7 +601,7 @@ Groups and repeaters
     gap: 12px;
     padding: 6px 8px 6px 14px;
     border-bottom: 1px solid var(--oa-line);
-    background: #fbfbfc;
+    background: var(--oa-surface-soft);
 }
 
 .oa-repeater__number {
@@ -619,9 +625,9 @@ Groups and repeaters
     margin: 0 0 12px !important;
     padding: 18px;
     color: var(--oa-ink-muted);
-    border: 1px dashed #c3c4c7;
+    border: 1px dashed var(--oa-line-strong);
     border-radius: 4px;
-    background: #fff;
+    background: var(--oa-surface);
     font-size: 12px !important;
     text-align: center;
 }

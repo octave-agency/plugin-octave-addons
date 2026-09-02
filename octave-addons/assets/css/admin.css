@@ -3811,6 +3811,16 @@ CUSTOM POST TYPE EDITOR
     font-size: 10px;
 }
 
+.oa-field-type-preview {
+    padding: 3px 7px;
+    color: var(--oa-text-dim);
+    border: 1px solid var(--oa-border-light);
+    border-radius: 5px;
+    background: rgba(147, 147, 147, 0.06);
+    font-size: 10px;
+    font-weight: 650;
+}
+
 .oa-field-scope-guide {
     display: flex;
     flex-wrap: wrap;

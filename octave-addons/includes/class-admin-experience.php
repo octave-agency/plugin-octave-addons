@@ -27,7 +27,33 @@ class Octave_Addons_Admin_Experience {
 		// already migrated by the time anything can save over it.
 		add_action( 'admin_init',            [ $this, 'migrate_legacy_option' ], 1 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'enqueue_block_assets',   [ $this, 'enqueue_block_editor_assets' ] );
 		add_action( 'admin_bar_menu',        [ $this, 'add_theme_toggle' ], 998 );
+
+	}
+
+	/*
+	ENQUEUE BLOCK EDITOR ASSETS
+	-- Loads the canvas-only theme rules through WordPress's block asset path so
+	-- they reach Gutenberg's iframe as well as the parent editor document.
+	---------------------------------------------------------- */
+
+	public function enqueue_block_editor_assets(): void {
+
+		if ( ! is_admin() || ! $this->is_enabled() ) {
+
+			return;
+
+		}
+
+		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/editor-canvas.css';
+
+		wp_enqueue_style(
+			'octave-addons-admin-experience-editor-canvas',
+			OCTAVE_ADDONS_URL . 'assets/css/admin-experience/editor-canvas.css',
+			[],
+			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
+		);
 
 	}
 

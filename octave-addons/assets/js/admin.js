@@ -2759,6 +2759,7 @@ ADMIN INTERACTIONS
 			var title = item.querySelector( '.oa-cpt-item-title' );
 			var keyPreview = item.querySelector( '.oa-cpt-key-preview' );
 			var typeInput = item.querySelector( '[data-field-type]' );
+			var typePreview = item.querySelector( '.oa-field-type-preview' );
 			var scopeBadge = item.querySelector( '.oa-field-scope-badge' );
 			var contextAssignment = item.querySelector( '[data-context-assignment="true"]' );
 			var publicToggle = item.querySelector( '.oa-tax-public-toggle' );
@@ -2817,6 +2818,12 @@ ADMIN INTERACTIONS
 				var isTab = 'tab' === typeInput.value;
 				var hidesDefault = isContainer || isTab || 'gallery' === typeInput.value;
 				var hidesRequired = isHtml || isTab;
+
+				if ( typePreview ) {
+
+					typePreview.textContent = typeInput.options[ typeInput.selectedIndex ].textContent;
+
+				}
 
 				choices.classList.toggle( 'oa-hidden', ! needsChoices );
 
@@ -3292,7 +3299,11 @@ ADMIN INTERACTIONS
 
 					}
 
-					keyPreview.textContent = keyInput.value;
+					if ( keyPreview ) {
+
+						keyPreview.textContent = keyInput.value;
+
+					}
 
 				}
 
@@ -3307,14 +3318,24 @@ ADMIN INTERACTIONS
 				}
 
 				keyInput.value = slugify( keyInput.value, true ).substring( 0, 'custom_taxonomies' === collectionKey ? 32 : 40 );
-				keyPreview.textContent = keyInput.value;
+
+				if ( keyPreview ) {
+
+					keyPreview.textContent = keyInput.value;
+
+				}
 
 			} );
 
 			keyInput.addEventListener( 'blur', function () {
 
 				keyInput.value = slugify( keyInput.value ).substring( 0, 'custom_taxonomies' === collectionKey ? 32 : 40 );
-				keyPreview.textContent = keyInput.value;
+
+				if ( keyPreview ) {
+
+					keyPreview.textContent = keyInput.value;
+
+				}
 
 			} );
 

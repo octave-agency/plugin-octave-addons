@@ -1,0 +1,36 @@
+/*
+GUTENBERG EDITOR CANVAS
+-- Applies the active admin palette inside Gutenberg's isolated canvas iframe.
+-- Theme variables are copied from the parent document by admin-experience.js.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"],
+html[data-oa-admin-theme="dark"] body.block-editor-iframe__body,
+html[data-oa-admin-theme="dark"] body.editor-styles-wrapper {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.editor-styles-wrapper,
+html[data-oa-admin-theme="dark"] .block-editor-block-list__layout,
+html[data-oa-admin-theme="dark"] .block-editor-block-list__block,
+html[data-oa-admin-theme="dark"] .wp-block {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] .editor-post-title__input,
+html[data-oa-admin-theme="dark"] .block-editor-rich-text__editable,
+html[data-oa-admin-theme="dark"] [contenteditable="true"] {
+    color: var(--oa-admin-text) !important;
+}
+
+html[data-oa-admin-theme="dark"] .editor-post-title__input::placeholder,
+html[data-oa-admin-theme="dark"] .block-editor-default-block-appender__content,
+html[data-oa-admin-theme="dark"] .block-editor-rich-text__editable[data-is-placeholder-visible="true"]::before {
+    color: var(--oa-admin-text-dim) !important;
+}
+
+html[data-oa-admin-theme="dark"] .block-editor-block-list__block.is-selected::after,
+html[data-oa-admin-theme="dark"] .block-editor-block-list__block.has-child-selected::after {
+    outline-color: var(--oa-admin-accent);
+}

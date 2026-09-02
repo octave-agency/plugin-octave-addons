@@ -1762,6 +1762,7 @@ class Octave_Addons_Custom_Post_Fields {
 				if ( class_exists( 'Octave_Addons_Breakdance_Repeater_Field', false ) ) {
 
 					\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Repeater_Field( $field ) );
+					$this->register_breakdance_sub_fields( $field );
 
 				}
 
@@ -1785,8 +1786,8 @@ class Octave_Addons_Custom_Post_Fields {
 
 	/*
 	REGISTER BREAKDANCE SUB FIELDS
-	-- Exposes a group's children as their own picker entries. Repeaters skip
-	-- this — the repeater itself is the single entry the picker needs.
+	-- Exposes structured children beneath their group or repeater context so a
+	-- repeated Global Block can read the active row's values.
 	---------------------------------------------------------- */
 
 	protected function register_breakdance_sub_fields( array $parent ): void {

@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.12.4
+Stable tag:        3.12.7
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -95,6 +95,16 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.12.7 =
+* Replaced post-field key badges with the selected field type so meta choices are easier to identify at a glance.
+
+= 3.12.6 =
+* Fixed repeater child fields no longer appearing as Breakdance Dynamic Data, which left repeated Global Blocks without values to display.
+
+= 3.12.5 =
+* Fixed Gutenberg's content canvas remaining white with dark text while the modern admin was in dark mode.
+* Changed Octave Post Fields and the field-only structured editor to use the same admin palette tokens, so both editor configurations stay visually consistent and follow theme/accent changes automatically.
 
 = 3.11.2 =
 * Fixed each module on a grouped settings page running into the next in the refreshed admin, where the panel card was flattened to no background, border or padding. Panels are cards again in both looks, so a group reads as one card per module.
