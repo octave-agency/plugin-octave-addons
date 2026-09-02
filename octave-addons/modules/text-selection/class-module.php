@@ -230,8 +230,8 @@ class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 
 	/*
 	RENDER SOURCE OPTIONS
-	-- Each option names the variable it writes so the mapping is visible
-	-- without leaving the settings page.
+	-- Keeps the human-readable colour name in the dropdown while the source key
+	-- retains its CSS variable mapping behind the scenes.
 	---------------------------------------------------------- */
 
 	protected function render_source_options( string $selected ): void {
@@ -244,10 +244,9 @@ class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 				<?php
 
 				printf(
-					/* translators: 1: colour name, 2: Breakdance CSS variable name. */
-					esc_html__( 'Breakdance %1$s (%2$s)', 'octave-addons' ),
-					esc_html( $source['label'] ),
-					esc_html( $source['variable'] )
+					/* translators: %s: Breakdance colour name. */
+					esc_html__( 'Breakdance %s', 'octave-addons' ),
+					esc_html( $source['label'] )
 				);
 
 				?>
