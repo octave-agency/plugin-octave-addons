@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.10.0
+Stable tag:        3.11.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -43,6 +43,14 @@ Octave Addons ships with a growing collection of focused modules:
 *   **Breakdance Launcher Styles** – always on and hidden from the admin.
     Declares Breakdance's launcher stylesheet as a block editor style so it
     reaches the block editor canvas iframe, which an admin stylesheet cannot.
+*   **Branding & Design** – one page for how the site and the admin look.
+    *Modern WordPress Admin* refreshes the whole WordPress admin, remembers a
+    light or dark choice per device, and can be recoloured from a single brand
+    colour. *Custom Login URL* moves and restyles the login page. *Text
+    Selection* sets the highlight colour and the text colour a visitor sees
+    when they select text, defaulting to the Breakdance
+    `--bde-brand-primary-color` variable so the highlight tracks the site
+    palette.
 *   **Post Types** – can display Posts as Blogs and provides separate managers for
     post types, reusable taxonomies, and typed post fields. Fields use registered
     WordPress post meta and are available in Breakdance Dynamic Data.
@@ -88,6 +96,20 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.11.0 =
+* Added a Branding & Design page that collects how the site and the admin look, holding Modern WordPress Admin, Custom Login URL and the new Text Selection module.
+* Added a Text Selection module for the highlight colour and the selected text colour, defaulting to the Breakdance `--bde-brand-primary-color` variable, with custom colours, an option to leave the text colour untouched, and an optional admin-side rule.
+* Changed the modern admin switch from a dashboard card to a full module, adding a default appearance for browsers that have not chosen one, a switch for the admin bar light and dark control, and a brand colour that recolours the admin with a tone derived for each mode.
+* Added full light and dark mode coverage for Rank Math in the modern WordPress admin, in its own stylesheet that only loads when Rank Math is active.
+* Changed the Rank Math rules from dark-only patches to token-driven styling, so the dashboard, module listing, settings panels, setup wizard, analytics, SEO analysis, post editor metabox, dashboard widget and post-table column all follow the admin theme.
+* Added dark mode coverage for the WordPress surfaces core still paints light, audited against the load-styles.php bundle: disabled buttons and read-only fields, the notice dismiss button, the Widgets and Nav Menus panels, accordions, tab panels, comment moderation, the welcome panel, the password strength meter, media menus and widget placeholders, the plugin and theme upload cards, the admin bar update bubble, several block editor components, the jQuery UI slider and drag placeholders.
+* Fixed the New / Add New button resizing when pressed, because core sets its padding on a `.wrap .page-title-action:active` selector that outranked ours.
+* Fixed the modern admin switching itself off on a site that enabled it before it became a module, which happened as soon as any other settings page was saved.
+* Fixed the Rank Math post editor metabox and SEO score chips, and three Breeze notice rules, resolving to nothing because they sat outside the scope their colour aliases were declared on.
+* Changed the admin experience stylesheets to live together under assets/css/admin-experience/.
+* Added a success colour token to the admin experience palette and an optional sort order so a module group can lead with its headline module.
+* Fixed the sidebar brand block using wider horizontal padding than the navigation beneath it.
 
 = 3.10.0 =
 * Changed Featured Image Column to always on and hidden from the admin, covering every post type that supports featured images rather than a chosen set.

@@ -470,6 +470,11 @@ class Octave_Addons_Admin {
 	protected function group_config( string $group ): array {
 
 		$groups = [
+			'branding' => [
+				'title'       => __( 'Branding & Design', 'octave-addons' ),
+				'description' => __( 'How the site and the WordPress admin look — the admin refresh and its brand colour, the login screen, and the colours a visitor sees when they select text.', 'octave-addons' ),
+				'requires'    => '',
+			],
 			'breakdance' => [
 				'title'       => __( 'Breakdance', 'octave-addons' ),
 				'description' => __( 'Everything that plugs into the Breakdance builder — AJAX filtering for post loops, default element spacing, and the custom element library.', 'octave-addons' ),
@@ -555,6 +560,7 @@ class Octave_Addons_Admin {
 
 		$icons = [
 			'animations'                 => 'sparkles',
+			'branding'                   => 'palette',
 			'breakdance'                 => 'layout',
 			'breakdance-ajax-filtering'  => 'filter',
 			'breakdance-custom-elements' => 'blocks',
@@ -752,8 +758,6 @@ class Octave_Addons_Admin {
 							</div>
 						</div>
 					</section>
-
-					<?php $this->admin_experience->render_setting_card(); ?>
 
 					<div class="oa-dashboard-heading">
 						<div>

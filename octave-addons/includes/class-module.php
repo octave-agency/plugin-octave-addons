@@ -59,6 +59,19 @@ abstract class Octave_Addons_Module {
 	}
 
 	/**
+	 * Sort weight inside a group page, lowest first.
+	 *
+	 * Modules sharing a group are rendered in this order rather than in
+	 * discovery order, so a group can lead with its headline module without
+	 * anyone having to rename a folder. Ties keep discovery order.
+	 */
+	public function get_order(): int {
+
+		return 0;
+
+	}
+
+	/**
 	 * Whether this module should appear in the Octave Addons admin UI.
 	 */
 	public function show_in_admin(): bool {

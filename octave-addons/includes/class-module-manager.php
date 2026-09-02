@@ -133,6 +133,30 @@ class Octave_Addons_Module_Manager {
 
 		}
 
+		// A group leads with its headline module, so weight beats discovery
+		// order while equal weights keep the alphabetical folder order.
+		foreach ( $entries as $key => $entry ) {
+
+			$order    = [];
+			$position = 0;
+			$sorted   = $entry['modules'];
+
+			foreach ( $sorted as $id => $module ) {
+
+				$order[ $id ] = [ $module->get_order(), $position++ ];
+
+			}
+
+			uksort( $sorted, static function ( string $a, string $b ) use ( $order ): int {
+
+				return $order[ $a ] <=> $order[ $b ];
+
+			} );
+
+			$entries[ $key ]['modules'] = $sorted;
+
+		}
+
 		return $entries;
 
 	}

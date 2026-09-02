@@ -1,0 +1,1216 @@
+/*
+ADMIN EXPERIENCE RANK MATH
+-- Maps every Rank Math admin surface onto the shared Octave admin tokens.
+-- Rank Math hardcodes its palette, so the rules here are theme-agnostic and
+-- resolve through the tokens: light mode picks up the Octave look and dark
+-- mode follows automatically when the tokens flip.
+---------------------------------------------------------- */
+
+/*
+COLOUR ALIASES
+-- Rank Math reuses one accent, one muted grey and one border across every
+-- screen, so the whole sheet is written against these six names.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page,
+html[data-oa-admin-theme] body.rank-math-wizard,
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper,
+html[data-oa-admin-theme] body.wp-admin #rank_math_metabox,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget,
+html[data-oa-admin-theme] body.wp-admin .rank-math-seo-score,
+html[data-oa-admin-theme] body.wp-admin .rank-math-modal,
+html[data-oa-admin-theme] body.wp-admin .rank-math-variables-dropdown {
+    --oa-rm-accent: var(--oa-admin-accent);
+    --oa-rm-accent-strong: var(--oa-admin-accent-dark);
+    --oa-rm-accent-soft: var(--oa-admin-accent-soft);
+    --oa-rm-on-accent: var(--oa-admin-on-accent);
+    --oa-rm-canvas: var(--oa-admin-canvas);
+    --oa-rm-surface: var(--oa-admin-surface);
+    --oa-rm-surface-soft: var(--oa-admin-surface-soft);
+    --oa-rm-surface-subtle: var(--oa-admin-surface-subtle);
+    --oa-rm-surface-hover: var(--oa-admin-surface-hover);
+    --oa-rm-border: var(--oa-admin-border);
+    --oa-rm-border-strong: var(--oa-admin-border-strong);
+    --oa-rm-text: var(--oa-admin-text);
+    --oa-rm-text-soft: var(--oa-admin-text-soft);
+    --oa-rm-text-dim: var(--oa-admin-text-dim);
+    --oa-rm-success: var(--oa-admin-success);
+    --oa-rm-warning: var(--oa-admin-warning);
+    --oa-rm-danger: var(--oa-admin-danger);
+}
+
+/*
+PAGE SHELL
+-- Rank Math paints the body, #wpwrap and its own dashboard wrapper, so all
+-- three have to move together or the page ends up in two tones.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page,
+html[data-oa-admin-theme] body.rank-math-page #wpwrap,
+html[data-oa-admin-theme] body.rank-math-page #wpcontent,
+html[data-oa-admin-theme] body.rank-math-page #wpbody,
+html[data-oa-admin-theme] body.rank-math-page #wpbody-content,
+html[data-oa-admin-theme] body.rank-math-page #rank-math-dashboard-page,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-canvas);
+}
+
+html[data-oa-admin-theme] body.rank-math-page #wpfooter {
+    border-top-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap h1,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap h2,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap h3,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap h4,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap h5,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap h6,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap .page-title {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap .rank-math-text,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-welcome-text p {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .dashboard-wrapper,
+html[data-oa-admin-theme] body.rank-math-page .dashboard-wrapper::before {
+    border-top-color: var(--oa-rm-border);
+    border-bottom-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .dashboard-wrapper > div > h2 {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .dashboard-wrapper > div > .description {
+    color: var(--oa-rm-text-soft);
+}
+
+/*
+HEADER AND BREADCRUMBS
+-- The header is sticky, so it is the one surface that must never inherit the
+-- canvas colour or the content scrolls into an invisible band.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-header {
+    border-bottom-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-header .rank-math-logo::after {
+    background: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-header .rank-math-logo-text,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-header .rank-math-logo-text a {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-header a.rank-math-help {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-header a.rank-math-help:hover,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-header a.rank-math-help:focus {
+    color: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-breadcrumbs,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-breadcrumbs .divider {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-breadcrumbs .active,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-breadcrumbs a {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector a,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector button.is-link,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector .rank-math-button.components-button {
+    color: var(--oa-rm-text-soft) !important;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector a:hover,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector a.active,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector a.is-active,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector button.is-link:hover,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector button.is-link.is-active,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector .rank-math-button.components-button.is-active,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-mode-selector .rank-math-button.components-button:hover:not(:disabled) {
+    color: var(--oa-rm-text) !important;
+}
+
+/*
+BOXES AND PANELS
+-- .rank-math-box is the card used by every screen, so its header, body and
+-- footer set the tone for the whole plugin.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-welcome-text,
+html[data-oa-admin-theme] body.rank-math-page .list-table,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-accordion,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-seo-analysis-header,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-result-filters,
+html[data-oa-admin-theme] body.rank-math-page .seo-analysis-results,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-result-graphs,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-seo-analysis-wrap header {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box.no-borders,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box.no-padding {
+    background: transparent;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box header h3,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box h2,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box h3,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box h4 {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box header p,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box p,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box form p {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box footer,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-accordion header,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-gray-box,
+html[data-oa-admin-theme] body.rank-math-page .consent-box,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-console-db-info,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-result-graphs .graphs-side,
+html[data-oa-admin-theme] body.rank-math-page h3.health-check-accordion-heading {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-accordion:hover,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-accordion:focus {
+    border-color: var(--oa-rm-accent);
+    box-shadow: 0 0 0 1px var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box .regular-text.fullwidth {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box .regular-text.fullwidth:focus {
+    border-color: var(--oa-rm-accent);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box.status-green header h3 {
+    color: var(--oa-rm-success);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box.status-green header .button {
+    color: var(--oa-rm-on-accent);
+    background: var(--oa-rm-success);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box.status-red header h3 {
+    color: var(--oa-rm-danger);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box.status-red header .button {
+    color: var(--oa-rm-on-accent);
+    background: var(--oa-rm-danger);
+}
+
+/*
+TABS
+-- Rank Math ships three different tab widgets: the settings rail, the box
+-- tabs and the Gutenberg tab panel used by the React screens.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tab:not(.rank-math-options-panel-content),
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs .rank-math-tab,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs > .cmb-row.tab-header,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tab-header {
+    color: var(--oa-rm-text-soft);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tab:not(.rank-math-options-panel-content):hover,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tab:not(.rank-math-options-panel-content):focus,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tab:not(.rank-math-options-panel-content).is-active,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs .rank-math-tab:hover,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs .rank-math-tab:focus,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs .rank-math-tab.is-active {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs .rank-math-tab.is-active::after,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs .rank-math-tab-content,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs .rank-math-tab-content::before {
+    color: var(--oa-rm-text-soft);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tab-header p {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs-navigation:not(.rank-math-custom) a {
+    color: var(--oa-rm-text-soft);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs-navigation:not(.rank-math-custom) a.active,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs-navigation:not(.rank-math-custom) a:focus,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs-navigation:not(.rank-math-custom) a:hover {
+    color: var(--oa-rm-accent);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs-navigation:not(.rank-math-custom) a.active::after {
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs-navigation:not(.rank-math-custom) .separator {
+    color: var(--oa-rm-text-dim);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-subtle);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tabs-content:not(.rank-math-custom) {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box-tabs {
+    border-bottom-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box-tabs > a {
+    color: var(--oa-rm-text-soft);
+    border-right-color: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box-tabs > a:hover,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box-tabs > a.active-tab {
+    color: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box-tabs > a.active-tab,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-box-tabs > a.active-tab::after {
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .components-tab-panel__tabs {
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .components-tab-panel__tabs .components-tab-panel__tabs-item {
+    color: var(--oa-rm-text-soft);
+    border-color: var(--oa-rm-border);
+    background: transparent;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .components-tab-panel__tabs .components-tab-panel__tabs-item:hover,
+html[data-oa-admin-theme] body.rank-math-page .components-tab-panel__tabs .components-tab-panel__tabs-item.is-active {
+    color: var(--oa-rm-accent);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .components-tab-panel__tabs .components-tab-panel__tabs-item::after {
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .components-tab-panel__tab-content {
+    color: var(--oa-rm-text);
+    background: transparent;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tab-panel .components-tab-panel__tab-content .field-wrap,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tab-panel .components-tab-panel__tab-content .form-footer {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+/*
+SETTINGS FIELDS
+-- The option panel builds every row from .field-row, and the older CMB2
+-- markup is still used by the metabox and a few module screens.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .field-wrap,
+html[data-oa-admin-theme] body.rank-math-page .field-metabox,
+html[data-oa-admin-theme] body.rank-math-page .cmb2-wrap {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .field-row,
+html[data-oa-admin-theme] body.rank-math-page .field-th,
+html[data-oa-admin-theme] body.rank-math-page .field-td,
+html[data-oa-admin-theme] body.rank-math-page .cmb-row,
+html[data-oa-admin-theme] body.rank-math-page .cmb-th,
+html[data-oa-admin-theme] body.rank-math-page .cmb-td {
+    border-color: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .field-th,
+html[data-oa-admin-theme] body.rank-math-page .field-th label,
+html[data-oa-admin-theme] body.rank-math-page [id^="field-metabox-rank"] .field-row .field-th,
+html[data-oa-admin-theme] body.rank-math-page .cmb-th label,
+html[data-oa-admin-theme] body.rank-math-page .field-wrap .field-row .buy-more-credits strong {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page p.field-description,
+html[data-oa-admin-theme] body.rank-math-page .field-description,
+html[data-oa-admin-theme] body.rank-math-page [id^="field-metabox-rank"] .field-description,
+html[data-oa-admin-theme] body.rank-math-page [id^="field-metabox-rank"] .rank-math-desc,
+html[data-oa-admin-theme] body.rank-math-page .cmb2-metabox-description,
+html[data-oa-admin-theme] body.rank-math-page .field-wrap .field-row .buy-more-credits,
+html[data-oa-admin-theme] body.rank-math-page .next-fetch {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page [id^="field-metabox-rank"] .field-description code,
+html[data-oa-admin-theme] body.rank-math-page .info-list,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-result-table .row-content code {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .field-metabox .note {
+    color: var(--oa-rm-warning);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .field-row.features-child,
+html[data-oa-admin-theme] body.rank-math-page .form-footer:not(.rank-math-custom),
+html[data-oa-admin-theme] body.rank-math-page .field-wrap + footer.form-footer {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page input[type="text"],
+html[data-oa-admin-theme] body.rank-math-page input[type="url"],
+html[data-oa-admin-theme] body.rank-math-page input[type="email"],
+html[data-oa-admin-theme] body.rank-math-page input[type="number"],
+html[data-oa-admin-theme] body.rank-math-page input[type="search"],
+html[data-oa-admin-theme] body.rank-math-page select,
+html[data-oa-admin-theme] body.rank-math-page textarea,
+html[data-oa-admin-theme] body.rank-math-page .cmb2-wrap .cmb-type-textarea textarea,
+html[data-oa-admin-theme] body.rank-math-page .cmb2-wrap .cmb-type-textarea-small textarea {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page input:focus,
+html[data-oa-admin-theme] body.rank-math-page select:focus,
+html[data-oa-admin-theme] body.rank-math-page textarea:focus {
+    border-color: var(--oa-rm-accent);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .invalid,
+html[data-oa-admin-theme] body.rank-math-page .widefat.invalid {
+    border-color: var(--oa-rm-danger) !important;
+    background: var(--oa-rm-surface-soft) !important;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .validation-message {
+    color: var(--oa-rm-on-accent);
+    background: var(--oa-rm-danger);
+}
+
+/*
+TABLES
+-- Covers the settings list tables, the system status report and the
+-- import/export backup lists, which all share .list-table.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .list-table,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-import-export .rank-math-settings-backup-form .list-table.with-action,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tools-table.widefat {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .list-table th,
+html[data-oa-admin-theme] body.rank-math-page .list-table td,
+html[data-oa-admin-theme] body.rank-math-page .form-table th,
+html[data-oa-admin-theme] body.rank-math-page .form-table td,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-status-table thead tr th,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap .rank-math-systm-status th,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-wrap .rank-math-systm-status td {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .list-table td,
+html[data-oa-admin-theme] body.rank-math-page .form-table td p,
+html[data-oa-admin-theme] body.rank-math-page .list-table .empty-notice {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tools-table.widefat tr:nth-child(odd),
+html[data-oa-admin-theme] body.rank-math-page .rank-math-systm-status thead th,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-panel .components-panel__body > .components-panel__body-title {
+    background: var(--oa-rm-surface-subtle);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-panel,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-panel .components-panel__body {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-panel .components-panel__body-toggle.components-button {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-panel .components-panel__body-toggle.components-button svg {
+    fill: var(--oa-rm-text-soft);
+}
+
+/*
+BUTTONS
+-- Rank Math restyles the core button classes inside .rank-math-page, so the
+-- overrides have to name the same three variants it does.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .button,
+html[data-oa-admin-theme] body.rank-math-page .button-secondary,
+html[data-oa-admin-theme] body.rank-math-page .is-secondary {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border-strong);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .button:hover:not(:disabled),
+html[data-oa-admin-theme] body.rank-math-page .button:focus:not(:disabled),
+html[data-oa-admin-theme] body.rank-math-page .button-secondary:hover:not(:disabled),
+html[data-oa-admin-theme] body.rank-math-page .button-secondary:focus:not(:disabled),
+html[data-oa-admin-theme] body.rank-math-page .is-secondary:hover:not(:disabled),
+html[data-oa-admin-theme] body.rank-math-page .is-secondary:focus:not(:disabled) {
+    color: var(--oa-rm-accent);
+    border-color: var(--oa-rm-accent);
+    background: var(--oa-rm-surface-hover);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .button.active,
+html[data-oa-admin-theme] body.rank-math-page .button-secondary.active,
+html[data-oa-admin-theme] body.rank-math-page .is-secondary.active {
+    color: var(--oa-rm-accent);
+    border-color: var(--oa-rm-accent);
+    background: var(--oa-rm-accent-soft);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .button-primary,
+html[data-oa-admin-theme] body.rank-math-page .is-primary,
+html[data-oa-admin-theme] body.rank-math-page .button-primary[disabled],
+html[data-oa-admin-theme] body.rank-math-page .is-primary[disabled] {
+    color: var(--oa-rm-on-accent) !important;
+    border-color: var(--oa-rm-accent) !important;
+    background: var(--oa-rm-accent) !important;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .button-primary:hover:not(:disabled),
+html[data-oa-admin-theme] body.rank-math-page .button-primary:focus:not(:disabled),
+html[data-oa-admin-theme] body.rank-math-page .is-primary:hover:not(:disabled),
+html[data-oa-admin-theme] body.rank-math-page .is-primary:focus:not(:disabled) {
+    color: var(--oa-rm-on-accent) !important;
+    border-color: var(--oa-rm-accent-strong) !important;
+    background: var(--oa-rm-accent-strong) !important;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .button-primary:focus,
+html[data-oa-admin-theme] body.rank-math-page .is-primary:focus {
+    box-shadow: 0 0 0 1px var(--oa-rm-surface), 0 0 0 3px var(--oa-admin-focus-ring);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .is-blue:not(.default) {
+    color: var(--oa-rm-on-accent);
+    border-color: var(--oa-rm-accent);
+    background: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .is-green:not(.default) {
+    color: var(--oa-rm-on-accent);
+    border-color: var(--oa-rm-success);
+    background: var(--oa-rm-success);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .is-red:not(.default) {
+    color: var(--oa-rm-on-accent);
+    border-color: var(--oa-rm-danger);
+    background: var(--oa-rm-danger);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .button-link-delete {
+    color: var(--oa-rm-danger);
+    border-color: var(--oa-rm-danger);
+    background: transparent;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .button-link-delete:hover,
+html[data-oa-admin-theme] body.rank-math-page .button-link-delete:focus {
+    color: var(--oa-rm-on-accent);
+    background: var(--oa-rm-danger);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme] body.rank-math-page .button-link,
+html[data-oa-admin-theme] body.rank-math-page .is-link {
+    color: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-help-icon {
+    color: var(--oa-rm-text-dim);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-help-icon:hover {
+    color: var(--oa-rm-accent);
+}
+
+/*
+TOGGLES AND CHECKBOXES
+-- The module switches are the main control on the dashboard, so their off
+-- state has to stay visible against a dark card.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .cmb2-slider {
+    border-color: var(--oa-rm-border-strong);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .cmb2-slider::before {
+    background-color: var(--oa-rm-border-strong);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .cmb2-toggle input:checked + .cmb2-slider {
+    border-color: var(--oa-rm-accent);
+    background-color: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .cmb2-toggle input:checked + .cmb2-slider::before {
+    background: var(--oa-rm-on-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .cmb2-toggle input:disabled + .cmb2-slider,
+html[data-oa-admin-theme] body.rank-math-page .cmb2-toggle input:disabled + .cmb2-slider::before {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .toggle_off {
+    color: var(--oa-rm-text-dim);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .toggle_on {
+    border-color: var(--oa-rm-on-accent);
+    background: var(--oa-rm-on-accent);
+    fill: var(--oa-rm-on-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-switch label {
+    background: var(--oa-rm-border-strong);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-switch label::after {
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-switch input:checked + label {
+    background: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page [id^="cmb2-metabox-rank"] input[type="checkbox"] {
+    border-color: var(--oa-rm-border-strong);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page [id^="cmb2-metabox-rank"] input[type="checkbox"]:checked,
+html[data-oa-admin-theme] body.rank-math-page [id^="cmb2-metabox-rank"] input[type="checkbox"]:checked:focus {
+    border-color: var(--oa-rm-accent);
+    background: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page [id^="cmb2-metabox-rank"] input[type="checkbox"]:checked::before,
+html[data-oa-admin-theme] body.rank-math-page [id^="cmb2-metabox-rank"] input[type="checkbox"]:checked:focus::before {
+    color: var(--oa-rm-on-accent);
+}
+
+/*
+MODULE LISTING
+-- The module cards keep their own icon accents; only the card, its status
+-- strip and its copy move onto the tokens.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .module-listing .rank-math-box {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .module-listing .rank-math-box header h3 {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .module-listing .rank-math-box header p {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .module-listing .rank-math-box .status {
+    border-top-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .module-listing .rank-math-box.is-pro:hover {
+    border-color: var(--oa-rm-accent);
+    box-shadow: 0 0 0 3px var(--oa-rm-accent-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .module-listing .rank-math-box header .is-upgradeable div {
+    color: var(--oa-rm-text-dim);
+}
+
+/*
+Icon tiles
+-- Every module icon is a hardcoded colour on a 15% tint of itself, which
+-- reads as a bright block on a dark card. Softening the tile keeps the
+-- per-module colour recognisable without the glare.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .module-listing .rank-math-box i[class*="rm-icon-"],
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-list-icon li i[class*="rm-icon-"] {
+    filter: brightness(1.35) saturate(0.9);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .module-listing .rank-math-box i[class*="rm-icon-"]::before,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-list-icon li i[class*="rm-icon-"]::before {
+    filter: none;
+}
+
+/*
+DASHBOARD QUICK LINKS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-list-icon li a,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-list-icon li p {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-list-icon li strong {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-list-icon li a:hover strong {
+    color: var(--oa-rm-accent);
+}
+
+/*
+NOTICES
+-- Rank Math prints its own notice shell as well as core notices, and both
+-- appear inside the plugin pages.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-notice,
+html[data-oa-admin-theme] body.rank-math-page .wrap .rank-math-notice,
+html[data-oa-admin-theme] body.rank-math-page .wrap .rank-math-accordion-content .rank-math-notice {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-notice p,
+html[data-oa-admin-theme] body.rank-math-page .wrap .rank-math-accordion-content .rank-math-notice p {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-notice .notice-info {
+    border-left-color: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-notice .notice-warning {
+    border-left-color: var(--oa-rm-warning);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-notice .notice-error,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-notice--error {
+    border-left-color: var(--oa-rm-danger);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-settings-notice,
+html[data-oa-admin-theme] body.rank-math-page div.notice:not(.rank-math-notice):not(.settings-error):not(.cmb-type-notice) {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .sitemap-nginx-notice pre {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-surface-soft);
+}
+
+/*
+TOOLTIPS AND DROPDOWNS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tooltip {
+    color: var(--oa-rm-text-dim);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tooltip:hover {
+    color: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tooltip > span {
+    color: var(--oa-rm-on-accent);
+    background: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-tooltip > span::after {
+    border-top-color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-variables-dropdown,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-search-dropdown,
+html[data-oa-admin-theme] body.rank-math-page .components-popover__content {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-variables-dropdown input[type="text"] {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-variables-dropdown li span {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-variables-dropdown li:hover,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-search-dropdown > .rank-math-button.components-button.button-secondary:hover {
+    background: var(--oa-rm-surface-hover);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-variables-dropdown li::after {
+    background-color: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-search-dropdown > .rank-math-button.components-button.button-secondary {
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-search-dropdown > .rank-math-button.components-button.button-secondary h1 {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-search-options .components-input-control .components-input-control__container .components-input-control__input {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page a.rank-math-variables-button.button-secondary {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page a.rank-math-variables-button.button-secondary:hover {
+    border-color: var(--oa-rm-accent);
+    background: var(--oa-rm-surface-hover);
+}
+
+/*
+SERP PREVIEW
+-- The preview mimics a Google result, so it keeps its own link blue and green
+-- and only the surrounding card follows the tokens.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .serp-preview,
+html[data-oa-admin-theme] body.wp-admin .rank-math-modal .serp-preview {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .serp-preview .serp-title,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-preview-title,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-preview-title h5,
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-variables-preview {
+    color: #8AB4F8;
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .serp-preview .serp-url-wrapper {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .serp-preview .serp-description {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-preview-title span {
+    color: #7FCB91;
+}
+
+/*
+CODE BOXES
+-- These are already dark in Rank Math's own palette, so only light mode needs
+-- them turned back over to the tokens.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="light"] body.rank-math-page textarea.rank-math-code-box,
+html[data-oa-admin-theme="light"] body.rank-math-page div.rank-math-code-box textarea {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+/*
+SEO ANALYSIS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-seo-analysis-wrap .title-prefix,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-seo-analysis-wrap .rank-math-analysis-date,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-result-graphs .result-score div,
+html[data-oa-admin-theme] body.rank-math-page #rank-math-circle-progress .result-main-score div,
+html[data-oa-admin-theme] body.rank-math-page .competitor_analyzer .rank-math-box > p {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-result-table .category-title,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-result-filter,
+html[data-oa-admin-theme] body.rank-math-page .seo-analysis-results > .components-tab-panel__tabs .components-tab-panel__tabs-item {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-result-table .table-row {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .progress-bar,
+html[data-oa-admin-theme] body.rank-math-page .chart .chart-bar::before {
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .progress-bar .progress-text {
+    color: var(--oa-rm-text-soft);
+}
+
+/*
+ANALYTICS
+-- The analytics screens reuse the WooCommerce table components, which paint
+-- their own white rows and headers.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page #rank-math-analytics h2,
+html[data-oa-admin-theme] body.rank-math-page #rank-math-analytics h3,
+html[data-oa-admin-theme] body.rank-math-page #rank-math-analytics h4,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analytics .text-large,
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-ellipsis-menu__title {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analytics .rank-math-item-difference,
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-table table,
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-table table small,
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-table.components-card {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-table,
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-table .components-card__header .components-dropdown .components-popover__content {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-table table tr th,
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-table table tr:first-child {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-surface-subtle);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .woocommerce-table table tr:hover {
+    background: var(--oa-rm-surface-hover);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analytics input,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analytics select,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analytics textarea,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analyzer-header .analytics-search input,
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analyzer-header .analytics-dropdown select.components-select-control__input {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analyzer-header .rank-math-suggestions {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analyzer-header .rank-math-suggestions li .title {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analytics .up {
+    color: var(--oa-rm-success);
+}
+
+html[data-oa-admin-theme] body.rank-math-page .rank-math-analytics .down {
+    color: var(--oa-rm-danger);
+}
+
+/*
+PRO AND UPGRADE PANELS
+-- These ship as deep navy blocks in both of Rank Math's own modes, so they
+-- only need their surrounding card and body copy corrected.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-page #rank-math-pro-cta .rank-math-cta-box,
+html[data-oa-admin-theme] body.rank-math-page #rank-math-pro-cta .rank-math-cta-table {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-page #rank-math-pro-cta .rank-math-cta-box h3 {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-page #rank-math-pro-cta p,
+html[data-oa-admin-theme] body.rank-math-page #rank-math-pro-cta ul,
+html[data-oa-admin-theme] body.rank-math-page #rank-math-pro-cta .rank-math-cta-text {
+    color: var(--oa-rm-text-soft);
+}
+
+/*
+SETUP WIZARD
+-- The wizard renders on its own page shell with body.rank-math-wizard, so it
+-- never picks up the wp-admin foundations.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.rank-math-wizard {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-canvas);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wrapper,
+html[data-oa-admin-theme] body.rank-math-wizard .rank-math-wap-connect-cta {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .rank-math-gray-box,
+html[data-oa-admin-theme] body.rank-math-wizard .field-row.features-child {
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .text-center,
+html[data-oa-admin-theme] body.rank-math-wizard .main-content > header p,
+html[data-oa-admin-theme] body.rank-math-wizard .return-to-dashboard a,
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-navigation a {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-content--requirements .rank-math-table {
+    border-color: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-content--requirements .rank-math-table th,
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-content--requirements .wizard-conflicts td {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-content--requirements .rank-math-table tr:nth-child(odd) {
+    background: var(--oa-rm-surface-subtle);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-content--requirements .rank-math-setup-mode ul li label {
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-content--requirements .rank-math-setup-mode ul li label .rank-math-mode-title {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-navigation span {
+    border-color: var(--oa-rm-border-strong);
+    background: var(--oa-rm-border-strong);
+    box-shadow: inset 0 0 0 2px var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-navigation a.active span {
+    color: var(--oa-rm-on-accent);
+    border-color: var(--oa-rm-accent);
+    background: var(--oa-rm-accent);
+    box-shadow: inset 0 0 0 2px var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-navigation a.done span {
+    color: var(--oa-rm-on-accent);
+    border-color: var(--oa-rm-success);
+    background: var(--oa-rm-success);
+    box-shadow: inset 0 0 0 2px var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-navigation a:after {
+    background-color: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme] body.rank-math-wizard .wizard-navigation a.done::after {
+    background-color: var(--oa-rm-success);
+}
+
+/*
+POST EDITOR METABOX
+-- The metabox renders outside .rank-math-page, inside both the classic
+-- editor and the block editor sidebar.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper,
+html[data-oa-admin-theme] body.wp-admin #rank_math_metabox,
+html[data-oa-admin-theme] body.wp-admin #rank_math_metabox .inside {
+    color: var(--oa-rm-text);
+    background-color: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper .rank-math-tabs .components-panel__body > .components-base-control > .components-base-control__field > .components-base-control__label,
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper .rank-math-tabs .components-panel__body.rank-math-redirect label {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper .components-panel__body,
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper .components-panel__body-title {
+    border-color: var(--oa-rm-border);
+    background: transparent;
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper input[type="text"],
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper input[type="url"],
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper select,
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper textarea {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank-math-metabox-wrapper .rank-math-tabs .rank-math-tooltip .rank-math-tooltip-content {
+    color: var(--oa-rm-on-accent);
+    background: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-seo-score {
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-seo-score.good-fk {
+    color: var(--oa-rm-success);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-seo-score.ok-fk {
+    color: var(--oa-rm-warning);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-seo-score.bad-fk {
+    color: var(--oa-rm-danger);
+    background: var(--oa-rm-surface-soft);
+}
+
+/* Generate Alt button in the attachment details panel. */
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-generate-alt-button {
+    color: var(--oa-admin-accent);
+    border-color: var(--oa-admin-accent);
+    background: var(--oa-admin-accent-soft);
+}
+
+/*
+DASHBOARD WIDGET
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-dashboard-block,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-widget-footer {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-dashboard-block > div {
+    border-color: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget h3,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget h4,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-blog-title,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .text-large,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-dashboard-block > div h4 {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-tooltip,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-tooltip::before,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-item-difference {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget h3 a i {
+    color: var(--oa-rm-text-dim);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget h3 a:hover i,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-blog-post a:hover {
+    color: var(--oa-rm-accent);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .up,
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .rank-math-widget-go-pro {
+    color: var(--oa-rm-success);
+}
+
+html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget .down {
+    color: var(--oa-rm-danger);
+}
+
+/*
+POST LIST COLUMN
+-- The SEO column sits inside a core list table, so only the score chips and
+-- the meta text below them need correcting.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank_math_seo_details .rank-math-column-display:not(.seo-score),
+html[data-oa-admin-theme="dark"] body.wp-admin .rank_math_seo_details .rank-math-column-display:not(.seo-score) * {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-list-table td .rank-math-column-value {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface-soft);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-list-table td .rank-math-column-display.seo-score.no-score strong {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-hover);
+}

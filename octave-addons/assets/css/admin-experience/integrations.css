@@ -7,7 +7,10 @@ ADMIN EXPERIENCE INTEGRATIONS
 Shared plugin colour aliases
 ---------------------------------------------------------- */
 
-body.wp-admin :is(.breeze-box, .wpr-wrap, .imagify-settings, .imagify-main-content) {
+/* The Breeze top notice and its one-click section sit outside .breeze-box,
+   so they are named here too or the rules below resolve to nothing. */
+
+body.wp-admin :is(.breeze-box, .breeze-top-notice, .breeze-one-click-optimization-section, .wpr-wrap, .imagify-settings, .imagify-main-content) {
     --oa-plugin-accent: var(--oa-admin-accent);
     --oa-plugin-accent-strong: var(--oa-admin-accent-dark);
     --oa-plugin-accent-soft: var(--oa-admin-accent-soft);

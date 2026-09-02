@@ -26,6 +26,7 @@ WORDPRESS ADMIN EXPERIENCE
     --oa-admin-focus-ring: rgba(23, 105, 194, 0.36);
     --oa-admin-danger: #C9363E;
     --oa-admin-warning: #B76A00;
+    --oa-admin-success: #1F8A5B;
     --oa-admin-radius: 12px;
     --oa-admin-radius-small: 8px;
     --oa-admin-shadow: 0 10px 30px rgba(16, 36, 31, 0.07);
@@ -53,6 +54,7 @@ html[data-oa-admin-theme="dark"] {
     --oa-admin-focus-ring: rgba(99, 169, 245, 0.32);
     --oa-admin-danger: #FF858C;
     --oa-admin-warning: #F6B95F;
+    --oa-admin-success: #5FD3A0;
     --oa-admin-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
     --oa-admin-shadow-raised: 0 18px 50px rgba(0, 0, 0, 0.34);
 }
@@ -470,7 +472,15 @@ body.wp-admin .submitdelete:hover {
     color: var(--oa-admin-danger);
 }
 
-body.wp-admin .page-title-action {
+/* Core sets the padding on .wrap .page-title-action:active, which outranks a
+   body.wp-admin selector, so the button used to resize the moment it was
+   pressed. Carrying .wrap here puts these rules back in front, and .add-new-h2
+   is the legacy class core still styles alongside it. */
+
+body.wp-admin .wrap .page-title-action,
+body.wp-admin .wrap .page-title-action:active,
+body.wp-admin .wrap .add-new-h2,
+body.wp-admin .wrap .add-new-h2:active {
     top: -3px;
     margin-left: 8px;
     padding: 7px 13px;
@@ -481,10 +491,13 @@ body.wp-admin .page-title-action {
     font-weight: 650;
 }
 
-body.wp-admin .page-title-action:hover,
-body.wp-admin .page-title-action:focus {
+body.wp-admin .wrap .page-title-action:hover,
+body.wp-admin .wrap .page-title-action:focus,
+body.wp-admin .wrap .add-new-h2:hover,
+body.wp-admin .wrap .add-new-h2:focus {
     color: var(--oa-admin-on-accent);
     background: var(--oa-admin-accent);
+    border-color: var(--oa-admin-accent);
 }
 
 /*
@@ -1609,7 +1622,10 @@ body.wp-admin.rtl #adminmenu li.wp-has-current-submenu::before {
     border-radius: 3px 0 0 3px;
 }
 
-body.wp-admin.rtl .page-title-action {
+body.wp-admin.rtl .wrap .page-title-action,
+body.wp-admin.rtl .wrap .page-title-action:active,
+body.wp-admin.rtl .wrap .add-new-h2,
+body.wp-admin.rtl .wrap .add-new-h2:active {
     margin-right: 8px;
     margin-left: 0;
 }
@@ -1834,7 +1850,10 @@ body.wp-admin .components-button.is-primary {
     font-weight: 600;
 }
 
-body.wp-admin .page-title-action {
+body.wp-admin .wrap .page-title-action,
+body.wp-admin .wrap .page-title-action:active,
+body.wp-admin .wrap .add-new-h2,
+body.wp-admin .wrap .add-new-h2:active {
     top: -2px;
     padding: 5px 10px;
     border-radius: 3px;
@@ -1951,11 +1970,6 @@ html[data-oa-admin-theme="dark"] body.wp-admin.term-php .form-field > label,
 html[data-oa-admin-theme="dark"] body.wp-admin.term-php .form-field > legend,
 html[data-oa-admin-theme="dark"] body.wp-admin.term-php .form-table th {
     color: var(--oa-admin-text);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-admin .rank_math_seo_details .rank-math-column-display:not(.seo-score),
-html[data-oa-admin-theme="dark"] body.wp-admin .rank_math_seo_details .rank-math-column-display:not(.seo-score) * {
-    color: var(--oa-admin-text-soft);
 }
 
 html[data-oa-admin-theme="dark"] body.wp-admin .plugins,
@@ -2756,25 +2770,6 @@ html[data-oa-admin-theme="dark"] body.index-php #onetap_missing_alt_text .onetap
     color: var(--oa-admin-text-soft);
 }
 
-html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-dashboard-block,
-html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-widget-footer {
-    color: var(--oa-admin-text);
-    background: var(--oa-admin-surface);
-    border-color: var(--oa-admin-border);
-}
-
-html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget h3,
-html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget h4,
-html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-blog-title,
-html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .text-large {
-    color: var(--oa-admin-text);
-}
-
-html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-tooltip,
-html[data-oa-admin-theme="dark"] body.index-php #rank_math_dashboard_widget .rank-math-tooltip::before {
-    color: var(--oa-admin-text-soft);
-}
-
 html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget,
 html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-block,
 html[data-oa-admin-theme="dark"] body.index-php #wp_mail_smtp_reports_widget_lite .wp-mail-smtp-dash-widget-chart-block,
@@ -2959,46 +2954,6 @@ html[data-oa-admin-theme="dark"] body.gform-admin-screen table tbody tr:nth-chil
 }
 
 /*
-Rank Math
----------------------------------------------------------- */
-
-html[data-oa-admin-theme="dark"] body.rank-math-page #wpcontent,
-html[data-oa-admin-theme="dark"] body.rank-math-page #wpbody-content,
-html[data-oa-admin-theme="dark"] body.rank-math-page #rank-math-dashboard-page,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-wrap {
-    color: var(--oa-admin-text);
-    background: var(--oa-admin-canvas);
-}
-
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-header,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-tabs,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-tab-content,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-module,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box footer {
-    color: var(--oa-admin-text);
-    background: var(--oa-admin-surface);
-    border-color: var(--oa-admin-border);
-}
-
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box footer,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-tabs {
-    background: var(--oa-admin-surface-soft);
-}
-
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box h2,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box h3,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-module h2,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-module h3 {
-    color: var(--oa-admin-text);
-}
-
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-box p,
-html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-module p {
-    color: var(--oa-admin-text-soft);
-}
-
-/*
 Wordfence
 ---------------------------------------------------------- */
 
@@ -3028,6 +2983,354 @@ html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard h4 {
 
 html[data-oa-admin-theme="dark"] body.toplevel_page_Wordfence #wf-dashboard p {
     color: var(--oa-admin-text-soft);
+}
+
+/*
+CORE SURFACES CORE STILL PAINTS LIGHT
+-- Audited against the load-styles.php bundle this site serves. Everything
+-- below is a place where WordPress hardcodes a white panel, a near-black
+-- label or a light border that no earlier rule in this sheet reaches, so the
+-- element stayed light while the admin around it went dark. Light mode keeps
+-- core's own values, which are already correct there.
+---------------------------------------------------------- */
+
+/*
+Disabled controls
+-- Core marks the whole disabled button state !important, so this is the one
+-- place the sheet has to answer in kind. The light border is the real problem:
+-- it draws a bright ring around a dark button.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button.disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button[disabled],
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-secondary.disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-secondary:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-secondary[disabled],
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-primary.disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-primary:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .button-primary[disabled] {
+    color: var(--oa-admin-text-dim) !important;
+    border-color: var(--oa-admin-border) !important;
+    background: var(--oa-admin-surface-soft) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin input[type="text"]:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin input[type="email"]:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin input[type="url"]:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin input[type="number"]:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin select:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin textarea:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin input.readonly,
+html[data-oa-admin-theme="dark"] body.wp-admin input[readonly],
+html[data-oa-admin-theme="dark"] body.wp-admin textarea.readonly,
+html[data-oa-admin-theme="dark"] body.wp-admin textarea[readonly] {
+    color: var(--oa-admin-text-dim);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface-soft);
+}
+
+/*
+Notice dismiss button
+-- The × sits on every notice on every screen and core fixes it at #1e1e1e,
+-- which disappears into a dark notice.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .notice-dismiss,
+html[data-oa-admin-theme="dark"] body.wp-admin .notice-dismiss::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .notice-dismiss:hover::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .notice-dismiss:active::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .notice-dismiss:focus::before,
+html[data-oa-admin-theme="dark"] body.wp-admin #bulk-titles .ntdelbutton::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .tagchecklist .ntdelbutton .remove-tag-icon::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .welcome-panel .welcome-panel-close::before {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .notice-title {
+    color: var(--oa-admin-text);
+}
+
+/*
+Widgets screen
+-- The classic widget list is a stack of white cards with near-black titles.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widget .widget-top,
+html[data-oa-admin-theme="dark"] body.wp-admin .widget-top,
+html[data-oa-admin-theme="dark"] body.wp-admin .menu-item-handle {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widget-inside,
+html[data-oa-admin-theme="dark"] body.wp-admin .widgets-chooser ul {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widget-action,
+html[data-oa-admin-theme="dark"] body.wp-admin .widget-control-edit,
+html[data-oa-admin-theme="dark"] body.wp-admin #widgets-right a.widget-control-edit,
+html[data-oa-admin-theme="dark"] body.wp-admin .toggle-indicator,
+html[data-oa-admin-theme="dark"] body.wp-admin .item-edit,
+html[data-oa-admin-theme="dark"] body.wp-admin .postbox .handle-order-higher,
+html[data-oa-admin-theme="dark"] body.wp-admin .postbox .handle-order-lower {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widget-top:hover .widget-action,
+html[data-oa-admin-theme="dark"] body.wp-admin .widget-action:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .sidebar-name:hover .toggle-indicator,
+html[data-oa-admin-theme="dark"] body.wp-admin .item-edit:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .item-edit:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .edit-post-meta-boxes-area .postbox .handle-order-higher,
+html[data-oa-admin-theme="dark"] body.wp-admin .edit-post-meta-boxes-area .postbox .handle-order-lower {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .widget-control-edit {
+    background: var(--oa-admin-surface-soft);
+}
+
+/*
+Accordions and tab panels
+-- Nav Menus, the Privacy settings page and the link category picker.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .accordion-section-title button.accordion-trigger,
+html[data-oa-admin-theme="dark"] body.nav-menus-php .metabox-holder .accordion-section-title button.accordion-trigger {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .privacy-settings-accordion-trigger {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .privacy-settings-accordion-trigger:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .privacy-settings-accordion-trigger:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .privacy-settings-accordion-trigger:active {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-tab-panel,
+html[data-oa-admin-theme="dark"] body.wp-admin .comment-ays,
+html[data-oa-admin-theme="dark"] body.wp-admin .feature-filter,
+html[data-oa-admin-theme="dark"] body.wp-admin .filtered-by .tag,
+html[data-oa-admin-theme="dark"] body.wp-admin .revisions-tooltip,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-tooltip .wp-tooltip__bubble {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface);
+}
+
+/*
+Comments and moderation
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin #replyerror,
+html[data-oa-admin-theme="dark"] body.wp-admin #the-comment-list div.undo,
+html[data-oa-admin-theme="dark"] body.wp-admin #the-comment-list tr.undo {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .column-comments .post-com-count-pending,
+html[data-oa-admin-theme="dark"] body.wp-admin .column-response .post-com-count-pending {
+    border-color: var(--oa-admin-surface);
+}
+
+/*
+Dashboard
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .welcome-panel .welcome-panel-column-container {
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #dashboard_primary .rss-widget span.rss-date,
+html[data-oa-admin-theme="dark"] body.wp-admin .rss-widget span.rss-date {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #dashboard_right_now .sub {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface-soft);
+}
+
+/*
+Users and passwords
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin #pass-strength-result {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface-soft);
+}
+
+/*
+Media library and media widgets
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .media-frame .media-menu {
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .media-progress-bar {
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .uploader-window .media-progress-bar {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.upload-php .media-modal-close:hover .media-modal-icon::before,
+html[data-oa-admin-theme="dark"] body.upload-php .media-modal-close:focus .media-modal-icon::before {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .media-widget-control .attachment-media-view .button-add-media,
+html[data-oa-admin-theme="dark"] body.wp-admin .media-widget-control .placeholder,
+html[data-oa-admin-theme="dark"] body.wp-admin .media-widget-preview .placeholder {
+    color: var(--oa-admin-text-soft);
+    border-color: var(--oa-admin-border-strong);
+    background-color: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .image-details .advanced-toggle,
+html[data-oa-admin-theme="dark"] body.wp-admin .image-details .advanced-toggle:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .image-details .advanced-toggle:active {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+Plugin, theme and file editors
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .upload-plugin .wp-upload-form,
+html[data-oa-admin-theme="dark"] body.wp-admin .upload-theme .wp-upload-form {
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin #template .CodeMirror,
+html[data-oa-admin-theme="dark"] body.wp-admin .custom-html-widget-fields > p > .CodeMirror {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .close-full-overlay,
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .previous-theme,
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .next-theme {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .close-full-overlay:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .close-full-overlay:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .previous-theme:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .previous-theme:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .next-theme:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .theme-install-overlay .next-theme:focus {
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-hover);
+}
+
+/*
+Drag placeholders and the privacy request table
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .sortable-placeholder {
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .privacy_requests tbody td.check-column,
+html[data-oa-admin-theme="dark"] body.wp-admin .privacy_requests tr.status-request-confirmed td.check-column,
+html[data-oa-admin-theme="dark"] body.wp-admin .privacy_requests tr.status-request-failed td.check-column {
+    background-color: var(--oa-admin-surface);
+}
+
+/*
+Admin bar update bubble
+-- Two IDs in core's own selector, so the override has to carry them both.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] #wpadminbar .quicklinks a span#ab-updates,
+html[data-oa-admin-theme="dark"] #wpadminbar .quicklinks a:hover span#ab-updates {
+    color: var(--oa-admin-text);
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/*
+Block editor components
+-- These reach the post editor sidebar, so they show up on every edit screen.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-checkbox-control__input[type="checkbox"] {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-checkbox-control__input[type="checkbox"]:disabled,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-checkbox-control__input[type="checkbox"][aria-disabled="true"] {
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-radio-control__input[type="radio"]:checked::before {
+    background-color: var(--oa-admin-on-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-badge:where(.is-default) {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-form-token-field__token.is-validating .components-form-token-field__token-text,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-form-token-field__token.is-validating .components-form-token-field__remove-token,
+html[data-oa-admin-theme="dark"] body.wp-admin .components-form-token-field__token.is-borderless .components-form-token-field__remove-token {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .components-notice__dismiss {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+jQuery UI slider
+-- Used by the media crop tools and a handful of core controls.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-slider .ui-slider-handle,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-slider .ui-slider-handle:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-slider .ui-slider-handle:focus,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-slider .ui-slider-handle:active {
+    border-color: var(--oa-admin-border-strong);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-slider .ui-slider-handle::before,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-slider .ui-slider-handle:hover::before {
+    color: var(--oa-admin-text);
+}
+
+/*
+Press This bookmarklet card
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .pressthis-bookmarklet,
+html[data-oa-admin-theme="dark"] body.wp-admin .pressthis-bookmarklet:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin .pressthis-bookmarklet:active {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-soft);
 }
 
 @media screen and (max-width: 960px) {
@@ -3399,14 +3702,6 @@ html[data-oa-admin-theme="dark"] body.wp-admin .acf-expand-details,
 html[data-oa-admin-theme="dark"] body.wp-admin .acf-expand-details .is-closed,
 html[data-oa-admin-theme="dark"] body.wp-admin .acf-expand-details .is-open {
     color: var(--oa-admin-text-soft);
-}
-
-/* Rank Math Generate Alt button in the attachment details panel. */
-
-html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-generate-alt-button {
-    color: var(--oa-admin-accent);
-    background: var(--oa-admin-accent-soft);
-    border-color: var(--oa-admin-accent);
 }
 
 /*

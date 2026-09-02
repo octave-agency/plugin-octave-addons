@@ -182,7 +182,8 @@ FOCUS STATES
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 22px 20px;
+    /* Matches .oa-nav so the brand mark and the nav pills share a left edge */
+    padding: 22px 12px;
     border-bottom: 1px solid var(--oa-border-light);
 }
 
@@ -627,130 +628,6 @@ Notices above the interface
 /*
 DASHBOARD MODULES
 ---------------------------------------------------------- */
-
-/*
-Admin experience boundary
--- Isolated site-wide switch for the optional WordPress admin refresh.
----------------------------------------------------------- */
-
-.oa-dashboard-setting {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    margin: 4px 2px 24px;
-    padding: 18px 20px;
-    color: var(--oa-text);
-    background: var(--oa-surface);
-    border: 1px solid var(--oa-border);
-    border-radius: 14px;
-    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
-}
-
-.oa-dashboard-setting-copy {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-}
-
-.oa-dashboard-setting-icon {
-    display: grid;
-    place-items: center;
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
-    color: var(--oa-accent);
-    background: var(--oa-accent-bg);
-    border: 1px solid rgba(43, 255, 134, 0.22);
-    border-radius: 11px;
-}
-
-.oa-dashboard-setting h2 {
-    margin: 3px 0 4px;
-    color: var(--oa-text);
-    font-size: 16px;
-    line-height: 1.3;
-}
-
-.oa-dashboard-setting p {
-    max-width: 620px;
-    margin: 0;
-    color: var(--oa-text-dim);
-    font-size: 11.5px;
-    line-height: 1.55;
-}
-
-.oa-dashboard-setting-form {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-    flex: 0 0 auto;
-}
-
-.oa-dashboard-setting-state {
-    min-width: 52px;
-    color: var(--oa-text-muted);
-    font-size: 11px;
-    font-weight: 650;
-}
-
-.oa-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 38px;
-    padding: 0 18px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-    text-decoration: none;
-    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
-}
-
-.oa-button--primary,
-.oa-button--primary:visited {
-    min-height: 36px;
-    padding: 0 16px;
-    color: #090B0C;
-    border-color: rgba(43, 255, 134, 0.72);
-    background: linear-gradient(135deg, #2BFF86, #00D084);
-    box-shadow: 0 8px 20px rgba(0, 208, 132, 0.18);
-}
-
-.oa-button--primary:hover,
-.oa-button--primary:focus,
-.oa-button--primary:active {
-    color: #090B0C;
-    border-color: #2BFF86;
-    background: linear-gradient(135deg, #5DFF9F, #2BFF86);
-    filter: none;
-    transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(0, 208, 132, 0.26);
-}
-
-.oa-button--primary:active {
-    transform: translateY(0);
-}
-
-@media screen and (max-width: 782px) {
-
-    .oa-dashboard-setting {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .oa-dashboard-setting-form {
-        justify-content: flex-start;
-        width: 100%;
-    }
-
-}
 
 .oa-dashboard-heading {
     display: flex;
@@ -1498,6 +1375,17 @@ CUSTOM SELECTS
     margin: 0;
 }
 
+/* --- Text selection preview ------------------------------ */
+
+.oa-selection-preview {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
 /* --- Hidden utility (JS-toggled visibility) -------------- */
 
 .oa-hidden {
@@ -2155,7 +2043,6 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
     background: var(--oa-surface);
 }
 
-.oa-app--themed .oa-dashboard-setting,
 .oa-app--themed .oa-module-card {
     border-color: var(--oa-border);
     background: var(--oa-surface);
@@ -2176,12 +2063,6 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
     border-top: 1px solid var(--oa-border-light);
 }
 
-.oa-app--themed .oa-dashboard-setting {
-    margin: 0 0 32px;
-    padding: 20px 22px;
-}
-
-.oa-app--themed .oa-dashboard-setting-icon,
 .oa-app--themed .oa-module-card-icon {
     color: var(--oa-accent);
     border-color: var(--oa-border);
@@ -2328,10 +2209,6 @@ html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field textarea:focus {
 
     .oa-app--themed .oa-content {
         padding: 20px 10px 28px;
-    }
-
-    .oa-app--themed .oa-dashboard-setting {
-        padding: 18px;
     }
 
 }
