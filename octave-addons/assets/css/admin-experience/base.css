@@ -802,6 +802,39 @@ body.wp-admin .tablenav {
     margin: 14px 0 10px;
 }
 
+body.wp-admin .tablenav-pages,
+body.wp-admin .tablenav-pages .pagination-links,
+body.wp-admin .tablenav-pages .paging-input,
+body.wp-admin .tablenav-pages .paging-input > label {
+    display: inline-flex;
+    align-items: center;
+}
+
+body.wp-admin .tablenav-pages {
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+body.wp-admin .tablenav-pages .displaying-num {
+    margin: 0;
+    line-height: 34px;
+}
+
+body.wp-admin .tablenav-pages .pagination-links {
+    gap: 4px;
+}
+
+body.wp-admin .tablenav-pages .paging-input {
+    gap: 6px;
+}
+
+body.wp-admin .tablenav-pages .current-page {
+    height: 34px;
+    min-height: 34px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
 body.wp-admin .tablenav-pages .page-numbers,
 body.wp-admin .tablenav .tablenav-pages a,
 body.wp-admin .tablenav-pages-navspan {
@@ -809,9 +842,12 @@ body.wp-admin .tablenav-pages-navspan {
     height: 34px;
     border-color: var(--oa-admin-border);
     border-radius: 7px;
-    line-height: 32px;
+    line-height: 1;
     box-sizing: border-box;
     padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 body.wp-admin .tablenav-pages .current {

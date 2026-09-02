@@ -161,6 +161,7 @@ class Octave_Addons_Admin_Experience {
 		$integrations_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/integrations.css';
 		$woo_path          = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/woocommerce.css';
 		$rank_math_path    = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/rank-math.css';
+		$activity_log_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/activity-log.css';
 		$js_path           = OCTAVE_ADDONS_DIR . 'assets/js/admin-experience.js';
 		$theme             = $this->get_theme();
 
@@ -204,6 +205,17 @@ class Octave_Addons_Admin_Experience {
 				OCTAVE_ADDONS_URL . 'assets/css/admin-experience/rank-math.css',
 				[ 'octave-addons-admin-experience' ],
 				file_exists( $rank_math_path ) ? (string) filemtime( $rank_math_path ) : OCTAVE_ADDONS_VERSION
+			);
+
+		}
+
+		if ( $this->is_wp_activity_log_active() ) {
+
+			wp_enqueue_style(
+				'octave-addons-admin-experience-activity-log',
+				OCTAVE_ADDONS_URL . 'assets/css/admin-experience/activity-log.css',
+				[ 'octave-addons-admin-experience' ],
+				file_exists( $activity_log_path ) ? (string) filemtime( $activity_log_path ) : OCTAVE_ADDONS_VERSION
 			);
 
 		}
@@ -309,6 +321,17 @@ class Octave_Addons_Admin_Experience {
 	public function is_rank_math_active(): bool {
 
 		return defined( 'RANK_MATH_VERSION' ) || class_exists( 'RankMath' );
+
+	}
+
+	/*
+	IS WP ACTIVITY LOG ACTIVE
+	-- Gates the activity log sheet so it never loads without WP Activity Log.
+	---------------------------------------------------------- */
+
+	public function is_wp_activity_log_active(): bool {
+
+		return defined( 'WSAL_VERSION' ) || class_exists( 'WpSecurityAuditLog' );
 
 	}
 

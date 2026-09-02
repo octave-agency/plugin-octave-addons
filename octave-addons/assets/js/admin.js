@@ -4274,3 +4274,109 @@ NOTIFICATIONS BAR BANNERS
 	syncAll();
 
 })();
+
+/*
+TEXT SELECTION PREVIEW
+-- Keeps the sample at the top of the module showing the colours the pickers
+-- currently hold, so the pairing can be judged before anything is saved.
+---------------------------------------------------------- */
+
+(function () {
+
+	'use strict';
+
+	var demo = document.querySelector( '[data-oa-selection-preview]' );
+
+	if ( ! demo ) {
+
+		return;
+
+	}
+
+	var sample           = demo.querySelector( '.oa-selection-preview' );
+	var note             = demo.querySelector( '.oa-selection-demo-note' );
+	var backgroundSource = document.getElementById( 'oa-text-selection-background_source' );
+	var backgroundColor  = document.getElementById( 'oa-text-selection-background_color-value' );
+	var textSource       = document.getElementById( 'oa-text-selection-text_source' );
+	var textColor        = document.getElementById( 'oa-text-selection-text_color-value' );
+
+	if ( ! sample || ! backgroundSource || ! backgroundColor || ! textSource || ! textColor ) {
+
+		return;
+
+	}
+
+	var colours = {};
+
+	try {
+
+		colours = JSON.parse( demo.dataset.colors || '{}' );
+
+	} catch ( error ) {
+
+		colours = {};
+
+	}
+
+	/*
+	COLOUR FOR
+	-- Mirrors the server-side preview: a Breakdance source shows the colour
+	-- read from the global settings, and falls back to the saved hex through
+	-- the variable when that colour could not be read.
+	---------------------------------------------------------- */
+
+	function colourFor( source, input ) {
+
+		var breakdance = colours[ source.value ];
+
+		if ( breakdance ) {
+
+			return breakdance.value || 'var(' + breakdance.variable + ', ' + input.value + ')';
+
+		}
+
+		if ( 'custom' === source.value ) {
+
+			return input.value;
+
+		}
+
+		return '';
+
+	}
+
+	function isUnresolved( source ) {
+
+		return !! colours[ source.value ] && '' === colours[ source.value ].value;
+
+	}
+
+	function sync() {
+
+		sample.style.backgroundColor = colourFor( backgroundSource, backgroundColor );
+		sample.style.color = colourFor( textSource, textColor );
+
+		if ( note ) {
+
+			note.classList.toggle( 'oa-hidden', ! isUnresolved( backgroundSource ) && ! isUnresolved( textSource ) );
+
+		}
+
+	}
+
+	[ backgroundSource, textSource ].forEach( function ( select ) {
+
+		select.addEventListener( 'change', sync );
+
+	} );
+
+	[ backgroundColor, textColor ].forEach( function ( input ) {
+
+		input.addEventListener( 'input', sync );
+		input.addEventListener( 'change', sync );
+
+	} );
+
+	sync();
+
+})();

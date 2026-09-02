@@ -30,6 +30,7 @@ PALETTE (TOKENS)
     --oa-text-muted:   #939393;
     --oa-text-dim:     #6B6D6F;
     --oa-shadow:       0 28px 80px rgba(0, 0, 0, 0.34);
+    --oa-focus-ring:   rgba(43, 255, 134, 0.15);
     --oa-app-radius:   20px;
 }
 
@@ -891,7 +892,7 @@ Navigation entry
     line-height: 1.65;
 }
 
-/* --- Form table ------------------------------------------ */
+/* --- Form controls --------------------------------------- */
 
 .oa-form-table .oa-section-heading {
     padding-top: 34px;
@@ -930,31 +931,98 @@ Navigation entry
     margin-top: 0;
 }
 
-.oa-form-table input[type="text"],
-.oa-form-table input[type="email"],
-.oa-form-table input[type="url"],
-.oa-form-table input[type="number"],
-.oa-form-table input[type="search"],
-.oa-form-table select,
-.oa-form-table textarea {
+body.wp-admin .octave-addons-wrap .oa-app input[type="text"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="password"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="email"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="number"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="search"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="tel"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="url"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="date"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="datetime-local"],
+body.wp-admin .octave-addons-wrap .oa-app input[type="time"],
+body.wp-admin .octave-addons-wrap .oa-app select,
+body.wp-admin .octave-addons-wrap .oa-app textarea,
+#oaIconPickerModal input[type="text"],
+#oaIconPickerModal input[type="search"],
+#oaIconPickerModal select,
+#oaIconPickerModal textarea {
     min-height: 38px;
     padding: 7px 11px;
     color: var(--oa-text);
     border: 1px solid var(--oa-border);
     border-radius: 9px;
-    background: rgba(8, 11, 12, 0.58);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    background-color: var(--oa-surface);
+    box-shadow: none;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
-.oa-form-table input:focus,
-.oa-form-table select:focus,
-.oa-form-table textarea:focus {
+body.wp-admin .octave-addons-wrap .oa-app input[type="text"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="password"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="email"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="number"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="search"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="tel"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="url"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="date"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="datetime-local"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app input[type="time"]:hover,
+body.wp-admin .octave-addons-wrap .oa-app select:hover,
+body.wp-admin .octave-addons-wrap .oa-app textarea:hover,
+#oaIconPickerModal input[type="text"]:hover,
+#oaIconPickerModal input[type="search"]:hover,
+#oaIconPickerModal select:hover,
+#oaIconPickerModal textarea:hover {
+    color: var(--oa-text);
+    border-color: var(--oa-text-dim);
+    background-color: var(--oa-surface);
+}
+
+body.wp-admin .octave-addons-wrap .oa-app input[type="text"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="password"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="email"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="number"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="search"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="tel"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="url"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="date"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="datetime-local"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app input[type="time"]:focus,
+body.wp-admin .octave-addons-wrap .oa-app select:focus,
+body.wp-admin .octave-addons-wrap .oa-app textarea:focus,
+#oaIconPickerModal input[type="text"]:focus,
+#oaIconPickerModal input[type="search"]:focus,
+#oaIconPickerModal select:focus,
+#oaIconPickerModal textarea:focus {
     color: var(--oa-text);
     border-color: var(--oa-accent);
     outline: none;
-    background: rgba(11, 14, 15, 0.9);
-    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.15);
+    background-color: var(--oa-surface);
+    box-shadow: 0 0 0 3px var(--oa-focus-ring);
+}
+
+body.wp-admin .octave-addons-wrap .oa-app input[readonly],
+body.wp-admin .octave-addons-wrap .oa-app input:disabled,
+body.wp-admin .octave-addons-wrap .oa-app select:disabled,
+body.wp-admin .octave-addons-wrap .oa-app textarea:disabled,
+#oaIconPickerModal input[readonly],
+#oaIconPickerModal input:disabled,
+#oaIconPickerModal select:disabled,
+#oaIconPickerModal textarea:disabled {
+    color: var(--oa-text-muted);
+    background-color: var(--oa-surface-2);
+    cursor: not-allowed;
+    opacity: 0.72;
+}
+
+body.wp-admin .octave-addons-wrap .oa-app input::placeholder,
+body.wp-admin .octave-addons-wrap .oa-app textarea::placeholder,
+#oaIconPickerModal input::placeholder,
+#oaIconPickerModal textarea::placeholder {
+    color: var(--oa-text-dim);
+    opacity: 1;
 }
 
 /* --- Save bar -------------------------------------------- */
@@ -1162,8 +1230,8 @@ CUSTOM SELECTS
     color: var(--oa-text);
     border: 1px solid var(--oa-border);
     border-radius: 9px;
-    background: rgba(8, 11, 12, 0.58);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+    background: var(--oa-surface);
+    box-shadow: none;
     cursor: pointer;
     font-family: inherit;
     font-size: 13px;
@@ -1181,8 +1249,8 @@ CUSTOM SELECTS
 
 .oa-custom-select.is-open .oa-custom-select-trigger {
     border-color: var(--oa-accent);
-    background: rgba(11, 14, 15, 0.96);
-    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.15);
+    background: var(--oa-surface);
+    box-shadow: 0 0 0 3px var(--oa-focus-ring);
 }
 
 .oa-custom-select.is-open .oa-custom-select-trigger .dashicons {
@@ -1377,13 +1445,40 @@ CUSTOM SELECTS
 
 /* --- Text selection preview ------------------------------ */
 
+.oa-selection-demo {
+    margin: 0 0 8px;
+    padding: 20px 22px;
+    border: 1px solid var(--oa-border);
+    border-radius: 14px;
+    background: var(--oa-surface-2);
+}
+
+.oa-selection-demo-kicker {
+    display: block;
+    font-size: 11px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--oa-text-muted);
+}
+
+.oa-selection-demo-text {
+    margin: 10px 0 0;
+    color: var(--oa-text);
+    font-size: 17px;
+    line-height: 1.6;
+}
+
+.oa-selection-demo .oa-help {
+    margin-top: 10px;
+}
+
 .oa-selection-preview {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 2px 8px;
     border-radius: 6px;
-    font-size: 13px;
     font-weight: 500;
-    line-height: 1.5;
+    line-height: inherit;
 }
 
 /* --- Hidden utility (JS-toggled visibility) -------------- */
@@ -1532,15 +1627,8 @@ CUSTOM SELECTS
 
 .oa-ipm-set-select,
 .oa-ipm-search {
-    background: var(--oa-bg);
-    border: 1px solid var(--oa-border);
-    border-radius: 6px;
-    color: var(--oa-text);
     font-size: 13px;
-    padding: 7px 10px;
-    font-family: inherit;
     height: 36px;
-    box-sizing: border-box;
 }
 
 .oa-ipm-set-select {
@@ -1551,13 +1639,6 @@ CUSTOM SELECTS
 .oa-ipm-search {
     flex: 1;
     min-width: 0;
-}
-
-.oa-ipm-set-select:focus,
-.oa-ipm-search:focus {
-    outline: none;
-    border-color: var(--oa-accent);
-    box-shadow: 0 0 0 2px rgba(43, 255, 134, 0.2);
 }
 
 .oa-ipm-grid {
@@ -1721,21 +1802,9 @@ CUSTOM SELECTS
         flex: 1;
         min-width: 0;
         margin: 8px 12px;
-        padding: 7px 32px 7px 10px;
-        background-color: var(--oa-surface-2);
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a8099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        color: var(--oa-text);
-        border: 1px solid var(--oa-border);
-        border-radius: 6px;
         font-size: 13px;
         font-weight: 500;
-        font-family: inherit;
         cursor: pointer;
-        appearance: none;
-        -webkit-appearance: none;
-        outline: none;
     }
 
     .oa-nav-custom-select {
@@ -1749,11 +1818,6 @@ CUSTOM SELECTS
     .oa-nav-custom-select .oa-custom-select-dropdown {
         right: 0;
         left: 0;
-    }
-
-    .oa-nav-select:focus {
-        border-color: var(--oa-accent);
-        box-shadow: 0 0 0 2px rgba(43, 255, 134, 0.2);
     }
 
     .oa-content {
@@ -1885,6 +1949,7 @@ html[data-oa-admin-theme="light"] {
     --oa-text-muted: var(--oa-admin-text-soft);
     --oa-text-dim: var(--oa-admin-text-dim);
     --oa-shadow: var(--oa-admin-shadow);
+    --oa-focus-ring: var(--oa-admin-focus-ring);
 }
 
 html[data-oa-admin-theme="dark"] {
@@ -1905,6 +1970,17 @@ html[data-oa-admin-theme="dark"] {
     --oa-text-muted: var(--oa-admin-text-soft);
     --oa-text-dim: var(--oa-admin-text-dim);
     --oa-shadow: var(--oa-admin-shadow);
+    --oa-focus-ring: var(--oa-admin-focus-ring);
+}
+
+html[data-oa-admin-theme="light"] .oa-app--themed,
+html[data-oa-admin-theme="light"] #oaIconPickerModal {
+    color-scheme: light;
+}
+
+html[data-oa-admin-theme="dark"] .oa-app--themed,
+html[data-oa-admin-theme="dark"] #oaIconPickerModal {
+    color-scheme: dark;
 }
 
 body.wp-admin .octave-addons-wrap--themed {
@@ -2114,60 +2190,6 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
 
 .oa-app--themed .oa-assignment-option:hover {
     background: var(--oa-surface-hover, var(--oa-surface-3));
-}
-
-.oa-app--themed .oa-form-table input[type="text"],
-.oa-app--themed .oa-form-table input[type="email"],
-.oa-app--themed .oa-form-table input[type="url"],
-.oa-app--themed .oa-form-table input[type="number"],
-.oa-app--themed .oa-form-table input[type="search"],
-.oa-app--themed .oa-form-table select,
-.oa-app--themed .oa-form-table textarea,
-.oa-app--themed .oa-custom-select-trigger,
-.oa-app--themed .oa-cpt-field input,
-.oa-app--themed .oa-cpt-field select,
-.oa-app--themed .oa-cpt-field textarea,
-.oa-app--themed .oa-nb-field input,
-.oa-app--themed .oa-nb-field select,
-.oa-app--themed .oa-nb-field textarea {
-    color: var(--oa-text);
-    background: var(--oa-surface);
-    box-shadow: none;
-}
-
-.oa-app--themed .oa-form-table input:focus,
-.oa-app--themed .oa-form-table select:focus,
-.oa-app--themed .oa-form-table textarea:focus,
-.oa-app--themed .oa-custom-select.is-open .oa-custom-select-trigger,
-.oa-app--themed .oa-cpt-field input:focus,
-.oa-app--themed .oa-cpt-field select:focus,
-.oa-app--themed .oa-cpt-field textarea:focus,
-.oa-app--themed .oa-nb-field input:focus,
-.oa-app--themed .oa-nb-field select:focus,
-.oa-app--themed .oa-nb-field textarea:focus {
-    background: var(--oa-surface);
-    box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
-}
-
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field input[type="text"],
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field select,
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field textarea,
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field input[type="text"]:hover,
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field select:hover,
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field textarea:hover {
-    color: var(--oa-text);
-    border-color: var(--oa-border);
-    background: var(--oa-surface);
-    box-shadow: none;
-}
-
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field input[type="text"]:focus,
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field select:focus,
-html[data-oa-admin-theme] .oa-app--themed .oa-cpt-field textarea:focus {
-    color: var(--oa-text);
-    border-color: var(--oa-accent);
-    background: var(--oa-surface);
-    box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
 }
 
 .oa-app--themed .oa-custom-select-dropdown,
@@ -2806,10 +2828,6 @@ CONTENT DIRECTORY
     gap: 7px;
     flex: 1 1 260px;
     max-width: 340px;
-    padding: 0 11px;
-    border: 1px solid var(--oa-border);
-    border-radius: 9px;
-    background: var(--oa-surface-3);
 }
 
 .oa-content-directory-search .dashicons {
@@ -2821,19 +2839,7 @@ CONTENT DIRECTORY
 
 .oa-app .oa-content-directory-search input[type="search"] {
     width: 100%;
-    min-height: 34px;
-    padding: 0;
-    color: var(--oa-text);
-    border: 0;
-    background: none;
-    box-shadow: none;
     font-size: 11.5px;
-}
-
-.oa-app .oa-content-directory-search input[type="search"]:focus {
-    border: 0;
-    outline: none;
-    box-shadow: none;
 }
 
 .oa-content-directory-total {
@@ -4090,29 +4096,6 @@ CUSTOM POST TYPE EDITOR
 .oa-cpt-field select,
 .oa-cpt-field textarea {
     width: 100%;
-    min-height: 38px;
-    padding: 7px 11px;
-    color: var(--oa-text);
-    border: 1px solid var(--oa-border);
-    border-radius: 9px;
-    background: rgba(8, 11, 12, 0.58);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
-}
-
-.oa-cpt-field input[type="text"]:focus,
-.oa-cpt-field select:focus,
-.oa-cpt-field textarea:focus {
-    color: var(--oa-text);
-    border-color: var(--oa-accent);
-    outline: none;
-    background: rgba(11, 14, 15, 0.9);
-    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.15);
-}
-
-.oa-cpt-field input[readonly] {
-    color: var(--oa-text-muted);
-    background: rgba(147, 147, 147, 0.06);
-    cursor: not-allowed;
 }
 
 .oa-cpt-field small {
@@ -5293,26 +5276,8 @@ Value and unit controls
 .oa-spacing input[type="number"].oa-spacing-input {
     width: 100%;
     max-width: 110px;
-    padding: 7px 10px;
-    border: 1px solid var(--oa-border);
-    border-radius: 9px;
-    background: var(--oa-bg-soft);
-    color: var(--oa-text);
     font-size: 13px;
     line-height: 1.3;
-    box-shadow: none;
-}
-
-.oa-spacing input[type="number"].oa-spacing-input:focus {
-    border-color: var(--oa-accent);
-    outline: none;
-    box-shadow: 0 0 0 1px var(--oa-accent);
-}
-
-.oa-spacing input[type="number"].oa-spacing-input[readonly] {
-    border-style: dashed;
-    background: transparent;
-    color: var(--oa-text-dim);
 }
 
 .oa-spacing-unit {
@@ -5494,11 +5459,6 @@ html[data-oa-admin-theme="light"] .oa-ipm-close:hover {
     background: var(--oa-surface-3);
 }
 
-html[data-oa-admin-theme] .oa-ipm-set-select:focus,
-html[data-oa-admin-theme] .oa-ipm-search:focus {
-    box-shadow: 0 0 0 3px var(--oa-admin-focus-ring);
-}
-
 /*
 Colour picker
 -- The trigger, its popover and the swatch borders were painted with fixed
@@ -5572,15 +5532,6 @@ NUMBER AND DATE FIELDS
     font-size: 12px;
     line-height: 1.6;
     tab-size: 4;
-}
-
-.oa-form-table input[type="date"] {
-    min-height: 38px;
-    padding: 7px 11px;
-    color: var(--oa-text);
-    border: 1px solid var(--oa-border);
-    border-radius: 9px;
-    background: rgba(8, 11, 12, 0.58);
 }
 
 /*
@@ -5895,6 +5846,7 @@ NOTIFICATIONS BAR BANNERS
 .oa-nb-fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
     gap: 16px 18px;
     clear: both;
     padding: 14px;
@@ -5918,7 +5870,7 @@ NOTIFICATIONS BAR BANNERS
 }
 
 .oa-nb-field--switch {
-    align-self: end;
+    align-self: start;
 }
 
 .oa-nb-field > span:first-child {
@@ -5932,25 +5884,6 @@ NOTIFICATIONS BAR BANNERS
 .oa-nb-field select,
 .oa-nb-field textarea {
     width: 100%;
-    min-height: 38px;
-    padding: 7px 11px;
-    color: var(--oa-text);
-    border: 1px solid var(--oa-border);
-    border-radius: 9px;
-    background: rgba(8, 11, 12, 0.58);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
-}
-
-.oa-nb-field input[type="text"]:focus,
-.oa-nb-field input[type="url"]:focus,
-.oa-nb-field input[type="date"]:focus,
-.oa-nb-field select:focus,
-.oa-nb-field textarea:focus {
-    color: var(--oa-text);
-    border-color: var(--oa-accent);
-    outline: none;
-    background: rgba(11, 14, 15, 0.9);
-    box-shadow: 0 0 0 3px rgba(43, 255, 134, 0.15);
 }
 
 .oa-nb-field textarea {

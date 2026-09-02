@@ -1,0 +1,278 @@
+/*
+ADMIN EXPERIENCE WP ACTIVITY LOG
+-- Maps the Activity Log viewer's hard-coded colours onto the shared Octave
+-- admin tokens so the viewer follows both the light and dark themes.
+---------------------------------------------------------- */
+
+/*
+COLOUR ALIASES
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] {
+    --oa-wsal-accent: var(--oa-admin-accent);
+    --oa-wsal-accent-strong: var(--oa-admin-accent-dark);
+    --oa-wsal-accent-soft: var(--oa-admin-accent-soft);
+    --oa-wsal-on-accent: var(--oa-admin-on-accent);
+    --oa-wsal-surface: var(--oa-admin-surface);
+    --oa-wsal-surface-soft: var(--oa-admin-surface-soft);
+    --oa-wsal-surface-subtle: var(--oa-admin-surface-subtle);
+    --oa-wsal-surface-hover: var(--oa-admin-surface-hover);
+    --oa-wsal-border: var(--oa-admin-border);
+    --oa-wsal-border-strong: var(--oa-admin-border-strong);
+    --oa-wsal-line-soft: var(--oa-admin-line-soft);
+    --oa-wsal-text: var(--oa-admin-text);
+    --oa-wsal-text-soft: var(--oa-admin-text-soft);
+    --oa-wsal-text-dim: var(--oa-admin-text-dim);
+    --oa-wsal-success: var(--oa-admin-success);
+    --oa-wsal-danger: var(--oa-admin-danger);
+}
+
+/*
+PLUGIN NAVIGATION
+-- The free edition prints these rules inline, so the theme and body scope is
+-- deliberately more specific than WP Activity Log's ID selectors.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar {
+    color: var(--oa-wsal-text);
+    background: var(--oa-wsal-surface);
+    border-bottom: 1px solid var(--oa-wsal-border);
+    box-shadow: var(--oa-admin-shadow);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .wsal-nav-link {
+    color: var(--oa-wsal-text);
+}
+
+html[data-oa-admin-theme="light"] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .wsal-nav-left .wsal-nav-link::before {
+    filter: brightness(0);
+}
+
+html[data-oa-admin-theme="dark"] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .wsal-nav-left .wsal-nav-link::before {
+    filter: none;
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .wsal-nav-item.active .wsal-nav-link,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .wsal-nav-link:hover,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .wsal-nav-link:focus {
+    color: var(--oa-wsal-accent-strong);
+    background: var(--oa-wsal-accent-soft);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .cta-link {
+    color: var(--oa-wsal-on-accent);
+    background: var(--oa-wsal-accent);
+    border-color: var(--oa-wsal-accent);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .cta-link:hover,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-navbar .cta-link:focus {
+    color: var(--oa-wsal-on-accent);
+    background: var(--oa-wsal-accent-strong);
+}
+
+/*
+VIEWER CONTROLS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-ipp,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-ssa,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-ssas-dd span {
+    color: var(--oa-wsal-text-soft);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .search-icon-after {
+    color: var(--oa-wsal-text-soft);
+    background: var(--oa-wsal-surface-soft);
+    border-color: var(--oa-wsal-border-strong);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-lds-ellipsis div {
+    background: var(--oa-wsal-accent);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dashicons-dismiss:hover,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dashicons-dismiss:focus {
+    color: var(--oa-wsal-danger);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .button.wsal-button,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wp-core-ui .wsal-free-add-note.button.button-secondary {
+    color: var(--oa-wsal-text);
+    background: var(--oa-wsal-surface);
+    border-color: var(--oa-wsal-border-strong);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .button.wsal-button:hover,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .button.wsal-button:focus,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wp-core-ui .wsal-free-add-note.button.button-secondary:hover,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wp-core-ui .wsal-free-add-note.button.button-secondary:focus {
+    color: var(--oa-wsal-accent-strong);
+    background: var(--oa-wsal-accent-soft);
+    border-color: var(--oa-wsal-accent);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-ssas-dd {
+    color: var(--oa-wsal-text);
+    background: var(--oa-wsal-surface);
+    border-color: var(--oa-wsal-border-strong);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-ssas-dd a {
+    color: var(--oa-wsal-text);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-ssas-dd a:hover,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-ssas-dd .active {
+    color: var(--oa-wsal-accent-strong);
+    background: var(--oa-wsal-accent-soft);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-ssas-dd .allsites {
+    border-color: var(--oa-wsal-border);
+}
+
+/*
+ACTIVITY TABLE
+-- auditlog.css loads after the shared table rules and sets both stripe colours
+-- plus grid text explicitly, so each value is restored at higher specificity.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .striped > tbody > :nth-child(odd) {
+    background: var(--oa-wsal-surface-subtle);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .striped > tbody > :nth-child(even) {
+    background: var(--oa-wsal-surface);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .widefat.striped > tbody > tr:hover {
+    background: var(--oa-wsal-surface-hover);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-table-grid td,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-grid-text-header,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-grid-text-data {
+    color: var(--oa-wsal-text);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-table-grid .code.column-code,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-table-grid .info.column-info,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-table-grid .type.column-type,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-table-grid .site.column-site {
+    border-color: var(--oa-wsal-line-soft);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wp-list-table .column-mesg .icon {
+    background: var(--oa-wsal-surface);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .log-read::after {
+    color: var(--oa-wsal-surface);
+    background: var(--oa-wsal-text-dim);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .log-read-new::after {
+    color: var(--oa-wsal-surface);
+    background: var(--oa-wsal-success);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .event-data-panel {
+    box-shadow: inset 0 1px 0 var(--oa-wsal-border), inset 0 -1px 0 var(--oa-wsal-border);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .more-info {
+    color: var(--oa-wsal-text);
+    background: var(--oa-wsal-surface);
+    border-color: var(--oa-wsal-border-strong);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] a.inspector-active {
+    color: var(--oa-wsal-on-accent) !important;
+    background: var(--oa-wsal-accent) !important;
+    border-color: var(--oa-wsal-accent) !important;
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .more-info:hover,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .more-info:focus {
+    color: var(--oa-wsal-on-accent);
+    background: var(--oa-wsal-accent);
+    border-color: var(--oa-wsal-accent);
+}
+
+/*
+HELPERS AND DIALOGS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-search-helper-text {
+    color: var(--oa-wsal-text);
+    background: var(--oa-wsal-surface);
+    border: 1px solid var(--oa-wsal-border);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-search-helper-text span.dashicons.dashicons-info {
+    color: var(--oa-wsal-success);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dark-tooltip.dark,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dark-tooltip.light {
+    color: var(--oa-wsal-text);
+    background: var(--oa-wsal-surface);
+    border: 1px solid var(--oa-wsal-border);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dark-tooltip ul.confirm li {
+    color: var(--oa-wsal-on-accent);
+    background: var(--oa-wsal-accent);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dark-tooltip ul.confirm li:hover {
+    background: var(--oa-wsal-accent-strong);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dark-tooltip.south .tip {
+    border-color: var(--oa-wsal-surface) transparent transparent;
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dark-tooltip.west .tip {
+    border-color: transparent var(--oa-wsal-surface) transparent transparent;
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dark-tooltip.north .tip {
+    border-color: transparent transparent var(--oa-wsal-surface);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .dark-tooltip.east .tip {
+    border-color: transparent transparent transparent var(--oa-wsal-surface);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-custom-notifications-lock {
+    background: var(--oa-wsal-text-dim);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .ui-dialog.wsal-free-add-note-dialog {
+    color: var(--oa-wsal-text);
+    background: var(--oa-wsal-surface);
+    border: 1px solid var(--oa-wsal-border);
+    box-shadow: var(--oa-admin-shadow-raised);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] .wsal-free-add-note-dialog .ui-dialog-title,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-free-add-note-modal.ui-widget-content {
+    color: var(--oa-wsal-text);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-free-add-note-modal .wsal-free-add-note-upgrade {
+    color: var(--oa-wsal-on-accent);
+    background: var(--oa-wsal-accent);
+}
+
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-free-add-note-modal .wsal-free-add-note-upgrade:hover,
+html[data-oa-admin-theme] body[class*="toplevel_page_wsal-auditlog"] #wsal-free-add-note-modal .wsal-free-add-note-upgrade:focus {
+    color: var(--oa-wsal-on-accent);
+    background: var(--oa-wsal-accent-strong);
+}
