@@ -472,7 +472,7 @@ class Octave_Addons_Admin {
 		$groups = [
 			'branding' => [
 				'title'       => __( 'Branding & Design', 'octave-addons' ),
-				'description' => __( 'How the site and the WordPress admin look — the admin refresh and its brand colour, the login screen, and the colours a visitor sees when they select text.', 'octave-addons' ),
+				'description' => __( 'How the site and the WordPress admin look — the admin refresh and its brand colour, and the colours a visitor sees when they select text.', 'octave-addons' ),
 				'requires'    => '',
 			],
 			'breakdance' => [

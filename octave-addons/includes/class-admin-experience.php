@@ -76,8 +76,6 @@ class Octave_Addons_Admin_Experience {
 
 		return [
 			'enabled'       => false,
-			'default_theme' => 'system',   // system | light | dark
-			'show_toggle'   => true,
 			'accent_source' => 'default',  // default | custom
 			'accent_color'  => self::DEFAULT_ACCENT,
 		];
@@ -94,11 +92,7 @@ class Octave_Addons_Admin_Experience {
 		$input = is_array( $input ) ? $input : [];
 		$clean = self::get_setting_defaults();
 
-		$clean['enabled']     = ! empty( $input['enabled'] );
-		$clean['show_toggle'] = ! empty( $input['show_toggle'] );
-
-		$clean['default_theme'] = in_array( $input['default_theme'] ?? '', [ 'system', 'light', 'dark' ], true )
-			? $input['default_theme'] : 'system';
+		$clean['enabled'] = ! empty( $input['enabled'] );
 
 		$clean['accent_source'] = in_array( $input['accent_source'] ?? '', [ 'default', 'custom' ], true )
 			? $input['accent_source'] : 'default';
@@ -331,9 +325,7 @@ class Octave_Addons_Admin_Experience {
 
 		}
 
-		$settings = $this->get_settings();
-
-		if ( empty( $settings['enabled'] ) || empty( $settings['show_toggle'] ) ) {
+		if ( ! $this->is_enabled() ) {
 
 			return;
 
@@ -358,23 +350,20 @@ class Octave_Addons_Admin_Experience {
 	/*
 	GET THEME
 	-- Reads the appearance choice from the browser so shared accounts stay per
-	-- device, and falls back to the appearance the site is configured to open in.
+	-- device. Without a choice the browser follows the operating system.
 	---------------------------------------------------------- */
 
 	public function get_theme(): string {
 
 		$theme = isset( $_COOKIE[ self::THEME_COOKIE ] ) ? sanitize_key( wp_unslash( $_COOKIE[ self::THEME_COOKIE ] ) ) : '';
 
-		if ( in_array( $theme, [ 'light', 'dark' ], true ) ) {
+		if ( ! in_array( $theme, [ 'light', 'dark' ], true ) ) {
 
-			return $theme;
+			return 'system';
 
 		}
 
-		$settings = $this->get_settings();
-
-		return in_array( $settings['default_theme'] ?? 'system', [ 'light', 'dark' ], true )
-			? (string) $settings['default_theme'] : 'system';
+		return $theme;
 
 	}
 

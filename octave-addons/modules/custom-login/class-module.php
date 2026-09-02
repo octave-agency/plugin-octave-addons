@@ -35,18 +35,6 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
 
     }
 
-    public function get_group(): string {
-
-        return 'branding';
-
-    }
-
-    public function get_order(): int {
-
-        return 20;
-
-    }
-
     public function get_defaults(): array {
 
         return [
