@@ -9,6 +9,14 @@ POST FIELDS EDITOR
     padding: 0;
 }
 
+body.block-editor-page #octave-custom-post-fields .oa-post-fields-grid {
+    padding-inline: 24px;
+}
+
+body.block-editor-page #octave-custom-post-fields .oa-post-fields-tablist {
+    margin-inline: 24px;
+}
+
 .oa-post-fields {
     --oa-field-accent: var(--oa-admin-accent, #16834c);
     --oa-field-surface: var(--oa-admin-surface, #fff);

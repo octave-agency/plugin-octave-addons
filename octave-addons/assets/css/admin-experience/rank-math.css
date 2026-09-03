@@ -19,6 +19,7 @@ html[data-oa-admin-theme] body.wp-admin #rank_math_metabox,
 html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget,
 html[data-oa-admin-theme] body.wp-admin .rank-math-seo-score,
 html[data-oa-admin-theme] body.wp-admin .rank-math-modal,
+html[data-oa-admin-theme] body.wp-admin .rank-math-sidebar-panel,
 html[data-oa-admin-theme] body.wp-admin .rank-math-variables-dropdown {
     --oa-rm-accent: var(--oa-admin-accent);
     --oa-rm-accent-strong: var(--oa-admin-accent-dark);
@@ -868,6 +869,63 @@ html[data-oa-admin-theme="dark"] body.rank-math-page .serp-preview .serp-descrip
 
 html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-preview-title span {
     color: #7FCB91;
+}
+
+/*
+POST EDITOR PREVIEW
+-- Rank Math's Gutenberg sidebar and snippet modal sit outside its admin-page
+-- wrapper, so their tabs and search preview need editor-specific coverage.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-sidebar-panel .components-tab-panel__tabs,
+html[data-oa-admin-theme] body.wp-admin .rank-math-modal .components-tab-panel__tabs {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-sidebar-panel .components-tab-panel__tabs-item,
+html[data-oa-admin-theme] body.wp-admin .rank-math-modal .components-tab-panel__tabs-item {
+    color: var(--oa-rm-text-soft);
+    background: transparent;
+}
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-sidebar-panel .components-tab-panel__tabs-item:hover,
+html[data-oa-admin-theme] body.wp-admin .rank-math-sidebar-panel .components-tab-panel__tabs-item.is-active,
+html[data-oa-admin-theme] body.wp-admin .rank-math-modal .components-tab-panel__tabs-item:hover,
+html[data-oa-admin-theme] body.wp-admin .rank-math-modal .components-tab-panel__tabs-item.is-active {
+    color: var(--oa-rm-accent);
+    background: var(--oa-rm-accent-soft);
+}
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-sidebar-panel .serp-preview,
+html[data-oa-admin-theme] body.wp-admin .rank-math-modal .serp-preview {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-sidebar-panel .serp-preview-result-stats,
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-modal .serp-preview-result-stats {
+    color: var(--oa-rm-text-dim);
+    border-color: var(--oa-rm-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-sidebar-panel .serp-url,
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-sidebar-panel .serp-url-wrapper,
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-modal .serp-url,
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-modal .serp-url-wrapper {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-sidebar-panel .serp-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-modal .serp-title {
+    color: #8AB4F8;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-sidebar-panel .serp-description,
+html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-modal .serp-description {
+    color: var(--oa-rm-text-soft);
 }
 
 /*

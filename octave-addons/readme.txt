@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.13.1
+Stable tag:        3.14.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -95,6 +95,14 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.14.0 =
+* Added a per-post-type featured image setting, enabled by default and backwards compatible with existing post types.
+
+= 3.13.2 =
+* Aligned Octave Post Fields with its Gutenberg meta-box title across desktop and responsive editor layouts.
+* Updated the Rank Math editor sidebar and Edit Snippet modal to use the active Octave colour scheme, including preview and tab surfaces.
+* Replaced Gutenberg's white pinned-plugin state with the active Octave accent colour.
 
 = 3.13.1 =
 * Removed the redundant Post Fields introduction and aligned the standard editor meta box with the compact structured-content field layout.

@@ -417,7 +417,8 @@ body.wp-admin.wp-core-ui .button-primary,
 body.wp-admin .components-button.is-secondary,
 body.wp-admin .components-button.is-primary {
     min-height: 36px;
-    padding: 6px 14px;
+    padding: 0 14px;
+    line-height: 36px;
     border-radius: var(--oa-admin-radius-small);
     font-weight: 600;
     line-height: 1.4;
@@ -1881,7 +1882,8 @@ body.wp-admin.wp-core-ui .button-primary,
 body.wp-admin .components-button.is-secondary,
 body.wp-admin .components-button.is-primary {
     min-height: 32px;
-    padding: 4px 11px;
+    padding: 0 11px;
+    line-height: 32px;
     border-radius: 3px;
     font-weight: 600;
 }
@@ -3780,4 +3782,12 @@ html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-button-block-append
 html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-list__empty-block-inserter .block-editor-inserter__toggle.components-button svg,
 html[data-oa-admin-theme="dark"] body.wp-admin .block-editor-block-list__insertion-point-inserter .block-editor-inserter__toggle.components-button svg {
     fill: var(--oa-admin-on-accent);
+}
+
+/* Gutenberg's pinned plugin control uses a hardcoded white pressed state. */
+
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .interface-complementary-area__pin-unpin-item.components-button.is-pressed {
+    color: var(--oa-admin-accent) !important;
+    background: var(--oa-admin-accent-soft) !important;
+    box-shadow: inset 0 0 0 1px var(--oa-admin-accent);
 }

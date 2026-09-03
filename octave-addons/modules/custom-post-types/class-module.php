@@ -572,6 +572,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'public'                 => true,
 			'publicly_queryable'     => true,
 			'content_editor'         => true,
+			'featured_image'         => true,
 			'has_archive'            => true,
 			'archive_slug'           => '',
 			'categories'             => true,
@@ -1764,6 +1765,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$public                 = ! empty( $post_type['public'] );
 		$publicly_queryable     = ! array_key_exists( 'publicly_queryable', $post_type ) ? $public : ! empty( $post_type['publicly_queryable'] );
 		$content_editor         = ! array_key_exists( 'content_editor', $post_type ) || ! empty( $post_type['content_editor'] );
+		$featured_image         = ! array_key_exists( 'featured_image', $post_type ) || ! empty( $post_type['featured_image'] );
 		$has_archive            = ! empty( $post_type['has_archive'] );
 		$enabled                = ! empty( $post_type['enabled'] );
 		$taxonomies_url         = $saved ? $this->editor_url( $key, 'categories' ) : '';
@@ -1969,7 +1971,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 						<fieldset class="oa-cpt-group">
 					<legend><?php esc_html_e( 'Editing', 'octave-addons' ); ?></legend>
-					<p class="oa-cpt-group-description"><?php esc_html_e( 'Choose whether this post type needs the standard WordPress content area as well as its Octave content fields.', 'octave-addons' ); ?></p>
+					<p class="oa-cpt-group-description"><?php esc_html_e( 'Choose which standard WordPress editing features this post type uses alongside its Octave content fields.', 'octave-addons' ); ?></p>
 					<div class="oa-cpt-fields oa-cpt-fields--switches">
 						<div class="oa-cpt-field oa-cpt-switch-field">
 							<span><?php esc_html_e( 'Content editor', 'octave-addons' ); ?></span>
@@ -1979,6 +1981,16 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 								<span class="oa-switch-slider"></span>
 							</label>
 							<small><?php esc_html_e( 'Turn off when entries are built entirely from Octave content fields, such as testimonials. Gutenberg remains available, with the Octave fields replacing its content canvas.', 'octave-addons' ); ?></small>
+						</div>
+
+						<div class="oa-cpt-field oa-cpt-switch-field">
+							<span><?php esc_html_e( 'Featured image', 'octave-addons' ); ?></span>
+							<label class="oa-switch">
+								<input type="hidden" name="<?= esc_attr( $this->cpt_field_name( $index, 'featured_image' ) ); ?>" value="0">
+								<input type="checkbox" name="<?= esc_attr( $this->cpt_field_name( $index, 'featured_image' ) ); ?>" value="1"<?= checked( $featured_image, true, false ); ?>>
+								<span class="oa-switch-slider"></span>
+							</label>
+							<small><?php esc_html_e( 'Show the standard WordPress featured image control for this post type.', 'octave-addons' ); ?></small>
 						</div>
 					</div>
 						</fieldset>
@@ -3390,11 +3402,16 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'title',
 			'editor',
 			'author',
-			'thumbnail',
 			'excerpt',
 			'revisions',
 			'custom-fields',
 		];
+
+		if ( ! array_key_exists( 'featured_image', $post_type ) || ! empty( $post_type['featured_image'] ) ) {
+
+			$supports[] = 'thumbnail';
+
+		}
 
 		if ( post_type_exists( $key ) ) {
 
@@ -3680,6 +3697,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					? ! empty( $post_type['public'] )
 					: ! empty( $post_type['publicly_queryable'] ),
 				'content_editor'         => ! array_key_exists( 'content_editor', $post_type ) || ! empty( $post_type['content_editor'] ),
+				'featured_image'         => ! array_key_exists( 'featured_image', $post_type ) || ! empty( $post_type['featured_image'] ),
 				'has_archive'            => ! empty( $post_type['has_archive'] ),
 				'archive_slug'           => $archive_slug,
 				'categories'             => ! empty( $post_type['categories'] ),
