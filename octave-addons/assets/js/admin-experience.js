@@ -16,6 +16,60 @@ WORDPRESS ADMIN EXPERIENCE
     var syncedEditorCanvas;
 
     /*
+    SYNC WYSIWYG THEME
+    -- TinyMCE keeps editable content in separate iframe documents. Injects the
+    -- resolved palette into every classic and custom-field editor, including
+    -- editors added later inside repeaters.
+    ---------------------------------------------------------- */
+
+    function syncWysiwygTheme() {
+
+        var rootStyles = window.getComputedStyle( root );
+        var background = rootStyles.getPropertyValue( '--oa-admin-surface' ).trim();
+        var text = rootStyles.getPropertyValue( '--oa-admin-text' ).trim();
+        var softText = rootStyles.getPropertyValue( '--oa-admin-text-soft' ).trim();
+        var accent = rootStyles.getPropertyValue( '--oa-admin-accent-dark' ).trim();
+
+        document.querySelectorAll( '.wp-editor-wrap iframe' ).forEach( function ( iframe ) {
+
+            if ( ! iframe.contentDocument || ! iframe.contentDocument.head ) {
+
+                return;
+
+            }
+
+            var editorRoot = iframe.contentDocument.documentElement;
+            var style = iframe.contentDocument.getElementById( 'oa-wysiwyg-theme' );
+
+            editorRoot.dataset.oaAdminTheme = activeTheme;
+            editorRoot.style.colorScheme = activeTheme;
+
+            if ( ! style ) {
+
+                style = iframe.contentDocument.createElement( 'style' );
+                style.id = 'oa-wysiwyg-theme';
+                iframe.contentDocument.head.appendChild( style );
+
+            }
+
+            style.textContent = 'html, body#tinymce { color: ' + text + ' !important; background: ' + background + ' !important; }'
+                + ' body#tinymce { caret-color: ' + text + '; }'
+                + ' body#tinymce p, body#tinymce li { color: ' + text + '; }'
+                + ' body#tinymce blockquote { color: ' + softText + '; }'
+                + ' body#tinymce a { color: ' + accent + '; }';
+
+            if ( ! iframe.dataset.oaThemeSync ) {
+
+                iframe.dataset.oaThemeSync = '1';
+                iframe.addEventListener( 'load', syncWysiwygTheme );
+
+            }
+
+        } );
+
+    }
+
+    /*
     SYNC EDITOR CANVAS THEME
     -- Gutenberg renders post content in a separate document. Copies the active
     -- theme and its resolved tokens into that document so editor and meta-box
@@ -95,6 +149,7 @@ WORDPRESS ADMIN EXPERIENCE
     function watchEditorCanvas() {
 
         syncEditorCanvasTheme();
+        syncWysiwygTheme();
 
         if ( editorCanvasObserver ) {
 
@@ -102,7 +157,12 @@ WORDPRESS ADMIN EXPERIENCE
 
         }
 
-        editorCanvasObserver = new MutationObserver( syncEditorCanvasTheme );
+        editorCanvasObserver = new MutationObserver( function () {
+
+            syncEditorCanvasTheme();
+            syncWysiwygTheme();
+
+        } );
         editorCanvasObserver.observe( document.body, {
             childList: true,
             subtree: true
@@ -122,6 +182,7 @@ WORDPRESS ADMIN EXPERIENCE
         root.style.colorScheme = theme;
 
         syncEditorCanvasTheme();
+        syncWysiwygTheme();
         updateToggle();
 
     }

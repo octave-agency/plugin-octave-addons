@@ -1056,6 +1056,40 @@ body.wp-admin .wp-editor-tabs button {
     border-radius: 7px 7px 0 0;
 }
 
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-editor-tabs .wp-switch-editor {
+    color: var(--oa-admin-text-soft);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .html-active .switch-html,
+html[data-oa-admin-theme="dark"] body.wp-admin .tmce-active .switch-tmce {
+    color: var(--oa-admin-text);
+    border-bottom-color: var(--oa-admin-surface);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-panel,
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-toolbar-grp,
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-widget.mce-btn,
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-menubtn {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-panel .mce-btn button,
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-panel .mce-ico,
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-panel .mce-txt {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-panel .mce-btn:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin div.mce-panel .mce-btn.mce-active {
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-hover);
+}
+
 body.wp-admin .interface-interface-skeleton,
 body.wp-admin .edit-post-layout,
 body.wp-admin .edit-site-layout {

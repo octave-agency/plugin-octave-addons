@@ -83,7 +83,8 @@ class Octave_Addons_Breakdance_Value_Resolver {
 
 		if ( empty( $row ) ) {
 
-			$parent = \Breakdance\DynamicData\DynamicDataController::getInstance()->getField( 'octave_post_repeater_' . $field_data['parent_name'] );
+			$parent_slug = $field_data['dynamic_parent_slug'] ?? 'octave_post_repeater_' . $field_data['parent_name'];
+			$parent      = \Breakdance\DynamicData\DynamicDataController::getInstance()->getField( $parent_slug );
 
 			if ( $parent ) {
 
@@ -120,7 +121,7 @@ class Octave_Addons_Breakdance_String_Field extends \Breakdance\DynamicData\Stri
 
 	public function category() {
 
-		return __( 'Octave', 'octave-addons' );
+		return $this->field_data['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
 
 	}
 
@@ -132,7 +133,9 @@ class Octave_Addons_Breakdance_String_Field extends \Breakdance\DynamicData\Stri
 
 	public function slug() {
 
-		return 'octave_post_field_' . ( $this->field_data['dynamic_name'] ?? $this->field_data['name'] );
+		$slug = 'octave_post_field_' . ( $this->field_data['dynamic_name'] ?? $this->field_data['name'] );
+
+		return $slug . ( empty( $this->field_data['dynamic_post_type'] ) ? '' : '_' . $this->field_data['dynamic_post_type'] );
 
 	}
 
@@ -190,7 +193,7 @@ class Octave_Addons_Breakdance_Image_Field extends \Breakdance\DynamicData\Image
 
 	public function category() {
 
-		return __( 'Octave', 'octave-addons' );
+		return $this->field_data['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
 
 	}
 
@@ -202,7 +205,9 @@ class Octave_Addons_Breakdance_Image_Field extends \Breakdance\DynamicData\Image
 
 	public function slug() {
 
-		return 'octave_post_field_' . ( $this->field_data['dynamic_name'] ?? $this->field_data['name'] );
+		$slug = 'octave_post_field_' . ( $this->field_data['dynamic_name'] ?? $this->field_data['name'] );
+
+		return $slug . ( empty( $this->field_data['dynamic_post_type'] ) ? '' : '_' . $this->field_data['dynamic_post_type'] );
 
 	}
 
@@ -244,7 +249,7 @@ class Octave_Addons_Breakdance_Gallery_Field extends \Breakdance\DynamicData\Gal
 
 	public function category() {
 
-		return __( 'Octave', 'octave-addons' );
+		return $this->field_data['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
 
 	}
 
@@ -256,7 +261,9 @@ class Octave_Addons_Breakdance_Gallery_Field extends \Breakdance\DynamicData\Gal
 
 	public function slug() {
 
-		return 'octave_post_field_' . ( $this->field_data['dynamic_name'] ?? $this->field_data['name'] );
+		$slug = 'octave_post_field_' . ( $this->field_data['dynamic_name'] ?? $this->field_data['name'] );
+
+		return $slug . ( empty( $this->field_data['dynamic_post_type'] ) ? '' : '_' . $this->field_data['dynamic_post_type'] );
 
 	}
 
@@ -314,7 +321,7 @@ class Octave_Addons_Breakdance_Repeater_Field extends \Breakdance\DynamicData\Re
 
 	public function category() {
 
-		return __( 'Octave', 'octave-addons' );
+		return $this->field_data['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
 
 	}
 
@@ -326,7 +333,9 @@ class Octave_Addons_Breakdance_Repeater_Field extends \Breakdance\DynamicData\Re
 
 	public function slug() {
 
-		return 'octave_post_repeater_' . $this->field_data['name'];
+		$slug = 'octave_post_repeater_' . $this->field_data['name'];
+
+		return $slug . ( empty( $this->field_data['dynamic_post_type'] ) ? '' : '_' . $this->field_data['dynamic_post_type'] );
 
 	}
 

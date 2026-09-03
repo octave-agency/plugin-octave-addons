@@ -2808,6 +2808,7 @@ ADMIN INTERACTIONS
 				}
 
 				var choices = item.querySelector( '.oa-field-choices' );
+				var nameField = item.querySelector( '.oa-field-name' );
 				var referenceSource = item.querySelector( '.oa-field-reference-source' );
 				var defaultField = item.querySelector( '.oa-field-default' );
 				var subFieldEditor = item.querySelector( '.oa-sub-field-editor' );
@@ -2819,6 +2820,13 @@ ADMIN INTERACTIONS
 				var isTab = 'tab' === typeInput.value;
 				var hidesDefault = isContainer || isTab || [ 'gallery', 'cpt_select' ].indexOf( typeInput.value ) !== -1;
 				var hidesRequired = isHtml || isTab;
+
+				if ( nameField ) {
+
+					nameField.classList.toggle( 'oa-hidden', isTab );
+					nameField.querySelector( 'input' ).required = ! isTab;
+
+				}
 
 				if ( typePreview ) {
 

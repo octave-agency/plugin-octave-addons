@@ -928,6 +928,37 @@ html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-modal .serp-descriptio
     color: var(--oa-rm-text-soft);
 }
 
+/* The Edit Snippet form sits inside .rank-math-editor, where Rank Math gives
+   every field group its own fixed light surface and text palette. */
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-editor .field-group {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-editor .field-group > label,
+html[data-oa-admin-theme] body.wp-admin .rank-math-editor .field-group .length-count {
+    color: var(--oa-rm-text);
+}
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-editor .field-group .components-base-control__help {
+    color: var(--oa-rm-text-soft);
+}
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-editor .field-group input,
+html[data-oa-admin-theme] body.wp-admin .rank-math-editor .field-group textarea {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border-strong);
+    background: var(--oa-rm-surface);
+}
+
+html[data-oa-admin-theme] body.wp-admin .rank-math-editor .field-group input:focus,
+html[data-oa-admin-theme] body.wp-admin .rank-math-editor .field-group textarea:focus {
+    border-color: var(--oa-rm-accent);
+    box-shadow: 0 0 0 1px var(--oa-rm-accent);
+}
+
 /*
 CODE BOXES
 -- These are already dark in Rank Math's own palette, so only light mode needs

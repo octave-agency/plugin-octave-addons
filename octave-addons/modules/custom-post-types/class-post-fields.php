@@ -42,7 +42,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 			}
 
-			$this->fields_by_meta_key[ (string) $field['meta_key'] ] = $field;
+			$this->fields_by_meta_key[ (string) $field['meta_key'] ][] = $field;
 
 		}
 
@@ -178,15 +178,22 @@ class Octave_Addons_Custom_Post_Fields {
 
 	public function read_legacy_meta( $value, $object_id, $meta_key, $single ) {
 
-		$field = $this->fields_by_meta_key[ (string) $meta_key ] ?? null;
+		$post_type = (string) get_post_type( $object_id );
+		$field     = null;
 
-		if ( ! $field ) {
+		foreach ( $this->fields_by_meta_key[ (string) $meta_key ] ?? [] as $candidate ) {
 
-			return $value;
+			if ( in_array( $post_type, $candidate['post_types'], true ) ) {
+
+				$field = $candidate;
+
+				break;
+
+			}
 
 		}
 
-		if ( ! in_array( (string) get_post_type( $object_id ), $field['post_types'], true ) ) {
+		if ( ! $field ) {
 
 			return $value;
 
@@ -539,9 +546,18 @@ class Octave_Addons_Custom_Post_Fields {
 
 			}
 
+			$post_type_object = get_post_type_object( $post_type );
+			$post_type_name   = $post_type_object && ! empty( $post_type_object->labels->singular_name )
+				? $post_type_object->labels->singular_name
+				: $this->post_type_labels[ $post_type ];
+
 			add_meta_box(
 				'octave-custom-post-fields',
-				__( 'Octave Post Fields', 'octave-addons' ),
+				sprintf(
+					/* translators: %s: post type name. */
+					__( 'Octave %s Post Fields', 'octave-addons' ),
+					$post_type_name
+				),
 				[ $this, 'render_meta_box' ],
 				$post_type,
 				'normal',
@@ -1111,7 +1127,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 			<div class="oa-post-field-media-actions">
 				<button type="button" class="button oa-gallery-select"><?php esc_html_e( 'Add images', 'octave-addons' ); ?></button>
-				<button type="button" class="button-link-delete oa-gallery-clear"><?php esc_html_e( 'Remove all', 'octave-addons' ); ?></button>
+				<button type="button" class="button button-secondary oa-gallery-clear"><?php esc_html_e( 'Remove all', 'octave-addons' ); ?></button>
 			</div>
 
 			<p class="description oa-gallery-hint"><?php esc_html_e( 'Drag a thumbnail to reorder, or focus one and use the left and right arrow keys.', 'octave-addons' ); ?></p>
@@ -1759,10 +1775,30 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
-		$controller = \Breakdance\DynamicData\DynamicDataController::getInstance();
-		$category   = __( 'Octave', 'octave-addons' );
+		$controller         = \Breakdance\DynamicData\DynamicDataController::getInstance();
+		$legacy_category    = __( 'Octave · Legacy', 'octave-addons' );
+		$dynamic_categories = [];
 
-		if ( ! in_array( $category, $controller->order, true ) ) {
+		foreach ( $enabled_fields as $field ) {
+
+			foreach ( $field['post_types'] as $post_type ) {
+
+				$label = $this->post_type_labels[ $post_type ] ?? $post_type;
+				$dynamic_categories[ $post_type ] = sprintf(
+					/* translators: %s: post type name. */
+					__( 'Octave · %s Fields', 'octave-addons' ),
+					$label
+				);
+
+			}
+
+		}
+
+		$categories   = array_values( $dynamic_categories );
+		$categories[] = $legacy_category;
+		$categories   = array_values( array_diff( $categories, $controller->order ) );
+
+		if ( ! empty( $categories ) ) {
 
 			$post_position = array_search( __( 'Post', 'breakdance' ), $controller->order, true );
 
@@ -1775,7 +1811,22 @@ class Octave_Addons_Custom_Post_Fields {
 
 			$position = false === $post_position ? 0 : (int) $post_position + 1;
 
-			array_splice( $controller->order, $position, 0, [ $category ] );
+			array_splice( $controller->order, $position, 0, $categories );
+
+		}
+
+		$legacy_names = [];
+
+		foreach ( $enabled_fields as $field ) {
+
+			if ( ! isset( $legacy_names[ $field['name'] ] ) ) {
+
+				$legacy_field = $field;
+				$legacy_field['dynamic_category'] = $legacy_category;
+				$this->register_breakdance_field( $legacy_field );
+				$legacy_names[ $field['name'] ] = true;
+
+			}
 
 		}
 
@@ -1790,32 +1841,51 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $enabled_fields as $field ) {
 
-			if ( 'group' === $field['type'] ) {
+			foreach ( $field['post_types'] as $post_type ) {
 
-				$this->register_breakdance_sub_fields( $field );
-
-			} elseif ( 'repeater' === $field['type'] ) {
-
-				if ( class_exists( 'Octave_Addons_Breakdance_Repeater_Field', false ) ) {
-
-					\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Repeater_Field( $field ) );
-					$this->register_breakdance_sub_fields( $field );
-
-				}
-
-			} elseif ( 'image' === $field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
-
-				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Image_Field( $field ) );
-
-			} elseif ( 'gallery' === $field['type'] && class_exists( 'Octave_Addons_Breakdance_Gallery_Field', false ) ) {
-
-				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Gallery_Field( $field ) );
-
-			} elseif ( class_exists( 'Octave_Addons_Breakdance_String_Field', false ) ) {
-
-				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_String_Field( $field ) );
+				$scoped_field = $field;
+				$scoped_field['post_types'] = [ $post_type ];
+				$scoped_field['dynamic_post_type'] = $post_type;
+				$scoped_field['dynamic_category'] = $dynamic_categories[ $post_type ];
+				$this->register_breakdance_field( $scoped_field );
 
 			}
+
+		}
+
+	}
+
+	/*
+	REGISTER BREAKDANCE FIELD
+	-- Registers one legacy or post-type-scoped field and its children.
+	---------------------------------------------------------- */
+
+	protected function register_breakdance_field( array $field ): void {
+
+		if ( 'group' === $field['type'] ) {
+
+			$this->register_breakdance_sub_fields( $field );
+
+		} elseif ( 'repeater' === $field['type'] ) {
+
+			if ( class_exists( 'Octave_Addons_Breakdance_Repeater_Field', false ) ) {
+
+				\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Repeater_Field( $field ) );
+				$this->register_breakdance_sub_fields( $field );
+
+			}
+
+		} elseif ( 'image' === $field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
+
+			\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Image_Field( $field ) );
+
+		} elseif ( 'gallery' === $field['type'] && class_exists( 'Octave_Addons_Breakdance_Gallery_Field', false ) ) {
+
+			\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_Gallery_Field( $field ) );
+
+		} elseif ( class_exists( 'Octave_Addons_Breakdance_String_Field', false ) ) {
+
+			\Breakdance\DynamicData\registerField( new Octave_Addons_Breakdance_String_Field( $field ) );
 
 		}
 
@@ -1831,13 +1901,16 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $parent['sub_fields'] as $sub_field ) {
 
-			$sub_field['meta_key']        = $parent['meta_key'];
-			$sub_field['legacy_meta_key'] = $parent['legacy_meta_key'] ?? '';
-			$sub_field['post_types']      = $parent['post_types'];
-			$sub_field['parent_type']     = $parent['type'];
-			$sub_field['parent_name']     = $parent['name'];
-			$sub_field['dynamic_name']    = $parent['name'] . '_' . $sub_field['name'];
-			$sub_field['label']           = $parent['label'] . ' · ' . $sub_field['label'];
+			$sub_field['meta_key']            = $parent['meta_key'];
+			$sub_field['legacy_meta_key']     = $parent['legacy_meta_key'] ?? '';
+			$sub_field['post_types']          = $parent['post_types'];
+			$sub_field['parent_type']         = $parent['type'];
+			$sub_field['parent_name']         = $parent['name'];
+			$sub_field['dynamic_name']        = $parent['name'] . '_' . $sub_field['name'];
+			$sub_field['dynamic_post_type']   = $parent['dynamic_post_type'] ?? '';
+			$sub_field['dynamic_category']    = $parent['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
+			$sub_field['dynamic_parent_slug'] = 'octave_post_repeater_' . $parent['name'] . ( empty( $parent['dynamic_post_type'] ) ? '' : '_' . $parent['dynamic_post_type'] );
+			$sub_field['label']               = $parent['label'] . ' · ' . $sub_field['label'];
 
 			if ( 'image' === $sub_field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
 

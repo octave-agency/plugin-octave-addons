@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.14.0
+Stable tag:        3.15.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -95,6 +95,15 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.15.1 =
+* Hid the post-type editor's Add reusable field action when no reusable fields exist.
+
+= 3.15.0 =
+* Allowed a post-meta key to be reused by fields assigned to different post types while continuing to reject collisions within the same post type.
+* Split Octave Breakdance Dynamic Data into post-type categories and retained the original field slugs in a separate legacy category for existing layouts.
+* Completed dark-mode styling for Rank Math snippet field groups and WordPress WYSIWYG editors.
+* Simplified tab field settings, aligned gallery actions, and included the current post type in the Octave Post Fields title.
 
 = 3.14.0 =
 * Added a per-post-type featured image setting, enabled by default and backwards compatible with existing post types.

@@ -1685,8 +1685,11 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		foreach ( $definitions as $item ) {
 
 			$item_key = $is_taxonomy ? $item['taxonomy'] : $item['name'];
+			$matches_context = $is_taxonomy
+				|| '' === $context
+				|| in_array( $context, $item['post_types'] ?? [], true );
 
-			if ( ! $is_new && $definition === $item_key ) {
+			if ( ! $is_new && null === $selected && $definition === $item_key && $matches_context ) {
 
 				$selected = $item;
 
@@ -2251,6 +2254,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		$context_label     = $post_types[ $primary_post_type ] ?? '';
 		$field_types       = $this->field_types();
+		$reusable_fields   = $this->reusable_fields( $fields );
 		$reusable_template = [
 			'enabled'         => true,
 			'label'           => '',
@@ -2312,7 +2316,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 					<?php
 
-					if ( '' !== $primary_post_type ) :
+					if ( '' !== $primary_post_type && ! empty( $reusable_fields ) ) :
 
 					?>
 
@@ -2320,7 +2324,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 					<?php
 
-					else :
+					elseif ( '' === $primary_post_type ) :
 
 					?>
 
@@ -2355,7 +2359,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			<?php
 
-			if ( '' !== $primary_post_type && ! $single ) :
+			if ( '' !== $primary_post_type && ! $single && ! empty( $reusable_fields ) ) :
 
 			?>
 
@@ -2375,7 +2379,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 					<?php
 
-					foreach ( $this->reusable_fields( $fields ) as $reusable_field ) :
+					foreach ( $reusable_fields as $reusable_field ) :
 
 						$field_name  = (string) $reusable_field['name'];
 						$field_label = (string) $reusable_field['label'];
@@ -2505,7 +2509,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					<p class="oa-cpt-group-description"><?php esc_html_e( 'The field name becomes the permanent post-meta key after saving. Values saved under the older _octave_ prefixed key are still read.', 'octave-addons' ); ?></p>
 					<div class="oa-cpt-fields">
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Label', 'octave-addons' ); ?></span><input type="text" data-role="title" name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'label' ) ); ?>" value="<?= esc_attr( $label ); ?>" placeholder="Client name" required></label>
-						<label class="oa-cpt-field"><span><?php esc_html_e( 'Field name', 'octave-addons' ); ?></span><input type="text" data-role="key" name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" maxlength="40" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>></label>
+						<label class="oa-cpt-field oa-field-name<?= $is_tab ? ' oa-hidden' : ''; ?>"><span><?php esc_html_e( 'Field name', 'octave-addons' ); ?></span><input type="text" data-role="key" name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" maxlength="40" pattern="[a-z0-9_]+"<?= $is_tab ? '' : ' required'; ?><?= $saved ? ' readonly' : ''; ?>></label>
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Field type', 'octave-addons' ); ?></span><select data-field-type name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'type' ) ); ?>"><?php foreach ( $types as $type_key => $type_label ) : ?><option value="<?= esc_attr( $type_key ); ?>"<?= selected( $type, $type_key, false ); ?>><?= esc_html( $type_label ); ?></option><?php endforeach; ?></select></label>
 						<label class="oa-cpt-field oa-field-reference-source<?= 'cpt_select' === $type ? '' : ' oa-hidden'; ?>"><span><?php esc_html_e( 'Content source', 'octave-addons' ); ?></span><select name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'reference_source' ) ); ?>"<?= 'cpt_select' === $type ? ' required' : ''; ?>><option value=""><?php esc_html_e( 'Choose a source', 'octave-addons' ); ?></option><?php foreach ( $reference_sources as $source_key => $source_label ) : ?><option value="<?= esc_attr( $source_key ); ?>"<?= selected( (string) ( $field['reference_source'] ?? '' ), $source_key, false ); ?>><?= esc_html( $source_label ); ?></option><?php endforeach; ?></select><small><?php esc_html_e( 'Editors will choose one item from this post type, or one site author.', 'octave-addons' ); ?></small></label>
 						<label class="oa-cpt-field oa-cpt-field--full oa-field-default<?= $hides_default ? ' oa-hidden' : ''; ?>" data-default-label="<?php esc_attr_e( 'Default value', 'octave-addons' ); ?>" data-html-label="<?php esc_attr_e( 'HTML content', 'octave-addons' ); ?>" data-default-help="<?php esc_attr_e( 'Shown until a post has its own saved value.', 'octave-addons' ); ?>" data-html-help="<?php esc_attr_e( 'Presentation-only markup shown between fields. It is sanitised and never saved as post meta.', 'octave-addons' ); ?>"><span><?= $is_html ? esc_html__( 'HTML content', 'octave-addons' ) : esc_html__( 'Default value', 'octave-addons' ); ?></span><textarea data-field-default-control name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'default_value' ) ); ?>" rows="<?= $is_html ? '6' : '2'; ?>"><?= esc_textarea( is_scalar( $field['default_value'] ?? '' ) ? (string) $field['default_value'] : '' ); ?></textarea><small><?= $is_html ? esc_html__( 'Presentation-only markup shown between fields. It is sanitised and never saved as post meta.', 'octave-addons' ) : esc_html__( 'Shown until a post has its own saved value.', 'octave-addons' ); ?></small></label>
@@ -3835,7 +3839,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			}
 
-			if ( '' === $label || isset( $used[ $name ] ) ) {
+			if ( '' === $label ) {
 
 				continue;
 
@@ -3862,7 +3866,15 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			}
 
-			$used[ $name ] = true;
+			$conflicts = array_intersect( $assigned, $used[ $name ] ?? [] );
+
+			if ( ! empty( $conflicts ) ) {
+
+				continue;
+
+			}
+
+			$used[ $name ] = array_values( array_unique( array_merge( $used[ $name ] ?? [], $assigned ) ) );
 			$is_container     = in_array( $type, [ 'group', 'repeater' ], true );
 			$is_list          = $is_container || 'gallery' === $type;
 			$reference_source = 'cpt_select' === $type ? sanitize_key( $field['reference_source'] ?? '' ) : '';
