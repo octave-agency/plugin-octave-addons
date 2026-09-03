@@ -371,7 +371,13 @@ class Octave_Addons_Custom_Post_Fields {
 		$post_id     = $post instanceof WP_Post ? $post->ID : 0;
 		$stored_keys = [];
 
-		foreach ( $fields as $field ) {
+		foreach ( $fields as $index => $field ) {
+
+			if ( 'cpt_select' === $field['type'] ) {
+
+				$fields[ $index ]['reference_options'] = $this->reference_options( $field );
+
+			}
 
 			if ( self::is_presentational( $field ) ) {
 
@@ -408,6 +414,7 @@ class Octave_Addons_Custom_Post_Fields {
 					/* translators: %s: comma separated list of field names. */
 					'requiredNotice'  => __( 'Saving is paused until these required fields are filled in: %s', 'octave-addons' ),
 					'selectOption'    => __( 'Select an option', 'octave-addons' ),
+					'selectItem'      => __( 'Select an item', 'octave-addons' ),
 					'yes'             => __( 'Yes', 'octave-addons' ),
 					/* translators: %d: item number. */
 					'item'            => __( 'Item %d', 'octave-addons' ),
@@ -728,14 +735,6 @@ class Octave_Addons_Custom_Post_Fields {
 
 		<div class="oa-post-fields">
 
-			<div class="oa-post-fields-intro">
-				<span class="dashicons dashicons-admin-generic" aria-hidden="true"></span>
-				<div>
-					<strong><?php esc_html_e( 'Content details', 'octave-addons' ); ?></strong>
-					<p><?php esc_html_e( 'Complete the fields below to keep this content consistent across templates and dynamic layouts.', 'octave-addons' ); ?></p>
-				</div>
-			</div>
-
 			<?php
 
 			if ( empty( $fields ) ) :
@@ -891,7 +890,7 @@ class Octave_Addons_Custom_Post_Fields {
 		$name        = 'octave_post_fields[' . $field['name'] . ']';
 		$id          = 'octave_post_field_' . $field['name'];
 		$type        = $field['type'];
-		$is_wide     = in_array( $type, [ 'textarea', 'wysiwyg', 'gallery' ], true );
+		$is_wide     = in_array( $type, [ 'textarea', 'wysiwyg', 'multiselect', 'gallery' ], true );
 		$choices     = $this->parse_choices( $field['choices'] );
 		$description = (string) $field['description'];
 
@@ -957,6 +956,21 @@ class Octave_Addons_Custom_Post_Fields {
 						'teeny'         => false,
 					]
 				);
+
+			} elseif ( 'cpt_select' === $type ) {
+
+				$reference_options = $this->reference_options( $field );
+
+				?>
+
+				<select id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>"<?= ! empty( $field['required'] ) ? ' required' : ''; ?>>
+					<option value=""><?php esc_html_e( 'Select an item', 'octave-addons' ); ?></option>
+					<?php foreach ( $reference_options as $reference_id => $reference_label ) : ?>
+					<option value="<?= esc_attr( (string) $reference_id ); ?>"<?= selected( (string) $value, (string) $reference_id, false ); ?>><?= esc_html( $reference_label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+
+				<?php
 
 			} elseif ( in_array( $type, [ 'select', 'multiselect' ], true ) ) {
 
@@ -1529,6 +1543,29 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
+		if ( 'cpt_select' === $type ) {
+
+			$reference_id = absint( $value );
+			$source       = (string) ( $field['reference_source'] ?? '' );
+
+			if ( ! $reference_id ) {
+
+				return '';
+
+			}
+
+			if ( 'author' === $source ) {
+
+				$user = get_user_by( 'id', $reference_id );
+
+				return $user && user_can( $user, 'edit_posts' ) ? (string) $reference_id : '';
+
+			}
+
+			return $source === get_post_type( $reference_id ) ? (string) $reference_id : '';
+
+		}
+
 		if ( in_array( $type, [ 'select', 'radio' ], true ) ) {
 
 			$value   = sanitize_text_field( (string) $value );
@@ -1872,6 +1909,74 @@ class Octave_Addons_Custom_Post_Fields {
 		}
 
 		return $parsed;
+
+	}
+
+	/*
+	REFERENCE OPTIONS
+	-- Builds the selectable posts or authors for one CPT select field. IDs are
+	-- stored as strings so classic and REST-backed editors share one meta shape.
+	---------------------------------------------------------- */
+
+	protected function reference_options( array $field ): array {
+
+		$source  = (string) ( $field['reference_source'] ?? '' );
+		$options = [];
+
+		if ( 'author' === $source ) {
+
+			$users = get_users(
+				[
+					'fields'  => [ 'ID', 'display_name' ],
+					'orderby' => 'display_name',
+					'order'   => 'ASC',
+				]
+			);
+
+			foreach ( $users as $user ) {
+
+				if ( ! user_can( $user->ID, 'edit_posts' ) ) {
+
+					continue;
+
+				}
+
+				$options[ (string) $user->ID ] = $user->display_name;
+
+			}
+
+			return $options;
+
+		}
+
+		if ( '' === $source || ! post_type_exists( $source ) ) {
+
+			return [];
+
+		}
+
+		$post_ids = get_posts(
+			[
+				'fields'         => 'ids',
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'post_status'    => [ 'publish', 'future', 'draft', 'pending', 'private' ],
+				'post_type'      => $source,
+				'posts_per_page' => -1,
+			]
+		);
+
+		foreach ( $post_ids as $post_id ) {
+
+			$title = get_the_title( $post_id );
+
+			$options[ (string) $post_id ] = '' !== trim( (string) $title )
+				? $title
+				: sprintf( __( '(no title) #%d', 'octave-addons' ), $post_id );
+
+		}
+
+		return $options;
 
 	}
 

@@ -2246,6 +2246,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'type'            => 'text',
 			'default_value'   => '',
 			'choices'         => '',
+			'reference_source' => '',
 			'description'     => '',
 			'required'        => false,
 			'scope'           => 'reusable',
@@ -2459,9 +2460,10 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$is_container   = in_array( $type, [ 'group', 'repeater' ], true );
 		$is_html        = 'html' === $type;
 		$is_tab         = 'tab' === $type;
-		$hides_default  = $is_container || $is_tab || 'gallery' === $type;
-		$hides_required = $is_html || $is_tab;
-		$scope_label    = 'specific' === $scope
+		$hides_default     = $is_container || $is_tab || in_array( $type, [ 'gallery', 'cpt_select' ], true );
+		$hides_required    = $is_html || $is_tab;
+		$reference_sources = $this->reference_source_options();
+		$scope_label      = 'specific' === $scope
 			? sprintf( __( 'Specific to %s', 'octave-addons' ), $owner_label )
 			: __( 'Reusable', 'octave-addons' );
 
@@ -2493,6 +2495,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Label', 'octave-addons' ); ?></span><input type="text" data-role="title" name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'label' ) ); ?>" value="<?= esc_attr( $label ); ?>" placeholder="Client name" required></label>
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Field name', 'octave-addons' ); ?></span><input type="text" data-role="key" name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" maxlength="40" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>></label>
 						<label class="oa-cpt-field"><span><?php esc_html_e( 'Field type', 'octave-addons' ); ?></span><select data-field-type name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'type' ) ); ?>"><?php foreach ( $types as $type_key => $type_label ) : ?><option value="<?= esc_attr( $type_key ); ?>"<?= selected( $type, $type_key, false ); ?>><?= esc_html( $type_label ); ?></option><?php endforeach; ?></select></label>
+						<label class="oa-cpt-field oa-field-reference-source<?= 'cpt_select' === $type ? '' : ' oa-hidden'; ?>"><span><?php esc_html_e( 'Content source', 'octave-addons' ); ?></span><select name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'reference_source' ) ); ?>"<?= 'cpt_select' === $type ? ' required' : ''; ?>><option value=""><?php esc_html_e( 'Choose a source', 'octave-addons' ); ?></option><?php foreach ( $reference_sources as $source_key => $source_label ) : ?><option value="<?= esc_attr( $source_key ); ?>"<?= selected( (string) ( $field['reference_source'] ?? '' ), $source_key, false ); ?>><?= esc_html( $source_label ); ?></option><?php endforeach; ?></select><small><?php esc_html_e( 'Editors will choose one item from this post type, or one site author.', 'octave-addons' ); ?></small></label>
 						<label class="oa-cpt-field oa-cpt-field--full oa-field-default<?= $hides_default ? ' oa-hidden' : ''; ?>" data-default-label="<?php esc_attr_e( 'Default value', 'octave-addons' ); ?>" data-html-label="<?php esc_attr_e( 'HTML content', 'octave-addons' ); ?>" data-default-help="<?php esc_attr_e( 'Shown until a post has its own saved value.', 'octave-addons' ); ?>" data-html-help="<?php esc_attr_e( 'Presentation-only markup shown between fields. It is sanitised and never saved as post meta.', 'octave-addons' ); ?>"><span><?= $is_html ? esc_html__( 'HTML content', 'octave-addons' ) : esc_html__( 'Default value', 'octave-addons' ); ?></span><textarea data-field-default-control name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'default_value' ) ); ?>" rows="<?= $is_html ? '6' : '2'; ?>"><?= esc_textarea( is_scalar( $field['default_value'] ?? '' ) ? (string) $field['default_value'] : '' ); ?></textarea><small><?= $is_html ? esc_html__( 'Presentation-only markup shown between fields. It is sanitised and never saved as post meta.', 'octave-addons' ) : esc_html__( 'Shown until a post has its own saved value.', 'octave-addons' ); ?></small></label>
 						<label class="oa-cpt-field oa-cpt-field--full oa-field-choices<?= in_array( $type, [ 'select', 'multiselect', 'radio' ], true ) ? '' : ' oa-hidden'; ?>"><span><?php esc_html_e( 'Choices', 'octave-addons' ); ?></span><textarea name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'choices' ) ); ?>" rows="5" placeholder="featured : Featured&#10;standard : Standard"><?= esc_textarea( (string) ( $field['choices'] ?? '' ) ); ?></textarea><small><?php esc_html_e( 'One per line. Use value : Label or a simple value.', 'octave-addons' ); ?></small></label>
 						<label class="oa-cpt-field oa-cpt-field--full"><span><?php esc_html_e( 'Instructions for editors', 'octave-addons' ); ?></span><textarea name="<?= esc_attr( $this->collection_field_name( 'custom_fields', $index, 'description' ) ); ?>" rows="3"><?= esc_textarea( (string) ( $field['description'] ?? '' ) ); ?></textarea></label>
@@ -3842,21 +3845,35 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			}
 
 			$used[ $name ] = true;
-			$is_container  = in_array( $type, [ 'group', 'repeater' ], true );
-			$is_list       = $is_container || 'gallery' === $type;
-			$clean[]       = [
+			$is_container     = in_array( $type, [ 'group', 'repeater' ], true );
+			$is_list          = $is_container || 'gallery' === $type;
+			$reference_source = 'cpt_select' === $type ? sanitize_key( $field['reference_source'] ?? '' ) : '';
+			$default_value    = '';
+
+			if ( $is_list ) {
+
+				$default_value = [];
+
+			} elseif ( in_array( $type, [ 'wysiwyg', 'html' ], true ) ) {
+
+				$default_value = wp_kses_post( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) );
+
+			} elseif ( 'cpt_select' !== $type ) {
+
+				$default_value = sanitize_text_field( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) );
+
+			}
+
+			$clean[] = [
 				'enabled'         => ! empty( $field['enabled'] ),
 				'label'           => $label,
 				'name'            => $name,
 				'meta_key'        => $name,
 				'legacy_meta_key' => '_octave_' . $name,
 				'type'            => $type,
-				'default_value'   => $is_list
-					? []
-					: ( in_array( $type, [ 'wysiwyg', 'html' ], true )
-					? wp_kses_post( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) )
-					: sanitize_text_field( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) ) ),
+				'default_value'   => $default_value,
 				'choices'         => sanitize_textarea_field( wp_unslash( (string) ( $field['choices'] ?? '' ) ) ),
+				'reference_source' => $reference_source,
 				'description'     => sanitize_textarea_field( wp_unslash( (string) ( $field['description'] ?? '' ) ) ),
 				'required'        => ! in_array( $type, [ 'html', 'tab' ], true ) && ! empty( $field['required'] ),
 				'scope'           => $scope,
@@ -3995,6 +4012,36 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
+	REFERENCE SOURCE OPTIONS
+	-- Lists every editor-visible post type currently registered on the site,
+	-- together with authors as the supported non-post relationship source.
+	---------------------------------------------------------- */
+
+	protected function reference_source_options(): array {
+
+		$options    = [];
+		$post_types = get_post_types( [ 'show_ui' => true ], 'objects' );
+
+		foreach ( $post_types as $post_type ) {
+
+			if ( 'attachment' === $post_type->name ) {
+
+				continue;
+
+			}
+
+			$options[ $post_type->name ] = $post_type->labels->name;
+
+		}
+
+		natcasesort( $options );
+		$options['author'] = __( 'Authors', 'octave-addons' );
+
+		return $options;
+
+	}
+
+	/*
 	FIELD TYPES
 	-- Lists supported standard controls and their admin labels.
 	---------------------------------------------------------- */
@@ -4024,6 +4071,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'radio'       => __( 'Radio buttons', 'octave-addons' ),
 			'select'      => __( 'Select', 'octave-addons' ),
 			'multiselect' => __( 'Multi-select', 'octave-addons' ),
+			'cpt_select'  => __( 'CPT select', 'octave-addons' ),
 			'image'       => __( 'Image', 'octave-addons' ),
 			'gallery'     => __( 'Gallery', 'octave-addons' ),
 			'file'        => __( 'File', 'octave-addons' ),
@@ -4115,7 +4163,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	protected function sub_field_types(): array {
 
-		return array_diff_key( $this->field_types(), array_flip( [ 'group', 'repeater', 'html', 'tab' ] ) );
+		return array_diff_key( $this->field_types(), array_flip( [ 'group', 'repeater', 'html', 'tab', 'cpt_select' ] ) );
 
 	}
 

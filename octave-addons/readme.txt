@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.12.7
+Stable tag:        3.13.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -95,6 +95,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.13.1 =
+* Removed the redundant Post Fields introduction and aligned the standard editor meta box with the compact structured-content field layout.
+
+= 3.13.0 =
+* Added a CPT select post field with a configurable source drawn from the site's registered post types, plus an Authors source.
 
 = 3.12.7 =
 * Replaced post-field key badges with the selected field type so meta choices are easier to identify at a glance.

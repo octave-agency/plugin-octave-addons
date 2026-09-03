@@ -2808,6 +2808,7 @@ ADMIN INTERACTIONS
 				}
 
 				var choices = item.querySelector( '.oa-field-choices' );
+				var referenceSource = item.querySelector( '.oa-field-reference-source' );
 				var defaultField = item.querySelector( '.oa-field-default' );
 				var subFieldEditor = item.querySelector( '.oa-sub-field-editor' );
 				var requiredField = item.querySelector( '.oa-field-required' );
@@ -2816,7 +2817,7 @@ ADMIN INTERACTIONS
 				var isContainer = [ 'group', 'repeater' ].indexOf( typeInput.value ) !== -1;
 				var isHtml = 'html' === typeInput.value;
 				var isTab = 'tab' === typeInput.value;
-				var hidesDefault = isContainer || isTab || 'gallery' === typeInput.value;
+				var hidesDefault = isContainer || isTab || [ 'gallery', 'cpt_select' ].indexOf( typeInput.value ) !== -1;
 				var hidesRequired = isHtml || isTab;
 
 				if ( typePreview ) {
@@ -2826,6 +2827,13 @@ ADMIN INTERACTIONS
 				}
 
 				choices.classList.toggle( 'oa-hidden', ! needsChoices );
+
+				if ( referenceSource ) {
+
+					referenceSource.classList.toggle( 'oa-hidden', 'cpt_select' !== typeInput.value );
+					referenceSource.querySelector( 'select' ).required = 'cpt_select' === typeInput.value;
+
+				}
 
 				if ( defaultField ) {
 

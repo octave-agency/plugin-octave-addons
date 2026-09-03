@@ -11,7 +11,6 @@ POST FIELDS EDITOR
 
 .oa-post-fields {
     --oa-field-accent: var(--oa-admin-accent, #16834c);
-    --oa-field-canvas: var(--oa-admin-canvas, #f8f9fa);
     --oa-field-surface: var(--oa-admin-surface, #fff);
     --oa-field-surface-soft: var(--oa-admin-surface-soft, #f6f7f7);
     --oa-field-surface-hover: var(--oa-admin-surface-hover, #f0f0f1);
@@ -25,7 +24,7 @@ POST FIELDS EDITOR
     --oa-field-danger-soft: color-mix(in srgb, var(--oa-field-danger) 14%, transparent);
     --oa-field-shadow: var(--oa-admin-shadow, 0 1px 2px rgba(0, 0, 0, 0.035));
     color: var(--oa-field-text);
-    background: var(--oa-field-canvas);
+    background: transparent;
 }
 
 .oa-post-fields-empty {
@@ -39,37 +38,6 @@ POST FIELDS EDITOR
     text-align: center;
 }
 
-.oa-post-fields-intro {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--oa-field-border);
-    background: var(--oa-field-surface);
-}
-
-.oa-post-fields-intro > .dashicons {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    color: var(--oa-field-on-accent);
-    border-radius: 9px;
-    background: var(--oa-field-accent);
-}
-
-.oa-post-fields-intro strong {
-    display: block;
-    margin: 1px 0 3px;
-    color: var(--oa-field-text);
-    font-size: 14px;
-}
-
-.oa-post-fields-intro p {
-    margin: 0;
-    color: var(--oa-field-text-soft);
-}
-
 /*
 Tabs
 -- Tab fields split the meta box into panels. Hidden panels stay in the form so
@@ -80,10 +48,11 @@ Tabs
     display: flex;
     align-items: stretch;
     flex-wrap: wrap;
-    gap: 0 24px;
-    padding: 0 20px;
+    gap: 0 20px;
+    margin: 0 12px;
+    padding: 0;
     border-bottom: 1px solid var(--oa-field-border);
-    background: var(--oa-field-surface);
+    background: transparent;
 }
 
 .oa-post-fields-grid + .oa-post-fields-tabs .oa-post-fields-tablist {
@@ -114,8 +83,8 @@ Tabs
 }
 
 .oa-post-fields-tab.is-active {
-    color: var(--oa-field-accent);
-    border-bottom-color: var(--oa-field-accent);
+    color: var(--oa-field-text);
+    border-bottom-color: var(--oa-field-text);
 }
 
 .oa-post-fields-grid[hidden] {
@@ -124,28 +93,37 @@ Tabs
 
 .oa-post-fields-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-    padding: 20px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0 12px;
 }
 
 .oa-post-field {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    align-items: start;
+    gap: 2px 32px;
     min-width: 0;
-    padding: 16px;
-    border: 1px solid var(--oa-field-border);
-    border-radius: 10px;
-    background: var(--oa-field-surface);
-    box-shadow: var(--oa-field-shadow);
+    padding: 16px 0;
+    border: 0;
+    border-bottom: 1px solid var(--oa-field-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.oa-post-fields-grid > .oa-post-field:not(.oa-post-field-container):last-child {
+    border-bottom: 0;
 }
 
 .oa-post-field--wide {
-    grid-column: 1 / -1;
+    display: block;
 }
 
 .oa-post-field-html {
-    margin-top: 8px;
-    padding: 20px 0 8px;
-    border-width: 1px 0 0;
+    margin: 0;
+    padding: 26px 0 10px;
+    border: 0;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
@@ -173,10 +151,29 @@ Tabs
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
+    grid-area: 1 / 1;
+    margin: 0;
+    padding-top: 11px;
     color: var(--oa-field-text);
     font-size: 13px;
     font-weight: 600;
+}
+
+.oa-post-field > input:not([type="checkbox"]):not([type="radio"]),
+.oa-post-field > select,
+.oa-post-field > textarea,
+.oa-post-field > .wp-editor-wrap,
+.oa-post-field > .oa-post-field-options,
+.oa-post-field > .oa-post-field-checkbox,
+.oa-post-field > .oa-post-field-media,
+.oa-post-field > .oa-post-field-gallery {
+    grid-area: 1 / 2;
+    min-width: 0;
+}
+
+.oa-post-field--wide > .oa-post-field-label {
+    margin-bottom: 8px;
+    padding-top: 0;
 }
 
 .oa-post-field-required {
@@ -208,7 +205,22 @@ Tabs
     color: var(--oa-field-text);
     background: var(--oa-field-surface);
     border-color: var(--oa-field-border-strong);
-    border-radius: 6px;
+    border-radius: 2px;
+}
+
+.oa-post-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.oa-post-field select {
+    min-height: 42px;
+    padding: 7px 11px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.oa-post-field textarea {
+    min-height: 96px;
+    padding: 9px 11px;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .oa-post-field input:focus,
@@ -219,9 +231,14 @@ Tabs
 }
 
 .oa-post-field .description {
-    margin: 8px 0 0;
+    grid-area: 2 / 1;
+    margin: 5px 0 0;
     color: var(--oa-field-text-soft);
     font-size: 12px;
+}
+
+.oa-post-field--wide > .description {
+    margin-top: 8px;
 }
 
 .oa-post-field-options {
@@ -403,8 +420,12 @@ Gallery
 }
 
 .oa-post-field-container {
+    margin: 16px 0;
     padding: 0;
     overflow: hidden;
+    border: 1px solid var(--oa-field-border);
+    border-radius: 4px;
+    background: var(--oa-field-surface);
 }
 
 .oa-post-field-container-head {
@@ -537,9 +558,21 @@ Gallery
 }
 
 .oa-repeater-row-fields > .oa-post-field {
+    display: block;
     padding: 13px;
-    background: var(--oa-field-surface-soft);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     box-shadow: none;
+}
+
+.oa-repeater-row-fields .oa-post-field-label {
+    margin-bottom: 8px;
+    padding-top: 0;
+}
+
+.oa-repeater-row-fields .oa-post-field .description {
+    margin-top: 8px;
 }
 
 .oa-repeater-row-fields .wp-editor-wrap {
@@ -548,12 +581,13 @@ Gallery
 
 @media (max-width: 782px) {
 
-    .oa-post-fields-grid {
-        grid-template-columns: minmax(0, 1fr);
+    .oa-post-field {
+        display: block;
     }
 
-    .oa-post-field--wide {
-        grid-column: auto;
+    .oa-post-field > .oa-post-field-label {
+        margin-bottom: 8px;
+        padding-top: 0;
     }
 
     .oa-post-field-container-head {

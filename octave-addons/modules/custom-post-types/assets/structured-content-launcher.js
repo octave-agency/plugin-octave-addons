@@ -827,6 +827,26 @@ STRUCTURED CONTENT EDITOR
 				value: String( value || '' )
 			} );
 
+		} else if ( 'cpt_select' === field.type ) {
+
+			var referenceOptions = Object.keys( field.reference_options || {} ).map( function ( referenceId ) {
+
+				return {
+					label: field.reference_options[ referenceId ],
+					value: String( referenceId )
+				};
+
+			} );
+
+			control = createElement( components.SelectControl, {
+				__nextHasNoMarginBottom: true,
+				'aria-invalid': invalid ? 'true' : undefined,
+				onChange: props.onChange,
+				options: [ { label: strings.selectItem, value: '' } ].concat( referenceOptions ),
+				required: required,
+				value: String( value || '' )
+			} );
+
 		} else if ( 'select' === field.type ) {
 
 			control = createElement( components.SelectControl, {
