@@ -129,6 +129,10 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 	-- follow the catch-all heading row so their rules land after it.
 	-- reset_via marks rows whose last-child reset is already covered by
 	-- another row's selector, so the reset rule stays short.
+	-- Selectors are comma separated and lead with the bare HTML element, the
+	-- way Breakdance's own typography does, so block editor markup such as
+	-- <h2 class="wp-block-heading"> is covered as well as builder output. The
+	-- .bde-* class stays alongside it for elements whose tag is configurable.
 	---------------------------------------------------------- */
 
 	protected function elements(): array {
@@ -136,55 +140,55 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 		return [
 			'heading' => [
 				'label'    => __( 'Heading — all levels', 'octave-addons' ),
-				'selector' => '.bde-heading',
+				'selector' => 'h1, h2, h3, h4, h5, h6, .bde-heading',
 				'section'  => 'headings',
 				'unit'     => 'heading-margin',
 			],
 			'h1' => [
 				'label'     => __( 'Heading 1', 'octave-addons' ),
-				'selector'  => 'h1.bde-heading',
+				'selector'  => 'h1',
 				'section'   => 'headings',
 				'child'     => true,
 				'reset_via' => 'heading',
 			],
 			'h2' => [
 				'label'     => __( 'Heading 2', 'octave-addons' ),
-				'selector'  => 'h2.bde-heading',
+				'selector'  => 'h2',
 				'section'   => 'headings',
 				'child'     => true,
 				'reset_via' => 'heading',
 			],
 			'h3' => [
 				'label'     => __( 'Heading 3', 'octave-addons' ),
-				'selector'  => 'h3.bde-heading',
+				'selector'  => 'h3',
 				'section'   => 'headings',
 				'child'     => true,
 				'reset_via' => 'heading',
 			],
 			'h4' => [
 				'label'     => __( 'Heading 4', 'octave-addons' ),
-				'selector'  => 'h4.bde-heading',
+				'selector'  => 'h4',
 				'section'   => 'headings',
 				'child'     => true,
 				'reset_via' => 'heading',
 			],
 			'h5' => [
 				'label'     => __( 'Heading 5', 'octave-addons' ),
-				'selector'  => 'h5.bde-heading',
+				'selector'  => 'h5',
 				'section'   => 'headings',
 				'child'     => true,
 				'reset_via' => 'heading',
 			],
 			'h6' => [
 				'label'     => __( 'Heading 6', 'octave-addons' ),
-				'selector'  => 'h6.bde-heading',
+				'selector'  => 'h6',
 				'section'   => 'headings',
 				'child'     => true,
 				'reset_via' => 'heading',
 			],
 			'text' => [
 				'label'    => __( 'Text', 'octave-addons' ),
-				'selector' => '.bde-text',
+				'selector' => 'p, .bde-text',
 				'section'  => 'content',
 				'unit'     => 'element-gap',
 			],
@@ -196,12 +200,12 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 			],
 			'blockquote' => [
 				'label'    => __( 'Blockquote', 'octave-addons' ),
-				'selector' => '.bde-blockquote',
+				'selector' => 'blockquote, .bde-blockquote',
 				'section'  => 'content',
 			],
 			'basic-list' => [
 				'label'    => __( 'List', 'octave-addons' ),
-				'selector' => '.bde-basic-list',
+				'selector' => 'ul, ol, .bde-basic-list',
 				'section'  => 'content',
 			],
 			'icon-list' => [
@@ -216,7 +220,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 			],
 			'image' => [
 				'label'    => __( 'Image', 'octave-addons' ),
-				'selector' => '.bde-image',
+				'selector' => 'figure, .bde-image',
 				'section'  => 'content',
 			],
 			'gallery' => [
@@ -251,7 +255,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 			],
 			'code-block' => [
 				'label'    => __( 'Code Block', 'octave-addons' ),
-				'selector' => '.bde-code-block',
+				'selector' => 'pre, .bde-code-block',
 				'section'  => 'content',
 			],
 			'shortcode' => [
@@ -677,8 +681,8 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 				}
 
 				$rules[] = sprintf(
-					".breakdance %s {\n\tmargin-bottom: %s;\n}",
-					$element['selector'],
+					"%s {\n\tmargin-bottom: %s;\n}",
+					$this->prefix_selector( $element['selector'] ),
 					$value
 				);
 
@@ -730,6 +734,35 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 	}
 
 	/*
+	PREFIX SELECTOR
+	-- Scopes each selector in a comma separated row to the builder wrapper,
+	-- since the prefix has to repeat per selector rather than sit once at the
+	-- front of the list.
+	---------------------------------------------------------- */
+
+	protected function prefix_selector( string $selector, string $suffix = '' ): string {
+
+		$parts = [];
+
+		foreach ( explode( ',', $selector ) as $part ) {
+
+			$part = trim( $part );
+
+			if ( '' === $part ) {
+
+				continue;
+
+			}
+
+			$parts[] = '.breakdance ' . $part . $suffix;
+
+		}
+
+		return implode( ",\n", $parts );
+
+	}
+
+	/*
 	RESET SELECTORS
 	-- Builds the last-child selector list, dropping any row already covered by
 	-- another configured row so the rule stays readable.
@@ -749,7 +782,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 			}
 
-			$selectors[] = '.breakdance ' . $element['selector'] . ':last-child';
+			$selectors[] = $this->prefix_selector( $element['selector'], ':last-child' );
 
 		}
 

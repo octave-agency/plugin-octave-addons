@@ -3677,6 +3677,30 @@ BREAKDANCE SPACING GRID
 	var NUMBER      = /^-?\d+(\.\d+)?$/;
 
 	/*
+	PREFIX SELECTOR
+	-- Mirrors the module's PHP prefixing: the builder wrapper repeats per
+	-- selector in a comma separated row rather than sitting once at the front.
+	---------------------------------------------------------- */
+
+	function prefixSelector( selector, suffix ) {
+
+		return String( selector || '' ).split( ',' ).map( function ( part ) {
+
+			return part.trim();
+
+		} ).filter( function ( part ) {
+
+			return '' !== part;
+
+		} ).map( function ( part ) {
+
+			return '.breakdance ' + part + ( suffix || '' );
+
+		} ).join( ',\n' );
+
+	}
+
+	/*
 	TOKEN VAR
 	-- The variable a row is bound to, or an empty string when the row carries
 	-- its own literal value.
@@ -3787,7 +3811,7 @@ BREAKDANCE SPACING GRID
 
 				}
 
-				rules.push( '.breakdance ' + row.dataset.selector + ' {\n\tmargin-bottom: ' + value + ';\n}' );
+				rules.push( prefixSelector( row.dataset.selector ) + ' {\n\tmargin-bottom: ' + value + ';\n}' );
 
 				if ( -1 === reset.indexOf( row ) ) {
 
@@ -3829,7 +3853,7 @@ BREAKDANCE SPACING GRID
 
 				} );
 
-				var selector = '.breakdance ' + row.dataset.selector + ':last-child';
+				var selector = prefixSelector( row.dataset.selector, ':last-child' );
 
 				if ( ! covered && -1 === selectors.indexOf( selector ) ) {
 

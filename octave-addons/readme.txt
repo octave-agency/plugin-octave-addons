@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.15.1
+Stable tag:        3.16.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -95,6 +95,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.16.0 =
+* Extended Breakdance Default Spacing to bare HTML elements — h1 to h6, p, blockquote, ul, ol, figure and pre — so block editor content is spaced alongside builder output.
 
 = 3.15.1 =
 * Hid the post-type editor's Add reusable field action when no reusable fields exist.
