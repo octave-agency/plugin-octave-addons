@@ -62,7 +62,20 @@ final class Octave_Addons {
 			$this->modules->run_enabled();
 		}, 5 );
 
+		add_action( 'init', [ $this, 'enable_page_excerpts' ], 6 );
+
 		add_action( 'admin_bar_menu', [ $this, 'remove_wordpress_admin_bar_items' ], 999 );
+
+	}
+
+	/*
+	ENABLE PAGE EXCERPTS
+	-- Adds the native excerpt editor and API support to built-in Pages.
+	---------------------------------------------------------- */
+
+	public function enable_page_excerpts(): void {
+
+		add_post_type_support( 'page', 'excerpt' );
 
 	}
 
