@@ -1863,7 +1863,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 								?>
 
 							</span>
-							<small><?= $saved ? esc_html__( 'Locked after saving to protect existing content. Use the edit button to rename it.', 'octave-addons' ) : esc_html__( 'Use an oa_ prefix; maximum 20 characters.', 'octave-addons' ); ?></small>
+							<small><?= $saved ? esc_html__( 'Locked after saving to protect existing content. Use the edit button to rename it.', 'octave-addons' ) : esc_html__( 'Use lowercase letters, numbers and underscores; maximum 20 characters.', 'octave-addons' ); ?></small>
 						</label>
 
 						<div class="oa-cpt-field oa-cpt-field--full oa-cpt-icon-field">
@@ -4199,17 +4199,15 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	/*
 	SANITIZE POST TYPE KEY
-	-- Prefixes custom post type keys with oa_.
+	-- Preserves the submitted WordPress-safe key and supplies a namespaced
+	-- fallback only when no usable key was entered.
 	---------------------------------------------------------- */
 
 	protected function sanitize_post_type_key( $value, int $index ): string {
 
 		$key = substr( sanitize_key( wp_unslash( (string) $value ) ), 0, 20 );
 
-		$key = preg_replace( '/^oa_+/', '', $key );
-		$key = 'oa_' . trim( (string) $key, '_' );
-
-		if ( 'oa_' === $key ) {
+		if ( '' === $key ) {
 
 			$key = 'oa_content_' . ( $index + 1 );
 

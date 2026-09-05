@@ -34,3 +34,19 @@ html[data-oa-admin-theme="dark"] .block-editor-block-list__block.is-selected::af
 html[data-oa-admin-theme="dark"] .block-editor-block-list__block.has-child-selected::after {
     outline-color: var(--oa-admin-accent);
 }
+
+/*
+Breakdance launcher
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] .breakdance-launcher {
+    color: #FFFFFF !important;
+    background-color: var(--oa-admin-surface) !important;
+    border-color: var(--oa-admin-border) !important;
+}
+
+html[data-oa-admin-theme="dark"] .breakdance-launcher .breakdance-launcher__description,
+html[data-oa-admin-theme="dark"] .breakdance-launcher .breakdance-launcher-link,
+html[data-oa-admin-theme="dark"] .breakdance-launcher .breakdance-launcher__unsaved-changes {
+    color: #FFFFFF !important;
+}
