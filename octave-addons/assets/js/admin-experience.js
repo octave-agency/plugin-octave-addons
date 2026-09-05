@@ -13,6 +13,7 @@ WORDPRESS ADMIN EXPERIENCE
     var savedTheme = 'light' === config.theme || 'dark' === config.theme ? config.theme : 'system';
     var activeTheme = 'system' === savedTheme ? ( mediaQuery.matches ? 'dark' : 'light' ) : savedTheme;
     var editorCanvasObserver;
+    var editorCanvasFrame;
     var syncedEditorCanvas;
 
     /*
@@ -157,10 +158,25 @@ WORDPRESS ADMIN EXPERIENCE
 
         }
 
+        // The Customizer rewrites large parts of its DOM on every setting change,
+        // so the sync is collapsed into one pass per frame rather than one per
+        // mutation batch.
         editorCanvasObserver = new MutationObserver( function () {
 
-            syncEditorCanvasTheme();
-            syncWysiwygTheme();
+            if ( editorCanvasFrame ) {
+
+                return;
+
+            }
+
+            editorCanvasFrame = window.requestAnimationFrame( function () {
+
+                editorCanvasFrame = null;
+
+                syncEditorCanvasTheme();
+                syncWysiwygTheme();
+
+            } );
 
         } );
         editorCanvasObserver.observe( document.body, {

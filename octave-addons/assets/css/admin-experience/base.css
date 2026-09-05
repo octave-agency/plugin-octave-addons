@@ -2750,59 +2750,6 @@ html[data-oa-admin-theme="dark"] body.wp-admin .about__container .about__section
 }
 
 /*
-Customizer controls
--- The preview iframe is deliberately excluded so the front end stays accurate.
----------------------------------------------------------- */
-
-html[data-oa-admin-theme="dark"] body.wp-customizer,
-html[data-oa-admin-theme="dark"] body.wp-customizer #customize-controls,
-html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-sidebar,
-html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-header,
-html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-sidebar-content,
-html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-footer,
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-pane-parent,
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-pane-child,
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-section-title {
-    color: var(--oa-admin-text);
-    background: var(--oa-admin-surface);
-    border-color: var(--oa-admin-border);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-customizer #customize-info .accordion-section-title,
-html[data-oa-admin-theme="dark"] body.wp-customizer .control-section .accordion-section-title,
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-panel-back,
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-section-back {
-    color: var(--oa-admin-text);
-    background: var(--oa-admin-surface-soft);
-    border-color: var(--oa-admin-border);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-control-title,
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-section-title h3,
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-panel-title {
-    color: var(--oa-admin-text);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-customizer .customize-control-description,
-html[data-oa-admin-theme="dark"] body.wp-customizer .description {
-    color: var(--oa-admin-text-soft);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-customizer input:not([type="checkbox"]):not([type="radio"]),
-html[data-oa-admin-theme="dark"] body.wp-customizer select,
-html[data-oa-admin-theme="dark"] body.wp-customizer textarea {
-    color: var(--oa-admin-text);
-    background-color: var(--oa-admin-surface-soft);
-    border-color: var(--oa-admin-border-strong);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-customizer .button:not(.button-primary) {
-    color: var(--oa-admin-text);
-    background: var(--oa-admin-surface-soft);
-    border-color: var(--oa-admin-border-strong);
-}
-
-/*
 Dashboard widgets
 ---------------------------------------------------------- */
 
@@ -3824,4 +3771,61 @@ html[data-oa-admin-theme] body.wp-admin.block-editor-page .interface-complementa
     color: var(--oa-admin-accent) !important;
     background: var(--oa-admin-accent-soft) !important;
     box-shadow: inset 0 0 0 1px var(--oa-admin-accent);
+}
+
+/*
+COLOUR PICKER
+-- The wp-color-picker chrome is painted from fixed light values in core's
+-- color-picker.css, so on the dark canvas the swatch button, its hex readout
+-- and the Iris panel all stayed white. Iris draws its own gradients on a
+-- canvas element, so only the surrounding chrome is restated here.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .wp-picker-container .wp-color-result.button,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .wp-picker-container .wp-color-result.button:hover,
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .wp-picker-container .wp-color-result.button:focus {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-color-result-text,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-color-result:hover::after,
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-color-result:focus::after {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-left-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-picker-container .iris-picker {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-picker-container input[type="text"].wp-color-picker {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-color-picker::placeholder {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .wp-picker-container input[type="text"].iris-error {
+    color: var(--oa-admin-text);
+    background-color: rgba(255, 133, 140, 0.14);
+    border-color: var(--oa-admin-danger);
+}
+
+/*
+IMAGE EDITOR
+-- Only the disabled toolbar buttons carry fixed light values; the crop canvas
+-- and its checkerboard read correctly against the dark canvas already.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin.wp-core-ui .imgedit-menu .button.disabled {
+    color: var(--oa-admin-text-dim);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border);
 }

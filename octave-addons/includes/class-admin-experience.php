@@ -27,6 +27,10 @@ class Octave_Addons_Admin_Experience {
 		// already migrated by the time anything can save over it.
 		add_action( 'admin_init',            [ $this, 'migrate_legacy_option' ], 1 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		// customize.php builds its own page instead of loading admin-header.php, so
+		// admin_enqueue_scripts never fires there and the refresh has to be asked
+		// for through the Customizer's own enqueue point.
+		add_action( 'customize_controls_enqueue_scripts', [ $this, 'enqueue_customizer_assets' ] );
 		add_action( 'enqueue_block_assets',   [ $this, 'enqueue_block_editor_assets' ] );
 		add_action( 'admin_bar_menu',        [ $this, 'add_theme_toggle' ], 998 );
 
@@ -169,6 +173,93 @@ class Octave_Addons_Admin_Experience {
 	}
 
 	/*
+	ASSET VERSION
+	-- Uses the file's own timestamp so an edited sheet reaches the browser
+	-- without waiting for a plugin release.
+	---------------------------------------------------------- */
+
+	public function asset_version( string $relative ): string {
+
+		$path = OCTAVE_ADDONS_DIR . $relative;
+
+		return file_exists( $path ) ? (string) filemtime( $path ) : OCTAVE_ADDONS_VERSION;
+
+	}
+
+	/*
+	ENQUEUE SHARED ASSETS
+	-- The tokens, the palette and the script that resolves the appearance. Every
+	-- screen the refresh reaches needs these, so both enqueue points start here.
+	---------------------------------------------------------- */
+
+	public function enqueue_shared_assets(): void {
+
+		$settings = $this->get_settings();
+
+		wp_enqueue_style(
+			'octave-addons-admin-experience',
+			OCTAVE_ADDONS_URL . 'assets/css/admin-experience/base.css',
+			[],
+			$this->asset_version( 'assets/css/admin-experience/base.css' )
+		);
+
+		$accent_css = $this->accent_css( $settings );
+
+		if ( '' !== $accent_css ) {
+
+			wp_add_inline_style( 'octave-addons-admin-experience', $accent_css );
+
+		}
+
+		wp_enqueue_script(
+			'octave-addons-admin-experience',
+			OCTAVE_ADDONS_URL . 'assets/js/admin-experience.js',
+			[],
+			$this->asset_version( 'assets/js/admin-experience.js' ),
+			false
+		);
+
+		wp_localize_script( 'octave-addons-admin-experience', 'oaAdminExperience', [
+			'theme'           => $this->get_theme(),
+			'cookieName'      => self::THEME_COOKIE,
+			'cookieDays'      => (string) self::THEME_COOKIE_DAYS,
+			'cookiePath'      => $this->get_cookie_path(),
+			'cookieDomain'    => defined( 'COOKIE_DOMAIN' ) && COOKIE_DOMAIN ? (string) COOKIE_DOMAIN : '',
+			'cookieSecure'    => is_ssl() ? '1' : '',
+			'darkModeText'    => __( 'Use dark mode', 'octave-addons' ),
+			'lightModeText'   => __( 'Use light mode', 'octave-addons' ),
+			'mediaSearchText' => __( 'Search media…', 'octave-addons' ),
+		] );
+
+	}
+
+	/*
+	ENQUEUE CUSTOMIZER ASSETS
+	-- The Customizer's body carries wp-customizer rather than wp-admin, so the
+	-- integration sheets would never match a single selector there. Only the
+	-- shared tokens and the Customizer's own sheet are loaded.
+	---------------------------------------------------------- */
+
+	public function enqueue_customizer_assets(): void {
+
+		if ( ! $this->is_enabled() ) {
+
+			return;
+
+		}
+
+		$this->enqueue_shared_assets();
+
+		wp_enqueue_style(
+			'octave-addons-admin-experience-customizer',
+			OCTAVE_ADDONS_URL . 'assets/css/admin-experience/customizer.css',
+			[ 'octave-addons-admin-experience' ],
+			$this->asset_version( 'assets/css/admin-experience/customizer.css' )
+		);
+
+	}
+
+	/*
 	ENQUEUE ASSETS
 	-- Loads the visual refresh only while the site-wide switch is enabled.
 	---------------------------------------------------------- */
@@ -183,28 +274,12 @@ class Octave_Addons_Admin_Experience {
 
 		}
 
-		$css_path          = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/base.css';
 		$integrations_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/integrations.css';
 		$woo_path          = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/woocommerce.css';
 		$rank_math_path    = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/rank-math.css';
 		$activity_log_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/activity-log.css';
-		$js_path           = OCTAVE_ADDONS_DIR . 'assets/js/admin-experience.js';
-		$theme             = $this->get_theme();
 
-		wp_enqueue_style(
-			'octave-addons-admin-experience',
-			OCTAVE_ADDONS_URL . 'assets/css/admin-experience/base.css',
-			[],
-			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
-		);
-
-		$accent_css = $this->accent_css( $settings );
-
-		if ( '' !== $accent_css ) {
-
-			wp_add_inline_style( 'octave-addons-admin-experience', $accent_css );
-
-		}
+		$this->enqueue_shared_assets();
 
 		wp_enqueue_style(
 			'octave-addons-admin-experience-integrations',
@@ -245,26 +320,6 @@ class Octave_Addons_Admin_Experience {
 			);
 
 		}
-
-		wp_enqueue_script(
-			'octave-addons-admin-experience',
-			OCTAVE_ADDONS_URL . 'assets/js/admin-experience.js',
-			[],
-			file_exists( $js_path ) ? (string) filemtime( $js_path ) : OCTAVE_ADDONS_VERSION,
-			false
-		);
-
-		wp_localize_script( 'octave-addons-admin-experience', 'oaAdminExperience', [
-			'theme'           => $theme,
-			'cookieName'      => self::THEME_COOKIE,
-			'cookieDays'      => (string) self::THEME_COOKIE_DAYS,
-			'cookiePath'      => $this->get_cookie_path(),
-			'cookieDomain'    => defined( 'COOKIE_DOMAIN' ) && COOKIE_DOMAIN ? (string) COOKIE_DOMAIN : '',
-			'cookieSecure'    => is_ssl() ? '1' : '',
-			'darkModeText'    => __( 'Use dark mode', 'octave-addons' ),
-			'lightModeText'   => __( 'Use light mode', 'octave-addons' ),
-			'mediaSearchText' => __( 'Search media…', 'octave-addons' ),
-		] );
 
 	}
 

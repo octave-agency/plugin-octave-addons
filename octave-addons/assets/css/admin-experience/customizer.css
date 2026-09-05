@@ -1,0 +1,921 @@
+/*
+CUSTOMIZER CONTROLS
+-- Carries the admin refresh into wp-admin/customize.php.
+-- The Customizer builds its own page instead of loading admin-header.php, so
+-- its body never gets the wp-admin class every other sheet here hangs off.
+-- Everything below is scoped to body.wp-customizer and painted from the shared
+-- tokens, so one set of rules serves both the light and the dark appearance.
+-- The preview iframe is a separate document and is deliberately left alone so
+-- the front end always renders exactly as a visitor sees it.
+---------------------------------------------------------- */
+
+/*
+SHELL AND CHROME
+---------------------------------------------------------- */
+
+body.wp-customizer {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+body.wp-customizer .wp-full-overlay {
+    background: var(--oa-admin-sidebar);
+}
+
+body.wp-customizer .wp-full-overlay-main {
+    background-color: var(--oa-admin-canvas);
+}
+
+body.wp-customizer .wp-full-overlay-sidebar {
+    background: var(--oa-admin-canvas);
+    border-right-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .wp-full-overlay-sidebar .wp-full-overlay-header,
+body.wp-customizer #customize-header-actions {
+    background: var(--oa-admin-canvas);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .wp-full-overlay-sidebar-content,
+body.wp-customizer.outer-section-open #customize-controls .wp-full-overlay-sidebar-content {
+    background: var(--oa-admin-canvas);
+}
+
+body.wp-customizer #customize-sidebar-outer-content {
+    background: var(--oa-admin-canvas);
+    border-right-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .customize-pane-parent,
+body.wp-customizer .customize-pane-child {
+    background: var(--oa-admin-canvas);
+}
+
+/*
+FOOTER ACTIONS
+-- The collapse control and the desktop, tablet and phone preview switches.
+---------------------------------------------------------- */
+
+body.wp-customizer .expanded .wp-full-overlay-footer,
+body.wp-customizer .wp-full-overlay-sidebar .wp-full-overlay-footer {
+    background: var(--oa-admin-canvas);
+    border-top-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .wp-full-overlay-footer .devices {
+    background: var(--oa-admin-canvas);
+    box-shadow: -20px 0 10px -5px var(--oa-admin-canvas);
+}
+
+body.wp-customizer .wp-full-overlay-footer .devices button:before {
+    color: var(--oa-admin-text-dim);
+}
+
+body.wp-customizer .wp-full-overlay-footer .devices button.active {
+    border-bottom-color: var(--oa-admin-accent);
+}
+
+body.wp-customizer .wp-full-overlay-footer .devices button.active:before {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer .wp-full-overlay-footer .devices button:hover,
+body.wp-customizer .wp-full-overlay-footer .devices button:focus {
+    background-color: var(--oa-admin-surface);
+}
+
+body.wp-customizer .wp-full-overlay-footer .devices button:focus,
+body.wp-customizer .wp-full-overlay-footer .devices button.active:hover {
+    border-bottom-color: var(--oa-admin-accent);
+}
+
+body.wp-customizer .wp-full-overlay-footer .devices button:hover:before,
+body.wp-customizer .wp-full-overlay-footer .devices button:focus:before {
+    color: var(--oa-admin-accent);
+}
+
+body.wp-customizer.wp-core-ui .wp-full-overlay .collapse-sidebar {
+    color: var(--oa-admin-text-dim);
+}
+
+body.wp-customizer.wp-core-ui .wp-full-overlay .collapse-sidebar:hover,
+body.wp-customizer.wp-core-ui .wp-full-overlay .collapse-sidebar:focus {
+    color: var(--oa-admin-accent);
+}
+
+body.wp-customizer .wp-full-overlay .collapse-sidebar-arrow:before {
+    background: var(--oa-admin-canvas);
+}
+
+/*
+CLOSE AND PREVIEW TOGGLES
+---------------------------------------------------------- */
+
+body.wp-customizer .customize-controls-close,
+body.wp-customizer .customize-controls-preview-toggle {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+    border-top-color: var(--oa-admin-border);
+    border-bottom-color: var(--oa-admin-canvas);
+}
+
+body.wp-customizer .customize-controls-close:focus,
+body.wp-customizer .customize-controls-close:hover,
+body.wp-customizer .customize-controls-preview-toggle:focus,
+body.wp-customizer .customize-controls-preview-toggle:hover {
+    color: var(--oa-admin-accent);
+    background: var(--oa-admin-surface);
+    border-bottom-color: var(--oa-admin-accent);
+}
+
+/*
+INFO PANEL
+---------------------------------------------------------- */
+
+body.wp-customizer #customize-controls .customize-info {
+    border-top-color: var(--oa-admin-border);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #customize-controls .customize-info .accordion-section-title,
+body.wp-customizer #customize-controls .panel-meta.customize-info .accordion-section-title:hover,
+body.wp-customizer #customize-controls .cannot-expand:hover .accordion-section-title {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #customize-controls .customize-info .preview-notice,
+body.wp-customizer #customize-controls .customize-info .customize-action {
+    color: var(--oa-admin-text-soft);
+}
+
+body.wp-customizer #customize-controls .customize-info .panel-title,
+body.wp-customizer #customize-controls .customize-info .site-title {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer #customize-controls .customize-info .customize-help-toggle,
+body.wp-customizer .customize-screen-options-toggle {
+    color: var(--oa-admin-text-soft);
+}
+
+body.wp-customizer #customize-controls .customize-info .customize-help-toggle:hover,
+body.wp-customizer #customize-controls .customize-info .customize-help-toggle:focus,
+body.wp-customizer .customize-screen-options-toggle:hover,
+body.wp-customizer .customize-screen-options-toggle:focus,
+body.wp-customizer #customize-controls .customize-info.open .accordion-section-title:after,
+body.wp-customizer #customize-controls .customize-info .accordion-section-title:hover:after,
+body.wp-customizer #customize-controls .customize-info .accordion-section-title:focus:after {
+    color: var(--oa-admin-accent);
+}
+
+body.wp-customizer #customize-controls .customize-info .customize-panel-description,
+body.wp-customizer #customize-controls .customize-info .customize-section-description,
+body.wp-customizer #customize-outer-theme-controls .customize-info .customize-section-description,
+body.wp-customizer #customize-controls .no-widget-areas-rendered-notice {
+    color: var(--oa-admin-text-soft);
+    background: var(--oa-admin-surface);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #screen-options-wrap {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-top-color: var(--oa-admin-border);
+}
+
+/*
+PANELS AND SECTIONS
+---------------------------------------------------------- */
+
+body.wp-customizer #customize-theme-controls .accordion-section-title,
+body.wp-customizer #customize-outer-theme-controls .accordion-section-title,
+body.wp-customizer #customize-controls #customize-theme-controls .customize-themes-panel .accordion-section-title,
+body.wp-customizer #customize-theme-controls .control-panel-themes > .accordion-section-title,
+body.wp-customizer #customize-theme-controls .control-panel-themes > .accordion-section-title:hover {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    border-left-color: var(--oa-admin-surface);
+}
+
+body.wp-customizer.js .control-section:hover .accordion-section-title,
+body.wp-customizer.js .control-section .accordion-section-title:hover,
+body.wp-customizer.js .control-section.open .accordion-section-title,
+body.wp-customizer.js .control-section .accordion-section-title:focus {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+body.wp-customizer #customize-theme-controls .control-section.open {
+    border-bottom-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #customize-theme-controls .control-section.open .accordion-section-title,
+body.wp-customizer #customize-outer-theme-controls .control-section.open .accordion-section-title {
+    border-bottom-color: var(--oa-admin-border) !important;
+}
+
+body.wp-customizer #customize-theme-controls .control-section:last-of-type.open,
+body.wp-customizer #customize-theme-controls .control-section:last-of-type > .accordion-section-title,
+body.wp-customizer #accordion-section-themes + .control-section,
+body.wp-customizer #customize-theme-controls #accordion-section-menu_locations > .accordion-section-title,
+body.wp-customizer #customize-theme-controls .control-panel-content .control-section-nav_menu:nth-last-child(2) .accordion-section-title,
+body.wp-customizer #customize-theme-controls .control-panel-content:not(.control-panel-nav_menus) .control-section:nth-child(2),
+body.wp-customizer #customize-theme-controls .control-panel-nav_menus .control-section-nav_menu,
+body.wp-customizer #customize-theme-controls .control-section-nav_menu_locations .accordion-section-title {
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #customize-theme-controls .accordion-section-content,
+body.wp-customizer #customize-outer-theme-controls .accordion-section-content {
+    color: var(--oa-admin-text-soft);
+}
+
+body.wp-customizer .customize-section-title {
+    background: var(--oa-admin-surface);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .customize-section-title h3,
+body.wp-customizer h3.customize-section-title,
+body.wp-customizer .customize-panel-title,
+body.wp-customizer #available-widgets .customize-section-title h3,
+body.wp-customizer #available-menu-items .customize-section-title h3 {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer .customize-panel-back,
+body.wp-customizer .customize-section-back {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    border-left-color: var(--oa-admin-surface);
+}
+
+body.wp-customizer .customize-panel-back:hover,
+body.wp-customizer .customize-panel-back:focus,
+body.wp-customizer .customize-section-back:hover,
+body.wp-customizer .customize-section-back:focus {
+    background: var(--oa-admin-surface-hover);
+}
+
+body.wp-customizer .control-section .customize-section-text-before {
+    color: var(--oa-admin-text-soft);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .accordion-section .dropdown-content {
+    border-color: var(--oa-admin-canvas);
+}
+
+/*
+CONTROLS
+---------------------------------------------------------- */
+
+body.wp-customizer .customize-control-title {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer #customize-controls .description,
+body.wp-customizer .customize-control-description,
+body.wp-customizer .customize-control .description {
+    color: var(--oa-admin-text-soft);
+}
+
+body.wp-customizer .customize-control label,
+body.wp-customizer .customize-control span.customize-control-title {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer input[type="text"],
+body.wp-customizer input[type="password"],
+body.wp-customizer input[type="email"],
+body.wp-customizer input[type="number"],
+body.wp-customizer input[type="search"],
+body.wp-customizer input[type="tel"],
+body.wp-customizer input[type="url"],
+body.wp-customizer input[type="date"],
+body.wp-customizer input[type="datetime-local"],
+body.wp-customizer input[type="time"],
+body.wp-customizer select,
+body.wp-customizer textarea {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+    border-radius: var(--oa-admin-radius-small);
+}
+
+body.wp-customizer input[type="text"]:focus,
+body.wp-customizer input[type="password"]:focus,
+body.wp-customizer input[type="email"]:focus,
+body.wp-customizer input[type="number"]:focus,
+body.wp-customizer input[type="search"]:focus,
+body.wp-customizer input[type="tel"]:focus,
+body.wp-customizer input[type="url"]:focus,
+body.wp-customizer select:focus,
+body.wp-customizer textarea:focus {
+    border-color: var(--oa-admin-accent);
+    box-shadow: 0 0 0 1px var(--oa-admin-accent);
+}
+
+body.wp-customizer input::placeholder,
+body.wp-customizer textarea::placeholder {
+    color: var(--oa-admin-text-dim);
+}
+
+body.wp-customizer select option,
+body.wp-customizer select optgroup {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+}
+
+body.wp-customizer input[type="checkbox"],
+body.wp-customizer input[type="radio"] {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+body.wp-customizer input[type="checkbox"]:checked,
+body.wp-customizer input[type="radio"]:checked {
+    background: var(--oa-admin-accent);
+    border-color: var(--oa-admin-accent);
+}
+
+body.wp-customizer input[type="checkbox"]:checked::before {
+    filter: var(--oa-admin-check-filter);
+}
+
+body.wp-customizer input[type="radio"]:checked::before {
+    background-color: var(--oa-admin-on-accent);
+}
+
+body.wp-customizer .customize-control .dropdown-arrow,
+body.wp-customizer .customize-control .dropdown-status {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+}
+
+body.wp-customizer .customize-control .dropdown-arrow:after {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer .customize-control .attachment-media-view .placeholder,
+body.wp-customizer .customize-control .attachment-media-view .button-add-media,
+body.wp-customizer .customize-control-header .placeholder {
+    color: var(--oa-admin-text-soft);
+    border-color: var(--oa-admin-border-strong);
+}
+
+body.wp-customizer .customize-control .attachment-media-view .button-add-media {
+    background: var(--oa-admin-surface-soft);
+}
+
+body.wp-customizer .customize-control .attachment-media-view .button-add-media:hover,
+body.wp-customizer .customize-control .attachment-media-view .button-add-media:focus {
+    background: var(--oa-admin-surface);
+}
+
+body.wp-customizer .customize-control-header .inner {
+    color: var(--oa-admin-text-soft);
+}
+
+body.wp-customizer .date-time-fields .date-input,
+body.wp-customizer #customize-control-changeset_scheduled_date,
+body.wp-customizer #customize-control-changeset_status .customize-inside-control-row,
+body.wp-customizer #customize-control-changeset_preview_link input {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .preview-link-wrapper .customize-copy-preview-link.preview-control-element.button,
+body.wp-customizer .customize-copy-preview-link:before,
+body.wp-customizer .customize-copy-preview-link:after {
+    background: var(--oa-admin-surface) !important;
+}
+
+/*
+COLOUR PICKER
+-- Iris paints its own chrome from hardcoded light values.
+---------------------------------------------------------- */
+
+body.wp-customizer .wp-picker-container .wp-color-result.button,
+body.wp-customizer .wp-picker-input-wrap .wp-picker-clear,
+body.wp-customizer .wp-picker-container .iris-picker {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+body.wp-customizer .wp-picker-container .iris-picker .iris-square-inner,
+body.wp-customizer .wp-picker-container .iris-picker .iris-slider {
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .wp-picker-container .wp-color-result-text {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-left-color: var(--oa-admin-border-strong);
+}
+
+/*
+BUTTONS
+---------------------------------------------------------- */
+
+body.wp-customizer.wp-core-ui .button,
+body.wp-customizer.wp-core-ui .button-secondary {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+    border-radius: var(--oa-admin-radius-small);
+    font-weight: 600;
+}
+
+body.wp-customizer.wp-core-ui .button:hover,
+body.wp-customizer.wp-core-ui .button-secondary:hover {
+    color: var(--oa-admin-accent-dark);
+    background: var(--oa-admin-accent-soft);
+    border-color: var(--oa-admin-accent);
+}
+
+body.wp-customizer.wp-core-ui .button-primary {
+    color: var(--oa-admin-on-accent);
+    background: var(--oa-admin-accent);
+    border-color: var(--oa-admin-accent);
+    border-radius: var(--oa-admin-radius-small);
+    font-weight: 600;
+}
+
+body.wp-customizer.wp-core-ui .button-primary:hover,
+body.wp-customizer.wp-core-ui .button-primary:focus {
+    color: var(--oa-admin-on-accent);
+    background: var(--oa-admin-accent-dark);
+    border-color: var(--oa-admin-accent-dark);
+}
+
+body.wp-customizer.wp-core-ui .button-link,
+body.wp-customizer.wp-core-ui .button-link:hover {
+    color: var(--oa-admin-accent-dark);
+    background: transparent;
+    border-color: transparent;
+}
+
+body.wp-customizer.wp-core-ui .button.disabled,
+body.wp-customizer.wp-core-ui .button:disabled,
+body.wp-customizer.wp-core-ui .button-primary.disabled,
+body.wp-customizer.wp-core-ui .button-primary:disabled {
+    color: var(--oa-admin-text-dim) !important;
+    background: var(--oa-admin-surface-soft) !important;
+    border-color: var(--oa-admin-border) !important;
+}
+
+body.wp-customizer a {
+    color: var(--oa-admin-accent-dark);
+}
+
+body.wp-customizer a:hover,
+body.wp-customizer a:active {
+    color: var(--oa-admin-accent);
+}
+
+/*
+LOADING INDICATOR
+---------------------------------------------------------- */
+
+body.wp-customizer .spinner {
+    width: 20px;
+    height: 20px;
+    background: none;
+    border: 2px solid var(--oa-admin-border-strong);
+    border-top-color: var(--oa-admin-accent);
+    border-radius: 50%;
+    opacity: 1;
+    box-sizing: border-box;
+}
+
+body.wp-customizer .spinner.is-active {
+    animation: oa-admin-spinner 0.7s linear infinite;
+}
+
+/*
+NOTIFICATIONS
+---------------------------------------------------------- */
+
+body.wp-customizer #customize-controls #customize-notifications-area,
+body.wp-customizer #customize-controls .panel-meta > .customize-control-notifications-container,
+body.wp-customizer #customize-controls .customize-section-title > .customize-control-notifications-container {
+    border-bottom-color: var(--oa-admin-border);
+}
+
+/* The left edge carries the notice's status colour, so only the other three
+   sides are restated. */
+
+body.wp-customizer #customize-controls .notice,
+body.wp-customizer #customize-controls li.notice {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-top-color: var(--oa-admin-border);
+    border-right-color: var(--oa-admin-border);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #customize-controls #customize-notifications-area .notice.notification-overlay .notification-message,
+body.wp-customizer #customize-controls #customize-notifications-area .notice.notification-overlay.notification-changeset-locked .customize-changeset-locked-message {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+body.wp-customizer #customize-controls .notice-dismiss:before {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+WIDGETS
+---------------------------------------------------------- */
+
+body.wp-customizer #available-widgets,
+body.wp-customizer #available-widgets-filter {
+    background: var(--oa-admin-canvas);
+    border-right-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #available-widgets-list {
+    border-top-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #available-widgets .widget-tpl {
+    background: var(--oa-admin-surface);
+    border-bottom-color: var(--oa-admin-border);
+    border-left-color: var(--oa-admin-surface);
+}
+
+body.wp-customizer #available-widgets .widget-tpl:hover,
+body.wp-customizer #available-widgets .widget-tpl.selected {
+    background: var(--oa-admin-surface-hover);
+    border-bottom-color: var(--oa-admin-border-strong);
+}
+
+body.wp-customizer #available-widgets .widget-title h3 {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer #available-widgets .widget .widget-description {
+    color: var(--oa-admin-text-dim);
+}
+
+body.wp-customizer #available-widgets .widget-title:before {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer .customize-control-widget_form .widget-top,
+body.wp-customizer .customize-control-widget_form .widget-inside {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .customize-control-widget_form.wide-widget-control.expanding .widget-top,
+body.wp-customizer .customize-control-widget_form.wide-widget-control.expanded:not(.collapsing) .widget-top {
+    background-color: var(--oa-admin-surface-hover);
+}
+
+body.wp-customizer .customize-control .widget-top:hover .widget-action,
+body.wp-customizer .customize-control .widget-action:focus {
+    color: var(--oa-admin-accent);
+}
+
+body.wp-customizer #customize-theme-controls .widget-reorder-nav {
+    background-color: var(--oa-admin-surface-soft);
+}
+
+body.wp-customizer .widget-reorder-nav span,
+body.wp-customizer .menu-item-reorder-nav button {
+    color: var(--oa-admin-text-dim);
+}
+
+body.wp-customizer .widget-reorder-nav span:hover,
+body.wp-customizer .widget-reorder-nav span:focus,
+body.wp-customizer .menu-item-reorder-nav button:hover,
+body.wp-customizer .menu-item-reorder-nav button:focus {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+body.wp-customizer #customize-theme-controls .move-widget-area {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+body.wp-customizer #customize-theme-controls .widget-area-select li {
+    color: var(--oa-admin-text-soft);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #customize-theme-controls .widget-area-select .selected {
+    color: var(--oa-admin-on-accent);
+    background: var(--oa-admin-accent);
+}
+
+body.wp-customizer #customize-theme-controls .first-widget .move-widget-up,
+body.wp-customizer #customize-theme-controls .last-widget .move-widget-down,
+body.wp-customizer .move-up-disabled .menus-move-up,
+body.wp-customizer .move-down-disabled .menus-move-down,
+body.wp-customizer .move-right-disabled .menus-move-right,
+body.wp-customizer .move-left-disabled .menus-move-left {
+    color: var(--oa-admin-text-dim);
+    background: var(--oa-admin-surface);
+}
+
+body.wp-customizer.adding-widget .add-new-widget,
+body.wp-customizer.adding-widget .add-new-widget:hover,
+body.wp-customizer.adding-menu-items .add-new-menu-item,
+body.wp-customizer.adding-menu-items .add-new-menu-item:hover,
+body.wp-customizer .add-menu-toggle.open,
+body.wp-customizer .add-menu-toggle.open:hover {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-border-strong);
+}
+
+/*
+MENUS
+---------------------------------------------------------- */
+
+body.wp-customizer #available-menu-items {
+    background: var(--oa-admin-canvas);
+    border-right-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #available-menu-items .accordion-section-title {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #available-menu-items .open .accordion-section-title,
+body.wp-customizer #available-menu-items #available-menu-items-search .accordion-section-title {
+    background: var(--oa-admin-surface-hover);
+}
+
+body.wp-customizer #available-menu-items .accordion-section-title:hover .toggle-indicator:before,
+body.wp-customizer #available-menu-items .button-link:hover .toggle-indicator:before,
+body.wp-customizer #available-menu-items .button-link:focus .toggle-indicator:before,
+body.wp-customizer #available-menu-items .open .accordion-section-title .toggle-indicator:before {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer #available-menu-items .item-tpl {
+    background: var(--oa-admin-surface);
+    border-bottom-color: var(--oa-admin-border);
+    border-left-color: var(--oa-admin-surface);
+}
+
+body.wp-customizer #available-menu-items .item-tpl:hover,
+body.wp-customizer #available-menu-items .item-tpl.selected {
+    background: var(--oa-admin-surface-hover);
+}
+
+body.wp-customizer #available-menu-items .cannot-expand .accordion-section-title .no-items {
+    color: var(--oa-admin-text-soft);
+}
+
+body.wp-customizer #available-menu-items .item-add {
+    color: var(--oa-admin-text-dim);
+}
+
+body.wp-customizer #available-menu-items .menu-item-handle .item-add:focus {
+    color: var(--oa-admin-text);
+}
+
+body.wp-customizer #available-menu-items .menu-item-handle.item-added .item-type,
+body.wp-customizer #available-menu-items .menu-item-handle.item-added .item-title,
+body.wp-customizer #available-menu-items .menu-item-handle.item-added:hover .item-add,
+body.wp-customizer #available-menu-items .menu-item-handle.item-added .item-add:focus {
+    color: var(--oa-admin-text-dim);
+}
+
+body.wp-customizer #available-menu-items .accordion-section-content .new-content-item-wrapper,
+body.wp-customizer .customize-control-dropdown-pages .new-content-item-wrapper {
+    background: var(--oa-admin-surface-soft);
+}
+
+body.wp-customizer .menu-item-bar .menu-item-handle,
+body.wp-customizer .nav-menu-inserted-item-loading .menu-item-handle,
+body.wp-customizer .added-menu-item .menu-item-handle.loading,
+body.wp-customizer .menu-item-reorder-nav {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .menu-item-edit-active .menu-item-handle {
+    border-color: var(--oa-admin-border-strong);
+}
+
+body.wp-customizer .menu-item-settings {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border-strong);
+}
+
+body.wp-customizer .menu-settings .menu-theme-locations,
+body.wp-customizer .control-section-nav_menu .menu-location-settings {
+    border-top-color: var(--oa-admin-border);
+}
+
+body.wp-customizer #customize-controls .theme-location-set,
+body.wp-customizer #customize-controls .control-section .accordion-section-title:focus .menu-in-location,
+body.wp-customizer #customize-controls .control-section .accordion-section-title:hover .menu-in-location {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+SEARCH FIELDS
+---------------------------------------------------------- */
+
+body.wp-customizer #available-menu-items-search .search-icon,
+body.wp-customizer #available-widgets-filter .search-icon,
+body.wp-customizer .themes-filter-bar .search-icon {
+    color: var(--oa-admin-text-dim);
+}
+
+/*
+THEME BROWSER
+---------------------------------------------------------- */
+
+body.wp-customizer .control-panel-themes .customize-themes-full-container,
+body.wp-customizer .wp-full-overlay.in-themes-panel,
+body.wp-customizer .customize-preview-header.themes-filter-bar,
+body.wp-customizer .filter-drawer,
+body.wp-customizer .themes-filter-bar .feature-filter-toggle.open {
+    background: var(--oa-admin-canvas);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .control-panel-themes .customize-themes-section-title {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+    border-left-color: var(--oa-admin-surface);
+}
+
+body.wp-customizer .control-panel-themes .customize-themes-section-title:focus,
+body.wp-customizer .control-panel-themes .customize-themes-section-title:hover {
+    background: var(--oa-admin-surface-hover);
+}
+
+body.wp-customizer .customize-themes-section-title:not(.selected):after {
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border-strong);
+}
+
+body.wp-customizer .control-panel-themes #accordion-section-installed_themes,
+body.wp-customizer #customize-theme-controls .customize-themes-panel h3.customize-section-title:first-child {
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .control-panel-themes .filter-themes-count .themes-displayed {
+    color: var(--oa-admin-text-soft);
+}
+
+body.wp-customizer .customize-control-theme .theme,
+body.wp-customizer .customize-control-theme .theme .theme-name,
+body.wp-customizer .customize-control-theme .theme .theme-actions {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .theme-overlay .theme-wrap,
+body.wp-customizer .theme-overlay .theme-about {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+body.wp-customizer .theme-overlay .theme-actions,
+body.wp-customizer .theme-header {
+    background: var(--oa-admin-canvas);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .theme-overlay .theme-header button,
+body.wp-customizer .theme-overlay .theme-header .close:before {
+    color: var(--oa-admin-text-soft);
+}
+
+body.wp-customizer .theme-overlay .theme-header .close:focus,
+body.wp-customizer .theme-overlay .theme-header .close:hover,
+body.wp-customizer .theme-overlay .theme-header .right:focus,
+body.wp-customizer .theme-overlay .theme-header .right:hover,
+body.wp-customizer .theme-overlay .theme-header .left:focus,
+body.wp-customizer .theme-overlay .theme-header .left:hover {
+    color: var(--oa-admin-accent);
+    background: var(--oa-admin-surface);
+}
+
+body.wp-customizer .theme-overlay .theme-header button.disabled,
+body.wp-customizer .theme-overlay .theme-header button.disabled:hover,
+body.wp-customizer .theme-overlay .theme-header button.disabled:focus {
+    color: var(--oa-admin-text-dim);
+}
+
+body.wp-customizer .showing-themes .control-panel-themes .customize-themes-mobile-back {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .showing-themes .control-panel-themes .customize-themes-mobile-back:hover,
+body.wp-customizer .showing-themes .control-panel-themes .customize-themes-mobile-back:focus {
+    background: var(--oa-admin-surface-hover);
+}
+
+/*
+DARK MODE ONLY
+-- Two places core paints with an image or a fixed light value that no token
+-- can reach, so they are corrected only where the canvas is dark.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-control-header .uploaded .header-view .close {
+    color: var(--oa-admin-text);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-customizer .theme-screenshot,
+html[data-oa-admin-theme="dark"] body.wp-customizer .customize-control-theme .theme-screenshot {
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-sidebar ::-webkit-scrollbar {
+    width: 12px;
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-customizer .wp-full-overlay-sidebar ::-webkit-scrollbar-thumb {
+    background: var(--oa-admin-border-strong);
+    border: 3px solid var(--oa-admin-canvas);
+    border-radius: 8px;
+}
+
+/*
+BLOCK WIDGETS
+-- A classic theme running block-based widgets renders the block editor inside
+-- the Widgets panel. Its shell is painted from fixed values that the shared
+-- design-system token overrides in base.css never reach, so the panel, the
+-- inserter and the shortcut modal are restated here.
+---------------------------------------------------------- */
+
+body.wp-customizer #customize-theme-controls .customize-pane-child.customize-widgets__sidebar-section,
+body.wp-customizer #customize-theme-controls .customize-pane-child.accordion-section-content.customize-widgets-layout__inspector {
+    color: var(--oa-admin-text);
+    background-color: var(--oa-admin-surface);
+}
+
+body.wp-customizer .customize-widgets-header {
+    background: var(--oa-admin-canvas);
+    border-bottom-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .customize-widgets-header-toolbar .customize-widgets-header-toolbar__inserter-toggle.components-button.has-icon {
+    color: var(--oa-admin-on-accent);
+    background: var(--oa-admin-accent);
+}
+
+body.wp-customizer .customize-widgets-header-toolbar .customize-widgets-header-toolbar__inserter-toggle.components-button.has-icon.is-pressed {
+    color: var(--oa-admin-on-accent);
+    background: var(--oa-admin-accent-dark);
+}
+
+body.wp-customizer .customize-widgets-layout__inserter-panel,
+body.wp-customizer .block-editor-inserter__quick-inserter .block-editor-inserter__panel-content {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+body.wp-customizer .customize-widgets-layout__inserter-panel-header,
+body.wp-customizer .customize-widgets-keyboard-shortcut-help-modal__shortcut,
+body.wp-customizer .customize-widgets-keyboard-shortcut-help-modal__shortcut:last-child {
+    border-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .block-editor-writing-flow,
+body.wp-customizer .block-editor-block-list__layout,
+body.wp-customizer .components-panel,
+body.wp-customizer .components-panel__body,
+body.wp-customizer .components-popover__content,
+body.wp-customizer .components-modal__frame {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+}
+
+body.wp-customizer .components-panel__body + .components-panel__body,
+body.wp-customizer .components-panel__body.is-opened + .components-panel__body {
+    border-top-color: var(--oa-admin-border);
+}
+
+body.wp-customizer .block-editor-block-types-list__item,
+body.wp-customizer .components-panel__body-toggle.components-button {
+    color: var(--oa-admin-text);
+}
