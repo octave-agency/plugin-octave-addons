@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.16.4
+Stable tag:        3.17.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -95,6 +95,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.17.1 =
+* Moved action confirmation messages to the top right so they no longer cover the sticky save button, with extra clearance below the mobile admin bar.
+
+= 3.17.0 =
+* Replaced the separate post-type and legacy Breakdance Dynamic Data categories with one Octave Fields category and an All Post Types selector that filters post-type-scoped fields without merging shared keys.
 
 = 3.16.1 =
 * Applied the Modern WordPress Admin refresh and its dark mode to the Customizer, which builds its own page and so never received the stylesheet.

@@ -1034,8 +1034,8 @@ ACTION TOASTS
 
 .oa-toasts {
     position: fixed;
+    top: 56px;
     right: 24px;
-    bottom: 24px;
     z-index: 100000;
     display: flex;
     flex-direction: column;
@@ -1058,7 +1058,7 @@ ACTION TOASTS
     font-weight: 600;
     line-height: 1.5;
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(-8px);
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
@@ -1073,6 +1073,16 @@ ACTION TOASTS
 
 .oa-toast.is-error {
     border-left-color: #ff6b6b;
+}
+
+@media screen and (max-width: 782px) {
+
+    .oa-toasts {
+        top: 70px;
+        right: 12px;
+        max-width: calc(100vw - 24px);
+    }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -125,6 +125,12 @@ class Octave_Addons_Breakdance_String_Field extends \Breakdance\DynamicData\Stri
 
 	}
 
+	public function subcategory() {
+
+		return $this->field_data['dynamic_subcategory'] ?? '';
+
+	}
+
 	public function proOnly() {
 
 		return false;
@@ -197,6 +203,12 @@ class Octave_Addons_Breakdance_Image_Field extends \Breakdance\DynamicData\Image
 
 	}
 
+	public function subcategory() {
+
+		return $this->field_data['dynamic_subcategory'] ?? '';
+
+	}
+
 	public function proOnly() {
 
 		return false;
@@ -250,6 +262,12 @@ class Octave_Addons_Breakdance_Gallery_Field extends \Breakdance\DynamicData\Gal
 	public function category() {
 
 		return $this->field_data['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
+
+	}
+
+	public function subcategory() {
+
+		return $this->field_data['dynamic_subcategory'] ?? '';
 
 	}
 
@@ -322,6 +340,12 @@ class Octave_Addons_Breakdance_Repeater_Field extends \Breakdance\DynamicData\Re
 	public function category() {
 
 		return $this->field_data['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
+
+	}
+
+	public function subcategory() {
+
+		return $this->field_data['dynamic_subcategory'] ?? '';
 
 	}
 

@@ -1,0 +1,29 @@
+/*
+DYNAMIC DATA FIELDS
+-- Styles the Octave Fields post type selector in the Breakdance picker.
+---------------------------------------------------------- */
+
+.octave-dynamic-data-post-type-filter {
+    display: block;
+    margin: 0 0 12px;
+}
+
+.octave-dynamic-data-post-type-filter select {
+    background-color: var(--white);
+    border: 1px solid var(--gray300);
+    border-radius: 4px;
+    color: var(--black);
+    cursor: pointer;
+    font: inherit;
+    min-height: 32px;
+    padding: 5px 9px;
+    width: 100%;
+}
+
+.dynamic-data-fields-subcategory[hidden] {
+    display: none;
+}
+
+.octave-dynamic-data-post-type-filtered .dynamic-data-fields-subcategory__title {
+    display: none;
+}

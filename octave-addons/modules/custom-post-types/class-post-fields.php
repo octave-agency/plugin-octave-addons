@@ -21,6 +21,7 @@ class Octave_Addons_Custom_Post_Fields {
 	protected array $post_type_labels;
 	protected array $structured_post_types;
 	protected array $fields_by_meta_key;
+	protected array $dynamic_post_type_options;
 
 	/*
 	CONSTRUCTOR
@@ -29,10 +30,11 @@ class Octave_Addons_Custom_Post_Fields {
 
 	public function __construct( array $fields, array $post_type_labels, array $post_types = [] ) {
 
-		$this->fields                = $fields;
-		$this->post_type_labels      = $post_type_labels;
-		$this->structured_post_types = [];
-		$this->fields_by_meta_key    = [];
+		$this->fields                    = $fields;
+		$this->post_type_labels          = $post_type_labels;
+		$this->structured_post_types     = [];
+		$this->fields_by_meta_key        = [];
+		$this->dynamic_post_type_options = [];
 
 		foreach ( $fields as $field ) {
 
@@ -86,6 +88,7 @@ class Octave_Addons_Custom_Post_Fields {
 		add_action( 'current_screen', [ $this, 'add_structured_content_template' ] );
 		add_action( 'init', [ $this, 'register_structured_content_block' ], 15 );
 		add_action( 'init', [ $this, 'register_breakdance_fields' ], 20 );
+		add_action( 'breakdance_builder_head', [ $this, 'print_breakdance_builder_assets' ] );
 
 	}
 
@@ -1747,7 +1750,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 	/*
 	REGISTER BREAKDANCE FIELDS
-	-- Creates typed Dynamic Data entries grouped under Octave.
+	-- Creates typed Dynamic Data entries in one post-type-filterable category.
 	---------------------------------------------------------- */
 
 	public function register_breakdance_fields(): void {
@@ -1775,30 +1778,32 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
-		$controller         = \Breakdance\DynamicData\DynamicDataController::getInstance();
-		$legacy_category    = __( 'Octave · Legacy', 'octave-addons' );
-		$dynamic_categories = [];
+		$controller       = \Breakdance\DynamicData\DynamicDataController::getInstance();
+		$dynamic_category = __( 'Octave Fields', 'octave-addons' );
+		$post_types       = [];
 
 		foreach ( $enabled_fields as $field ) {
 
 			foreach ( $field['post_types'] as $post_type ) {
 
-				$label = $this->post_type_labels[ $post_type ] ?? $post_type;
-				$dynamic_categories[ $post_type ] = sprintf(
-					/* translators: %s: post type name. */
-					__( 'Octave · %s Fields', 'octave-addons' ),
-					$label
-				);
+				$post_types[ $post_type ] = $this->post_type_labels[ $post_type ] ?? $post_type;
 
 			}
 
 		}
 
-		$categories   = array_values( $dynamic_categories );
-		$categories[] = $legacy_category;
-		$categories   = array_values( array_diff( $categories, $controller->order ) );
+		asort( $post_types, SORT_NATURAL | SORT_FLAG_CASE );
 
-		if ( ! empty( $categories ) ) {
+		$label_counts = array_count_values( array_values( $post_types ) );
+
+		foreach ( $post_types as $post_type => $label ) {
+
+			$subcategory = 1 < $label_counts[ $label ] ? sprintf( '%s (%s)', $label, $post_type ) : $label;
+			$this->dynamic_post_type_options[ $post_type ] = $subcategory;
+
+		}
+
+		if ( ! in_array( $dynamic_category, $controller->order, true ) ) {
 
 			$post_position = array_search( __( 'Post', 'breakdance' ), $controller->order, true );
 
@@ -1811,22 +1816,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 			$position = false === $post_position ? 0 : (int) $post_position + 1;
 
-			array_splice( $controller->order, $position, 0, $categories );
-
-		}
-
-		$legacy_names = [];
-
-		foreach ( $enabled_fields as $field ) {
-
-			if ( ! isset( $legacy_names[ $field['name'] ] ) ) {
-
-				$legacy_field = $field;
-				$legacy_field['dynamic_category'] = $legacy_category;
-				$this->register_breakdance_field( $legacy_field );
-				$legacy_names[ $field['name'] ] = true;
-
-			}
+			array_splice( $controller->order, $position, 0, [ $dynamic_category ] );
 
 		}
 
@@ -1843,10 +1833,11 @@ class Octave_Addons_Custom_Post_Fields {
 
 			foreach ( $field['post_types'] as $post_type ) {
 
-				$scoped_field = $field;
-				$scoped_field['post_types'] = [ $post_type ];
-				$scoped_field['dynamic_post_type'] = $post_type;
-				$scoped_field['dynamic_category'] = $dynamic_categories[ $post_type ];
+				$scoped_field                        = $field;
+				$scoped_field['post_types']          = [ $post_type ];
+				$scoped_field['dynamic_post_type']   = $post_type;
+				$scoped_field['dynamic_category']    = $dynamic_category;
+				$scoped_field['dynamic_subcategory'] = $this->dynamic_post_type_options[ $post_type ];
 				$this->register_breakdance_field( $scoped_field );
 
 			}
@@ -1857,7 +1848,7 @@ class Octave_Addons_Custom_Post_Fields {
 
 	/*
 	REGISTER BREAKDANCE FIELD
-	-- Registers one legacy or post-type-scoped field and its children.
+	-- Registers one post-type-scoped field and its children.
 	---------------------------------------------------------- */
 
 	protected function register_breakdance_field( array $field ): void {
@@ -1909,6 +1900,7 @@ class Octave_Addons_Custom_Post_Fields {
 			$sub_field['dynamic_name']        = $parent['name'] . '_' . $sub_field['name'];
 			$sub_field['dynamic_post_type']   = $parent['dynamic_post_type'] ?? '';
 			$sub_field['dynamic_category']    = $parent['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
+			$sub_field['dynamic_subcategory'] = $parent['dynamic_subcategory'] ?? '';
 			$sub_field['dynamic_parent_slug'] = 'octave_post_repeater_' . $parent['name'] . ( empty( $parent['dynamic_post_type'] ) ? '' : '_' . $parent['dynamic_post_type'] );
 			$sub_field['label']               = $parent['label'] . ' · ' . $sub_field['label'];
 
@@ -1927,6 +1919,61 @@ class Octave_Addons_Custom_Post_Fields {
 			}
 
 		}
+
+	}
+
+	/*
+	PRINT BREAKDANCE BUILDER ASSETS
+	-- Adds the post type selector to the unified Octave Dynamic Data category.
+	---------------------------------------------------------- */
+
+	public function print_breakdance_builder_assets(): void {
+
+		if ( empty( $this->dynamic_post_type_options ) ) {
+
+			return;
+
+		}
+
+		$handle = 'octave-dynamic-data-fields';
+
+		wp_enqueue_style(
+			$handle,
+			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/dynamic-data-fields.css',
+			[],
+			OCTAVE_ADDONS_VERSION
+		);
+		wp_enqueue_script(
+			$handle,
+			OCTAVE_ADDONS_URL . 'modules/custom-post-types/assets/dynamic-data-fields.js',
+			[],
+			OCTAVE_ADDONS_VERSION,
+			false
+		);
+		wp_localize_script(
+			$handle,
+			'octaveDynamicDataFields',
+			[
+				'category'     => __( 'Octave Fields', 'octave-addons' ),
+				'allPostTypes' => __( 'All Post Types', 'octave-addons' ),
+				'postTypes'    => array_map(
+					static function ( string $post_type, string $subcategory ): array {
+
+						return [
+							'value'       => $post_type,
+							'label'       => $subcategory,
+							'subcategory' => $subcategory,
+						];
+
+					},
+					array_keys( $this->dynamic_post_type_options ),
+					array_values( $this->dynamic_post_type_options )
+				),
+			]
+		);
+
+		wp_print_styles( $handle );
+		wp_print_scripts( $handle );
 
 	}
 
