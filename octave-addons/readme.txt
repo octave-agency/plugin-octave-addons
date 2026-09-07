@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.17.1
+Stable tag:        3.17.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -95,6 +95,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.17.2 =
+* Flattened Octave Dynamic Data into one field per unique meta key, using the first definition's title and unsuffixed field slug while retaining CPT assignments only for the Breakdance-style post type filter.
+* Shortened post editor meta-box titles from “Octave [Post Type] Post Fields” to “Octave [Post Type] Fields”.
 
 = 3.17.1 =
 * Moved action confirmation messages to the top right so they no longer cover the sticky save button, with extra clearance below the mobile admin bar.

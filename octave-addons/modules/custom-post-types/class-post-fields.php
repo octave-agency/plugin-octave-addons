@@ -22,6 +22,7 @@ class Octave_Addons_Custom_Post_Fields {
 	protected array $structured_post_types;
 	protected array $fields_by_meta_key;
 	protected array $dynamic_post_type_options;
+	protected array $dynamic_fields;
 
 	/*
 	CONSTRUCTOR
@@ -35,6 +36,7 @@ class Octave_Addons_Custom_Post_Fields {
 		$this->structured_post_types     = [];
 		$this->fields_by_meta_key        = [];
 		$this->dynamic_post_type_options = [];
+		$this->dynamic_fields            = [];
 
 		foreach ( $fields as $field ) {
 
@@ -558,7 +560,7 @@ class Octave_Addons_Custom_Post_Fields {
 				'octave-custom-post-fields',
 				sprintf(
 					/* translators: %s: post type name. */
-					__( 'Octave %s Post Fields', 'octave-addons' ),
+					__( 'Octave %s Fields', 'octave-addons' ),
 					$post_type_name
 				),
 				[ $this, 'render_meta_box' ],
@@ -1780,9 +1782,26 @@ class Octave_Addons_Custom_Post_Fields {
 
 		$controller       = \Breakdance\DynamicData\DynamicDataController::getInstance();
 		$dynamic_category = __( 'Octave Fields', 'octave-addons' );
+		$fields_by_key    = [];
 		$post_types       = [];
 
 		foreach ( $enabled_fields as $field ) {
+
+			$key = (string) $field['meta_key'];
+
+			if ( ! isset( $fields_by_key[ $key ] ) ) {
+
+				$fields_by_key[ $key ] = $field;
+
+			} else {
+
+				$fields_by_key[ $key ]['post_types'] = array_values(
+					array_unique(
+						array_merge( $fields_by_key[ $key ]['post_types'], $field['post_types'] )
+					)
+				);
+
+			}
 
 			foreach ( $field['post_types'] as $post_type ) {
 
@@ -1792,14 +1811,16 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
+		$enabled_fields = array_values( $fields_by_key );
+
 		asort( $post_types, SORT_NATURAL | SORT_FLAG_CASE );
 
 		$label_counts = array_count_values( array_values( $post_types ) );
 
 		foreach ( $post_types as $post_type => $label ) {
 
-			$subcategory = 1 < $label_counts[ $label ] ? sprintf( '%s (%s)', $label, $post_type ) : $label;
-			$this->dynamic_post_type_options[ $post_type ] = $subcategory;
+			$option_label = 1 < $label_counts[ $label ] ? sprintf( '%s (%s)', $label, $post_type ) : $label;
+			$this->dynamic_post_type_options[ $post_type ] = $option_label;
 
 		}
 
@@ -1831,24 +1852,62 @@ class Octave_Addons_Custom_Post_Fields {
 
 		foreach ( $enabled_fields as $field ) {
 
-			foreach ( $field['post_types'] as $post_type ) {
+			$field['dynamic_category'] = $dynamic_category;
 
-				$scoped_field                        = $field;
-				$scoped_field['post_types']          = [ $post_type ];
-				$scoped_field['dynamic_post_type']   = $post_type;
-				$scoped_field['dynamic_category']    = $dynamic_category;
-				$scoped_field['dynamic_subcategory'] = $this->dynamic_post_type_options[ $post_type ];
-				$this->register_breakdance_field( $scoped_field );
+			$this->dynamic_fields = array_merge(
+				$this->dynamic_fields,
+				$this->dynamic_field_entries( $field )
+			);
 
-			}
+			$this->register_breakdance_field( $field );
 
 		}
 
 	}
 
 	/*
+	DYNAMIC FIELD ENTRIES
+	-- Describes the exact fields registered for one meta key so the builder can
+	-- filter the flat field list without creating post-type-specific copies.
+	---------------------------------------------------------- */
+
+	protected function dynamic_field_entries( array $field ): array {
+
+		$entries  = [];
+		$meta_key = (string) $field['meta_key'];
+		$type     = (string) $field['type'];
+
+		if ( 'group' !== $type ) {
+
+			$entries[] = [
+				'key'       => 'field:' . $meta_key,
+				'label'     => (string) $field['label'],
+				'postTypes' => array_values( $field['post_types'] ),
+			];
+
+		}
+
+		if ( in_array( $type, [ 'group', 'repeater' ], true ) ) {
+
+			foreach ( $field['sub_fields'] as $sub_field ) {
+
+				$entries[] = [
+					'key'       => 'child:' . $meta_key . ':' . $sub_field['name'],
+					'label'     => (string) ( $field['label'] . ' · ' . $sub_field['label'] ),
+					'postTypes' => array_values( $field['post_types'] ),
+				];
+
+			}
+
+		}
+
+		return $entries;
+
+	}
+
+	/*
 	REGISTER BREAKDANCE FIELD
-	-- Registers one post-type-scoped field and its children.
+	-- Registers one field per Octave meta key and its children.
 	---------------------------------------------------------- */
 
 	protected function register_breakdance_field( array $field ): void {
@@ -1898,10 +1957,8 @@ class Octave_Addons_Custom_Post_Fields {
 			$sub_field['parent_type']         = $parent['type'];
 			$sub_field['parent_name']         = $parent['name'];
 			$sub_field['dynamic_name']        = $parent['name'] . '_' . $sub_field['name'];
-			$sub_field['dynamic_post_type']   = $parent['dynamic_post_type'] ?? '';
 			$sub_field['dynamic_category']    = $parent['dynamic_category'] ?? __( 'Octave', 'octave-addons' );
-			$sub_field['dynamic_subcategory'] = $parent['dynamic_subcategory'] ?? '';
-			$sub_field['dynamic_parent_slug'] = 'octave_post_repeater_' . $parent['name'] . ( empty( $parent['dynamic_post_type'] ) ? '' : '_' . $parent['dynamic_post_type'] );
+			$sub_field['dynamic_parent_slug'] = 'octave_post_repeater_' . $parent['name'];
 			$sub_field['label']               = $parent['label'] . ' · ' . $sub_field['label'];
 
 			if ( 'image' === $sub_field['type'] && class_exists( 'Octave_Addons_Breakdance_Image_Field', false ) ) {
@@ -1935,7 +1992,17 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
-		$handle = 'octave-dynamic-data-fields';
+		$handle  = 'octave-dynamic-data-fields';
+		$options = [];
+
+		foreach ( $this->dynamic_post_type_options as $post_type => $option_label ) {
+
+			$options[] = [
+				'value' => $post_type,
+				'label' => $option_label,
+			];
+
+		}
 
 		wp_enqueue_style(
 			$handle,
@@ -1956,19 +2023,8 @@ class Octave_Addons_Custom_Post_Fields {
 			[
 				'category'     => __( 'Octave Fields', 'octave-addons' ),
 				'allPostTypes' => __( 'All Post Types', 'octave-addons' ),
-				'postTypes'    => array_map(
-					static function ( string $post_type, string $subcategory ): array {
-
-						return [
-							'value'       => $post_type,
-							'label'       => $subcategory,
-							'subcategory' => $subcategory,
-						];
-
-					},
-					array_keys( $this->dynamic_post_type_options ),
-					array_values( $this->dynamic_post_type_options )
-				),
+				'postTypes'    => $options,
+				'fields'       => $this->dynamic_fields,
 			]
 		);
 

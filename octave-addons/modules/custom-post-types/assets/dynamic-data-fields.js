@@ -1,6 +1,6 @@
 /*
 DYNAMIC DATA FIELDS
--- Filters the unified Octave Fields category by assigned post type.
+-- Filters the flat Octave Fields list by assigned post type.
 ---------------------------------------------------------- */
 
 ( function () {
@@ -11,34 +11,73 @@ DYNAMIC DATA FIELDS
     let selectedPostType = '';
     let refreshScheduled = false;
 
-    if ( ! config || ! Array.isArray( config.postTypes ) ) {
+    if ( ! config || ! Array.isArray( config.postTypes ) || ! Array.isArray( config.fields ) ) {
 
         return;
 
     }
 
     /*
+    FIELD LABEL
+    -- Reads only the button title; Octave fields are not Pro-only and therefore
+    -- carry no badge text that could alter the registered label.
+    ---------------------------------------------------------- */
+
+    function fieldLabel( field ) {
+
+        const title = field.querySelector( '.dynamic-data-fields-field__title' );
+
+        return title ? title.textContent.trim() : '';
+
+    }
+
+    /*
+    MAP RENDERED FIELDS
+    -- Matches Breakdance's rendered order back to the unique Octave meta-key
+    -- entries. Label queues also preserve order when two keys share a title.
+    ---------------------------------------------------------- */
+
+    function mapRenderedFields( category ) {
+
+        const entriesByLabel = new Map();
+
+        config.fields.forEach( entry => {
+
+            const entries = entriesByLabel.get( entry.label ) || [];
+
+            entries.push( entry );
+            entriesByLabel.set( entry.label, entries );
+
+        } );
+
+        category.querySelectorAll( '.dynamic-data-fields-field' ).forEach( field => {
+
+            const entries = entriesByLabel.get( fieldLabel( field ) ) || [];
+            const entry   = entries.shift();
+
+            field.octaveDynamicField = entry || null;
+
+        } );
+
+    }
+
+    /*
     FILTER CATEGORY
-    -- Keeps every scoped copy visible for All Post Types and otherwise shows
-    -- only the subcategory belonging to the selected post type.
+    -- All Post Types leaves the complete unique meta-key list visible. A CPT
+    -- selection hides only keys that are not assigned to that post type.
     ---------------------------------------------------------- */
 
     function filterCategory( category ) {
 
-        const selected = config.postTypes.find( postType => {
+        mapRenderedFields( category );
 
-            return postType.value === selectedPostType;
+        category.querySelectorAll( '.dynamic-data-fields-field' ).forEach( field => {
 
-        } );
+            const entry = field.octaveDynamicField;
+            const show  = ! selectedPostType
+                || ( entry && entry.postTypes.includes( selectedPostType ) );
 
-        category.classList.toggle( 'octave-dynamic-data-post-type-filtered', Boolean( selected ) );
-
-        category.querySelectorAll( '.dynamic-data-fields-subcategory' ).forEach( subcategory => {
-
-            const heading = subcategory.querySelector( '.dynamic-data-fields-subcategory__title' );
-            const matches = ! selected || ( heading && heading.textContent.trim() === selected.subcategory );
-
-            subcategory.hidden = ! matches;
+            field.hidden = ! show;
 
         } );
 
@@ -46,16 +85,21 @@ DYNAMIC DATA FIELDS
 
     /*
     CREATE FILTER
-    -- Inserts one native select into each rendered Octave Fields category.
+    -- Builds a Breakdance-style dropdown above the single Octave field grid.
     ---------------------------------------------------------- */
 
     function createFilter( category ) {
 
         const wrapper = document.createElement( 'label' );
         const select  = document.createElement( 'select' );
+        const chevron = document.createElement( 'span' );
 
-        wrapper.className = 'octave-dynamic-data-post-type-filter';
+        wrapper.className = 'octave-dynamic-data-post-type-filter breakdance-dropdown-input d-flex';
+        select.className = 'octave-dynamic-data-post-type-filter__select';
         select.setAttribute( 'aria-label', config.allPostTypes );
+
+        chevron.className = 'octave-dynamic-data-post-type-filter__chevron';
+        chevron.setAttribute( 'aria-hidden', 'true' );
 
         select.add( new Option( config.allPostTypes, '' ) );
 
@@ -70,29 +114,23 @@ DYNAMIC DATA FIELDS
 
             selectedPostType = event.currentTarget.value;
 
-            document.querySelectorAll( '.dynamic-data-fields-category' ).forEach( renderedCategory => {
+            document.querySelectorAll( '.octave-dynamic-data-fields-category' ).forEach( renderedCategory => {
 
-                const heading = renderedCategory.querySelector( '.dynamic-data-fields-category__title' );
+                const renderedSelect = renderedCategory.querySelector( '.octave-dynamic-data-post-type-filter__select' );
 
-                if ( heading && heading.textContent.trim() === config.category ) {
+                if ( renderedSelect ) {
 
-                    const renderedSelect = renderedCategory.querySelector( '.octave-dynamic-data-post-type-filter select' );
-
-                    if ( renderedSelect ) {
-
-                        renderedSelect.value = selectedPostType;
-
-                    }
-
-                    filterCategory( renderedCategory );
+                    renderedSelect.value = selectedPostType;
 
                 }
+
+                filterCategory( renderedCategory );
 
             } );
 
         } );
 
-        wrapper.append( select );
+        wrapper.append( select, chevron );
         category.querySelector( '.dynamic-data-fields-column' ).prepend( wrapper );
 
     }
@@ -114,6 +152,8 @@ DYNAMIC DATA FIELDS
                 return;
 
             }
+
+            category.classList.add( 'octave-dynamic-data-fields-category' );
 
             if ( ! category.querySelector( '.octave-dynamic-data-post-type-filter' ) ) {
 
