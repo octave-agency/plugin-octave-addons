@@ -566,6 +566,8 @@ class Octave_Addons_Admin {
 		$icons = [
 			'ai-agents'                  => 'bot',
 			'animations'                 => 'sparkles',
+			'api-catalog'                => 'blocks',
+			'auth-discovery'             => 'lock',
 			'branding'                   => 'palette',
 			'breakdance'                 => 'layout',
 			'breakdance-ajax-filtering'  => 'filter',

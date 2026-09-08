@@ -8,6 +8,9 @@ MODULE: MARKDOWN FOR AGENTS
 -- client sends — which is what content negotiation is for.
 -- An agent asking for a page today has to scrape a builder's nested markup
 -- and spend most of its context window on layout. This hands it the text.
+-- There is nothing to configure. Every choice inside is the one that reads
+-- best to a chatbot, and it is the same on every site, so the module is a
+-- single switch.
 --
 -- Skill: https://isitagentready.com/.well-known/agent-skills/markdown-negotiation/SKILL.md
 -- Reference: https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/
@@ -29,14 +32,11 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 	/** Option holding the cache generation stamp, bumped to invalidate everything at once. */
 	protected const GENERATION_OPTION = 'octave_addons_markdown_generation';
 
-	/** How long one rendered document is kept. */
+	/** How long one converted document is kept. */
 	protected const CACHE_TTL = 12 * HOUR_IN_SECONDS;
 
 	/** Query argument that previews the Markdown variant in a browser. */
 	protected const PREVIEW_ARG = 'format';
-
-	/** @var array Settings for the current request, stored so the hooks can read them. */
-	protected array $settings = [];
 
 	public function get_id(): string {
 
@@ -78,63 +78,20 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	public function get_defaults(): array {
 
-		return [
-			'enabled'           => true,
-			'all_post_types'    => true,
-			'post_types'        => [ 'post', 'page' ],
-			'archives'          => true,
-			'frontmatter'       => true,
-			'jsonld'            => true,
-			'token_headers'     => true,
-			'vary_html'         => true,
-			'alternate_link'    => true,
-			'content_signal'    => true,
-			'signal_ai_train'   => true,
-			'signal_search'     => true,
-			'signal_ai_input'   => true,
-			'cache'             => true,
-			'preview'           => true,
-			'selector'          => '',
-		];
-
-	}
-
-	public function sanitize( $input ): array {
-
-		$clean = $this->get_defaults();
-
-		foreach ( [ 'enabled', 'all_post_types', 'archives', 'frontmatter', 'jsonld', 'token_headers', 'vary_html', 'alternate_link', 'content_signal', 'signal_ai_train', 'signal_search', 'signal_ai_input', 'cache', 'preview' ] as $key ) {
-
-			$clean[ $key ] = ! empty( $input[ $key ] );
-
-		}
-
-		$types = $input['post_types'] ?? [];
-		$types = is_array( $types ) ? array_filter( array_map( 'sanitize_key', $types ) ) : [];
-
-		$clean['post_types'] = array_values( array_unique( $types ) );
-		$clean['selector']   = $this->sanitize_selector( $input['selector'] ?? '' );
-
-		// Saving changes what a cached document would say, so the stored ones go.
-		$this->flush_cache();
-
-		return $clean;
+		return [ 'enabled' => true ];
 
 	}
 
 	/*
-	SANITIZE SELECTOR
-	-- The container setting only ever holds a short CSS selector, so anything
-	-- outside the characters a selector is written in is stripped rather than
-	-- stored and later rejected by the translator.
+	SANITIZE
+	-- Saving can change what a stored document would say, so they go.
 	---------------------------------------------------------------------------- */
 
-	protected function sanitize_selector( $value ): string {
+	public function sanitize( $input ): array {
 
-		$value = is_string( $value ) ? $value : '';
-		$value = (string) preg_replace( '/[^A-Za-z0-9_\-.#, ]/', '', $value );
+		$this->flush_cache();
 
-		return trim( (string) preg_replace( '/\s+/', ' ', $value ) );
+		return parent::sanitize( $input );
 
 	}
 
@@ -147,29 +104,13 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	public function run( array $s ): void {
 
-		$this->settings = $s;
-
 		add_action( 'template_redirect', [ $this, 'negotiate' ], 0 );
+		add_filter( 'wp_headers', [ $this, 'filter_vary_header' ] );
+		add_action( 'wp_head', [ $this, 'print_alternate_link' ], 2 );
 
-		if ( ! empty( $s['vary_html'] ) ) {
+		foreach ( [ 'save_post', 'deleted_post', 'trashed_post', 'untrashed_post', 'switch_theme' ] as $hook ) {
 
-			add_filter( 'wp_headers', [ $this, 'filter_vary_header' ] );
-
-		}
-
-		if ( ! empty( $s['alternate_link'] ) ) {
-
-			add_action( 'wp_head', [ $this, 'print_alternate_link' ], 2 );
-
-		}
-
-		if ( ! empty( $s['cache'] ) ) {
-
-			foreach ( [ 'save_post', 'deleted_post', 'trashed_post', 'untrashed_post', 'switch_theme' ] as $hook ) {
-
-				add_action( $hook, [ $this, 'flush_cache' ] );
-
-			}
+			add_action( $hook, [ $this, 'flush_cache' ] );
 
 		}
 
@@ -191,23 +132,27 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 		}
 
+		// Page caches key on the URL and mostly ignore Vary. Left cacheable, the
+		// Markdown answer gets stored against this address and then handed to
+		// whoever asks for it next, browsers included. Every full-page cache in
+		// common use honours this constant, so the variant is never stored.
+		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+
+			define( 'DONOTCACHEPAGE', true );
+
+		}
+
 		$url = $this->current_url();
 
 		if ( is_404() ) {
 
-			$this->emit( $this->document()->not_found( $url ), 404 );
+			$this->emit( ( new Octave_Addons_Markdown_Document() )->not_found( $url ), 404 );
 
 		}
 
 		if ( is_singular() ) {
 
 			$this->negotiate_singular( $url );
-
-			return;
-
-		}
-
-		if ( empty( $this->settings['archives'] ) ) {
 
 			return;
 
@@ -230,7 +175,7 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 		$post = get_queried_object();
 
-		if ( ! $post instanceof WP_Post || ! $this->post_type_included( $post->post_type ) ) {
+		if ( ! $post instanceof WP_Post || ! is_post_type_viewable( $post->post_type ) ) {
 
 			return;
 
@@ -241,7 +186,7 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 		if ( post_password_required( $post ) ) {
 
-			$this->emit( $this->document()->password_protected( $post, $permalink ) );
+			$this->emit( ( new Octave_Addons_Markdown_Document() )->password_protected( $post, $permalink ) );
 
 		}
 
@@ -274,7 +219,7 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 			}
 
-			$markdown = $this->document()->singular( $post, $html, $permalink );
+			$markdown = ( new Octave_Addons_Markdown_Document() )->singular( $post, $html, $permalink );
 			$tokens   = Octave_Addons_Markdown_Negotiator::estimate_tokens( $html );
 
 			$this->cache_set( $url, $markdown, $tokens );
@@ -311,7 +256,7 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 		}
 
-		$markdown = $this->document()->index( $wp_query, $url );
+		$markdown = ( new Octave_Addons_Markdown_Document() )->index( $wp_query, $url );
 
 		$this->cache_set( $url, $markdown );
 		$this->emit( $markdown );
@@ -385,7 +330,7 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	protected function preview_requested(): bool {
 
-		if ( empty( $this->settings['preview'] ) || ! current_user_can( 'edit_posts' ) ) {
+		if ( ! current_user_can( 'edit_posts' ) ) {
 
 			return false;
 
@@ -399,48 +344,10 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 	}
 
 	/*
-	POST TYPE INCLUDED
-	-- Post types are resolved here rather than at registration time, because
-	-- modules boot early on init and a custom post type may not exist yet.
-	---------------------------------------------------------------------------- */
-
-	protected function post_type_included( string $post_type ): bool {
-
-		if ( ! is_post_type_viewable( $post_type ) ) {
-
-			return false;
-
-		}
-
-		if ( ! empty( $this->settings['all_post_types'] ) ) {
-
-			return true;
-
-		}
-
-		return in_array( $post_type, (array) ( $this->settings['post_types'] ?? [] ), true );
-
-	}
-
-	/*
-	DOCUMENT
-	-- The document builder for the current settings.
-	---------------------------------------------------------------------------- */
-
-	protected function document(): Octave_Addons_Markdown_Document {
-
-		return new Octave_Addons_Markdown_Document( $this->settings );
-
-	}
-
-	/*
 	EMIT
 	-- Sends the Markdown response and stops. The token headers report the
 	-- Markdown and the HTML it was made from, which is the pair an agent uses
 	-- to judge whether asking for Markdown was worth it.
-	-- Caching is left exactly as it would have been for the HTML, so a CDN can
-	-- hold the Markdown variant on the same terms. Only a logged-in reader is
-	-- marked uncacheable, because what they were shown may not be public.
 	---------------------------------------------------------------------------- */
 
 	protected function emit( string $markdown, int $status = 200, int $original_tokens = 0 ): void {
@@ -449,31 +356,19 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 			status_header( $status );
 
-			if ( is_user_logged_in() ) {
-
-				nocache_headers();
-
-			}
-
 			header( 'Content-Type: ' . Octave_Addons_Markdown_Negotiator::CONTENT_TYPE, true );
 			header( 'Vary: ' . $this->vary_value(), true );
 			header( 'X-Content-Type-Options: nosniff', true );
 
-			if ( ! empty( $this->settings['token_headers'] ) ) {
+			// Belt and braces alongside DONOTCACHEPAGE, for the caches that read
+			// headers rather than constants.
+			header( 'Cache-Control: private, no-store, max-age=0', true );
 
-				header( 'x-markdown-tokens: ' . Octave_Addons_Markdown_Negotiator::estimate_tokens( $markdown ), true );
+			header( 'x-markdown-tokens: ' . Octave_Addons_Markdown_Negotiator::estimate_tokens( $markdown ), true );
 
-				if ( $original_tokens > 0 ) {
+			if ( $original_tokens > 0 ) {
 
-					header( 'x-original-tokens: ' . $original_tokens, true );
-
-				}
-
-			}
-
-			if ( ! empty( $this->settings['content_signal'] ) ) {
-
-				header( 'content-signal: ' . $this->content_signal(), true );
+				header( 'x-original-tokens: ' . $original_tokens, true );
 
 			}
 
@@ -481,33 +376,17 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 		echo $markdown; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markdown body, not HTML.
 
+		// exit runs the shutdown hooks, and a plugin on one of them may append
+		// to the page — an object cache printing its stats comment is the usual
+		// culprit. That belongs to the HTML response, not this one, so anything
+		// printed from here on is swallowed rather than sent.
+		ob_start( static function (): string {
+
+			return '';
+
+		} );
+
 		exit;
-
-	}
-
-	/*
-	CONTENT SIGNAL
-	-- States what the site permits this representation to be used for, in the
-	-- format the content-signal header is defined in.
-	---------------------------------------------------------------------------- */
-
-	protected function content_signal(): string {
-
-		$signals = [
-			'ai-train' => ! empty( $this->settings['signal_ai_train'] ),
-			'search'   => ! empty( $this->settings['signal_search'] ),
-			'ai-input' => ! empty( $this->settings['signal_ai_input'] ),
-		];
-
-		$parts = [];
-
-		foreach ( $signals as $name => $allowed ) {
-
-			$parts[] = $name . '=' . ( $allowed ? 'yes' : 'no' );
-
-		}
-
-		return implode( ', ', $parts );
 
 	}
 
@@ -606,17 +485,11 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	public function print_alternate_link(): void {
 
-		if ( ! is_singular() && empty( $this->settings['archives'] ) ) {
-
-			return;
-
-		}
-
 		if ( is_singular() ) {
 
 			$post = get_queried_object();
 
-			if ( ! $post instanceof WP_Post || ! $this->post_type_included( $post->post_type ) ) {
+			if ( ! $post instanceof WP_Post || ! is_post_type_viewable( $post->post_type ) ) {
 
 				return;
 
@@ -653,21 +526,13 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	/*
 	CACHE KEY
-	-- Keyed on the URL, the settings that change what a document says, and a
-	-- generation stamp. Bumping the stamp retires every stored document at
-	-- once without having to find and delete them.
+	-- Keyed on the URL and a generation stamp. Bumping the stamp retires every
+	-- stored document at once without having to find and delete them.
 	---------------------------------------------------------------------------- */
 
 	protected function cache_key( string $url ): string {
 
-		$signature = wp_json_encode( [
-			$this->settings['frontmatter'] ?? true,
-			$this->settings['jsonld'] ?? true,
-			$this->settings['selector'] ?? '',
-			get_option( self::GENERATION_OPTION, 0 ),
-		] );
-
-		return 'oa_md_' . md5( $url . '|' . $signature );
+		return 'oa_md_' . md5( $url . '|' . get_option( self::GENERATION_OPTION, 0 ) );
 
 	}
 
@@ -680,7 +545,7 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	protected function cache_get( string $url ): ?array {
 
-		if ( empty( $this->settings['cache'] ) || is_user_logged_in() ) {
+		if ( is_user_logged_in() ) {
 
 			return null;
 
@@ -709,7 +574,7 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	protected function cache_set( string $url, string $markdown, int $original_tokens = 0 ): void {
 
-		if ( empty( $this->settings['cache'] ) || is_user_logged_in() ) {
+		if ( is_user_logged_in() ) {
 
 			return;
 
@@ -738,297 +603,36 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	/*
 	RENDER SETTINGS
+	-- Nothing to configure: the switch is the setting. This states what the
+	-- module does while it is on, so the panel is not simply blank.
 	---------------------------------------------------------------------------- */
 
 	public function render_settings( array $s ): void {
 
-		$sample = home_url( '/' );
-
-		?>
-
-		<div class="notice notice-info inline oa-inline-notice">
-			<p><strong><?php esc_html_e( 'Check it from a terminal', 'octave-addons' ); ?></strong></p>
-			<p><code>curl -H "Accept: text/markdown" <?= esc_html( $sample ); ?></code></p>
-			<p><?php esc_html_e( 'The same address returns HTML in a browser and Markdown to a client that asks for it. Editors can also add ?format=markdown to any URL while the preview setting below is on.', 'octave-addons' ); ?></p>
-			<p><?php esc_html_e( 'If a full-page cache sits in front of WordPress, check that it varies on the Accept header. A cache that serves its stored HTML without reading Accept answers agents before this module ever runs.', 'octave-addons' ); ?></p>
-		</div>
-
-		<table class="form-table oa-form-table" role="presentation">
-
-			<?php Octave_Addons_Fields::section( [ 'label' => __( 'What responds', 'octave-addons' ), 'first' => true ] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Every public post type', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'all_post_types' ),
-						'name'    => $this->field_name( 'all_post_types' ),
-						'checked' => ! empty( $s['all_post_types'] ),
-						'data'    => [ 'controls-row-hide' => 'oaMdRowPostTypes' ],
-						'help'    => __( 'Answer for anything with a public URL, including post types added later. Turn this off to choose them by hand.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'id'    => 'oaMdRowPostTypes',
-				'label' => __( 'Post types', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					$this->render_post_types( $s );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Archives and search', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'archives' ),
-						'name'    => $this->field_name( 'archives' ),
-						'checked' => ! empty( $s['archives'] ),
-						'help'    => __( 'Answer listings with a link index — one line per entry with its excerpt — rather than a conversion of the card layout.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::section( [ 'label' => __( 'Document', 'octave-addons' ) ] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'YAML frontmatter', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'frontmatter' ),
-						'name'    => $this->field_name( 'frontmatter' ),
-						'checked' => ! empty( $s['frontmatter'] ),
-						'help'    => __( 'Open each document with the title, description, canonical URL, dates, author, image and terms.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Structured data', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'jsonld' ),
-						'name'    => $this->field_name( 'jsonld' ),
-						'checked' => ! empty( $s['jsonld'] ),
-						'help'    => __( 'Carry any JSON-LD the page publishes through to the end of the document in a fenced code block.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'for'   => $this->field_id( 'selector' ),
-				'label' => __( 'Content container', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::text( [
-						'id'          => $this->field_id( 'selector' ),
-						'name'        => $this->field_name( 'selector' ),
-						'value'       => $s['selector'],
-						'placeholder' => '.entry-content',
-						'help'        => __( 'Optional. A CSS selector naming the element holding the page content — a tag, an id or a class. Leave it empty to use main, article and the other standard landmarks, which is right for most themes.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::section( [ 'label' => __( 'Response headers', 'octave-addons' ) ] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Vary on HTML responses', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'vary_html' ),
-						'name'    => $this->field_name( 'vary_html' ),
-						'checked' => ! empty( $s['vary_html'] ),
-						'help'    => __( 'Adds Accept to the Vary header so a CDN keeps the HTML and Markdown versions apart. Leave this on unless a cache in front of the site handles it already.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Token count headers', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'token_headers' ),
-						'name'    => $this->field_name( 'token_headers' ),
-						'checked' => ! empty( $s['token_headers'] ),
-						'help'    => __( 'Send x-markdown-tokens and x-original-tokens so an agent can see what the conversion saved it.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Alternate link', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'alternate_link' ),
-						'name'    => $this->field_name( 'alternate_link' ),
-						'checked' => ! empty( $s['alternate_link'] ),
-						'help'    => __( 'Advertise the Markdown representation in the page head, so a crawler reading the HTML learns the same URL will answer in Markdown.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Content signal', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'content_signal' ),
-						'name'    => $this->field_name( 'content_signal' ),
-						'checked' => ! empty( $s['content_signal'] ),
-						'data'    => [ 'controls-row' => 'oaMdRowSignals' ],
-						'help'    => __( 'State what the content may be used for on every Markdown response. It is a declaration of preference, not an enforcement.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'id'    => 'oaMdRowSignals',
-				'label' => __( 'Permitted uses', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					$this->render_signals( $s );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::section( [ 'label' => __( 'Performance', 'octave-addons' ) ] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Cache converted pages', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'cache' ),
-						'name'    => $this->field_name( 'cache' ),
-						'checked' => ! empty( $s['cache'] ),
-						'help'    => __( 'Keep each converted document for twelve hours for logged-out requests. Publishing, updating or deleting anything clears the lot.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Editor preview', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'preview' ),
-						'name'    => $this->field_name( 'preview' ),
-						'checked' => ! empty( $s['preview'] ),
-						'help'    => __( 'Let anyone who can edit posts add ?format=markdown to a URL to read the Markdown in a browser. Logged-out visitors never get it, so it stays one public URL per page.', 'octave-addons' ),
-					] );
-
-				},
-			] ); ?>
-
-		</table>
-
-		<?php
-
-	}
-
-	/*
-	RENDER POST TYPES
-	-- The hand-picked list, shown only while the catch-all above is off.
-	---------------------------------------------------------------------------- */
-
-	protected function render_post_types( array $s ): void {
-
-		$chosen = (array) ( $s['post_types'] ?? [] );
-		$types  = get_post_types( [ 'public' => true ], 'objects' );
-
-		?>
-
-		<div class="oa-assignment-grid">
-			<?php
-
-			foreach ( $types as $type ) {
-
-				if ( ! is_post_type_viewable( $type ) ) {
-
-					continue;
-
-				}
-
-				$label = isset( $type->labels->name ) ? $type->labels->name : $type->name;
-
-				?>
-
-				<label class="oa-assignment-option">
-					<input type="checkbox"
-					       name="<?= esc_attr( $this->field_name( 'post_types' ) ); ?>[]"
-					       value="<?= esc_attr( $type->name ); ?>"<?php checked( in_array( $type->name, $chosen, true ) ); ?>>
-					<span class="oa-assignment-check" aria-hidden="true"></span>
-					<span class="oa-assignment-copy"><strong><?= esc_html( $label ); ?></strong><small><?= esc_html( $type->name ); ?></small></span>
-				</label>
-
-				<?php
-
-			}
-
-			?>
-		</div>
-
-		<?php
-
-	}
-
-	/*
-	RENDER SIGNALS
-	-- The three uses the content-signal header covers.
-	---------------------------------------------------------------------------- */
-
-	protected function render_signals( array $s ): void {
-
-		$signals = [
-			'signal_search'   => __( 'Search indexing', 'octave-addons' ),
-			'signal_ai_input' => __( 'AI input — answering with the page and citing it', 'octave-addons' ),
-			'signal_ai_train' => __( 'AI training', 'octave-addons' ),
+		$behaviours = [
+			__( 'Every page, post and custom post type with a public URL answers in Markdown, and archives, taxonomy pages and search results answer as a link index.', 'octave-addons' ),
+			__( 'Each document opens with YAML frontmatter — title, description, canonical URL, dates, author, image and terms — and carries any structured data the page publishes.', 'octave-addons' ),
+			__( 'The page is converted as it renders, so Breakdance sections, blocks and shortcodes all come through as text.', 'octave-addons' ),
+			__( 'Browsers are unaffected. They ask for HTML and receive exactly what they did before.', 'octave-addons' ),
 		];
 
 		?>
 
-		<div class="oa-assignment-grid">
+		<ul class="oa-help oa-md-summary">
 			<?php
 
-			foreach ( $signals as $key => $label ) {
+			foreach ( $behaviours as $behaviour ) {
 
 				?>
 
-				<label class="oa-assignment-option">
-					<input type="checkbox"
-					       name="<?= esc_attr( $this->field_name( $key ) ); ?>"
-					       value="1"<?php checked( ! empty( $s[ $key ] ) ); ?>>
-					<span class="oa-assignment-check" aria-hidden="true"></span>
-					<span class="oa-assignment-copy"><strong><?= esc_html( $label ); ?></strong></span>
-				</label>
+				<li><?= esc_html( $behaviour ); ?></li>
 
 				<?php
 
 			}
 
 			?>
-		</div>
+		</ul>
 
 		<?php
 

@@ -23,14 +23,6 @@ class Octave_Addons_Markdown_Document {
 	/** Words kept when an entry has to have its excerpt generated. */
 	protected const EXCERPT_WORDS = 40;
 
-	protected array $settings;
-
-	public function __construct( array $settings ) {
-
-		$this->settings = $settings;
-
-	}
-
 	/*
 	SINGULAR
 	-- Builds the document for one entry out of the HTML the theme rendered.
@@ -39,7 +31,7 @@ class Octave_Addons_Markdown_Document {
 	public function singular( WP_Post $post, string $html, string $url ): string {
 
 		$parser = new Octave_Addons_Html_To_Markdown( $html, $url );
-		$body   = $parser->is_parsed() ? $parser->markdown( $this->content_selectors() ) : '';
+		$body   = $parser->is_parsed() ? $parser->markdown() : '';
 		$title  = html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES, 'UTF-8' );
 
 		$description = $parser->is_parsed() ? $parser->meta_description() : '';
@@ -226,23 +218,15 @@ class Octave_Addons_Markdown_Document {
 
 	/*
 	ASSEMBLE
-	-- Joins the three parts of the document, each one switchable from the
-	-- module settings.
+	-- Joins the three parts of the document: frontmatter, body, and the page's
+	-- structured data where it has any.
 	---------------------------------------------------------------------------- */
 
 	protected function assemble( array $fields, string $body, array $json_ld ): string {
 
-		$document = '';
+		$document = $this->frontmatter( $fields ) . "\n" . trim( $body );
 
-		if ( ! empty( $this->settings['frontmatter'] ) ) {
-
-			$document .= $this->frontmatter( $fields ) . "\n";
-
-		}
-
-		$document .= trim( $body );
-
-		if ( ! empty( $this->settings['jsonld'] ) && $json_ld ) {
+		if ( $json_ld ) {
 
 			$document .= "\n\n## " . __( 'Structured data', 'octave-addons' ) . "\n";
 
@@ -342,9 +326,11 @@ class Octave_Addons_Markdown_Document {
 
 	/*
 	WITH HEADING
-	-- Themes usually render the entry title as the first heading inside the
-	-- content region, so a heading is only added when the body did not already
-	-- open with one. That keeps every document to a single H1.
+	-- A page normally renders its own headline as an H1 somewhere in the
+	-- content, so the entry title is only added as a heading when the body
+	-- carries no H1 at all. Checking the whole body rather than just its first
+	-- line matters on a builder page, where the H1 usually sits below an
+	-- eyebrow line and would otherwise end up as a second H1.
 	---------------------------------------------------------------------------- */
 
 	protected function with_heading( string $body, string $title ): string {
@@ -358,7 +344,7 @@ class Octave_Addons_Markdown_Document {
 
 		}
 
-		if ( '' !== $body && preg_match( '/^#{1,6}\s/', $body ) ) {
+		if ( '' !== $body && preg_match( '/^#[^#]/m', $body ) ) {
 
 			return $body;
 
@@ -501,94 +487,6 @@ class Octave_Addons_Markdown_Document {
 		}
 
 		return html_entity_decode( trim( (string) preg_replace( '/\s+/u', ' ', $description ) ), ENT_QUOTES, 'UTF-8' );
-
-	}
-
-	/*
-	CONTENT SELECTORS
-	-- The extra XPath expression built from the module's content container
-	-- setting, tried ahead of the standard landmarks.
-	---------------------------------------------------------------------------- */
-
-	protected function content_selectors(): array {
-
-		$selector = trim( (string) ( $this->settings['selector'] ?? '' ) );
-
-		if ( '' === $selector ) {
-
-			return [];
-
-		}
-
-		$expressions = [];
-
-		foreach ( explode( ',', $selector ) as $candidate ) {
-
-			$xpath = $this->css_to_xpath( trim( $candidate ) );
-
-			if ( '' !== $xpath ) {
-
-				$expressions[] = $xpath;
-
-			}
-
-		}
-
-		return $expressions;
-
-	}
-
-	/*
-	CSS TO XPATH
-	-- Translates the small slice of CSS a content container is ever written
-	-- in — a tag, an id, one or more classes, and descendant combinators —
-	-- into XPath. Anything more elaborate is rejected rather than half
-	-- understood, so a typo falls back to the standard landmarks instead of
-	-- silently matching the wrong element.
-	---------------------------------------------------------------------------- */
-
-	protected function css_to_xpath( string $selector ): string {
-
-		if ( '' === $selector ) {
-
-			return '';
-
-		}
-
-		$xpath = '';
-
-		foreach ( preg_split( '/\s+/', $selector ) as $part ) {
-
-			if ( ! preg_match( '/^([a-zA-Z][\w-]*)?((?:[#.][\w-]+)*)$/', $part, $match ) ) {
-
-				return '';
-
-			}
-
-			$tag       = '' !== ( $match[1] ?? '' ) ? strtolower( $match[1] ) : '*';
-			$predicate = '';
-
-			preg_match_all( '/([#.])([\w-]+)/', $match[2] ?? '', $tokens, PREG_SET_ORDER );
-
-			foreach ( $tokens as $token ) {
-
-				$predicate .= '#' === $token[1]
-					? '[@id="' . $token[2] . '"]'
-					: '[contains(concat(" ", normalize-space(@class), " "), " ' . $token[2] . ' ")]';
-
-			}
-
-			if ( '*' === $tag && '' === $predicate ) {
-
-				return '';
-
-			}
-
-			$xpath .= '//' . $tag . $predicate;
-
-		}
-
-		return $xpath;
 
 	}
 

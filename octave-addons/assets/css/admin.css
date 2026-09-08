@@ -5936,3 +5936,20 @@ NOTIFICATIONS BAR BANNERS
     }
 
 }
+
+/*
+MARKDOWN FOR AGENTS
+-- The module has no fields, so its panel is a plain statement of behaviour.
+---------------------------------------------------------- */
+
+.oa-md-summary {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding-left: 18px;
+    list-style: disc;
+}
+
+.oa-md-summary li {
+    margin: 0;
+}

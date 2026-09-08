@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.18.0
+Stable tag:        3.19.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -58,7 +58,24 @@ Octave Addons ships with a growing collection of focused modules:
     answer as a link index, converted pages are cached, `Vary: Accept` keeps
     caches from mixing the two up, and `x-markdown-tokens` reports what the
     conversion saved. Because it converts the rendered page rather than
-    `post_content`, Breakdance, block and shortcode content all convert.
+    `post_content`, Breakdance, block and shortcode content all convert —
+    including sites with no content container, where the body's own sections
+    are taken as the content. There is nothing to configure: it is one switch,
+    fixed at the settings that read best to a chatbot.
+*   **API Catalog** – publishes `/.well-known/api-catalog` as an RFC 9727
+    linkset so agents can discover the site's APIs without guessing at URLs,
+    and advertises it with an `api-catalog` link relation in both the response
+    headers and the page head. Entries are built from the REST namespaces the
+    site actually registers, so an API appears and disappears with the plugin
+    that provides it, and the namespaces that exist only to serve WordPress's
+    own admin screens are left out.
+*   **Agent Auth Discovery** – publishes `/auth.md` so an automated client can
+    find out how to authenticate before it starts guessing: what is readable
+    with no credential at all, where an operator asks for access, and how a
+    credential is sent. No sign-in URL is ever published, so a site using
+    Custom Login URL keeps its login address private. A site running an OAuth
+    authorization server can publish Protected Resource Metadata through the
+    `octave_addons_oauth_protected_resource` filter.
 *   **Post Types** – can display Posts as Blogs and provides separate managers for
     post types, reusable taxonomies, and typed post fields. Fields use registered
     WordPress post meta and are available in Breakdance Dynamic Data.
@@ -107,6 +124,19 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.19.0 =
+* Fixed Markdown for Agents returning almost none of the page on builder-made sites. A repeated `<article>` — a testimonial or post card — was being taken as the content region, so a page could convert to a single quote. An `<article>` is now only treated as the content region when the page has exactly one.
+* Added support for pages with no content container at all, which is every Breakdance site: the sections sitting directly in the body are taken together as the content, with the header, scripts and inline styles left out.
+* The site footer is left out of the Markdown alongside the header. Breakdance renders both from their own templates and stamps each section with the template it came from, so the trailing sections belonging to the footer template are dropped. Chrome repeated word for word in every document is what hurts a chatbot most, since identical boilerplate competes with the real content at retrieval time.
+* Fixed rows of links running together into one word. A builder writes a contact block or footer menu as adjacent anchors with the spacing inside them, which the conversion was trimming away.
+* Fixed the page title being repeated as a second H1 when the page renders its own headline below an eyebrow line.
+* Stopped anything a plugin prints on shutdown — an object cache's statistics comment, for instance — being appended to the Markdown response.
+* Markdown responses are no longer stored by full-page caches. A cache that keys on the URL alone could store the Markdown against the address and then serve it to whoever asked next.
+* Markdown for Agents is now a single on/off switch. Every option it had is fixed at the setting that reads best to a chatbot, so the behaviour is identical on every site.
+* Removed the `content-signal` response header; permitted uses are better declared once at the domain level than per response.
+* Added the Agent Auth Discovery module to the AI Agents area. It serves `/auth.md` describing the anonymous read access the REST API already offers, where an operator requests credentials, and how a credential is sent. It never publishes a sign-in URL, so a site running Custom Login URL keeps its login address private, and it serves `/.well-known/oauth-protected-resource` only where a site actually runs an OAuth authorization server, via the `octave_addons_oauth_protected_resource` filter.
+* Added the API Catalog module to the AI Agents area. It serves `/.well-known/api-catalog` as an RFC 9727 linkset with a `service-desc` and `service-doc` for each API, and advertises the catalog with an `api-catalog` link relation in the response headers and the page head. The listing is read from the REST namespaces the site registers, filtered to those an outside caller can use, and extendable through the `octave_addons_api_catalog_entries` filter.
 
 = 3.18.0 =
 * Added an AI Agents area to the admin, grouping the add-ons that change what an AI agent receives from the site.

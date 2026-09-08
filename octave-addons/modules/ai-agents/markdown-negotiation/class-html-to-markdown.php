@@ -37,6 +37,14 @@ class Octave_Addons_Html_To_Markdown {
 	/** Landmarks removed only when the whole body had to serve as the content root. */
 	protected const LANDMARK_TAGS = [ 'nav', 'header', 'footer', 'aside', 'form' ];
 
+	/*
+	BODY SECTIONS
+	-- Sections sitting directly in the body, plus any body-level wrapper that
+	-- holds sections of its own — which is what a Breakdance global block is.
+	-- The header is a <header> and the sprite an <svg>, so neither matches.
+	---------------------------------------------------------------------------- */
+	protected const BODY_SECTIONS = '/html/body/section | /html/body/div[.//section]';
+
 	/** Class names used for content that is present for assistive tech alone. */
 	protected const HIDDEN_CLASSES = [ 'screen-reader-text', 'sr-only', 'visually-hidden', 'skip-link' ];
 
@@ -46,10 +54,11 @@ class Octave_Addons_Html_To_Markdown {
 
 	protected string $base_url = '';
 
-	/** True once the content root has been located and cleaned. */
+	/** True once the content roots have been located and cleaned. */
 	protected bool $prepared = false;
 
-	protected ?DOMNode $root = null;
+	/** @var DOMNode[] The regions rendered, in document order. */
+	protected array $roots = [];
 
 	/*
 	CONSTRUCT
@@ -204,13 +213,21 @@ class Octave_Addons_Html_To_Markdown {
 
 		$this->prepare( $selectors );
 
-		if ( ! $this->root ) {
+		$parts = [];
 
-			return '';
+		foreach ( $this->roots as $root ) {
+
+			$text = $this->render_children( $root );
+
+			if ( '' !== trim( $text ) ) {
+
+				$parts[] = $text;
+
+			}
 
 		}
 
-		return $this->normalize( $this->render_children( $this->root ) );
+		return $this->normalize( implode( "\n\n", $parts ) );
 
 	}
 
@@ -232,44 +249,69 @@ class Octave_Addons_Html_To_Markdown {
 		}
 
 		$this->prepared = true;
+		$this->roots    = $this->find_roots( $selectors );
 
-		$body = $this->query( '//body' );
-		$body = $body && $body->length ? $body->item( 0 ) : null;
+		foreach ( $this->roots as $root ) {
 
-		$root       = null;
-		$candidates = array_merge( $selectors, $this->default_selectors() );
+			$this->unwrap_embeds( $root );
+			$this->drop( $root, self::DROP_TAGS );
+			$this->drop_hidden( $root );
 
-		foreach ( $candidates as $selector ) {
+			if ( ! $this->is_content_landmark( $root ) ) {
 
-			$found = $this->query( $selector );
-
-			if ( $found && $found->length ) {
-
-				$root = $found->item( 0 );
-
-				break;
+				$this->drop( $root, self::LANDMARK_TAGS );
 
 			}
 
 		}
 
-		$this->root = $root ?: $body;
+	}
 
-		if ( ! $this->root ) {
+	/*
+	FIND ROOTS
+	-- Locates the region or regions holding the page content.
+	-- A single landmark wins when there is one. Failing that comes the case
+	-- every Breakdance site is in: no content container anywhere, just a run
+	-- of sections sitting directly in the body next to the header. Those are
+	-- taken together, in document order, as one content region.
+	---------------------------------------------------------------------------- */
 
-			return;
+	protected function find_roots( array $selectors ): array {
+
+		foreach ( array_merge( $selectors, $this->default_selectors() ) as $selector ) {
+
+			$found = $this->query( $selector );
+
+			if ( ! $found || ! $found->length ) {
+
+				continue;
+
+			}
+
+			// An <article> repeated down the page is a card in a listing rather
+			// than the page's content region, and taking the first would return
+			// one card and discard the rest of the page.
+			if ( '//article' === $selector && $found->length > 1 ) {
+
+				continue;
+
+			}
+
+			return [ $found->item( 0 ) ];
 
 		}
 
-		$this->unwrap_embeds();
-		$this->drop( self::DROP_TAGS );
-		$this->drop_hidden();
+		$sections = $this->query( self::BODY_SECTIONS );
 
-		if ( ! $this->is_content_landmark( $this->root ) ) {
+		if ( $sections && $sections->length ) {
 
-			$this->drop( self::LANDMARK_TAGS );
+			return $this->without_footer_template( iterator_to_array( $sections ) );
 
 		}
+
+		$body = $this->query( '//body' );
+
+		return $body && $body->length ? [ $body->item( 0 ) ] : [];
 
 	}
 
@@ -298,6 +340,71 @@ class Octave_Addons_Html_To_Markdown {
 	}
 
 	/*
+	WITHOUT FOOTER TEMPLATE
+	-- Drops the site footer from a run of body-level sections.
+	-- Breakdance builds the header and footer as their own templates and drops
+	-- their sections straight into the body, stamping each one with the id of
+	-- the template it came from: bde-section-<template>-<node>. The header is
+	-- a <header> and goes with the other landmarks, but the footer arrives as
+	-- ordinary sections carrying a different template id from the page's own.
+	-- So the trailing run sharing the last section's id is the footer, and it
+	-- is dropped — but only when that id differs from the one the page opens
+	-- with, so a page whose footer is built inline keeps everything.
+	-- Chrome repeated verbatim on every page is the one thing worth cutting
+	-- for a chatbot: identical boilerplate in every document competes with the
+	-- real content when those documents are retrieved.
+	-- A page with no template ids to read — anything not built in Breakdance —
+	-- keeps every section it had.
+	---------------------------------------------------------------------------- */
+
+	protected function without_footer_template( array $sections ): array {
+
+		if ( count( $sections ) < 2 ) {
+
+			return $sections;
+
+		}
+
+		$first = $this->template_id( $sections[0] );
+		$last  = $this->template_id( $sections[ count( $sections ) - 1 ] );
+
+		if ( '' === $first || '' === $last || $first === $last ) {
+
+			return $sections;
+
+		}
+
+		while ( $sections && $this->template_id( end( $sections ) ) === $last ) {
+
+			array_pop( $sections );
+
+		}
+
+		return array_values( $sections );
+
+	}
+
+	/*
+	TEMPLATE ID
+	-- Reads the Breakdance template id a node was rendered from, or an empty
+	-- string when the node carries no such class.
+	---------------------------------------------------------------------------- */
+
+	protected function template_id( DOMNode $node ): string {
+
+		if ( XML_ELEMENT_NODE !== $node->nodeType ) {
+
+			return '';
+
+		}
+
+		$class = (string) $node->getAttribute( 'class' );
+
+		return preg_match( '/\bbde-[a-z]+(?:-builder)?-(\d+)-\d+/', $class, $match ) ? $match[1] : '';
+
+	}
+
+	/*
 	DEFAULT SELECTORS
 	-- The landmarks a content region is normally published under, ordered from
 	-- the most explicit to the loosest. Filterable so a site with an unusual
@@ -314,7 +421,6 @@ class Octave_Addons_Html_To_Markdown {
 			'//*[@id="main"]',
 			'//*[@id="primary"]',
 			$this->class_selector( 'entry-content' ),
-			$this->class_selector( 'breakdance' ),
 		];
 
 		/**
@@ -335,9 +441,9 @@ class Octave_Addons_Html_To_Markdown {
 	-- rather than silently disappearing with the rest of the furniture.
 	---------------------------------------------------------------------------- */
 
-	protected function unwrap_embeds(): void {
+	protected function unwrap_embeds( DOMNode $root ): void {
 
-		$nodes = $this->query( './/iframe[@src]', $this->root );
+		$nodes = $this->query( './/iframe[@src]', $root );
 
 		if ( ! $nodes ) {
 
@@ -382,11 +488,11 @@ class Octave_Addons_Html_To_Markdown {
 	-- Removes every element with one of the given tag names from the root.
 	---------------------------------------------------------------------------- */
 
-	protected function drop( array $tags ): void {
+	protected function drop( DOMNode $root, array $tags ): void {
 
 		foreach ( $tags as $tag ) {
 
-			$nodes = $this->query( './/' . $tag, $this->root );
+			$nodes = $this->query( './/' . $tag, $root );
 
 			if ( ! $nodes ) {
 
@@ -415,7 +521,7 @@ class Octave_Addons_Html_To_Markdown {
 	-- use to park text for screen readers alone.
 	---------------------------------------------------------------------------- */
 
-	protected function drop_hidden(): void {
+	protected function drop_hidden( DOMNode $root ): void {
 
 		$expressions = [
 			'.//*[@aria-hidden="true"]',
@@ -432,7 +538,7 @@ class Octave_Addons_Html_To_Markdown {
 
 		foreach ( $expressions as $expression ) {
 
-			$nodes = $this->query( $expression, $this->root );
+			$nodes = $this->query( $expression, $root );
 
 			if ( ! $nodes ) {
 
@@ -907,16 +1013,23 @@ class Octave_Addons_Html_To_Markdown {
 	RENDER LINK
 	-- Anchors with no destination, and the empty anchors builders leave behind
 	-- as scroll targets, contribute their text alone.
+	-- The whitespace around the label is kept outside the brackets rather than
+	-- trimmed away, because a builder writes a row of links as adjacent <a>
+	-- elements with the spacing inside them. Trimming it would run the labels
+	-- of a contact block or a footer menu together into one word.
 	---------------------------------------------------------------------------- */
 
 	protected function render_link( DOMNode $node ): string {
 
-		$inner = trim( $this->render_inline_children( $node ) );
+		$raw   = $this->render_inline_children( $node );
+		$inner = trim( $raw );
+		$lead  = '' !== $raw && preg_match( '/^\s/', $raw ) ? ' ' : '';
+		$trail = '' !== $raw && preg_match( '/\s$/', $raw ) ? ' ' : '';
 		$href  = trim( (string) $node->getAttribute( 'href' ) );
 
 		if ( '' === $href || 0 === strpos( $href, '#' ) || 0 === strpos( $href, 'javascript:' ) ) {
 
-			return '' !== $inner ? $inner : '';
+			return '' !== $inner ? $lead . $inner . $trail : '';
 
 		}
 
@@ -931,7 +1044,7 @@ class Octave_Addons_Html_To_Markdown {
 		$title = trim( (string) $node->getAttribute( 'title' ) );
 		$title = '' !== $title ? ' "' . str_replace( '"', '\"', $title ) . '"' : '';
 
-		return '[' . $inner . '](' . $this->escape_url( $href ) . $title . ')';
+		return $lead . '[' . $inner . '](' . $this->escape_url( $href ) . $title . ')' . $trail;
 
 	}
 
