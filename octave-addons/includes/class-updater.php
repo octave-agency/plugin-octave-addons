@@ -191,7 +191,7 @@ class Octave_Addons_Updater {
 
 		$this->backup_customised_elements();
 
-		$custom_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug . '/modules/breakdance-custom-elements/elements';
+		$custom_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug . '/modules/breakdance/custom-elements/elements';
 
 		if ( ! is_dir( $custom_dir ) ) {
 
@@ -284,7 +284,7 @@ class Octave_Addons_Updater {
 
 		if ( ! empty( $this->custom_backup_path ) && is_dir( $this->custom_backup_path ) ) {
 
-			$custom_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug . '/modules/breakdance-custom-elements/elements';
+			$custom_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug . '/modules/breakdance/custom-elements/elements';
 
 			$this->recursive_copy( $this->custom_backup_path, $custom_dir );
 			$this->recursive_delete( $this->custom_backup_path );

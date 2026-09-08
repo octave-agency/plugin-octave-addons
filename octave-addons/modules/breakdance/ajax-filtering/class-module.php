@@ -631,8 +631,8 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 		}
 
-		$assets_dir = OCTAVE_ADDONS_DIR . 'modules/breakdance-ajax-filtering/assets/';
-		$assets_url = OCTAVE_ADDONS_URL . 'modules/breakdance-ajax-filtering/assets/';
+		$assets_dir = OCTAVE_ADDONS_DIR . 'modules/breakdance/ajax-filtering/assets/';
+		$assets_url = OCTAVE_ADDONS_URL . 'modules/breakdance/ajax-filtering/assets/';
 		$css_path   = $assets_dir . 'filtering.css';
 		$js_path    = $assets_dir . 'filtering.js';
 

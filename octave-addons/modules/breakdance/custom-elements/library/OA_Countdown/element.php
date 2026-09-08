@@ -528,7 +528,7 @@ class OaCountdown extends \Breakdance\Elements\Element
         return [
             [
                 'title' => 'OA Countdown',
-                'scripts' => [$url . 'modules/breakdance-custom-elements/library/OA_Countdown/countdown.js?ver=' . $version],
+                'scripts' => [$url . 'modules/breakdance/custom-elements/library/OA_Countdown/countdown.js?ver=' . $version],
             ],
             [
                 'title' => 'OA Countdown - init',

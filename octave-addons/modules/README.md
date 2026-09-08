@@ -11,6 +11,42 @@ modules/
     └── assets/               ← optional
 ```
 
+## Areas
+
+A folder with no `class-module.php` of its own is an area: a place to keep
+related modules together as the plugin grows. Discovery looks one level
+inside it.
+
+```
+modules/
+├── ai-agents/
+│   └── markdown-negotiation/
+│       └── class-module.php
+├── breakdance/
+│   ├── ajax-filtering/
+│   ├── custom-elements/
+│   └── spacing/
+└── animations/
+    └── class-module.php
+```
+
+An area is filing only. It has no effect on the admin — what collapses
+modules onto one page is still the group id each module returns from
+`get_group()`, so a module can be filed in one place and presented in
+another, and either can change without the other. Nesting is optional:
+a module folder at the top level keeps working exactly as before.
+
+Inside an area, drop the area's name from the folder: the path already
+carries it, so `breakdance/spacing/` rather than
+`breakdance/breakdance-spacing/`.
+
+Module ids are a different matter. They live in one flat namespace across
+every area — the manager keys modules by `get_id()` alone — so an id has to
+stand on its own and keeps its prefix: the module in `breakdance/spacing/`
+still returns `breakdance-spacing`. The id is also the key its settings are
+stored under, so renaming a folder costs nothing while renaming an id
+discards what every site has saved.
+
 ## Minimum boilerplate
 
 ```php

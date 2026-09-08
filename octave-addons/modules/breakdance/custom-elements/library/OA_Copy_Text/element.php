@@ -368,7 +368,7 @@ class OaCopyText extends \Breakdance\Elements\Element
         return [
             [
                 'title' => 'OA Copy Text',
-                'scripts' => [$url . 'modules/breakdance-custom-elements/library/OA_Copy_Text/copy-text.js?ver=' . $version],
+                'scripts' => [$url . 'modules/breakdance/custom-elements/library/OA_Copy_Text/copy-text.js?ver=' . $version],
             ],
             [
                 'title' => 'OA Copy Text - init',

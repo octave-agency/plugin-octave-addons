@@ -42,7 +42,7 @@ Studio offers these writable locations instead:
 | Location | Path | Survives plugin updates |
 | --- | --- | --- |
 | Octave Elements (Site) | `wp-content/plugins/octave-elements/` | Yes |
-| Octave Elements (Plugin) | `octave-addons/modules/breakdance-custom-elements/elements/` | No |
+| Octave Elements (Plugin) | `octave-addons/modules/breakdance/custom-elements/elements/` | No |
 
 Breakdance only loads elements from inside `wp-content/plugins`, so the
 external location has to live there too. Create the folder and it is picked up

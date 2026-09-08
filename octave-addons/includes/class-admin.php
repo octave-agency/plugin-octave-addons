@@ -470,6 +470,11 @@ class Octave_Addons_Admin {
 	protected function group_config( string $group ): array {
 
 		$groups = [
+			'ai-agents' => [
+				'title'       => __( 'AI Agents', 'octave-addons' ),
+				'description' => __( 'What an AI agent gets when it asks the site for a page. These add-ons hand agents clean, structured text instead of leaving them to scrape a dense builder layout, while every browser carries on receiving the normal HTML.', 'octave-addons' ),
+				'requires'    => '',
+			],
 			'branding' => [
 				'title'       => __( 'Branding & Design', 'octave-addons' ),
 				'description' => __( 'How the site and the WordPress admin look — the admin refresh and its brand colour, and the colours a visitor sees when they select text.', 'octave-addons' ),
@@ -559,6 +564,7 @@ class Octave_Addons_Admin {
 	protected function module_icon( string $id ): string {
 
 		$icons = [
+			'ai-agents'                  => 'bot',
 			'animations'                 => 'sparkles',
 			'branding'                   => 'palette',
 			'breakdance'                 => 'layout',
@@ -569,6 +575,7 @@ class Octave_Addons_Admin {
 			'custom-post-types'          => 'layers',
 			'disable-comments'           => 'message-off',
 			'empty-link-highlighter'     => 'unlink',
+			'markdown-negotiation'       => 'file-text',
 			'mobile-contact-popup'       => 'smartphone',
 			'notifications-bar'          => 'megaphone',
 		];

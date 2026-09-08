@@ -151,7 +151,7 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 
 		// Ensure the in-plugin elements directory exists so Breakdance can write
 		// new elements when no external location is available.
-		$elements_dir = OCTAVE_ADDONS_DIR . 'modules/breakdance-custom-elements/elements';
+		$elements_dir = OCTAVE_ADDONS_DIR . 'modules/breakdance/custom-elements/elements';
 		if ( ! is_dir( $elements_dir ) ) {
 
 			wp_mkdir_p( $elements_dir );
@@ -160,7 +160,7 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 
 		// The shared library loads but is never offered as a save target.
 		\Breakdance\ElementStudio\registerSaveLocation(
-			'octave-addons/modules/breakdance-custom-elements/library',
+			'octave-addons/modules/breakdance/custom-elements/library',
 			'OctaveCustomElements',
 			'element',
 			'Octave Elements (Library)',
@@ -264,7 +264,7 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 
 		$roots = [
 			'library' => wp_normalize_path( Octave_Addons_Elements_Manifest::library_dir() ),
-			'site'    => wp_normalize_path( OCTAVE_ADDONS_DIR . 'modules/breakdance-custom-elements/elements' ),
+			'site'    => wp_normalize_path( OCTAVE_ADDONS_DIR . 'modules/breakdance/custom-elements/elements' ),
 		];
 
 		foreach ( array_keys( $this->get_save_locations() ) as $location ) {
@@ -519,7 +519,7 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Shared library', 'octave-addons' ); ?></th>
 				<td>
-					<code>octave-addons/modules/breakdance-custom-elements/library</code>
+					<code>octave-addons/modules/breakdance/custom-elements/library</code>
 					<p class="description">
 						<?php esc_html_e( 'Generic elements shipped with the plugin. Read-only in Element Studio, and any element edited here is carried across plugin updates rather than overwritten.', 'octave-addons' ); ?>
 					</p>
@@ -558,7 +558,7 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 
 		}
 
-		$locations['octave-addons/modules/breakdance-custom-elements/elements'] = 'Octave Elements (Plugin)';
+		$locations['octave-addons/modules/breakdance/custom-elements/elements'] = 'Octave Elements (Plugin)';
 
 		/**
 		 * Filters the writable Breakdance save locations.

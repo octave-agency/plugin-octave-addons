@@ -2,7 +2,12 @@
 
 /*
 MODULE MANAGER
--- Auto-discovers every module in /modules/<slug>/class-module.php.
+-- Auto-discovers every module in /modules/<slug>/class-module.php, and in
+-- /modules/<area>/<slug>/class-module.php one level deeper.
+-- A folder holding no class-module.php of its own is treated as an area:
+-- somewhere to keep related modules together as the plugin grows. An area is
+-- filing only — what collapses modules onto one admin page is still the group
+-- id each module returns from get_group(), so the two can be changed apart.
 -- Each class-module.php file must `return new Your_Module_Class();`.
 -- Adding a new module in the future is therefore a purely additive
 -- operation: drop a folder in, reload the admin, and a new tab
@@ -53,18 +58,26 @@ class Octave_Addons_Module_Manager {
 
 		foreach ( $dirs as $dir ) {
 
-			$file = trailingslashit( $dir ) . 'class-module.php';
-			if ( ! file_exists( $file ) ) {
+			if ( $this->load_module( $dir ) ) {
 
 				continue;
 
 			}
 
-			$module = include $file;
+			// No module here, so the folder is an area holding its own modules.
+			$nested = glob( trailingslashit( $dir ) . '*', GLOB_ONLYDIR );
 
-			if ( $module instanceof Octave_Addons_Module ) {
+			if ( empty( $nested ) ) {
 
-				$this->modules[ $module->get_id() ] = $module;
+				continue;
+
+			}
+
+			sort( $nested );
+
+			foreach ( $nested as $child ) {
+
+				$this->load_module( $child );
 
 			}
 
@@ -77,6 +90,33 @@ class Octave_Addons_Module_Manager {
 		 * @param array $modules  Array of Octave_Addons_Module instances keyed by id.
 		 */
 		$this->modules = apply_filters( 'octave_addons_register_modules', $this->modules );
+
+	}
+
+	/*
+	LOAD MODULE
+	-- Registers the module a folder holds, and reports whether it had one.
+	---------------------------------------------------------- */
+
+	protected function load_module( string $dir ): bool {
+
+		$file = trailingslashit( $dir ) . 'class-module.php';
+
+		if ( ! file_exists( $file ) ) {
+
+			return false;
+
+		}
+
+		$module = include $file;
+
+		if ( $module instanceof Octave_Addons_Module ) {
+
+			$this->modules[ $module->get_id() ] = $module;
+
+		}
+
+		return true;
 
 	}
 
@@ -291,10 +331,15 @@ class Octave_Addons_Module_Manager {
 
 		foreach ( $this->modules as $id => $module ) {
 
-			// A page only submits the modules it displays, so the rest keep the values they already hold.
-			if ( null !== $submitted && ! in_array( $id, $submitted, true ) && isset( $stored[ $id ] ) && is_array( $stored[ $id ] ) ) {
+			// A page only submits the modules it displays, so the rest keep the
+			// values they already hold — or their own defaults when they have
+			// never been saved, which is what lets a module ship switched on
+			// without the first save of some other page switching it off.
+			if ( null !== $submitted && ! in_array( $id, $submitted, true ) ) {
 
-				$clean[ $id ] = $stored[ $id ];
+				$clean[ $id ] = isset( $stored[ $id ] ) && is_array( $stored[ $id ] )
+					? $stored[ $id ]
+					: $module->get_defaults();
 
 				continue;
 

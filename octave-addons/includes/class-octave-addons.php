@@ -35,6 +35,10 @@ final class Octave_Addons {
 
 	protected function __construct() {
 
+		// Runs before the modules, so the elements module registers its save
+		// locations with everything already at the path it now expects.
+		Octave_Addons_Elements_Manifest::migrate_legacy_location();
+
 		$this->modules          = new Octave_Addons_Module_Manager();
 		$this->admin_experience = new Octave_Addons_Admin_Experience();
 		$this->admin            = new Octave_Addons_Admin( $this->modules, $this->admin_experience );

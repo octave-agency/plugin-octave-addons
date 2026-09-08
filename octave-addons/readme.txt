@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.17.2
+Stable tag:        3.18.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -50,13 +50,25 @@ Octave Addons ships with a growing collection of focused modules:
     visitor sees when they select text, defaulting to the Breakdance
     `--bde-brand-primary-color` variable so the highlight tracks the site
     palette.
+*   **AI Agents** – one page for what an AI agent gets when it asks the site
+    for a page. *Markdown for Agents* answers any request sending
+    `Accept: text/markdown` with a Markdown version of the same URL — YAML
+    frontmatter, the page text with the layout stripped out, and any JSON-LD
+    the page publishes — while browsers carry on receiving HTML. Archives
+    answer as a link index, converted pages are cached, `Vary: Accept` keeps
+    caches from mixing the two up, and `x-markdown-tokens` reports what the
+    conversion saved. Because it converts the rendered page rather than
+    `post_content`, Breakdance, block and shortcode content all convert.
 *   **Post Types** – can display Posts as Blogs and provides separate managers for
     post types, reusable taxonomies, and typed post fields. Fields use registered
     WordPress post meta and are available in Breakdance Dynamic Data.
 
 Each add-on has its own tab under *Octave Addons* in the WordPress
 admin, and closely related add-ons share one page — the Breakdance
-modules sit together on a single Breakdance screen. Adding a new add-on
+modules sit together on a single Breakdance screen, and the agent-facing
+modules on a single AI Agents screen. Modules are filed on disk in matching
+area folders (`/modules/ai-agents/`, `/modules/breakdance/`), which
+discovery reads one level into. Adding a new add-on
 later is a drop-in operation — create a folder under `/modules/`
 containing a `class-module.php` file that extends
 `Octave_Addons_Module`, and it will appear automatically. Return a group
@@ -95,6 +107,18 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.18.0 =
+* Added an AI Agents area to the admin, grouping the add-ons that change what an AI agent receives from the site.
+* Added the Markdown for Agents module: requests sending `Accept: text/markdown` receive a Markdown representation of the same URL while browsers continue to receive HTML.
+* Markdown documents carry YAML frontmatter, the converted page body and any JSON-LD the page publishes, and are built from the rendered page so Breakdance, block and shortcode content all convert.
+* Archives, taxonomy pages and search results answer as a link index built from the query rather than as a conversion of the card layout.
+* Added `Vary: Accept` to HTML responses so a CDN keeps the two representations apart, plus optional `x-markdown-tokens`, `x-original-tokens` and `content-signal` headers and a `<link rel="alternate">` advertising the Markdown variant.
+* Converted documents are cached for twelve hours for logged-out requests and cleared whenever content is published, updated or deleted. Editors can preview any page's Markdown by adding `?format=markdown` to its URL.
+* Markdown for Agents ships switched on, since a browser receives the same HTML either way.
+* Modules can now be filed in area folders — `/modules/<area>/<module>/` — which discovery reads one level into. Existing top-level module folders keep working unchanged.
+* Moved the Breakdance modules into `/modules/breakdance/` and the new module into `/modules/ai-agents/`. Inside an area a module folder drops the area's name, so the module is at `/modules/breakdance/spacing/` while its settings key stays `breakdance-spacing` — no saved settings change. Locally saved and locally edited Breakdance elements are migrated to the new path automatically on the first load after updating, including any asset paths inside them.
+* A module that has never been saved now keeps its own defaults when another module's page is saved, instead of being written out as switched off.
 
 = 3.17.2 =
 * Flattened Octave Dynamic Data into one field per unique meta key, using the first definition's title and unsuffixed field slug while retaining CPT assignments only for the Breakdance-style post type filter.
