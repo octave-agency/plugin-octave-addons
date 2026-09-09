@@ -21,6 +21,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 	protected array $admin_taxonomies = [];
 
+	protected array $baseless_taxonomies = [];
+
 	/*
 	CONSTRUCTOR
 	-- Refreshes rewrite rules only when custom routing changes.
@@ -2084,17 +2086,18 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	protected function render_taxonomy_editor( array $taxonomies, array $post_types, string $primary_post_type = '', bool $single = false, bool $start_new = false ): void {
 
 		$template = [
-			'enabled'           => true,
-			'name'              => '',
-			'singular_name'     => '',
-			'taxonomy'          => 'oa_category',
-			'slug'              => '',
-			'hierarchical'      => true,
-			'public'            => true,
-			'show_admin_column' => true,
-			'show_admin_filter' => false,
-			'post_types'        => '' !== $primary_post_type ? [ $primary_post_type ] : [],
-			'post_type_order'   => [],
+			'enabled'             => true,
+			'name'                => '',
+			'singular_name'       => '',
+			'taxonomy'            => 'oa_category',
+			'slug'                => '',
+			'hierarchical'        => true,
+			'public'              => true,
+			'remove_rewrite_base' => false,
+			'show_admin_column'   => true,
+			'show_admin_filter'   => false,
+			'post_types'          => '' !== $primary_post_type ? [ $primary_post_type ] : [],
+			'post_type_order'     => [],
 		];
 
 		if ( $start_new ) {
@@ -2233,6 +2236,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Public archives', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" class="oa-tax-public-toggle" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'public' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['public'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Expose term archive URLs and navigation options.', 'octave-addons' ); ?></small></div>
 						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Show in admin column', 'octave-addons' ); ?></span><input type="hidden" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'show_admin_column' ) ); ?>" value="0"><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'show_admin_column' ) ); ?>" value="1"<?= checked( ! array_key_exists( 'show_admin_column', $taxonomy ) || ! empty( $taxonomy['show_admin_column'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Show a sortable taxonomy column in assigned post type tables.', 'octave-addons' ); ?></small></div>
 						<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Show in admin filter', 'octave-addons' ); ?></span><input type="hidden" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'show_admin_filter' ) ); ?>" value="0"><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'show_admin_filter' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['show_admin_filter'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Add a term dropdown above assigned post type tables.', 'octave-addons' ); ?></small></div>
+						<div class="oa-cpt-field oa-cpt-switch-field oa-tax-url-field<?= empty( $taxonomy['public'] ) ? ' oa-hidden' : ''; ?>"><span><?php esc_html_e( 'Remove taxonomy base', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'remove_rewrite_base' ) ); ?>" value="1"<?= checked( ! empty( $taxonomy['remove_rewrite_base'] ), true, false ); ?>><span class="oa-switch-slider"></span></label><small><?php esc_html_e( 'Use /term-name/ instead of /taxonomy-slug/term-name/. Existing content keeps priority; if taxonomies share a term path, the first taxonomy wins.', 'octave-addons' ); ?></small></div>
 						<label class="oa-cpt-field oa-cpt-field--full oa-tax-url-field<?= empty( $taxonomy['public'] ) ? ' oa-hidden' : ''; ?>"><span><?php esc_html_e( 'URL slug', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->collection_field_name( 'custom_taxonomies', $index, 'slug' ) ); ?>" value="<?= esc_attr( (string) ( $taxonomy['slug'] ?? '' ) ); ?>" placeholder="project-category" required><small><?php esc_html_e( 'The term archive URL path. Falls back to the singular name when left empty.', 'octave-addons' ); ?></small></label>
 					</div>
 				</fieldset>
@@ -3003,7 +3007,20 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				$this->register_custom_taxonomy( $taxonomy, $post_types );
 				$this->admin_taxonomies[ $taxonomy['taxonomy'] ] = $taxonomy;
 
+				if ( ! empty( $taxonomy['public'] ) && ! empty( $taxonomy['remove_rewrite_base'] ) ) {
+
+					$this->baseless_taxonomies[ $taxonomy['taxonomy'] ] = $taxonomy;
+
+				}
+
 			}
+
+		}
+
+		if ( ! empty( $this->baseless_taxonomies ) ) {
+
+			add_filter( 'term_link', [ $this, 'filter_baseless_term_link' ], 10, 3 );
+			add_filter( 'request', [ $this, 'route_baseless_taxonomy_request' ] );
 
 		}
 
@@ -3593,6 +3610,312 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	}
 
 	/*
+	FILTER BASELESS TERM LINK
+	-- Removes the registered taxonomy base from opted-in public term URLs.
+	---------------------------------------------------------- */
+
+	public function filter_baseless_term_link( string $term_link, WP_Term $term, string $taxonomy ): string {
+
+		if ( ! isset( $this->baseless_taxonomies[ $taxonomy ] ) ) {
+
+			return $term_link;
+
+		}
+
+		$path = $this->term_archive_path( $term );
+
+		if ( '' === $path ) {
+
+			return $term_link;
+
+		}
+
+		return home_url( user_trailingslashit( $path, 'category' ) );
+
+	}
+
+	/*
+	ROUTE BASELESS TAXONOMY REQUEST
+	-- Resolves root-level term archives after WordPress has parsed the URL.
+	-- Existing Pages and resolved posts retain priority over matching terms.
+	---------------------------------------------------------- */
+
+	public function route_baseless_taxonomy_request( array $query_vars ): array {
+
+		if ( is_admin() || empty( $this->baseless_taxonomies ) ) {
+
+			return $query_vars;
+
+		}
+
+		$request = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '';
+		$path    = wp_parse_url( $request, PHP_URL_PATH );
+
+		if ( ! is_string( $path ) ) {
+
+			return $query_vars;
+
+		}
+
+		$home_path = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+		$home_path = is_string( $home_path ) ? trim( $home_path, '/' ) : '';
+		$path      = trim( rawurldecode( $path ), '/' );
+
+		if ( '' !== $home_path && ( $path === $home_path || 0 === strpos( $path, $home_path . '/' ) ) ) {
+
+			$path = ltrim( substr( $path, strlen( $home_path ) ), '/' );
+
+		}
+
+		if ( '' === $path ) {
+
+			return $query_vars;
+
+		}
+
+		$endpoint = $this->baseless_request_endpoint( $path );
+		$path     = $endpoint['path'];
+
+		if ( '' === $path || $this->request_matches_existing_content( $query_vars, $path ) ) {
+
+			return $query_vars;
+
+		}
+
+		foreach ( $this->baseless_taxonomies as $taxonomy => $definition ) {
+
+			$term = $this->term_at_archive_path( $path, $taxonomy, ! empty( $definition['hierarchical'] ) );
+
+			if ( ! $term ) {
+
+				continue;
+
+			}
+
+			$taxonomy_object = get_taxonomy( $taxonomy );
+
+			if ( ! $taxonomy_object || ! is_string( $taxonomy_object->query_var ) || '' === $taxonomy_object->query_var ) {
+
+				continue;
+
+			}
+
+			unset(
+				$query_vars['attachment'],
+				$query_vars['attachment_id'],
+				$query_vars['error'],
+				$query_vars['name'],
+				$query_vars['page'],
+				$query_vars['pagename'],
+				$query_vars['post_type']
+			);
+
+			$query_vars[ $taxonomy_object->query_var ] = $path;
+
+			if ( $endpoint['paged'] > 1 ) {
+
+				$query_vars['paged'] = $endpoint['paged'];
+
+			}
+
+			if ( '' !== $endpoint['feed'] ) {
+
+				$query_vars['feed'] = $endpoint['feed'];
+
+			}
+
+			return $query_vars;
+
+		}
+
+		return $query_vars;
+
+	}
+
+	/*
+	BASELESS REQUEST ENDPOINT
+	-- Separates pagination and feed suffixes from a possible term path.
+	---------------------------------------------------------- */
+
+	protected function baseless_request_endpoint( string $path ): array {
+
+		$endpoint = [
+			'path'  => $path,
+			'paged' => 1,
+			'feed'  => '',
+		];
+
+		if ( preg_match( '#^(.*)/page/([0-9]+)$#', $path, $matches ) ) {
+
+			$endpoint['path']  = trim( $matches[1], '/' );
+			$endpoint['paged'] = max( 1, absint( $matches[2] ) );
+
+			return $endpoint;
+
+		}
+
+		if ( preg_match( '#^(.*)/(?:feed/)?(feed|rdf|rss|rss2|atom)$#', $path, $matches ) ) {
+
+			$endpoint['path'] = trim( $matches[1], '/' );
+			$endpoint['feed'] = sanitize_key( $matches[2] );
+
+		}
+
+		return $endpoint;
+
+	}
+
+	/*
+	REQUEST MATCHES EXISTING CONTENT
+	-- Prevents a root-level term from taking over a real Page or resolved post.
+	---------------------------------------------------------- */
+
+	protected function request_matches_existing_content( array $query_vars, string $path ): bool {
+
+		$archive_vars = [
+			'author',
+			'author_name',
+			'cat',
+			'category_name',
+			'day',
+			'm',
+			'monthnum',
+			's',
+			'tag',
+			'tag_id',
+			'taxonomy',
+			'term',
+			'year',
+		];
+
+		foreach ( $archive_vars as $archive_var ) {
+
+			if ( ! empty( $query_vars[ $archive_var ] ) ) {
+
+				return true;
+
+			}
+
+		}
+
+		if ( ! empty( $query_vars['post_type'] ) && empty( $query_vars['name'] ) ) {
+
+			return true;
+
+		}
+
+		foreach ( get_taxonomies( [ 'public' => true ], 'objects' ) as $taxonomy_object ) {
+
+			$query_var = $taxonomy_object->query_var;
+
+			if ( is_string( $query_var ) && '' !== $query_var && ! empty( $query_vars[ $query_var ] ) ) {
+
+				return true;
+
+			}
+
+		}
+
+		$page = ! empty( $query_vars['pagename'] ) ? get_page_by_path( $path, OBJECT, 'page' ) : null;
+
+		if ( $page instanceof WP_Post && is_post_publicly_viewable( $page ) ) {
+
+			return true;
+
+		}
+
+		if ( empty( $query_vars['name'] ) ) {
+
+			return false;
+
+		}
+
+		$post_types = empty( $query_vars['post_type'] ) ? [ 'post' ] : (array) $query_vars['post_type'];
+		$post_types = array_filter( array_map( 'sanitize_key', $post_types ), 'post_type_exists' );
+		$post       = ! empty( $post_types ) ? get_page_by_path( basename( $path ), OBJECT, $post_types ) : null;
+
+		return $post instanceof WP_Post && is_post_publicly_viewable( $post );
+
+	}
+
+	/*
+	TERM AT ARCHIVE PATH
+	-- Finds the taxonomy term whose full hierarchy matches the requested path.
+	---------------------------------------------------------- */
+
+	protected function term_at_archive_path( string $path, string $taxonomy, bool $hierarchical ): ?WP_Term {
+
+		if ( ! $hierarchical && false !== strpos( $path, '/' ) ) {
+
+			return null;
+
+		}
+
+		$segments = array_values( array_filter( explode( '/', $path ) ) );
+
+		if ( empty( $segments ) ) {
+
+			return null;
+
+		}
+
+		$terms = get_terms(
+			[
+				'taxonomy'   => $taxonomy,
+				'slug'       => sanitize_title( end( $segments ) ),
+				'hide_empty' => false,
+			]
+		);
+
+		if ( is_wp_error( $terms ) ) {
+
+			return null;
+
+		}
+
+		foreach ( $terms as $term ) {
+
+			if ( $term instanceof WP_Term && $path === $this->term_archive_path( $term ) ) {
+
+				return $term;
+
+			}
+
+		}
+
+		return null;
+
+	}
+
+	/*
+	TERM ARCHIVE PATH
+	-- Builds a term's slug path, including hierarchical parents when enabled.
+	---------------------------------------------------------- */
+
+	protected function term_archive_path( WP_Term $term ): string {
+
+		$slugs     = [];
+		$ancestors = array_reverse( get_ancestors( $term->term_id, $term->taxonomy, 'taxonomy' ) );
+
+		foreach ( $ancestors as $ancestor_id ) {
+
+			$ancestor = get_term( $ancestor_id, $term->taxonomy );
+
+			if ( $ancestor instanceof WP_Term ) {
+
+				$slugs[] = $ancestor->slug;
+
+			}
+
+		}
+
+		$slugs[] = $term->slug;
+
+		return implode( '/', array_filter( $slugs ) );
+
+	}
+
+	/*
 	MAYBE REFRESH REWRITE RULES
 	-- Flushes once when post type routing or taxonomy settings change.
 	---------------------------------------------------------- */
@@ -3783,17 +4106,18 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 			$used[ $key ] = true;
 			$clean[]      = [
-				'enabled'           => ! empty( $taxonomy['enabled'] ),
-				'name'              => $name,
-				'singular_name'     => $singular,
-				'taxonomy'          => $key,
-				'slug'              => self::sanitize_rewrite_path( $taxonomy['slug'] ?? '', sanitize_title( $singular ) ),
-				'hierarchical'      => ! empty( $taxonomy['hierarchical'] ),
-				'public'            => ! empty( $taxonomy['public'] ),
-				'show_admin_column' => ! array_key_exists( 'show_admin_column', $taxonomy ) || ! empty( $taxonomy['show_admin_column'] ),
-				'show_admin_filter' => ! empty( $taxonomy['show_admin_filter'] ),
-				'post_types'        => $assigned,
-				'post_type_order'   => $order,
+				'enabled'             => ! empty( $taxonomy['enabled'] ),
+				'name'                => $name,
+				'singular_name'       => $singular,
+				'taxonomy'            => $key,
+				'slug'                => self::sanitize_rewrite_path( $taxonomy['slug'] ?? '', sanitize_title( $singular ) ),
+				'hierarchical'        => ! empty( $taxonomy['hierarchical'] ),
+				'public'              => ! empty( $taxonomy['public'] ),
+				'remove_rewrite_base' => ! empty( $taxonomy['remove_rewrite_base'] ),
+				'show_admin_column'   => ! array_key_exists( 'show_admin_column', $taxonomy ) || ! empty( $taxonomy['show_admin_column'] ),
+				'show_admin_filter'   => ! empty( $taxonomy['show_admin_filter'] ),
+				'post_types'          => $assigned,
+				'post_type_order'     => $order,
 			];
 
 		}
@@ -3999,16 +4323,17 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			}
 
 			$taxonomies[] = [
-				'enabled'           => true,
-				'name'              => $post_type['taxonomy_name'],
-				'singular_name'     => $post_type['taxonomy_singular_name'],
-				'taxonomy'          => $post_type['taxonomy'],
-				'slug'              => $post_type['taxonomy_slug'],
-				'hierarchical'      => true,
-				'public'            => ! empty( $post_type['public'] ),
-				'show_admin_column' => true,
-				'show_admin_filter' => false,
-				'post_types'        => [ $post_type['post_type'] ],
+				'enabled'             => true,
+				'name'                => $post_type['taxonomy_name'],
+				'singular_name'       => $post_type['taxonomy_singular_name'],
+				'taxonomy'            => $post_type['taxonomy'],
+				'slug'                => $post_type['taxonomy_slug'],
+				'hierarchical'        => true,
+				'public'              => ! empty( $post_type['public'] ),
+				'remove_rewrite_base' => false,
+				'show_admin_column'   => true,
+				'show_admin_filter'   => false,
+				'post_types'          => [ $post_type['post_type'] ],
 			];
 
 		}

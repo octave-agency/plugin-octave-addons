@@ -2763,7 +2763,7 @@ ADMIN INTERACTIONS
 			var scopeBadge = item.querySelector( '.oa-field-scope-badge' );
 			var contextAssignment = item.querySelector( '[data-context-assignment="true"]' );
 			var publicToggle = item.querySelector( '.oa-tax-public-toggle' );
-			var urlField = item.querySelector( '.oa-tax-url-field' );
+			var urlFields = item.querySelectorAll( '.oa-tax-url-field' );
 			var dragHandle = item.querySelector( '.oa-field-drag-handle' );
 			var keyIsAutomatic = 'false' === item.dataset.saved;
 
@@ -2775,13 +2775,17 @@ ADMIN INTERACTIONS
 
 			function syncPublicUrls() {
 
-				if ( ! publicToggle || ! urlField ) {
+				if ( ! publicToggle || ! urlFields.length ) {
 
 					return;
 
 				}
 
-				setFieldVisibility( urlField, publicToggle.checked );
+				urlFields.forEach( function ( urlField ) {
+
+					setFieldVisibility( urlField, publicToggle.checked );
+
+				} );
 
 			}
 

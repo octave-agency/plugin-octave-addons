@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.19.0
+Stable tag:        3.20.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -124,6 +124,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.20.0 =
+* Added an optional per-taxonomy setting that removes the public taxonomy URL base while preserving Pages, posts, existing archives, hierarchical term paths, feeds, and pagination.
 
 = 3.19.0 =
 * Fixed Markdown for Agents returning almost none of the page on builder-made sites. A repeated `<article>` — a testimonial or post card — was being taken as the content region, so a page could convert to a single quote. An `<article>` is now only treated as the content region when the page has exactly one.
