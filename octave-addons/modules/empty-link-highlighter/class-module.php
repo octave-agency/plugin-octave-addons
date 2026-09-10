@@ -330,6 +330,31 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 		});
 
 	}
+	/*
+	CLEAR EMPTY STATE
+	-- Removes the marker and restores any title changed by an earlier scan.
+	---------------------------------------------------------- */
+
+	function clearEmptyState( a ) {
+
+		a.removeAttribute( 'data-oa-elh-empty' );
+		var originalTitle = a.getAttribute( 'data-oa-elh-original-title' );
+		if ( originalTitle !== null ) {
+
+			if ( originalTitle ) {
+
+				a.setAttribute( 'title', originalTitle );
+
+			} else {
+
+				a.removeAttribute( 'title' );
+
+			}
+			a.removeAttribute( 'data-oa-elh-original-title' );
+
+		}
+
+	}
 	function scan() {
 
 		var links = document.querySelectorAll('a, .bde-button button[type="button"]');
@@ -338,43 +363,20 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 
 			if (a.closest('#wpadminbar')) {
 
-				a.removeAttribute('data-oa-elh-empty');
-				var adminBarOriginalTitle = a.getAttribute('data-oa-elh-original-title');
-				if (adminBarOriginalTitle !== null) {
-
-					if (adminBarOriginalTitle) {
-
-						a.setAttribute('title', adminBarOriginalTitle);
-
-					} else {
-
-						a.removeAttribute('title');
-
-					}
-					a.removeAttribute('data-oa-elh-original-title');
-
-				}
+				clearEmptyState( a );
 				return;
 
 			}
 			if (shouldIgnoreLink(a)) {
 
-				a.removeAttribute('data-oa-elh-empty');
-				var ignoredOriginalTitle = a.getAttribute('data-oa-elh-original-title');
-				if (ignoredOriginalTitle !== null) {
+				clearEmptyState( a );
+				return;
 
-					if (ignoredOriginalTitle) {
+			}
+			var wrapperLink = a.matches( '.bde-button button[type="button"]' ) ? a.closest( 'a' ) : null;
+			if ( wrapperLink ) {
 
-						a.setAttribute('title', ignoredOriginalTitle);
-
-					} else {
-
-						a.removeAttribute('title');
-
-					}
-					a.removeAttribute('data-oa-elh-original-title');
-
-				}
+				clearEmptyState( a );
 				return;
 
 			}
@@ -404,22 +406,7 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 
 			} else {
 
-				a.removeAttribute('data-oa-elh-empty');
-				var originalTitle = a.getAttribute('data-oa-elh-original-title');
-				if (originalTitle !== null) {
-
-					if (originalTitle) {
-
-						a.setAttribute('title', originalTitle);
-
-					} else {
-
-						a.removeAttribute('title');
-
-					}
-					a.removeAttribute('data-oa-elh-original-title');
-
-				}
+				clearEmptyState( a );
 
 			}
 

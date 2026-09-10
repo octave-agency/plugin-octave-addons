@@ -817,7 +817,7 @@ Navigation entry
     background: linear-gradient(145deg, rgba(23, 27, 28, 0.94), rgba(15, 18, 19, 0.94));
     border: 1px solid var(--oa-border);
     border-radius: 18px;
-    padding: 30px 32px 14px;
+    padding: 30px 32px 16px;
     box-shadow: 0 20px 54px rgba(0, 0, 0, 0.2);
 }
 
@@ -847,6 +847,11 @@ Navigation entry
 
 .oa-settings-body > :first-child {
     margin-top: 0;
+}
+
+.oa-settings-body > :last-child,
+.oa-settings-locked {
+    margin-bottom: 0;
 }
 
 .oa-panel-head-text {
@@ -921,6 +926,11 @@ Navigation entry
 .oa-form-table td {
     padding: 13px 0;
     color: var(--oa-text);
+}
+
+.oa-settings-body > .oa-form-table:last-child tr:last-child th,
+.oa-settings-body > .oa-form-table:last-child tr:last-child td {
+    padding-bottom: 0;
 }
 
 .oa-form-table label {
@@ -1845,7 +1855,7 @@ CUSTOM SELECTS
     }
 
     .oa-panel {
-        padding: 18px 18px 8px;
+        padding: 18px 18px 16px;
     }
 
     .oa-panel-head {
@@ -1862,7 +1872,7 @@ CUSTOM SELECTS
     }
 
     .oa-panel {
-        padding: 14px 14px 8px;
+        padding: 14px 14px 16px;
     }
 
     .oa-panel-head {
@@ -5946,10 +5956,30 @@ MARKDOWN FOR AGENTS
     display: grid;
     gap: 8px;
     margin: 0;
-    padding-left: 18px;
-    list-style: disc;
+    padding: 0;
+    color: var(--oa-text-muted);
+    font-size: 13px;
+    line-height: 1.55;
+    list-style: none;
 }
 
 .oa-md-summary li {
+    position: relative;
     margin: 0;
+    padding: 11px 14px 11px 38px;
+    border: 1px solid var(--oa-border-light);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.oa-md-summary li::before {
+    content: '';
+    position: absolute;
+    top: 17px;
+    left: 16px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--oa-green);
+    box-shadow: 0 0 0 4px var(--oa-green-bg);
 }
