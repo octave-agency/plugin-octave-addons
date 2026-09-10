@@ -1202,10 +1202,6 @@ html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-not
     border-color: var(--oa-admin-border);
 }
 
-html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-popover__content {
-    background: transparent;
-}
-
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__body-title,
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__body-title button,
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-tools-panel-header,
@@ -1448,21 +1444,24 @@ html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .editor-post-fe
 MEDIA LIBRARY
 ---------------------------------------------------------- */
 
+body.wp-admin.upload-php .wp-filter {
+    margin: 0 0 20px;
+    color: var(--oa-admin-text-soft);
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
 body.wp-admin.upload-php .media-toolbar.wp-filter {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px 18px;
     min-height: 58px;
-    margin: 12px 0 20px;
     padding: 10px 12px;
-    color: var(--oa-admin-text-soft);
-    background: var(--oa-admin-surface);
-    border-color: var(--oa-admin-border);
-    box-shadow: none;
 }
 
-body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch {
+body.wp-admin.upload-php .wp-filter .view-switch {
     display: flex;
     align-items: center;
     gap: 2px;
@@ -1470,7 +1469,7 @@ body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch {
     padding: 0;
 }
 
-body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a {
+body.wp-admin.upload-php .wp-filter .view-switch a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1482,17 +1481,17 @@ body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a {
     line-height: 1;
 }
 
-body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a::before {
+body.wp-admin.upload-php .wp-filter .view-switch a::before {
     color: currentColor;
 }
 
-body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a:hover,
-body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a:focus {
+body.wp-admin.upload-php .wp-filter .view-switch a:hover,
+body.wp-admin.upload-php .wp-filter .view-switch a:focus {
     color: var(--oa-admin-accent-dark);
     background: var(--oa-admin-accent-soft);
 }
 
-body.wp-admin.upload-php .media-toolbar.wp-filter .view-switch a.current {
+body.wp-admin.upload-php .wp-filter .view-switch a.current {
     color: var(--oa-admin-accent);
     background: var(--oa-admin-accent-soft);
 }

@@ -102,3 +102,45 @@ body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(.butt
     background: var(--oa-plugin-accent);
     text-shadow: none;
 }
+
+/*
+BREAKDANCE SETTINGS
+-- Replaces the fixed light navigation, panels and table borders shared by
+-- Breakdance's settings tabs without changing its layout.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .breakdance-admin,
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .breakdance-admin__content,
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .breakdance-admin .form-table,
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .breakdance-admin .form-table tr,
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .breakdance-admin .form-table th,
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .breakdance-admin .form-table td {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .breakdance-admin__tab.is-active {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings #bd-elements-list,
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings #analyticswp-ad {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings #analyticswp-ad p {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings #bd-elements-list small {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings #bd-elements-list input[type="checkbox"] {
+    background: var(--oa-admin-surface-soft);
+    border-color: var(--oa-admin-border-strong);
+}

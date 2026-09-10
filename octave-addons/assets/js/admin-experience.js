@@ -71,6 +71,57 @@ WORDPRESS ADMIN EXPERIENCE
     }
 
     /*
+    SYNC BREAKDANCE TOOLS THEME
+    -- Breakdance renders its cache utility in a same-origin frontend iframe,
+    -- so admin styles cannot reach the fixed light Vuetify surface directly.
+    ---------------------------------------------------------- */
+
+    function syncBreakdanceToolsTheme() {
+
+        var iframe = document.querySelector( '#settings-tools-regenerate-cache-iframe' );
+
+        if ( ! iframe || ! iframe.contentDocument || ! iframe.contentDocument.head ) {
+
+            return;
+
+        }
+
+        var frameRoot = iframe.contentDocument.documentElement;
+        var rootStyles = window.getComputedStyle( root );
+        var background = rootStyles.getPropertyValue( '--oa-admin-surface' ).trim();
+        var softBackground = rootStyles.getPropertyValue( '--oa-admin-surface-soft' ).trim();
+        var hoverBackground = rootStyles.getPropertyValue( '--oa-admin-surface-hover' ).trim();
+        var text = rootStyles.getPropertyValue( '--oa-admin-text' ).trim();
+        var softText = rootStyles.getPropertyValue( '--oa-admin-text-soft' ).trim();
+        var accent = rootStyles.getPropertyValue( '--oa-admin-accent-dark' ).trim();
+        var style = iframe.contentDocument.getElementById( 'oa-breakdance-tools-theme' );
+
+        frameRoot.dataset.oaAdminTheme = activeTheme;
+        frameRoot.style.colorScheme = activeTheme;
+
+        if ( ! style ) {
+
+            style = iframe.contentDocument.createElement( 'style' );
+            style.id = 'oa-breakdance-tools-theme';
+            iframe.contentDocument.head.appendChild( style );
+
+        }
+
+        style.textContent = 'html, body, .v-application, .v-application__wrap { color: ' + text + ' !important; background: ' + background + ' !important; }'
+            + ' .regenerate-cache-description { color: ' + softText + ' !important; }'
+            + ' .regenerate-cache-button { color: ' + accent + ' !important; background: ' + softBackground + ' !important; border-color: ' + accent + ' !important; box-shadow: none !important; }'
+            + ' .regenerate-cache-button:hover, .regenerate-cache-button:focus { background: ' + hoverBackground + ' !important; }';
+
+        if ( ! iframe.dataset.oaThemeSync ) {
+
+            iframe.dataset.oaThemeSync = '1';
+            iframe.addEventListener( 'load', syncBreakdanceToolsTheme );
+
+        }
+
+    }
+
+    /*
     SYNC EDITOR CANVAS THEME
     -- Gutenberg renders post content in a separate document. Copies the active
     -- theme and its resolved tokens into that document so editor and meta-box
@@ -151,6 +202,7 @@ WORDPRESS ADMIN EXPERIENCE
 
         syncEditorCanvasTheme();
         syncWysiwygTheme();
+        syncBreakdanceToolsTheme();
 
         if ( editorCanvasObserver ) {
 
@@ -175,6 +227,7 @@ WORDPRESS ADMIN EXPERIENCE
 
                 syncEditorCanvasTheme();
                 syncWysiwygTheme();
+                syncBreakdanceToolsTheme();
 
             } );
 
@@ -199,6 +252,7 @@ WORDPRESS ADMIN EXPERIENCE
 
         syncEditorCanvasTheme();
         syncWysiwygTheme();
+        syncBreakdanceToolsTheme();
         updateToggle();
 
     }

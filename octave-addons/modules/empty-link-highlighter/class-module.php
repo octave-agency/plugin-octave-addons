@@ -3,7 +3,7 @@
 /*
 MODULE: EMPTY LINK HIGHLIGHTER
 -- Ported from the standalone Empty Link Highlighter plugin. Scans the
--- frontend for <a> tags with empty/placeholder href and flags them.
+-- frontend for empty anchors and unlinked Breakdance buttons and flags them.
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,7 +29,7 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Highlights links with an empty href or href="#" on the frontend so broken navigation is immediately obvious.', 'octave-addons' );
+		return __( 'Highlights empty links and unlinked Breakdance buttons on the frontend so broken navigation is immediately obvious.', 'octave-addons' );
 
 	}
 
@@ -332,7 +332,7 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 	}
 	function scan() {
 
-		var links = document.querySelectorAll('a');
+		var links = document.querySelectorAll('a, .bde-button button[type="button"]');
 		var count = 0;
 		links.forEach(function(a) {
 
