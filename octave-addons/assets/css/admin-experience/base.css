@@ -133,23 +133,33 @@ body.wp-admin hr {
 
 /*
 LOADING INDICATOR
--- Replaces the legacy WordPress loading image with a lightweight CSS ring.
+-- Replaces both WordPress loaders with a tapered ring driven by the admin palette.
 ---------------------------------------------------------- */
 
-body.wp-admin .spinner {
-    width: 20px;
-    height: 20px;
-    background: none;
-    border: 2px solid var(--oa-admin-border-strong);
-    border-top-color: var(--oa-admin-accent);
+body.wp-admin .spinner,
+body.wp-admin .components-spinner {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    background: conic-gradient(from 45deg, transparent 0 18%, var(--oa-admin-accent-soft) 42%, var(--oa-admin-accent) 76%, var(--oa-admin-accent-dark) 100%);
+    border: 0;
     border-radius: 50%;
     opacity: 1;
     box-sizing: border-box;
+    box-shadow: none;
+    vertical-align: middle;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
 }
 
 body.wp-admin .spinner.is-active,
-body.wp-admin .loading-content .spinner {
-    animation: oa-admin-spinner 0.7s linear infinite;
+body.wp-admin .loading-content .spinner,
+body.wp-admin .components-spinner {
+    animation: oa-admin-spinner 0.8s linear infinite;
+}
+
+body.wp-admin .components-spinner > * {
+    display: none;
 }
 
 @keyframes oa-admin-spinner {
@@ -1182,8 +1192,8 @@ html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-b
     border-color: var(--oa-admin-border);
 }
 
-html[admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header button,
-html[admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header svg {
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header button,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-panel__header svg {
     color: var(--oa-admin-text);
 }
 
@@ -1257,10 +1267,6 @@ html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-che
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-radio-control__input,
 html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-form-toggle__track {
     border-color: var(--oa-admin-border-strong);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .components-spinner {
-    background: var(--oa-admin-accent);
 }
 
 /*
@@ -3770,6 +3776,30 @@ html[data-oa-admin-theme] body.wp-admin.block-editor-page .interface-complementa
     color: var(--oa-admin-accent) !important;
     background: var(--oa-admin-accent-soft) !important;
     box-shadow: inset 0 0 0 1px var(--oa-admin-accent);
+}
+
+/* Gutenberg's component rules load with enough specificity to repaint pressed
+   toolbar buttons. Keep every active editor control on the selected token. */
+
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .components-button.components-toolbar-button.is-pressed,
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .components-button.components-toolbar-button.is-active,
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .components-button.components-toolbar-button[aria-pressed="true"],
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .editor-header__toolbar .components-button.is-pressed,
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .editor-header__settings .components-button.is-pressed,
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .edit-post-header-toolbar .components-button.is-pressed,
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .edit-post-header__settings .components-button.is-pressed {
+    color: var(--oa-admin-accent-dark) !important;
+    background: var(--oa-admin-surface-selected) !important;
+    border-color: var(--oa-admin-accent) !important;
+    box-shadow: inset 0 0 0 1px var(--oa-admin-accent);
+}
+
+/* Keep the async new-term affordance compact and aligned with its button. */
+
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .editor-post-taxonomies__hierarchical-terms-submit + .components-spinner,
+html[data-oa-admin-theme] body.wp-admin.block-editor-page .editor-post-taxonomies__hierarchical-terms-submit .components-spinner {
+    margin: 0 0 0 10px;
+    align-self: center;
 }
 
 /*
