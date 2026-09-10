@@ -613,7 +613,6 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 			__( 'Every page, post and custom post type with a public URL answers in Markdown, and archives, taxonomy pages and search results answer as a link index.', 'octave-addons' ),
 			__( 'Each document opens with YAML frontmatter — title, description, canonical URL, dates, author, image and terms — and carries any structured data the page publishes.', 'octave-addons' ),
 			__( 'The page is converted as it renders, so Breakdance sections, blocks and shortcodes all come through as text.', 'octave-addons' ),
-			__( 'Browsers are unaffected. They ask for HTML and receive exactly what they did before.', 'octave-addons' ),
 		];
 
 		?>

@@ -80,5 +80,6 @@ Elements that need JavaScript expose a global init function and re-run it from
 | OA Countdown | Fixed-date, evergreen per-visitor, or recurring daily/weekly timer |
 | OA Copy Text | Click-to-copy button for a value or another node on the page |
 | OA Copyright | Footer line with a year generated at render time |
+| OA Hero Section | Native-style section with a featured-image background and editable starter content |
 | OA Logo Marquee | Seamless CSS logo strip, no slider library |
 | OA Reading Time | Reading estimate and word count for the current post |

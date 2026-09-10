@@ -41,6 +41,60 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 		}
 
 		add_filter( 'breakdance_builder_elements', [ $this, 'filter_builder_elements' ] );
+		add_filter( 'breakdance_render_element_html', [ __CLASS__, 'disable_hero_lazy_loading' ], 1000, 2 );
+
+	}
+
+	/*
+	DISABLE HERO LAZY LOADING
+	-- The hero is above the fold, so every nested image, iframe and video is
+	-- rendered eagerly even when it was added as a normal child element.
+	-- The exclusion attributes also give performance plugins a clear signal.
+	---------------------------------------------------------- */
+
+	public static function disable_hero_lazy_loading( $html, $node ) {
+
+		$node_type = is_array( $node ) ? (string) ( $node['data']['type'] ?? '' ) : '';
+
+		if ( 'OctaveCustomElements\\OaHeroSection' !== $node_type || ! is_string( $html ) || '' === $html ) {
+
+			return $html;
+
+		}
+
+		$html = preg_replace( '/\sdata-bde-lazy-bg=(["\'])waiting\1/i', '', $html ) ?? $html;
+
+		return preg_replace_callback(
+			'/<(?:img|iframe|video)\b[^>]*>/i',
+			static function ( array $matches ): string {
+
+				$tag = preg_replace( '/\sloading=(["\'])lazy\1/i', ' loading=$1eager$1', $matches[0] ) ?? $matches[0];
+
+				$attributes = '';
+
+				if ( ! preg_match( '/\sloading\s*=/i', $tag ) ) {
+
+					$attributes .= ' loading="eager"';
+
+				}
+
+				if ( ! preg_match( '/\sdata-no-lazy\s*=/i', $tag ) ) {
+
+					$attributes .= ' data-no-lazy="1"';
+
+				}
+
+				if ( ! preg_match( '/\sdata-skip-lazy\s*=/i', $tag ) ) {
+
+					$attributes .= ' data-skip-lazy="1"';
+
+				}
+
+				return preg_replace( '/\s*\/?>(\s*)$/', $attributes . '$0', $tag ) ?? $tag;
+
+			},
+			$html
+		) ?? $html;
 
 	}
 

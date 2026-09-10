@@ -1,0 +1,22 @@
+/*
+OA HERO SECTION
+-- Featured-image layer only; bde-section supplies the structure and children.
+---------------------------------------------------------- */
+
+.breakdance .bde-oa-hero-section .section-container {
+  z-index: 2;
+}
+
+.breakdance .bde-oa-hero-section .oa_hero_section-featured {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  pointer-events: none;
+}
+
+.breakdance .bde-oa-hero-section > .section-background-overlay {
+  z-index: 1;
+}

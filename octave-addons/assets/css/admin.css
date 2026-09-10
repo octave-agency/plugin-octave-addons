@@ -817,7 +817,7 @@ Navigation entry
     background: linear-gradient(145deg, rgba(23, 27, 28, 0.94), rgba(15, 18, 19, 0.94));
     border: 1px solid var(--oa-border);
     border-radius: 18px;
-    padding: 30px 32px 16px;
+    padding: 30px 32px;
     box-shadow: 0 20px 54px rgba(0, 0, 0, 0.2);
 }
 
@@ -852,6 +852,7 @@ Navigation entry
 .oa-settings-body > :last-child,
 .oa-settings-locked {
     margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .oa-panel-head-text {
@@ -928,8 +929,10 @@ Navigation entry
     color: var(--oa-text);
 }
 
+.oa-settings-body > .oa-form-table:last-child tr:last-child,
 .oa-settings-body > .oa-form-table:last-child tr:last-child th,
 .oa-settings-body > .oa-form-table:last-child tr:last-child td {
+    margin-bottom: 0;
     padding-bottom: 0;
 }
 
@@ -1855,7 +1858,7 @@ CUSTOM SELECTS
     }
 
     .oa-panel {
-        padding: 18px 18px 16px;
+        padding: 18px;
     }
 
     .oa-panel-head {
@@ -1872,7 +1875,7 @@ CUSTOM SELECTS
     }
 
     .oa-panel {
-        padding: 14px 14px 16px;
+        padding: 14px;
     }
 
     .oa-panel-head {

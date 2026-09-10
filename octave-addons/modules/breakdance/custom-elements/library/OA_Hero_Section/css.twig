@@ -1,0 +1,22 @@
+{# Featured-image background #}
+
+{% if content.hero.background_source == 'featured' %}
+
+  %%SELECTOR%% > .section-background-video,
+  %%SELECTOR%% > .section-background-slideshow {
+    display: none;
+  }
+
+  %%SELECTOR%% .oa_hero_section-featured {
+    {{ macros.image_settings(design.background.image_settings) }}
+  }
+
+  {% if breakpoint == design.background.image_settings.unset_image_at %}
+
+    %%SELECTOR%% .oa_hero_section-featured {
+      background-image: none !important;
+    }
+
+  {% endif %}
+
+{% endif %}
