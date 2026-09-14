@@ -93,39 +93,85 @@ ADMIN INTERACTIONS
 
 	/* Field row show/hide — control attributes accept comma-separated IDs.
 	   A control carrying data-controls-value shows its rows while it holds that
-	   value, so a select can drive a row as well as a checkbox can. */
-	document.querySelectorAll( '[data-controls-row]' ).forEach( function ( control ) {
+	   value, so a select can drive a row as well as a checkbox can.
+	   More than one control may claim the same row, and every one of them has
+	   to agree before it shows, so a field nested under another stays hidden
+	   while the field above it is. */
+	var conditionalRows = [];
 
-		var ids = control.dataset.controlsRow.split( ',' );
-		var match = control.dataset.controlsValue;
-		var rows = ids.map( function ( id ) {
+	function conditionalRow( row ) {
 
-			return document.getElementById( id.trim() );
+		var entry = null;
 
-		} ).filter( Boolean );
+		conditionalRows.forEach( function ( candidate ) {
 
-		if ( ! rows.length ) {
+			if ( candidate.row === row ) {
 
-			return;
+				entry = candidate;
+
+			}
+
+		} );
+
+		if ( entry ) {
+
+			return entry;
 
 		}
 
-		function sync() {
+		entry = { row: row, controls: [] };
 
-			var isVisible = undefined === match ? control.checked : match === control.value;
+		conditionalRows.push( entry );
 
-			rows.forEach( function ( row ) {
+		return entry;
 
-				row.classList.toggle( 'oa-hidden', ! isVisible );
+	}
+
+	function isControlOn( control ) {
+
+		var match = control.dataset.controlsValue;
+
+		return undefined === match ? control.checked : match === control.value;
+
+	}
+
+	function syncConditionalRows() {
+
+		conditionalRows.forEach( function ( entry ) {
+
+			var isVisible = entry.controls.every( function ( control ) {
+
+				return isControlOn( control );
 
 			} );
 
-		}
+			entry.row.classList.toggle( 'oa-hidden', ! isVisible );
 
-		sync();
-		control.addEventListener( 'change', sync );
+		} );
+
+	}
+
+	document.querySelectorAll( '[data-controls-row]' ).forEach( function ( control ) {
+
+		control.dataset.controlsRow.split( ',' ).forEach( function ( id ) {
+
+			var row = document.getElementById( id.trim() );
+
+			if ( ! row ) {
+
+				return;
+
+			}
+
+			conditionalRow( row ).controls.push( control );
+
+		} );
+
+		control.addEventListener( 'change', syncConditionalRows );
 
 	} );
+
+	syncConditionalRows();
 
 	document.querySelectorAll( '[data-controls-row-hide]' ).forEach( function ( checkbox ) {
 

@@ -3,7 +3,18 @@ NOTIFICATIONS BAR
 -- Frontend styles for the stacked announcement banners.
 -- Colours arrive as custom properties set inline by the module, so a banner
 -- with its own background simply overrides them on itself.
+-- Height is the single source of truth for the opening animation: the bar
+-- occupies --oa-nb-height, which pushes everything below it down, and the
+-- same measurement is published as --oa-nb-offset for anything fixed that
+-- the document flow cannot reach.
 ---------------------------------------------------------- */
+
+:root {
+    --oa-nb-duration: 420ms;
+    --oa-nb-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --oa-nb-height: 0px;
+    --oa-nb-offset: 0px;
+}
 
 .oa-nb {
     position: relative;
@@ -22,6 +33,97 @@ NOTIFICATIONS BAR
     left: 0;
     right: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/*
+Opening animation
+-- The oa-nb--animated class is added by the module's inline script, so a
+-- visitor without JavaScript never meets a bar collapsed to nothing. The
+-- oa-nb--anim-* class comes from the markup and does nothing on its own.
+-- Sliding grows the bar from zero height, which pushes the header and the
+-- page content down with it. Fading takes the full height straight away, so
+-- there is nothing left to push and only the banners come up.
+---------------------------------------------------------- */
+
+.oa-nb--animated {
+    overflow: hidden;
+}
+
+.oa-nb--animated.oa-nb--anim-slide-down {
+    height: 0;
+    transition: height var(--oa-nb-duration) var(--oa-nb-ease);
+}
+
+.oa-nb--animated.oa-nb--anim-slide-down.is-open {
+    height: var(--oa-nb-height);
+}
+
+.oa-nb--animated.oa-nb--anim-fade {
+    opacity: 0;
+    transition: opacity var(--oa-nb-duration) var(--oa-nb-ease);
+}
+
+.oa-nb--animated.oa-nb--anim-fade.is-open {
+    opacity: 1;
+}
+
+.oa-nb--animated.oa-nb--anim-slide-fade {
+    height: 0;
+    opacity: 0;
+    transition: height var(--oa-nb-duration) var(--oa-nb-ease), opacity var(--oa-nb-duration) var(--oa-nb-ease);
+}
+
+.oa-nb--animated.oa-nb--anim-slide-fade.is-open {
+    height: var(--oa-nb-height);
+    opacity: 1;
+}
+
+/*
+Bottom bar
+-- A bottom bar floats over the page, so it has nothing to push and slides up
+-- from the foot of the screen on transform rather than on height.
+---------------------------------------------------------- */
+
+.oa-nb--bottom.oa-nb--animated.oa-nb--anim-slide-down,
+.oa-nb--bottom.oa-nb--animated.oa-nb--anim-slide-fade {
+    height: auto;
+    transform: translateY(100%);
+    transition: transform var(--oa-nb-duration) var(--oa-nb-ease), opacity var(--oa-nb-duration) var(--oa-nb-ease);
+}
+
+.oa-nb--bottom.oa-nb--animated.oa-nb--anim-slide-down.is-open,
+.oa-nb--bottom.oa-nb--animated.oa-nb--anim-slide-fade.is-open {
+    height: auto;
+    transform: none;
+}
+
+/*
+Fixed header
+-- A Breakdance sticky header is position: fixed, so the growing bar cannot
+-- push it; margin-top moves it by the height the bar has taken instead.
+-- margin-top is deliberately left out of the transition list Breakdance
+-- manages on this element, so the header eases only while the bar is easing
+-- and otherwise tracks it frame for frame as the bar scrolls away.
+-- Any other fixed furniture can read --oa-nb-offset the same way from the
+-- module's custom CSS box.
+---------------------------------------------------------- */
+
+.breakdance .bde-header-builder.bde-header-builder--sticky:not(.bde-header-builder--sticky-bottom) {
+    margin-top: var(--oa-nb-offset, 0px);
+}
+
+.oa-nb-animating .breakdance .bde-header-builder.bde-header-builder--sticky:not(.bde-header-builder--sticky-bottom) {
+    transition-property: transform, opacity, background-color, box-shadow, top, margin-top;
+    transition-duration: var(--oa-nb-duration);
+    transition-timing-function: var(--oa-nb-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    :root {
+        --oa-nb-duration: 1ms;
+    }
+
 }
 
 /*

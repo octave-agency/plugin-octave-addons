@@ -26,6 +26,9 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 	/** Placeholder index the browser swaps out when cloning the card template. */
 	protected const TEMPLATE_INDEX = '__INDEX__';
 
+	/** The corner radius the rounded button shape applies. */
+	protected const ROUNDED_RADIUS = 8;
+
 
 	public function get_id(): string {
 
@@ -48,21 +51,25 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 	public function get_defaults(): array {
 
 		return [
-			'enabled'         => false,
-			'position'        => 'top',
-			'sticky'          => false,
-			'cookie_days'     => 7,
-			'bg'              => self::background_defaults(),
-			'text_color'      => '#ffffff',
-			'link_color'      => '#ffffff',
-			'close_color'     => '#ffffff',
-			'button_style'    => 'primary',
-			'button_override' => false,
-			'button_bg'       => '#ffffff',
-			'button_color'    => '#111827',
-			'button_radius'   => 8,
-			'custom_css'      => '',
-			'banners'         => [],
+			'enabled'              => false,
+			'position'             => 'top',
+			'sticky'               => false,
+			'animate'              => true,
+			'animation'            => 'slide-down',
+			'cookie_days'          => 7,
+			'bg'                   => self::background_defaults(),
+			'text_color'           => '#ffffff',
+			'link_color'           => '#ffffff',
+			'close_color'          => '#ffffff',
+			'button_style'         => 'primary',
+			'button_override'      => false,
+			'button_bg'            => '#ffffff',
+			'button_color'         => '#111827',
+			'button_padding'       => '',
+			'button_shape'         => 'inherit',
+			'button_radius_custom' => '',
+			'custom_css'           => '',
+			'banners'              => [],
 		];
 
 	}
@@ -115,10 +122,14 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 		$clean['enabled']         = ! empty( $input['enabled'] );
 		$clean['sticky']          = ! empty( $input['sticky'] );
+		$clean['animate']         = ! empty( $input['animate'] );
 		$clean['button_override'] = ! empty( $input['button_override'] );
 
 		$clean['position'] = in_array( $input['position'] ?? '', [ 'top', 'bottom' ], true )
 			? $input['position'] : 'top';
+
+		$clean['animation'] = in_array( $input['animation'] ?? '', [ 'slide-down', 'fade', 'slide-fade' ], true )
+			? $input['animation'] : 'slide-down';
 
 		$clean['cookie_days'] = max( 0, min( 365, (int) ( $input['cookie_days'] ?? 7 ) ) );
 
@@ -127,10 +138,16 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 		$clean['link_color']  = sanitize_hex_color( $input['link_color'] ?? '' )  ?: '#ffffff';
 		$clean['close_color'] = sanitize_hex_color( $input['close_color'] ?? '' ) ?: '#ffffff';
 
-		$clean['button_style']  = $this->sanitize_button_style( $input['button_style'] ?? '' );
-		$clean['button_bg']     = sanitize_hex_color( $input['button_bg'] ?? '' )    ?: '#ffffff';
-		$clean['button_color']  = sanitize_hex_color( $input['button_color'] ?? '' ) ?: '#111827';
-		$clean['button_radius'] = max( 0, min( 100, (int) ( $input['button_radius'] ?? 8 ) ) );
+		$clean['button_style'] = $this->sanitize_button_style( $input['button_style'] ?? '' );
+		$clean['button_bg']    = sanitize_hex_color( $input['button_bg'] ?? '' )    ?: '#ffffff';
+		$clean['button_color'] = sanitize_hex_color( $input['button_color'] ?? '' ) ?: '#111827';
+
+		$clean['button_padding'] = self::sanitize_length( $input['button_padding'] ?? '' );
+
+		$clean['button_shape'] = in_array( $input['button_shape'] ?? '', [ 'inherit', 'square', 'rounded', 'custom' ], true )
+			? $input['button_shape'] : 'inherit';
+
+		$clean['button_radius_custom'] = self::sanitize_length( $input['button_radius_custom'] ?? '' );
 
 		$clean['custom_css'] = self::sanitize_css( $input['custom_css'] ?? '' );
 		$clean['banners']    = $this->sanitize_banners( $input['banners'] ?? [] );
@@ -285,6 +302,28 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 	}
 
+	/*
+	SANITIZE LENGTH
+	-- One CSS length, or the two to four of them a padding shorthand takes.
+	-- Anything carrying a character a length has no use for is dropped rather
+	-- than patched up, so a typo leaves the Breakdance value in place instead
+	-- of producing a rule nobody asked for.
+	---------------------------------------------------------- */
+
+	protected static function sanitize_length( $raw ): string {
+
+		$value = trim( sanitize_text_field( (string) $raw ) );
+
+		if ( '' === $value ) {
+
+			return '';
+
+		}
+
+		return preg_match( '/^[0-9a-z%.\s-]{1,60}$/i', $value ) ? $value : '';
+
+	}
+
 	protected function sanitize_button_style( $raw ): string {
 
 		$value = sanitize_text_field( (string) $raw );
@@ -407,6 +446,57 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 				},
 			] ); ?>
 			<?php Octave_Addons_Fields::row( [
+				'label' => __( 'Animate in', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					Octave_Addons_Fields::switch_field( [
+						'id'      => $this->field_id( 'animate' ),
+						'name'    => $this->field_name( 'animate' ),
+						'checked' => ! empty( $s['animate'] ),
+						'data'    => [ 'controls-row' => 'oaNbRowAnimation' ],
+						'help'    => __( 'Opens the bar on load, pushing the page and any fixed header down with it. Visitors who ask for reduced motion get the bar straight away instead.', 'octave-addons' ),
+					] );
+
+				},
+			] ); ?>
+			<?php Octave_Addons_Fields::row( [
+				'id'    => 'oaNbRowAnimation',
+				'for'   => $this->field_id( 'animation' ),
+				'label' => __( 'Animation', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					$animations = [
+						'slide-down' => __( 'Slide down', 'octave-addons' ),
+						'fade'       => __( 'Fade', 'octave-addons' ),
+						'slide-fade' => __( 'Slide down and fade', 'octave-addons' ),
+					];
+
+					?>
+
+					<select id="<?= esc_attr( $this->field_id( 'animation' ) ); ?>"
+					        name="<?= esc_attr( $this->field_name( 'animation' ) ); ?>">
+						<?php
+
+						foreach ( $animations as $key => $label ) {
+
+							printf(
+								'<option value="%1$s"%2$s>%3$s</option>',
+								esc_attr( $key ),
+								selected( $s['animation'], $key, false ),
+								esc_html( $label )
+							);
+
+						}
+
+						?>
+
+					</select>
+					<span class="oa-help"><?php esc_html_e( 'Sliding opens the bar from nothing, so the page is pushed down as it grows. Fading takes the space straight away and brings the banners up over it. A bottom bar slides up from the foot of the screen rather than down.', 'octave-addons' ); ?></span>
+					<?php
+
+				},
+			] ); ?>
+			<?php Octave_Addons_Fields::row( [
 				'for'   => $this->field_id( 'cookie_days' ),
 				'label' => __( 'Hide for', 'octave-addons' ),
 				'field' => function () use ( $s ) {
@@ -521,8 +611,8 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						'id'      => $this->field_id( 'button_override' ),
 						'name'    => $this->field_name( 'button_override' ),
 						'checked' => ! empty( $s['button_override'] ),
-						'data'    => [ 'controls-row' => 'oaNbRowButtonBg,oaNbRowButtonColor,oaNbRowButtonRadius' ],
-						'help'    => __( 'Replaces the colours and corner radius of the chosen Breakdance style for banner buttons only. Everything else — typography, padding, hover — is left to Breakdance.', 'octave-addons' ),
+						'data'    => [ 'controls-row' => 'oaNbRowButtonBg,oaNbRowButtonColor' ],
+						'help'    => __( 'Replaces the colours of the chosen Breakdance style for banner buttons only. Everything else — typography, hover, the size fields below — is left alone.', 'octave-addons' ),
 					] );
 
 				},
@@ -556,18 +646,70 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 				},
 			] ); ?>
 			<?php Octave_Addons_Fields::row( [
-				'id'    => 'oaNbRowButtonRadius',
-				'for'   => $this->field_id( 'button_radius' ),
-				'label' => __( 'Button corner radius', 'octave-addons' ),
+				'for'   => $this->field_id( 'button_padding' ),
+				'label' => __( 'Button padding', 'octave-addons' ),
 				'field' => function () use ( $s ) {
 
-					Octave_Addons_Fields::number( [
-						'id'     => $this->field_id( 'button_radius' ),
-						'name'   => $this->field_name( 'button_radius' ),
-						'value'  => $s['button_radius'],
-						'min'    => 0,
-						'max'    => 100,
-						'suffix' => 'px',
+					Octave_Addons_Fields::text( [
+						'id'          => $this->field_id( 'button_padding' ),
+						'name'        => $this->field_name( 'button_padding' ),
+						'value'       => $s['button_padding'],
+						'placeholder' => '8px 16px',
+						'help'        => __( 'Shrinks a site button that is too big for a banner. Takes a CSS padding value — one length, or vertical then horizontal. Leave it empty to keep the padding Breakdance gives the chosen style.', 'octave-addons' ),
+					] );
+
+				},
+			] ); ?>
+			<?php Octave_Addons_Fields::row( [
+				'for'   => $this->field_id( 'button_shape' ),
+				'label' => __( 'Button shape', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					$shapes = [
+						'inherit' => __( 'Leave as it is', 'octave-addons' ),
+						'square'  => __( 'Square', 'octave-addons' ),
+						'rounded' => __( 'Rounded', 'octave-addons' ),
+						'custom'  => __( 'Custom', 'octave-addons' ),
+					];
+
+					?>
+
+					<select id="<?= esc_attr( $this->field_id( 'button_shape' ) ); ?>"
+					        name="<?= esc_attr( $this->field_name( 'button_shape' ) ); ?>"
+					        data-controls-row="oaNbRowButtonRadius" data-controls-value="custom">
+						<?php
+
+						foreach ( $shapes as $key => $label ) {
+
+							printf(
+								'<option value="%1$s"%2$s>%3$s</option>',
+								esc_attr( $key ),
+								selected( $s['button_shape'], $key, false ),
+								esc_html( $label )
+							);
+
+						}
+
+						?>
+
+					</select>
+					<span class="oa-help"><?php esc_html_e( 'Leave as it is keeps the corners the Breakdance style already has, which matters for a preset built as a pill. Square flattens them, rounded softens them.', 'octave-addons' ); ?></span>
+					<?php
+
+				},
+			] ); ?>
+			<?php Octave_Addons_Fields::row( [
+				'id'    => 'oaNbRowButtonRadius',
+				'for'   => $this->field_id( 'button_radius_custom' ),
+				'label' => __( 'Custom corner radius', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					Octave_Addons_Fields::text( [
+						'id'          => $this->field_id( 'button_radius_custom' ),
+						'name'        => $this->field_name( 'button_radius_custom' ),
+						'value'       => $s['button_radius_custom'],
+						'placeholder' => '999px',
+						'help'        => __( 'A CSS border-radius value, so a pill or a pair of mismatched corners is reachable as well as a plain radius.', 'octave-addons' ),
 					] );
 
 				},
@@ -841,6 +983,118 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 	}
 
 	/*
+	BUTTON SIZE CSS
+	-- Padding rides on Breakdance's own --bde-button-padding-base, which every
+	-- button style reads and which inherits, so setting it on the bar resizes
+	-- the buttons inside it and nothing else on the page.
+	-- Corners cannot go the same way: a button preset is free to declare
+	-- border-radius outright, and several do, so that one is written as a rule
+	-- weighty enough to land on top of the preset.
+	---------------------------------------------------------- */
+
+	protected function button_size_css( array $s ): string {
+
+		$css     = '';
+		$padding = trim( (string) ( $s['button_padding'] ?? '' ) );
+
+		if ( '' !== $padding ) {
+
+			$css .= sprintf( '.oa-nb{--bde-button-padding-base:%s;}', $padding );
+
+		}
+
+		$radius = $this->button_radius_css( $s );
+
+		if ( '' !== $radius ) {
+
+			$css .= sprintf( '.breakdance .oa-nb .oa-nb__button.button-atom{border-radius:%s;}', $radius );
+
+		}
+
+		return $css;
+
+	}
+
+	/*
+	BUTTON RADIUS CSS
+	-- The radius the chosen shape asks for, or nothing at all when the button
+	-- is to keep whatever corners the Breakdance style already gave it.
+	---------------------------------------------------------- */
+
+	protected function button_radius_css( array $s ): string {
+
+		$shape = $s['button_shape'] ?? 'inherit';
+
+		if ( 'square' === $shape ) {
+
+			return '0';
+
+		}
+
+		if ( 'rounded' === $shape ) {
+
+			return self::ROUNDED_RADIUS . 'px';
+
+		}
+
+		if ( 'custom' === $shape ) {
+
+			return trim( (string) ( $s['button_radius_custom'] ?? '' ) );
+
+		}
+
+		return '';
+
+	}
+
+	/*
+	GET SETTINGS
+	-- Carries a corner radius saved before the shape control replaced it over
+	-- to whichever shape describes it, so a bar keeps the corners it was given
+	-- without anyone having to open the settings again.
+	-- The old radius only ever reached the page through the colour override,
+	-- so a bar that had the override switched off is left alone rather than
+	-- handed corners it was never showing.
+	---------------------------------------------------------- */
+
+	public function get_settings( array $saved ): array {
+
+		$settings = parent::get_settings( $saved );
+
+		if ( isset( $saved['button_shape'] ) || ! isset( $saved['button_radius'] ) ) {
+
+			return $settings;
+
+		}
+
+		if ( empty( $saved['button_override'] ) ) {
+
+			return $settings;
+
+		}
+
+		$radius = (int) $saved['button_radius'];
+
+		if ( 0 === $radius ) {
+
+			$settings['button_shape'] = 'square';
+
+		} elseif ( self::ROUNDED_RADIUS === $radius ) {
+
+			$settings['button_shape'] = 'rounded';
+
+		} else {
+
+			$settings['button_shape']         = 'custom';
+			$settings['button_radius_custom'] = $radius . 'px';
+
+		}
+
+		return $settings;
+
+	}
+
+	/*
 	FRONTEND
 	---------------------------------------------------------- */
 
@@ -964,10 +1218,9 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 		if ( ! empty( $s['button_override'] ) ) {
 
 			$css .= sprintf(
-				'.breakdance .oa-nb .oa-nb__button.button-atom{background-color:%1$s;background-image:none;border-color:%1$s;color:%2$s;border-radius:%3$dpx;}',
-				$s['button_bg']     ?? '#ffffff',
-				$s['button_color']  ?? '#111827',
-				(int) ( $s['button_radius'] ?? 8 )
+				'.breakdance .oa-nb .oa-nb__button.button-atom{background-color:%1$s;background-image:none;border-color:%1$s;color:%2$s;}',
+				$s['button_bg']    ?? '#ffffff',
+				$s['button_color'] ?? '#111827'
 			);
 
 			$css .= sprintf(
@@ -977,9 +1230,15 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 		}
 
+		// Size is deliberately outside the colour override: a button can be too
+		// big for a banner without its colours being wrong.
+		$css .= $this->button_size_css( $s );
+
 		if ( ! Octave_Addons::is_breakdance_active() ) {
 
-			$css .= '.oa-nb .oa-nb__button{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border:1px solid currentColor;border-radius:8px;font-weight:600;line-height:1.2;text-decoration:none;}';
+			// Reads the same variable Breakdance would, so the padding field
+			// still does its job on a site the plugin is not sitting beside.
+			$css .= '.oa-nb .oa-nb__button{display:inline-flex;align-items:center;gap:8px;padding:var(--bde-button-padding-base,9px 18px);border:1px solid currentColor;border-radius:8px;font-weight:600;line-height:1.2;text-decoration:none;}';
 
 		}
 
@@ -1019,21 +1278,34 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 		}
 
+		$animation = in_array( $s['animation'] ?? '', [ 'slide-down', 'fade', 'slide-fade' ], true )
+			? $s['animation'] : 'slide-down';
+
+		// Harmless on its own: nothing reads it until the inline script adds
+		// the class that collapses the bar.
+		$classes[] = 'oa-nb--anim-' . $animation;
+
 		?>
 
 		<div id="oaNotificationsBar" class="<?= esc_attr( implode( ' ', $classes ) ); ?>"
 		     data-cookie-days="<?= esc_attr( (string) ( $s['cookie_days'] ?? 7 ) ); ?>"
+		     data-animate="<?= empty( $s['animate'] ) ? '0' : '1'; ?>"
+		     data-animation="<?= esc_attr( $animation ); ?>"
 		     role="region" aria-label="<?php esc_attr_e( 'Site notifications', 'octave-addons' ); ?>">
 
-			<?php
+			<div class="oa-nb__track">
 
-			foreach ( $banners as $banner ) {
+				<?php
 
-				$this->render_banner( $s, $banner );
+				foreach ( $banners as $banner ) {
 
-			}
+					$this->render_banner( $s, $banner );
 
-			?>
+				}
+
+				?>
+
+			</div>
 
 		</div>
 		<?php
@@ -1144,6 +1416,14 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 	DISMISSAL SCRIPT
 	-- Runs where it is printed, before the browser paints, so a banner the
 	-- visitor closed is gone rather than removed a moment later.
+	-- It also collapses the bar ready for the opening animation. That class is
+	-- added here rather than printed on the element so a visitor without
+	-- JavaScript, who would never get the class that opens it again, still
+	-- gets the banners at their full height.
+	-- A bar that keeps its full height from the first frame — one that is not
+	-- animating at all, or one that only fades — hands a fixed header its
+	-- offset here and now, so the header never paints over the bar before the
+	-- frontend script has had a chance to run.
 	---------------------------------------------------------- */
 
 	protected function dismissal_script(): string {
@@ -1177,7 +1457,33 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 		bar.parentNode.removeChild( bar );
 
+		return;
+
 	}
+
+	var animating = '1' === bar.getAttribute( 'data-animate' );
+
+	if ( animating ) {
+
+		bar.classList.add( 'oa-nb--animated' );
+
+	}
+
+	if ( bar.classList.contains( 'oa-nb--bottom' ) ) {
+
+		return;
+
+	}
+
+	if ( animating && 'fade' !== bar.getAttribute( 'data-animation' ) ) {
+
+		return;
+
+	}
+
+	var track = bar.querySelector( '.oa-nb__track' ) || bar;
+
+	document.documentElement.style.setProperty( '--oa-nb-offset', track.offsetHeight + 'px' );
 
 })();
 JS;
