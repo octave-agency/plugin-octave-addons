@@ -29,6 +29,9 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 	/** The corner radius the rounded button shape applies. */
 	protected const ROUNDED_RADIUS = 8;
 
+	/** The bar's element id, which every generated rule leans on for weight. */
+	protected const BAR_ID = 'oaNotificationsBar';
+
 
 	public function get_id(): string {
 
@@ -729,7 +732,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						'class'       => 'large-text code oa-code-area',
 						'spellcheck'  => false,
 						'placeholder' => ".oa-nb__banner {\n    font-size: 15px;\n}",
-						'help'        => __( 'Printed after the bar stylesheet. Target .oa-nb for the bar, .oa-nb__banner for one banner, .oa-nb__text, .oa-nb__button and .oa-nb__close for the parts inside it.', 'octave-addons' ),
+						'help'        => __( 'Printed after the bar stylesheet. Target .oa-nb for the bar, .oa-nb__banner for one banner, .oa-nb__text, .oa-nb__button and .oa-nb__close for the parts inside it. The settings above are written against #oaNotificationsBar, so put that in front of your selector to overrule one of them.', 'octave-addons' ),
 					] );
 
 				},
@@ -984,34 +987,42 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 	/*
 	BUTTON SIZE CSS
-	-- Padding rides on Breakdance's own --bde-button-padding-base, which every
-	-- button style reads and which inherits, so setting it on the bar resizes
-	-- the buttons inside it and nothing else on the page.
-	-- Corners cannot go the same way: a button preset is free to declare
-	-- border-radius outright, and several do, so that one is written as a rule
-	-- weighty enough to land on top of the preset.
+	-- Both of these have to outweigh the button preset rather than feed it.
+	-- Breakdance reads padding and corners from --bde-button-padding-base and
+	-- --bde-button-border-radius, but a preset is free to declare either one
+	-- outright and the presets people actually build do: padding arrives as
+	-- four longhands and the radius as its own declaration, both of them past
+	-- the point where the variables are read.
+	-- So the size is written against the bar's id. An id outranks any number
+	-- of classes, so it lands on top of the preset whatever that preset is
+	-- built from, and a shorthand padding there beats the preset's longhands.
 	---------------------------------------------------------- */
 
 	protected function button_size_css( array $s ): string {
 
-		$css     = '';
+		$rules   = '';
 		$padding = trim( (string) ( $s['button_padding'] ?? '' ) );
+		$radius  = $this->button_radius_css( $s );
 
 		if ( '' !== $padding ) {
 
-			$css .= sprintf( '.oa-nb{--bde-button-padding-base:%s;}', $padding );
+			$rules .= sprintf( 'padding:%s;', $padding );
 
 		}
-
-		$radius = $this->button_radius_css( $s );
 
 		if ( '' !== $radius ) {
 
-			$css .= sprintf( '.breakdance .oa-nb .oa-nb__button.button-atom{border-radius:%s;}', $radius );
+			$rules .= sprintf( 'border-radius:%s;', $radius );
 
 		}
 
-		return $css;
+		if ( '' === $rules ) {
+
+			return '';
+
+		}
+
+		return sprintf( '#%s .oa-nb__button{%s}', self::BAR_ID, $rules );
 
 	}
 
@@ -1213,18 +1224,21 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 			$s['close_color'] ?? '#ffffff'
 		);
 
-		// Four class levels so the override lands above the Breakdance global
-		// button rules whichever order the two stylesheets are printed in.
+		// Every generated rule hangs off the bar's id. An id outranks any number
+		// of classes, so a Breakdance button preset is overridden on weight
+		// alone and nothing here has to reach for !important.
 		if ( ! empty( $s['button_override'] ) ) {
 
 			$css .= sprintf(
-				'.breakdance .oa-nb .oa-nb__button.button-atom{background-color:%1$s;background-image:none;border-color:%1$s;color:%2$s;}',
+				'#%1$s .oa-nb__button{background-color:%2$s;background-image:none;border-color:%2$s;color:%3$s;}',
+				self::BAR_ID,
 				$s['button_bg']    ?? '#ffffff',
 				$s['button_color'] ?? '#111827'
 			);
 
 			$css .= sprintf(
-				'.breakdance .oa-nb .oa-nb__button.button-atom .button-atom__text{color:%s;}',
+				'#%1$s .oa-nb__button .button-atom__text{color:%2$s;}',
+				self::BAR_ID,
 				$s['button_color'] ?? '#111827'
 			);
 
@@ -1236,9 +1250,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 		if ( ! Octave_Addons::is_breakdance_active() ) {
 
-			// Reads the same variable Breakdance would, so the padding field
-			// still does its job on a site the plugin is not sitting beside.
-			$css .= '.oa-nb .oa-nb__button{display:inline-flex;align-items:center;gap:8px;padding:var(--bde-button-padding-base,9px 18px);border:1px solid currentColor;border-radius:8px;font-weight:600;line-height:1.2;text-decoration:none;}';
+			$css .= '.oa-nb .oa-nb__button{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border:1px solid currentColor;border-radius:8px;font-weight:600;line-height:1.2;text-decoration:none;}';
 
 		}
 
@@ -1287,7 +1299,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 		?>
 
-		<div id="oaNotificationsBar" class="<?= esc_attr( implode( ' ', $classes ) ); ?>"
+		<div id="<?= esc_attr( self::BAR_ID ); ?>" class="<?= esc_attr( implode( ' ', $classes ) ); ?>"
 		     data-cookie-days="<?= esc_attr( (string) ( $s['cookie_days'] ?? 7 ) ); ?>"
 		     data-animate="<?= empty( $s['animate'] ) ? '0' : '1'; ?>"
 		     data-animation="<?= esc_attr( $animation ); ?>"
@@ -1429,11 +1441,12 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 	protected function dismissal_script(): string {
 
 		$prefix = wp_json_encode( self::COOKIE_PREFIX );
+		$id     = wp_json_encode( self::BAR_ID );
 
 		return <<<JS
 (function () {
 
-	var bar = document.getElementById( 'oaNotificationsBar' );
+	var bar = document.getElementById( {$id} );
 
 	if ( ! bar ) {
 
