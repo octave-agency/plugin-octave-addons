@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.22.1
+Stable tag:        3.22.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -124,6 +124,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.22.2 =
+* Fixed Breakdance AJAX Filtering overriding a Post List's own posts-per-page limit. AJAX pagination now uses the detected query size, and unpaginated queries remain untouched.
 
 = 3.20.0 =
 * Added an optional per-taxonomy setting that removes the public taxonomy URL base while preserving Pages, posts, existing archives, hierarchical term paths, feeds, and pagination.

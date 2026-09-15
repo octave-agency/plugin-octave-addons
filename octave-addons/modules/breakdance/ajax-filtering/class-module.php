@@ -21,6 +21,8 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 	protected static string $detected_post_type = '';
 
+	protected static ?int $detected_posts_per_page = null;
+
 	protected static bool $hooks_registered = false;
 
 	/*
@@ -240,7 +242,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 								'class'       => 'small-text',
 								'help'        => sprintf(
 									/* translators: %d: the Settings → Reading posts per page value. */
-									__( 'How many posts each filter or page request returns. Defaults to the Reading setting (%d). Maximum 100.', 'octave-addons' ),
+									__( 'Default posts per page when the query does not supply its own limit. Defaults to the Reading setting (%d). Maximum 100 for this default.', 'octave-addons' ),
 									self::reading_posts_per_page()
 								),
 							]
@@ -415,11 +417,18 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	/*
 	FILTER BREAKDANCE QUERY
 	-- Adds filtering and page offsets to layouts using the Array Query helper
+	-- Keeps the query's own page size when Breakdance supplies one
 	---------------------------------------------------------- */
 
 	public function filter_breakdance_query( $query ) {
 
-		if ( ! is_array( $query ) || ! self::is_eligible_request() ) {
+		if ( ! is_array( $query ) || self::$query_applied || ! self::is_eligible_request() ) {
+
+			return $query;
+
+		}
+
+		if ( -1 === (int) ( $query['posts_per_page'] ?? 0 ) || ! empty( $query['nopaging'] ) ) {
 
 			return $query;
 
@@ -439,7 +448,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 		$taxonomy      = self::term_taxonomy( $selected_term, $post_type );
 		$search        = self::request_search();
 
-		$query['posts_per_page']      = self::posts_per_page();
+		$query['posts_per_page']      = self::resolve_query_page_size( $query );
 		$query['paged']               = self::request_page();
 		$query['ignore_sticky_posts'] = true;
 
@@ -464,8 +473,9 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 		}
 
-		self::$query_applied      = true;
-		self::$detected_post_type = $post_type;
+		self::$query_applied           = true;
+		self::$detected_post_type      = $post_type;
+		self::$detected_posts_per_page = $query['posts_per_page'];
 
 		return $query;
 
@@ -514,10 +524,14 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 		$taxonomy      = self::term_taxonomy( $selected_term, $post_type );
 		$search        = self::request_search();
 
-		self::$query_applied      = true;
-		self::$detected_post_type = $post_type;
+		// Original arguments distinguish a supplied limit from WordPress's Reading fallback.
+		$per_page = $query->is_main_query() ? self::posts_per_page() : self::resolve_query_page_size( $query->query );
 
-		$query->set( 'posts_per_page', self::posts_per_page() );
+		self::$query_applied           = true;
+		self::$detected_post_type      = $post_type;
+		self::$detected_posts_per_page = $per_page;
+
+		$query->set( 'posts_per_page', $per_page );
 		$query->set( 'ignore_sticky_posts', true );
 
 		// Only take over paging once the module asks for an offset, so WordPress's
@@ -555,12 +569,19 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	IS LOOP QUERY
 	-- Decides whether a query is the loop being enhanced
 	-- Counting queries, single-item widgets, and manual selections are skipped
+	-- Queries requesting all posts keep their existing unpaginated behaviour
 	-- The main query counts on a posts page or archive, because that is exactly
 	-- what Breakdance hands to a Post Loop that has no Custom Query
 	-- A secondary query must originate from Breakdance unless a page path pins it
 	---------------------------------------------------------- */
 
 	protected static function is_loop_query( WP_Query $query ): bool {
+
+		if ( -1 === (int) $query->get( 'posts_per_page' ) || $query->get( 'nopaging' ) ) {
+
+			return false;
+
+		}
 
 		if ( '' !== (string) $query->get( 'fields' ) || ! empty( $query->get( 'post__in' ) ) ) {
 
@@ -729,7 +750,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 			class="oa-breakdance-ajax-controls"
 			data-base-url="<?= esc_url( self::get_base_url() ); ?>"
 			data-post-type="<?= esc_attr( $post_type ); ?>"
-			data-posts-per-page="<?= esc_attr( (string) self::posts_per_page() ); ?>"
+			data-posts-per-page="<?= esc_attr( (string) ( self::$detected_posts_per_page ?? self::posts_per_page() ) ); ?>"
 			data-total-count="<?= esc_attr( (string) $total_count ); ?>"
 			data-current-count="<?= esc_attr( (string) $current_count ); ?>"
 			data-show-result-count="<?= ! empty( $settings['show_result_count'] ) ? 'true' : 'false'; ?>"
@@ -895,6 +916,19 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 		$module = new self();
 
 		return $module->get_defaults();
+
+	}
+
+	/*
+	RESOLVE QUERY PAGE SIZE
+	-- Gives a supplied query limit precedence over the module's default
+	---------------------------------------------------------- */
+
+	protected static function resolve_query_page_size( array $query ): int {
+
+		$per_page = (int) ( $query['posts_per_page'] ?? 0 );
+
+		return $per_page > 0 ? $per_page : self::posts_per_page();
 
 	}
 
