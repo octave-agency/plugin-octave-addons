@@ -1,0 +1,61 @@
+/*
+CURVE RISE TRANSITION
+-- A surface rises with a soft elliptical leading edge that flattens as it
+-- lands, led by a thin accent wave; on the next page it lifts away with the
+-- curve trailing beneath it
+-- Cover 560ms and reveal 760ms, matching COVER_MS and REVEAL_MS
+---------------------------------------------------------- */
+
+.oa-transition--curve-rise .oa-transition__layer {
+    z-index: 2;
+}
+
+.oa-transition--curve-rise .oa-transition__layer--b {
+    display: block;
+    z-index: 1;
+    background: var(--oa-pm-accent);
+}
+
+html.oa-transition-out .oa-transition--curve-rise .oa-transition__layer {
+    animation: oa-cr-cover 500ms cubic-bezier(0.83, 0, 0.17, 1) 60ms both;
+}
+
+html.oa-transition-out .oa-transition--curve-rise .oa-transition__layer--b {
+    animation-delay: 0ms;
+}
+
+html.oa-transition-reveal .oa-transition--curve-rise .oa-transition__layer {
+    animation: oa-cr-reveal 690ms cubic-bezier(0.83, 0, 0.17, 1) both;
+}
+
+html.oa-transition-reveal .oa-transition--curve-rise .oa-transition__layer--b {
+    animation-delay: 70ms;
+}
+
+@keyframes oa-cr-cover {
+
+    from {
+        transform: translate3d(0, 100%, 0);
+        border-radius: 50% 50% 0 0 / 22vh 22vh 0 0;
+    }
+
+    to {
+        transform: translate3d(0, 0, 0);
+        border-radius: 0;
+    }
+
+}
+
+@keyframes oa-cr-reveal {
+
+    from {
+        transform: translate3d(0, 0, 0);
+        border-radius: 0;
+    }
+
+    to {
+        transform: translate3d(0, -100%, 0);
+        border-radius: 0 0 50% 50% / 0 0 22vh 22vh;
+    }
+
+}

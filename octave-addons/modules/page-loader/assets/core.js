@@ -1,13 +1,14 @@
 /*
-PAGE LOADER & TRANSITIONS CORE
+PAGE TRANSITIONS CORE
 -- Runs in the head and owns the whole lifecycle, so custom code can listen
 -- but never leave the page covered or locked:
 -- Initial loader: shown on a full page load (per the display frequency),
 -- progress from real readiness signals, removed on window load, with an
--- 8 second hard limit
+-- 8 second hard limit. Every timing derives from cfg.duration (the Loader
+-- duration setting), including a minimum display time that paces progress
+-- so a fast page still shows the whole animation
 -- Transitions: eligible same-origin clicks cover the page and navigate as
 -- soon as it is covered; the next page reveals itself on DOMContentLoaded
--- Quick navigation: intent-based prefetch of eligible links
 -- Events on document: oa-loader:start|progress|exit|done,
 -- oa-transition:out|in|done
 ---------------------------------------------------------- */
@@ -104,6 +105,24 @@ PAGE LOADER & TRANSITIONS CORE
 		// Background tabs pause animation frames, so a timer backs it up.
 		window.requestAnimationFrame( run );
 		window.setTimeout( run, 120 );
+
+	}
+
+	/*
+	CLICK ORIGIN
+	-- Exposes where the navigation started as --oa-pt-x / --oa-pt-y, so
+	-- presets such as Circle Reveal can grow from the clicked link and close
+	-- back into the same point on the next page
+	---------------------------------------------------------- */
+
+	function setOrigin( x, y ) {
+
+		if ( 'number' === typeof x && 'number' === typeof y ) {
+
+			root.style.setProperty( '--oa-pt-x', x.toFixed( 2 ) + '%' );
+			root.style.setProperty( '--oa-pt-y', y.toFixed( 2 ) + '%' );
+
+		}
 
 	}
 
@@ -230,108 +249,6 @@ PAGE LOADER & TRANSITIONS CORE
 	}
 
 	/*
-	QUICK NAVIGATION
-	-- Prefetches an eligible link on hover intent, focus or touch, with
-	-- Speculation Rules where supported and <link rel="prefetch"> otherwise.
-	-- Respects Save-Data and 2G connections, and caps prefetches per page.
-	---------------------------------------------------------- */
-
-	function bindPrefetch() {
-
-		var connection = navigator.connection || {};
-
-		if ( connection.saveData || /2g$/.test( connection.effectiveType || '' ) ) {
-
-			return;
-
-		}
-
-		var rules = window.HTMLScriptElement && HTMLScriptElement.supports && HTMLScriptElement.supports( 'speculationrules' );
-		var fetched = {};
-		var count = 0;
-		var limit = 8;
-		var timer = null;
-
-		function prefetch( url ) {
-
-			var href = url.href.split( '#' )[0];
-
-			if ( fetched[ href ] || count >= limit || href === window.location.href.split( '#' )[0] ) {
-
-				return;
-
-			}
-
-			fetched[ href ] = true;
-			count++;
-
-			if ( rules ) {
-
-				var script = document.createElement( 'script' );
-
-				script.type = 'speculationrules';
-				script.textContent = JSON.stringify( { prefetch: [ { source: 'list', urls: [ href ] } ] } );
-				document.head.appendChild( script );
-
-				return;
-
-			}
-
-			var hint = document.createElement( 'link' );
-
-			hint.rel = 'prefetch';
-			hint.as = 'document';
-			hint.href = href;
-			document.head.appendChild( hint );
-
-		}
-
-		function intent( event, delay ) {
-
-			var link = linkFrom( event );
-			var url = link ? eligibleUrl( link ) : null;
-
-			window.clearTimeout( timer );
-
-			if ( url ) {
-
-				timer = window.setTimeout( function () {
-
-					prefetch( url );
-
-				}, delay );
-
-			}
-
-		}
-
-		document.addEventListener( 'mouseover', function ( event ) {
-
-			intent( event, 80 );
-
-		}, { passive: true } );
-
-		document.addEventListener( 'mouseout', function () {
-
-			window.clearTimeout( timer );
-
-		}, { passive: true } );
-
-		document.addEventListener( 'focusin', function ( event ) {
-
-			intent( event, 0 );
-
-		} );
-
-		document.addEventListener( 'touchstart', function ( event ) {
-
-			intent( event, 0 );
-
-		}, { passive: true } );
-
-	}
-
-	/*
 	INITIAL LOADER
 	-- Progress blends document readiness with how many images have loaded,
 	-- eased so the number never jumps, and never reaches 100 until the
@@ -350,6 +267,9 @@ PAGE LOADER & TRANSITIONS CORE
 		var closed = false;
 		var timers = [];
 		var phases = { loading: 0.15, interactive: 0.55, complete: 1 };
+		var base = cfg.duration || 900;
+		var started = Date.now();
+		var minTime = base * 5 / 3;
 
 		root.classList.add( 'oa-loader-active' );
 		api.state = 'loading';
@@ -438,7 +358,18 @@ PAGE LOADER & TRANSITIONS CORE
 			root.classList.add( 'oa-loader-exit' );
 			api.state = 'exiting';
 			emit( 'oa-loader:exit' );
-			timers.push( window.setTimeout( done, ( cfg.duration || 900 ) + 60 ) );
+			timers.push( window.setTimeout( done, base + 60 ) );
+
+		}
+
+		// Caps displayed progress to an ease-out curve over the minimum time
+		// (base × 5/3, 1500ms at the 900ms default), so a page that loads
+		// instantly still counts up rather than flashing.
+		function paced() {
+
+			var t = Math.min( 1, ( Date.now() - started ) / minTime );
+
+			return t * ( 2 - t );
 
 		}
 
@@ -454,7 +385,7 @@ PAGE LOADER & TRANSITIONS CORE
 			target = 1;
 
 			// Lets the number catch up, without waiting on a paused frame loop.
-			timers.push( window.setTimeout( exit, 420 ) );
+			timers.push( window.setTimeout( exit, Math.max( 0, minTime - ( Date.now() - started ) ) + base * 0.47 ) );
 
 		}
 
@@ -468,11 +399,13 @@ PAGE LOADER & TRANSITIONS CORE
 
 				}
 
-				shown += ( target - shown ) * 0.18;
+				var goal = Math.min( target, paced() );
 
-				if ( target - shown < 0.004 ) {
+				shown += ( goal - shown ) * 0.18;
 
-					shown = target;
+				if ( goal - shown < 0.004 ) {
+
+					shown = goal;
 
 				}
 
@@ -499,7 +432,7 @@ PAGE LOADER & TRANSITIONS CORE
 		frame = window.requestAnimationFrame( tick );
 
 		timers.push( window.setTimeout( finish, hardLimit ) );
-		timers.push( window.setTimeout( done, hardLimit + ( cfg.duration || 900 ) + 1500 ) );
+		timers.push( window.setTimeout( done, hardLimit + base + 1500 ) );
 
 		if ( 'complete' === document.readyState ) {
 
@@ -530,12 +463,13 @@ PAGE LOADER & TRANSITIONS CORE
 	-- ready rather than waiting for every image
 	---------------------------------------------------------- */
 
-	function startIngress() {
+	function startIngress( flag ) {
 
 		var revealed = false;
 		var closed = false;
 		var safety = null;
 
+		setOrigin( flag.x, flag.y );
 		root.classList.add( 'oa-transition-in' );
 		api.state = 'arriving';
 		emit( 'oa-transition:in' );
@@ -613,9 +547,19 @@ PAGE LOADER & TRANSITIONS CORE
 			}
 
 			var overlay = document.getElementById( cfg.replay ? 'oa-page-loader' : 'oa-page-transition' );
+			var flag = { t: Date.now() };
+
+			// A keyboard activation has no pointer position, so it starts centred.
+			if ( event.detail && window.innerWidth && window.innerHeight ) {
+
+				flag.x = event.clientX / window.innerWidth * 100;
+				flag.y = event.clientY / window.innerHeight * 100;
+
+			}
 
 			event.preventDefault();
-			store( 'set', flagKey, JSON.stringify( { t: Date.now() } ) );
+			setOrigin( flag.x, flag.y );
+			store( 'set', flagKey, JSON.stringify( flag ) );
 
 			if ( ! overlay ) {
 
@@ -703,7 +647,7 @@ PAGE LOADER & TRANSITIONS CORE
 
 		} else if ( arrived ) {
 
-			startIngress();
+			startIngress( flag );
 
 		} else if ( ! reduced && cfg.loader && shouldShowLoader() ) {
 
@@ -714,12 +658,6 @@ PAGE LOADER & TRANSITIONS CORE
 		if ( cfg.transition && ! reduced ) {
 
 			bindNavigation();
-
-		}
-
-		if ( cfg.prefetch ) {
-
-			bindPrefetch();
 
 		}
 

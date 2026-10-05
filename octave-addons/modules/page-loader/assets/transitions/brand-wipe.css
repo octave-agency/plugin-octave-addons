@@ -1,12 +1,24 @@
 /*
 BRAND WIPE TRANSITION
--- An accent surface wipes across with the brand name set inside it, then
--- wipes onward to reveal the next page
--- Cover 460ms and reveal 640ms, matching COVER_MS and REVEAL_MS
+-- An accent surface wipes across with the brand name rising inside it,
+-- then wipes onward over a trailing background-colour band, so the reveal
+-- reads as two tones rather than a single cut
+-- Cover 460ms and reveal 720ms, matching COVER_MS and REVEAL_MS
 ---------------------------------------------------------- */
 
 .oa-transition--brand-wipe .oa-transition__layer {
+    z-index: 2;
     background: var(--oa-pm-accent);
+}
+
+.oa-transition--brand-wipe .oa-transition__layer--b {
+    display: block;
+    z-index: 1;
+    background: var(--oa-pm-bg);
+}
+
+.oa-transition--brand-wipe .oa-transition__brand {
+    z-index: 3;
 }
 
 .oa-transition__brand {
@@ -30,7 +42,11 @@ html.oa-transition-out .oa-transition__brand {
 }
 
 html.oa-transition-reveal .oa-transition--brand-wipe .oa-transition__layer {
-    animation: oa-bw-reveal 640ms cubic-bezier(0.65, 0, 0.35, 1) 80ms both;
+    animation: oa-bw-reveal 560ms cubic-bezier(0.65, 0, 0.35, 1) 60ms both;
+}
+
+html.oa-transition-reveal .oa-transition--brand-wipe .oa-transition__layer--b {
+    animation-delay: 160ms;
 }
 
 html.oa-transition-reveal .oa-transition__brand {
@@ -65,10 +81,12 @@ html.oa-transition-reveal .oa-transition__brand {
 
     from {
         opacity: 0;
+        transform: translate(-50%, -20%);
         clip-path: inset(0 0 100% 0);
     }
 
     to {
+        transform: translate(-50%, -50%);
         clip-path: inset(0 0 0 0);
     }
 

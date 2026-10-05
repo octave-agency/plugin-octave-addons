@@ -43,6 +43,7 @@ class Octave_Addons_Icons {
 		'palette'    => '<path d="M12 3a9 9 0 0 0 0 18 2 2 0 0 0 1.6-3.2 2 2 0 0 1 1.6-3.2H18a3 3 0 0 0 3-3 9 9 0 0 0-9-8.6z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="15.5" cy="8.5" r="1"/>',
 		'bot'        => '<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4.5V8"/><circle cx="12" cy="3" r="1.2"/><path d="M9 13h.01"/><path d="M15 13h.01"/><path d="M9.5 16.5h5"/><path d="M2 13v3"/><path d="M22 13v3"/>',
 		'file-text'  => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/>',
+		'page-loader' => '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18"/><path d="M8 17h8"/><path d="M12 17v-6"/><path d="M9 14l3-3 3 3"/>',
 
 		// Shared interface icons.
 		'arrow-right'  => '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>',

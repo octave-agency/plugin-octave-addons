@@ -8,7 +8,7 @@ ORBITAL SIGNAL LOADER
     width: 88px;
     height: 88px;
     overflow: visible;
-    animation: oa-os-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: oa-os-in calc(var(--oa-loader-duration, 900ms) * 0.778) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .oa-loader__ring,
@@ -34,7 +34,7 @@ ORBITAL SIGNAL LOADER
 .oa-loader__tracker {
     fill: var(--oa-pm-accent);
     transform-origin: 60px 60px;
-    animation: oa-os-orbit 1800ms linear infinite;
+    animation: oa-os-orbit calc(var(--oa-loader-duration, 900ms) * 2) linear infinite;
 }
 
 html.oa-loader-exit .oa-loader__orbit {

@@ -718,8 +718,9 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 				},
 			] ); ?>
 
-			<?php Octave_Addons_Fields::section( [ 'label' => __( 'Custom CSS', 'octave-addons' ) ] ); ?>
+			<?php Octave_Addons_Fields::custom_setup( [ 'oaNbRowCss' ] ); ?>
 			<?php Octave_Addons_Fields::row( [
+				'id'    => 'oaNbRowCss',
 				'for'   => $this->field_id( 'custom_css' ),
 				'label' => __( 'Additional CSS', 'octave-addons' ),
 				'field' => function () use ( $s ) {

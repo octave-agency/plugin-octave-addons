@@ -1,11 +1,12 @@
 /*
-PAGE LOADER & TRANSITIONS CORE
+PAGE TRANSITIONS CORE
 -- Overlays are hidden unless the head script adds a state class to <html>,
 -- so nothing appears without JavaScript. Two CSS failsafes release the page
 -- after 10 seconds even if the lifecycle script never runs: the overlays
 -- become invisible and the scroll lock lifts.
 -- States: oa-loader-active, oa-loader-exit, oa-loader-cover,
 -- oa-transition-out, oa-transition-in, oa-transition-reveal
+-- Loader timings are multiples of --oa-loader-duration, the one base value
 ---------------------------------------------------------- */
 
 .oa-loader,
@@ -85,7 +86,7 @@ html.oa-loader-exit .oa-loader__inner {
 
 html.oa-loader-cover:not(.oa-loader-active) .oa-loader::before,
 html.oa-loader-cover:not(.oa-loader-active) .oa-loader__inner {
-    animation: oa-pm-fade-in 280ms ease-out both;
+    animation: oa-pm-fade-in calc(var(--oa-loader-duration, 900ms) * 0.311) ease-out both;
 }
 
 /*

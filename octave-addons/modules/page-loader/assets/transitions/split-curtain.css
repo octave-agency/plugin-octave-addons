@@ -1,7 +1,8 @@
 /*
 SPLIT CURTAIN TRANSITION
--- Two half panels close from the sides and part again on the next page
--- Cover 460ms and reveal 680ms, matching COVER_MS and REVEAL_MS
+-- Two half panels close from the sides, the right a beat behind the left,
+-- meeting on a thin accent seam; they part again on the next page
+-- Cover 520ms and reveal 740ms, matching COVER_MS and REVEAL_MS
 ---------------------------------------------------------- */
 
 .oa-transition--split-curtain .oa-transition__layer {
@@ -14,6 +15,7 @@ SPLIT CURTAIN TRANSITION
     right: 0;
     left: 50%;
     margin-right: 0;
+    box-shadow: inset 1px 0 0 var(--oa-pm-accent);
 }
 
 html.oa-transition-out .oa-transition--split-curtain .oa-transition__layer {
@@ -22,6 +24,7 @@ html.oa-transition-out .oa-transition--split-curtain .oa-transition__layer {
 
 html.oa-transition-out .oa-transition--split-curtain .oa-transition__layer--b {
     animation-name: oa-sc-from-right;
+    animation-delay: 60ms;
 }
 
 html.oa-transition-reveal .oa-transition--split-curtain .oa-transition__layer {
@@ -30,6 +33,7 @@ html.oa-transition-reveal .oa-transition--split-curtain .oa-transition__layer {
 
 html.oa-transition-reveal .oa-transition--split-curtain .oa-transition__layer--b {
     animation-name: oa-sc-to-right;
+    animation-delay: 60ms;
 }
 
 @keyframes oa-sc-from-left {

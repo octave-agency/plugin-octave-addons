@@ -11,7 +11,7 @@ LOGO MASK LOADER
 
 .oa-loader__logo {
     display: block;
-    animation: oa-lm-unmask 1100ms cubic-bezier(0.65, 0, 0.35, 1) 100ms both;
+    animation: oa-lm-unmask calc(var(--oa-loader-duration, 900ms) * 1.222) cubic-bezier(0.65, 0, 0.35, 1) calc(var(--oa-loader-duration, 900ms) * 0.111) both;
 }
 
 .oa-loader__logo img {
@@ -54,7 +54,7 @@ html.oa-loader-exit .oa-loader--logo-mask .oa-loader__inner {
 }
 
 html.oa-loader-exit .oa-loader--logo-mask .oa-loader__line {
-    animation: oa-pm-fade-out 240ms ease-out forwards;
+    animation: oa-pm-fade-out calc(var(--oa-loader-duration, 900ms) * 0.267) ease-out forwards;
 }
 
 @keyframes oa-lm-unmask {

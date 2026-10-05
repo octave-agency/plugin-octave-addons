@@ -41,7 +41,7 @@ CURTAIN REVEAL LOADER
     top: 50%;
     left: 50%;
     transform: translate(-50%, calc(-100% - 14px));
-    animation: oa-cr-in 800ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both;
+    animation: oa-cr-in calc(var(--oa-loader-duration, 900ms) * 0.889) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--oa-loader-duration, 900ms) * 0.067) both;
 }
 
 html.oa-loader-exit .oa-loader--curtain .oa-loader__inner {
@@ -57,7 +57,7 @@ html.oa-loader-exit .oa-loader__panel--b {
 }
 
 html.oa-loader-exit .oa-loader--curtain .oa-loader__brand {
-    animation: oa-pm-fade-out 260ms ease-out forwards;
+    animation: oa-pm-fade-out calc(var(--oa-loader-duration, 900ms) * 0.289) ease-out forwards;
 }
 
 @keyframes oa-cr-in {

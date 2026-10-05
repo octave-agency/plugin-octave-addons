@@ -205,6 +205,8 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 				},
 			] );
 
+			Octave_Addons_Fields::custom_setup( [ 'oaAnimRowCss', 'oaAnimRowJs' ] );
+
 			Octave_Addons_Fields::row( [
 				'id'    => 'oaAnimRowCss',
 				'for'   => $this->field_id( 'css_override' ),

@@ -180,7 +180,9 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
 
                 },
             ] ); ?>
+            <?php Octave_Addons_Fields::custom_setup( [ 'oaLoginRowCss' ] ); ?>
             <?php Octave_Addons_Fields::row( [
+                'id'    => 'oaLoginRowCss',
                 'for'   => $this->field_id( 'custom_css' ),
                 'label' => __( 'Custom CSS', 'octave-addons' ),
                 'field' => function () use ( $s ) {

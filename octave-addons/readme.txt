@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.23.1
+Stable tag:        3.23.3
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -30,11 +30,12 @@ Octave Addons ships with a growing collection of focused modules:
     Minimal), Custom only, or Off. Only the selected preset loads, a shared
     safety controller guarantees content is never left hidden, and reduced
     motion shows everything immediately. CSS and JS overrides remain.
-*   **Page Loader & Transitions** – an initial loader for full page loads
+*   **Page Transitions** – an initial loader for full page loads
     (Brand Counter, Logo Mask, Image Window, Curtain Reveal, Orbital Signal or
-    Custom only) and separate internal page transitions (Slide Up, Split
-    Curtain, Brand Wipe, Soft Fade, Replay Loader or Custom only), with
-    intent-based prefetching. Both are off by default, use normal document
+    Custom only), paced by a single Loader duration, and separate internal page
+    transitions (Slide Up, Curve Rise, Circle Reveal, Column Stagger,
+    Diagonal Sweep, Split Curtain, Brand Wipe, Frosted Fade, Replay Loader or
+    Custom only). Both are off by default, use normal document
     navigation, and always release the page through hard timeouts.
 *   **Notifications Bar** – shows scheduled announcement banners across the
     top or bottom of the site. Each banner carries its own message, button,
@@ -142,12 +143,20 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.23.3 =
+* The initial page loader's timing now comes from one Loader duration setting (default 900ms, 400 to 2000ms). The entrance animation, the minimum time the loader stays up (about 1.7 times the duration, 1500ms by default), the pacing of the progress number and the reveal all scale from it, so a higher value slows the whole loader evenly. On a fast site the loader no longer flashes past: progress is paced to finish at the minimum time. The 8-second safety limit still applies.
+* Removed Quick navigation (hover prefetching) from Page Transitions. Caching and performance plugins such as WP Rocket and Breeze already handle prefetching, so the module no longer adds its own.
+* Custom CSS and JavaScript fields in Page Transitions, Scroll Animations, Custom Login URL and Notifications Bar now sit under a collapsible Custom setup heading at the end of each module's settings. It opens automatically when any of its fields already holds code.
+* Added four internal page transitions: Curve Rise (a surface with a soft curved edge that flattens as it lands), Circle Reveal (expands from the clicked link and irises closed into the same point on the next page, centred for keyboard navigation), Column Stagger (five strips rising in a cascade) and Diagonal Sweep (an angled accent blade leading a slanted surface).
+* Refined the existing transitions: Split Curtain panels now close a beat apart onto an accent seam, Brand Wipe reveals in two tones with the brand name rising into place, and Soft Fade is now Frosted Fade, blurring the outgoing page behind the surface and gently expanding away on arrival.
+* Fixed renaming a reusable taxonomy key returning "This definition could not be found". Keys are now saved exactly as entered instead of always being forced to start with `oa_`, so the editor returns to the renamed taxonomy. Existing keys are unchanged, and a key that matches a WordPress core taxonomy such as `category` is still namespaced to avoid a clash.
+
 = 3.23.1 =
 * Added the Accessibility Tree Repairs module to the AI Agents area, on by default. It gives each Breakdance Content Toggle checkbox an accessible name from its visible on-state label and the `switch` role, so a Monthly / Yearly toggle reads as "Yearly, switch, off", addressing the "Form elements must have labels" and "Accessibility tree is not well-formed" audits. It targets only Breakdance's stable semantic classes, repairs every toggle on the page including ones added later, and never replaces a name or role that is already present.
 * Octave Addons now has a WordPress admin submenu: Dashboard plus one item per module or module group, generated from the discovered modules so it always matches the plugin's own navigation. Each item has its own page and is highlighted when open, and older `admin.php?page=octave-addons&tab=…` links redirect to the matching page.
 
 = 3.23.0 =
-* Added the Page Loader & Transitions module with two independently controlled systems, both off by default. The initial page loader offers Brand Counter, Logo Mask, Image Window, Curtain Reveal, Orbital Signal and Custom only presets, renders through `wp_body_open`, reports real loading progress, can show once per session or on every full load, and always clears within 8 seconds, with a CSS failsafe that releases the page even if its script never runs. Internal page transitions offer Slide Up, Split Curtain, Brand Wipe, Soft Fade, Replay Loader and Custom only, use normal document navigation, skip external, hash, file, download, targeted, modified, admin, login, REST, AJAX, preview, builder and WooCommerce cart, checkout, account and cart-action links, and honour `data-oa-no-transition`. Quick navigation prefetches internal pages on hover, focus or touch, using Speculation Rules where supported, and respects Save-Data and slow connections.
+* Added the Page Transitions module with two independently controlled systems, both off by default. The initial page loader offers Brand Counter, Logo Mask, Image Window, Curtain Reveal, Orbital Signal and Custom only presets, renders through `wp_body_open`, reports real loading progress, can show once per session or on every full load, and always clears within 8 seconds, with a CSS failsafe that releases the page even if its script never runs. Internal page transitions offer Slide Up, Split Curtain, Brand Wipe, Soft Fade, Replay Loader and Custom only, use normal document navigation, skip external, hash, file, download, targeted, modified, admin, login, REST, AJAX, preview, builder and WooCommerce cart, checkout, account and cart-action links, and honour `data-oa-no-transition`. Quick navigation prefetches internal pages on hover, focus or touch, using Speculation Rules where supported, and respects Save-Data and slow connections.
 * Replaced the Scroll Animations "Load CSS" and "Load JavaScript" switches with a single Scroll animation type: Luxury, Editorial, Creative, Cinematic, Minimal, Custom only or Off. Only the selected preset's assets load. A shared controller that custom JavaScript cannot replace keeps content visible without JavaScript, on errors and for reduced-motion visitors, reveals each target once, and clears transitions, filters and `will-change` once each reveal settles. Headings keep their links, spans, icons, line breaks and inline styling when split into masked words or lines. Very tall columns and short footer lines now reveal reliably.
 * Existing Scroll Animations settings are migrated automatically: sites that loaded the bundled CSS move to Luxury, sites that ran only their overrides move to Custom only, and CSS and JavaScript override content is kept unchanged.
 * Breakdance Lazy Load now lazy loads videos by default while still leaving images and backgrounds to the site's performance plugin. Breakdance YouTube and Vimeo videos without a chosen Load Method use their lightweight players (or Breakdance's lazy load when autoplay is on), HTML5 videos from Breakdance Video elements, Breakdance section video backgrounds, the core video block and the `[video]` shortcode start with `preload="none"` and load, and autoplay, as they approach the viewport, and video iframes from Breakdance, core embeds and oEmbed receive `loading="lazy"`.

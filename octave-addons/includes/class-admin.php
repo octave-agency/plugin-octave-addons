@@ -696,6 +696,7 @@ class Octave_Addons_Admin {
 			'markdown-negotiation'       => 'file-text',
 			'mobile-contact-popup'       => 'smartphone',
 			'notifications-bar'          => 'megaphone',
+			'page-loader'                => 'page-loader',
 		];
 
 		return $icons[ $id ] ?? 'sliders';

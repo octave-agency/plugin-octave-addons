@@ -4069,11 +4069,16 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			$singular = sanitize_text_field( wp_unslash( (string) ( $taxonomy['singular_name'] ?? '' ) ) );
 			$key      = substr( sanitize_key( wp_unslash( (string) ( $taxonomy['taxonomy'] ?? '' ) ) ), 0, 32 );
 
-			$key = 'oa_' . ltrim( preg_replace( '/^oa_+/', '', $key ), '_' );
-
-			if ( 'oa_' === $key ) {
+			// The key is kept exactly as entered so a rename lands on the URL the
+			// editor redirects to; only an empty key or one WordPress already owns
+			// (category, post_tag, nav_menu…) falls back to a namespaced key.
+			if ( '' === $key ) {
 
 				$key = 'oa_category_' . ( $index + 1 );
+
+			} elseif ( in_array( $key, get_taxonomies( [ '_builtin' => true ] ), true ) ) {
+
+				$key = substr( 'oa_' . $key, 0, 32 );
 
 			}
 

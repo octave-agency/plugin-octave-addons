@@ -1,0 +1,48 @@
+/*
+COLUMN STAGGER TRANSITION
+-- Five vertical strips rise in a left-to-right cascade to cover the page,
+-- then continue upward in the same order on the next page
+-- Strips carry --oa-i (0-4) from the markup; 45ms between strips
+-- Cover 580ms and reveal 720ms, matching COVER_MS and REVEAL_MS
+---------------------------------------------------------- */
+
+.oa-transition--column-stagger .oa-transition__layer {
+    display: none;
+}
+
+.oa-transition__col {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--oa-i) * 20%);
+    width: calc(20% + 1px);
+    background: var(--oa-pm-bg);
+}
+
+.oa-transition__col:nth-child(odd) {
+    box-shadow: inset 0 2px 0 var(--oa-pm-accent);
+}
+
+html.oa-transition-out .oa-transition__col {
+    animation: oa-cs-cover 400ms cubic-bezier(0.76, 0, 0.24, 1) calc(var(--oa-i) * 45ms) both;
+}
+
+html.oa-transition-reveal .oa-transition__col {
+    animation: oa-cs-reveal 540ms cubic-bezier(0.76, 0, 0.24, 1) calc(var(--oa-i) * 45ms) both;
+}
+
+@keyframes oa-cs-cover {
+
+    from {
+        transform: translate3d(0, 100%, 0);
+    }
+
+}
+
+@keyframes oa-cs-reveal {
+
+    to {
+        transform: translate3d(0, -100%, 0);
+    }
+
+}

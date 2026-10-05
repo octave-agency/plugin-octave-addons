@@ -134,6 +134,12 @@ ADMIN INTERACTIONS
 		var control = link.control;
 		var match = link.values || control.dataset.controlsValue;
 
+		if ( control.hasAttribute( 'aria-expanded' ) ) {
+
+			return 'true' === control.getAttribute( 'aria-expanded' );
+
+		}
+
 		if ( undefined === match ) {
 
 			return control.checked;
@@ -180,6 +186,32 @@ ADMIN INTERACTIONS
 			conditionalRow( row ).controls.push( { control: control, values: parts[1] } );
 
 		} );
+
+		if ( control.hasAttribute( 'aria-expanded' ) ) {
+
+			var hasCode = control.dataset.controlsRow.split( ',' ).some( function ( id ) {
+
+				var row = document.getElementById( id.trim() );
+
+				return row && Array.prototype.some.call( row.querySelectorAll( 'textarea' ), function ( area ) {
+
+					return '' !== area.value.trim();
+
+				} );
+
+			} );
+
+			control.setAttribute( 'aria-expanded', hasCode ? 'true' : 'false' );
+			control.addEventListener( 'click', function () {
+
+				control.setAttribute( 'aria-expanded', 'true' === control.getAttribute( 'aria-expanded' ) ? 'false' : 'true' );
+				syncConditionalRows();
+
+			} );
+
+			return;
+
+		}
 
 		control.addEventListener( 'change', syncConditionalRows );
 
@@ -3386,13 +3418,7 @@ ADMIN INTERACTIONS
 
 				if ( keyIsAutomatic ) {
 
-					keyInput.value = slugify( titleInput.value ).substring( 0, 'custom_taxonomies' === collectionKey ? 29 : 40 );
-
-					if ( 'custom_taxonomies' === collectionKey ) {
-
-						keyInput.value = 'oa_' + keyInput.value.replace( /^oa_+/, '' );
-
-					}
+					keyInput.value = slugify( titleInput.value ).substring( 0, 'custom_taxonomies' === collectionKey ? 32 : 40 );
 
 					if ( keyPreview ) {
 
@@ -4741,7 +4767,9 @@ MOTION PREVIEWS
 		function loaderPreview( run, type ) {
 
 			var text = value( 'text' ) || controls.siteName || '';
-			var reveal = Math.max( 400, Math.min( 1600, parseInt( value( 'duration' ), 10 ) || 900 ) );
+			// Every timing is a multiple of the one Loader duration, as on the frontend.
+			var reveal = Math.max( 400, Math.min( 2000, parseInt( value( 'duration' ), 10 ) || 900 ) );
+			var scale = reveal / 900;
 			var loader = make( 'div', 'oa-pv-loader oa-pv-loader--' + type, stage );
 			var surface = make( 'span', 'oa-pv-surface', loader );
 			var inner = make( 'div', 'oa-pv-inner', loader );
@@ -4761,7 +4789,7 @@ MOTION PREVIEWS
 				progress = make( 'span', 'oa-pv-progress', line );
 				count = field( 'progress' ) && ! field( 'progress' ).checked ? null : make( 'span', 'oa-pv-count', meter, '0' );
 
-				animate( brand, [ { opacity: 0, transform: 'translate3d(0, 10px, 0)', clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, transform: 'none', clipPath: 'inset(0 0 0 0)' } ], { duration: 900, delay: 80 } );
+				animate( brand, [ { opacity: 0, transform: 'translate3d(0, 10px, 0)', clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, transform: 'none', clipPath: 'inset(0 0 0 0)' } ], { duration: 900 * scale, delay: 80 * scale } );
 				exits.push( [ surface, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], sweep, 1 ] );
 				exits.push( [ inner, [ { opacity: 1 }, { opacity: 0, transform: 'translate3d(0, -14px, 0)' } ], 'cubic-bezier(0.7, 0, 0.84, 0)', 0.6 ] );
 
@@ -4779,7 +4807,7 @@ MOTION PREVIEWS
 
 				progress = make( 'span', 'oa-pv-progress', logoLine );
 
-				animate( logo, [ { clipPath: 'inset(0 100% 0 0)', transform: 'translate3d(-6px, 0, 0)' }, { clipPath: 'inset(0 0 0 0)', transform: 'none' } ], { duration: 1100, delay: 100, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
+				animate( logo, [ { clipPath: 'inset(0 100% 0 0)', transform: 'translate3d(-6px, 0, 0)' }, { clipPath: 'inset(0 0 0 0)', transform: 'none' } ], { duration: 1100 * scale, delay: 100 * scale, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
 				exits.push( [ logo, [ { clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 0 100%)', transform: 'translate3d(6px, 0, 0)' } ], 'cubic-bezier(0.7, 0, 0.84, 0)', 0.55 ] );
 				exits.push( [ surface, [ { opacity: 1 }, { opacity: 0 } ], 'cubic-bezier(0.7, 0, 0.2, 1)', 1 ] );
 				exits.push( [ logoLine, [ { opacity: 1 }, { opacity: 0 } ], 'ease-out', 0.3 ] );
@@ -4794,11 +4822,11 @@ MOTION PREVIEWS
 					var picture = make( 'img', '', frame );
 
 					picture.src = imageUrl;
-					animate( picture, [ { transform: 'scale(1.18)' }, { transform: 'scale(1.06)' } ], { duration: 1300, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
+					animate( picture, [ { transform: 'scale(1.18)' }, { transform: 'scale(1.06)' } ], { duration: 1300 * scale, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
 
 				}
 
-				animate( frame, [ { clipPath: 'inset(38% 32% 38% 32%)' }, { clipPath: 'inset(18% 26% 30% 14%)', offset: 0.4 }, { clipPath: 'inset(8% 6% 12% 22%)' } ], { duration: 1300, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
+				animate( frame, [ { clipPath: 'inset(38% 32% 38% 32%)' }, { clipPath: 'inset(18% 26% 30% 14%)', offset: 0.4 }, { clipPath: 'inset(8% 6% 12% 22%)' } ], { duration: 1300 * scale, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
 				exits.push( [ frame, [ { clipPath: 'inset(8% 6% 12% 22%)' }, { clipPath: 'inset(0 0 0 0)', transform: 'scale(1.06)' } ], sweep, 1 ] );
 				exits.push( [ loader, [ { opacity: 1 }, { opacity: 0 } ], 'cubic-bezier(0.7, 0, 0.84, 0)', 1 ] );
 
@@ -4812,7 +4840,7 @@ MOTION PREVIEWS
 
 				progress = make( 'span', 'oa-pv-seam', top );
 
-				animate( curtainBrand, [ { opacity: 0, clipPath: 'inset(100% 0 0 0)' }, { opacity: 1, clipPath: 'inset(0 0 0 0)' } ], { duration: 800, delay: 60 } );
+				animate( curtainBrand, [ { opacity: 0, clipPath: 'inset(100% 0 0 0)' }, { opacity: 1, clipPath: 'inset(0 0 0 0)' } ], { duration: 800 * scale, delay: 60 * scale } );
 				exits.push( [ top, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], sweep, 1 ] );
 				exits.push( [ bottom, [ { transform: 'none' }, { transform: 'translate3d(0, 100%, 0)' } ], sweep, 1 ] );
 				exits.push( [ curtainBrand, [ { opacity: 1 }, { opacity: 0 } ], 'ease-out', 0.3 ] );
@@ -4827,8 +4855,8 @@ MOTION PREVIEWS
 				svg.innerHTML = '<circle class="oa-pv-ring" cx="60" cy="60" r="44"></circle><circle class="oa-pv-arc" cx="60" cy="60" r="44" pathLength="100"></circle><g class="oa-pv-tracker"><circle cx="60" cy="16" r="3"></circle></g>';
 				inner.appendChild( svg );
 
-				animate( svg.querySelector( '.oa-pv-tracker' ), [ { transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' } ], { duration: 1800, iterations: Infinity, easing: 'linear' } );
-				animate( svg.querySelector( '.oa-pv-arc' ), [ { strokeDashoffset: 100 }, { strokeDashoffset: 0 } ], { duration: 1400, easing: 'linear' } );
+				animate( svg.querySelector( '.oa-pv-tracker' ), [ { transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' } ], { duration: 1800 * scale, iterations: Infinity, easing: 'linear' } );
+				animate( svg.querySelector( '.oa-pv-arc' ), [ { strokeDashoffset: 100 }, { strokeDashoffset: 0 } ], { duration: 1400 * scale, easing: 'linear' } );
 				exits.push( [ svg, [ { opacity: 1 }, { opacity: 0, transform: 'scale(1.12)' } ], 'cubic-bezier(0.7, 0, 0.84, 0)', 0.6 ] );
 				exits.push( [ surface, [ { opacity: 1 }, { opacity: 0 } ], 'cubic-bezier(0.7, 0, 0.2, 1)', 1 ] );
 
@@ -4840,7 +4868,7 @@ MOTION PREVIEWS
 
 			}
 
-			var load = animate( progress || inner, progress ? [ { transform: 'scaleX(0)' }, { transform: 'scaleX(1)' } ] : [ { opacity: 1 }, { opacity: 1 } ], { duration: 1400, easing: 'cubic-bezier(0.3, 0.1, 0.3, 1)' } );
+			var load = animate( progress || inner, progress ? [ { transform: 'scaleX(0)' }, { transform: 'scaleX(1)' } ] : [ { opacity: 1 }, { opacity: 1 } ], { duration: reveal * 5 / 3, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' } );
 
 			if ( count ) {
 
@@ -4902,26 +4930,77 @@ MOTION PREVIEWS
 				cover = [ [ layerB, [ { transform: 'translate3d(0, 100%, 0)' }, { transform: 'none' } ], 420, 0 ], [ layer, [ { transform: 'translate3d(0, 100%, 0)' }, { transform: 'none' } ], 420, 40 ] ];
 				reveal = [ [ layer, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], 620, 0 ], [ layerB, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], 620, 60 ] ];
 
+			} else if ( 'curve-rise' === type ) {
+
+				var curveIn = { transform: 'translate3d(0, 100%, 0)', borderRadius: '50% 50% 0 0 / 30% 30% 0 0' };
+				var curveOut = { transform: 'translate3d(0, -100%, 0)', borderRadius: '0 0 50% 50% / 0 0 30% 30%' };
+				var flat = { transform: 'none', borderRadius: '0' };
+
+				layerB.hidden = false;
+				layerB.classList.add( 'oa-pv-layer--accent' );
+				overlay.insertBefore( layerB, layer );
+				cover = [ [ layerB, [ curveIn, flat ], 500, 0 ], [ layer, [ curveIn, flat ], 500, 60 ] ];
+				reveal = [ [ layer, [ flat, curveOut ], 690, 0 ], [ layerB, [ flat, curveOut ], 690, 70 ] ];
+
+			} else if ( 'circle-reveal' === type ) {
+
+				var point = ' at 72% 38%';
+
+				layerB.hidden = false;
+				layerB.classList.add( 'oa-pv-layer--accent' );
+				overlay.insertBefore( layerB, layer );
+				cover = [ [ layerB, [ { clipPath: 'circle(0' + point + ')' }, { clipPath: 'circle(150%' + point + ')' } ], 450, 0 ], [ layer, [ { clipPath: 'circle(0' + point + ')' }, { clipPath: 'circle(150%' + point + ')' } ], 450, 70 ] ];
+				reveal = [ [ layer, [ { clipPath: 'circle(150%' + point + ')' }, { clipPath: 'circle(0' + point + ')' } ], 680, 0 ], [ layerB, [ { clipPath: 'circle(150%' + point + ')' }, { clipPath: 'circle(0' + point + ')' } ], 680, 80 ] ];
+
+			} else if ( 'column-stagger' === type ) {
+
+				layer.hidden = true;
+
+				for ( var col = 0; col < 5; col++ ) {
+
+					var strip = make( 'span', 'oa-pv-layer oa-pv-col', overlay );
+
+					strip.style.left = ( col * 20 ) + '%';
+					cover.push( [ strip, [ { transform: 'translate3d(0, 100%, 0)' }, { transform: 'none' } ], 400, col * 45 ] );
+					reveal.push( [ strip, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], 540, col * 45 ] );
+
+				}
+
+			} else if ( 'diagonal-sweep' === type ) {
+
+				var skew = ' skewX(-14deg)';
+
+				layerB.hidden = false;
+				layer.classList.add( 'oa-pv-layer--skew' );
+				layerB.classList.add( 'oa-pv-layer--skew', 'oa-pv-layer--accent' );
+				overlay.insertBefore( layerB, layer );
+				cover = [ [ layerB, [ { transform: 'translate3d(-120%, 0, 0)' + skew }, { transform: 'translate3d(0, 0, 0)' + skew } ], 480, 0 ], [ layer, [ { transform: 'translate3d(-120%, 0, 0)' + skew }, { transform: 'translate3d(0, 0, 0)' + skew } ], 480, 40 ] ];
+				reveal = [ [ layer, [ { transform: 'translate3d(0, 0, 0)' + skew }, { transform: 'translate3d(120%, 0, 0)' + skew } ], 640, 0 ], [ layerB, [ { transform: 'translate3d(0, 0, 0)' + skew }, { transform: 'translate3d(120%, 0, 0)' + skew } ], 640, 60 ] ];
+
 			} else if ( 'split-curtain' === type ) {
 
 				layerB.hidden = false;
 				layer.classList.add( 'oa-pv-layer--left' );
 				layerB.classList.add( 'oa-pv-layer--right' );
-				cover = [ [ layer, [ { transform: 'translate3d(-100%, 0, 0)' }, { transform: 'none' } ], 460, 0 ], [ layerB, [ { transform: 'translate3d(100%, 0, 0)' }, { transform: 'none' } ], 460, 0 ] ];
-				reveal = [ [ layer, [ { transform: 'none' }, { transform: 'translate3d(-100%, 0, 0)' } ], 680, 0 ], [ layerB, [ { transform: 'none' }, { transform: 'translate3d(100%, 0, 0)' } ], 680, 0 ] ];
+				cover = [ [ layer, [ { transform: 'translate3d(-100%, 0, 0)' }, { transform: 'none' } ], 460, 0 ], [ layerB, [ { transform: 'translate3d(100%, 0, 0)' }, { transform: 'none' } ], 460, 60 ] ];
+				reveal = [ [ layer, [ { transform: 'none' }, { transform: 'translate3d(-100%, 0, 0)' } ], 680, 0 ], [ layerB, [ { transform: 'none' }, { transform: 'translate3d(100%, 0, 0)' } ], 680, 60 ] ];
 
 			} else if ( 'brand-wipe' === type ) {
 
 				var brand = make( 'span', 'oa-pv-brand oa-pv-brand--wipe', overlay, value( 'text' ) || controls.siteName || '' );
+				var wipeIn = [ { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' } ];
+				var wipeOut = [ { clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 0 100%)' } ];
 
+				layerB.hidden = false;
 				layer.classList.add( 'oa-pv-layer--accent' );
-				cover = [ [ layer, [ { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' } ], 460, 0 ], [ brand, [ { opacity: 0, clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, clipPath: 'inset(0 0 0 0)' } ], 460, 140 ] ];
-				reveal = [ [ layer, [ { clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 0 100%)' } ], 640, 80 ], [ brand, [ { opacity: 1 }, { opacity: 0 } ], 200, 0 ] ];
+				overlay.insertBefore( layerB, layer );
+				cover = [ [ layerB, wipeIn, 460, 0 ], [ layer, wipeIn, 460, 0 ], [ brand, [ { opacity: 0, transform: 'translate(-50%, -20%)', clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, transform: 'translate(-50%, -50%)', clipPath: 'inset(0 0 0 0)' } ], 460, 140 ] ];
+				reveal = [ [ layer, wipeOut, 560, 60 ], [ layerB, wipeOut, 560, 160 ], [ brand, [ { opacity: 1 }, { opacity: 0 } ], 200, 0 ] ];
 
 			} else if ( 'soft-fade' === type ) {
 
-				cover = [ [ layer, [ { opacity: 0 }, { opacity: 1 } ], 260, 0 ] ];
-				reveal = [ [ layer, [ { opacity: 1 }, { opacity: 0 } ], 360, 0 ] ];
+				cover = [ [ layer, [ { opacity: 0, backdropFilter: 'blur(0px)' }, { opacity: 1, backdropFilter: 'blur(16px)' } ], 320, 0 ] ];
+				reveal = [ [ layer, [ { opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(1.04)' } ], 460, 0 ] ];
 
 			} else if ( 'replay-loader' === type ) {
 
@@ -4943,10 +5022,18 @@ MOTION PREVIEWS
 			}
 
 			var last = null;
+			var lastEnd = 0;
 
 			cover.forEach( function ( step ) {
 
-				last = animate( step[0], step[1], { duration: step[2], delay: 500 + step[3], easing: sweep } );
+				var animation = animate( step[0], step[1], { duration: step[2], delay: 500 + step[3], easing: sweep } );
+
+				if ( step[2] + step[3] >= lastEnd ) {
+
+					last = animation;
+					lastEnd = step[2] + step[3];
+
+				}
 
 			} );
 

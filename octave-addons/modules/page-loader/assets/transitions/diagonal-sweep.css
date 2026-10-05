@@ -1,0 +1,60 @@
+/*
+DIAGONAL SWEEP TRANSITION
+-- An angled accent blade leads a slanted surface across the page; on the
+-- next page both continue across to reveal it
+-- The layers are widened so the slanted edges never expose a corner
+-- Cover 520ms and reveal 700ms, matching COVER_MS and REVEAL_MS
+---------------------------------------------------------- */
+
+.oa-transition--diagonal-sweep .oa-transition__layer {
+    z-index: 2;
+    left: -25%;
+    right: -25%;
+    transform: skewX(-14deg);
+}
+
+.oa-transition--diagonal-sweep .oa-transition__layer--b {
+    display: block;
+    z-index: 1;
+    background: var(--oa-pm-accent);
+}
+
+html.oa-transition-out .oa-transition--diagonal-sweep .oa-transition__layer {
+    animation: oa-ds-cover 480ms cubic-bezier(0.7, 0, 0.2, 1) 40ms both;
+}
+
+html.oa-transition-out .oa-transition--diagonal-sweep .oa-transition__layer--b {
+    animation-delay: 0ms;
+}
+
+html.oa-transition-reveal .oa-transition--diagonal-sweep .oa-transition__layer {
+    animation: oa-ds-reveal 640ms cubic-bezier(0.7, 0, 0.2, 1) both;
+}
+
+html.oa-transition-reveal .oa-transition--diagonal-sweep .oa-transition__layer--b {
+    animation-delay: 60ms;
+}
+
+@keyframes oa-ds-cover {
+
+    from {
+        transform: translate3d(-120%, 0, 0) skewX(-14deg);
+    }
+
+    to {
+        transform: translate3d(0, 0, 0) skewX(-14deg);
+    }
+
+}
+
+@keyframes oa-ds-reveal {
+
+    from {
+        transform: translate3d(0, 0, 0) skewX(-14deg);
+    }
+
+    to {
+        transform: translate3d(120%, 0, 0) skewX(-14deg);
+    }
+
+}

@@ -1,0 +1,57 @@
+/*
+CIRCLE REVEAL TRANSITION
+-- An accent ring then the surface expand from the clicked link to cover the
+-- page; on the next page the surface irises closed into the same point.
+-- The core script sets --oa-pt-x / --oa-pt-y, centred for keyboard clicks.
+-- Cover 520ms and reveal 760ms, matching COVER_MS and REVEAL_MS
+---------------------------------------------------------- */
+
+.oa-transition--circle-reveal .oa-transition__layer {
+    z-index: 2;
+}
+
+.oa-transition--circle-reveal .oa-transition__layer--b {
+    display: block;
+    z-index: 1;
+    background: var(--oa-pm-accent);
+}
+
+html.oa-transition-out .oa-transition--circle-reveal .oa-transition__layer {
+    animation: oa-ci-cover 450ms cubic-bezier(0.65, 0, 0.35, 1) 70ms both;
+}
+
+html.oa-transition-out .oa-transition--circle-reveal .oa-transition__layer--b {
+    animation-delay: 0ms;
+}
+
+html.oa-transition-reveal .oa-transition--circle-reveal .oa-transition__layer {
+    animation: oa-ci-reveal 680ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+html.oa-transition-reveal .oa-transition--circle-reveal .oa-transition__layer--b {
+    animation-delay: 80ms;
+}
+
+@keyframes oa-ci-cover {
+
+    from {
+        clip-path: circle(0 at var(--oa-pt-x, 50%) var(--oa-pt-y, 50%));
+    }
+
+    to {
+        clip-path: circle(150vmax at var(--oa-pt-x, 50%) var(--oa-pt-y, 50%));
+    }
+
+}
+
+@keyframes oa-ci-reveal {
+
+    from {
+        clip-path: circle(150vmax at var(--oa-pt-x, 50%) var(--oa-pt-y, 50%));
+    }
+
+    to {
+        clip-path: circle(0 at var(--oa-pt-x, 50%) var(--oa-pt-y, 50%));
+    }
+
+}

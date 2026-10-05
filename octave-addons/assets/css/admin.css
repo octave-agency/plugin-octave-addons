@@ -916,6 +916,36 @@ Navigation entry
     padding-top: 6px;
 }
 
+.oa-section-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+}
+
+.oa-section-toggle:hover,
+.oa-section-toggle:focus-visible {
+    color: var(--oa-text);
+}
+
+.oa-section-toggle .dashicons {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    transition: transform 0.2s ease;
+}
+
+.oa-section-toggle[aria-expanded="true"] .dashicons {
+    transform: rotate(180deg);
+}
+
 .oa-form-table th {
     width: 200px;
     padding: 16px 18px 16px 0;
@@ -6271,6 +6301,24 @@ Transition layers
 
 .oa-motion-stage .oa-pv-layer--right {
     left: 50%;
+}
+
+.oa-motion-stage .oa-pv-layer--right:not(.oa-pv-layer--accent) {
+    box-shadow: inset 1px 0 0 var(--oa-pv-accent);
+}
+
+.oa-motion-stage .oa-pv-layer--skew {
+    left: -25%;
+    right: -25%;
+}
+
+.oa-motion-stage .oa-pv-col {
+    right: auto;
+    width: calc(20% + 1px);
+}
+
+.oa-motion-stage .oa-pv-col:nth-child(odd) {
+    box-shadow: inset 0 2px 0 var(--oa-pv-accent);
 }
 
 /*

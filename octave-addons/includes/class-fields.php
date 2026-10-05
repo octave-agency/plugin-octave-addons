@@ -99,6 +99,32 @@ class Octave_Addons_Fields {
 
     }
 
+    /*
+    CUSTOM SETUP
+    -- A collapsible "Custom setup" section heading for a module's custom CSS
+    -- and JavaScript rows. The rows join the conditional-row system, so they
+    -- show only while the group is open and any other control agrees.
+    -- Starts open when one of the rows already holds code.
+    ---------------------------------------------------------- */
+
+    public static function custom_setup( array $row_ids ): void {
+
+        ?>
+
+        <tr>
+            <th colspan="2" class="oa-section-heading oa-section-heading--toggle">
+                <button type="button" class="oa-section-toggle" aria-expanded="false"
+                        aria-controls="<?= esc_attr( implode( ' ', $row_ids ) ); ?>"
+                        data-controls-row="<?= esc_attr( implode( ',', $row_ids ) ); ?>">
+                    <span><?php esc_html_e( 'Custom setup', 'octave-addons' ); ?></span>
+                    <span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+                </button>
+            </th>
+        </tr>
+        <?php
+
+    }
+
     /**
      * iOS-style toggle switch (checkbox + .oa-switch-slider).
      *

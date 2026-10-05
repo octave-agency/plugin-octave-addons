@@ -14,7 +14,7 @@ BRAND COUNTER LOADER
 
 .oa-loader--brand-counter .oa-loader__brand {
     align-self: flex-start;
-    animation: oa-bc-rise 900ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
+    animation: oa-bc-rise var(--oa-loader-duration, 900ms) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--oa-loader-duration, 900ms) * 0.089) both;
 }
 
 .oa-loader__meter {
