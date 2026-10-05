@@ -3,7 +3,8 @@ DIAGONAL SWEEP TRANSITION
 -- An angled accent blade leads a slanted surface across the page; on the
 -- next page both continue across to reveal it
 -- The layers are widened so the slanted edges never expose a corner
--- Cover 520ms and reveal 700ms, matching COVER_MS and REVEAL_MS
+-- Cover 520ms and reveal 700ms at the 600ms default, matching COVER_MS and
+-- REVEAL_MS; every timing is a multiple of --oa-transition-duration
 ---------------------------------------------------------- */
 
 .oa-transition--diagonal-sweep .oa-transition__layer {
@@ -20,7 +21,7 @@ DIAGONAL SWEEP TRANSITION
 }
 
 html.oa-transition-out .oa-transition--diagonal-sweep .oa-transition__layer {
-    animation: oa-ds-cover 480ms cubic-bezier(0.7, 0, 0.2, 1) 40ms both;
+    animation: oa-ds-cover calc(var(--oa-transition-duration, 600ms) * 0.8) cubic-bezier(0.7, 0, 0.2, 1) calc(var(--oa-transition-duration, 600ms) * 0.067) both;
 }
 
 html.oa-transition-out .oa-transition--diagonal-sweep .oa-transition__layer--b {
@@ -28,11 +29,11 @@ html.oa-transition-out .oa-transition--diagonal-sweep .oa-transition__layer--b {
 }
 
 html.oa-transition-reveal .oa-transition--diagonal-sweep .oa-transition__layer {
-    animation: oa-ds-reveal 640ms cubic-bezier(0.7, 0, 0.2, 1) both;
+    animation: oa-ds-reveal calc(var(--oa-transition-duration, 600ms) * 1.067) cubic-bezier(0.7, 0, 0.2, 1) both;
 }
 
 html.oa-transition-reveal .oa-transition--diagonal-sweep .oa-transition__layer--b {
-    animation-delay: 60ms;
+    animation-delay: calc(var(--oa-transition-duration, 600ms) * 0.1);
 }
 
 @keyframes oa-ds-cover {

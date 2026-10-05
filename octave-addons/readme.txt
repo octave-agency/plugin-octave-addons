@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.23.3
+Stable tag:        3.23.4
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -35,8 +35,9 @@ Octave Addons ships with a growing collection of focused modules:
     Custom only), paced by a single Loader duration, and separate internal page
     transitions (Slide Up, Curve Rise, Circle Reveal, Column Stagger,
     Diagonal Sweep, Split Curtain, Brand Wipe, Frosted Fade, Replay Loader or
-    Custom only). Both are off by default, use normal document
-    navigation, and always release the page through hard timeouts.
+    Custom only), paced by their own Transition duration. Both are off by
+    default, use normal document navigation, and always release the page
+    through hard timeouts.
 *   **Notifications Bar** – shows scheduled announcement banners across the
     top or bottom of the site. Each banner carries its own message, button,
     link, show from and show to dates and background, closes to a cookie for
@@ -142,6 +143,10 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.23.4 =
+* Internal page transitions now have their own Transition duration setting (default 600ms, 300 to 1500ms), working like the Loader duration. Every preset's cover, reveal, staggers and the wait before navigating scale from it, so a higher value slows the whole transition evenly. The default plays exactly as before. Replay Loader keeps following the Loader duration, and custom transition CSS can use `--oa-transition-duration` to follow the setting.
+* The Octave Addons admin menu no longer lists a separate Dashboard item; clicking Octave Addons in the sidebar opens the dashboard.
 
 = 3.23.3 =
 * The initial page loader's timing now comes from one Loader duration setting (default 900ms, 400 to 2000ms). The entrance animation, the minimum time the loader stays up (about 1.7 times the duration, 1500ms by default), the pacing of the progress number and the reveal all scale from it, so a higher value slows the whole loader evenly. On a fast site the loader no longer flashes past: progress is paced to finish at the minimum time. The 8-second safety limit still applies.

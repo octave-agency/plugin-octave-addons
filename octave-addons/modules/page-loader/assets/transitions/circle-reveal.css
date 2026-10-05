@@ -3,7 +3,8 @@ CIRCLE REVEAL TRANSITION
 -- An accent ring then the surface expand from the clicked link to cover the
 -- page; on the next page the surface irises closed into the same point.
 -- The core script sets --oa-pt-x / --oa-pt-y, centred for keyboard clicks.
--- Cover 520ms and reveal 760ms, matching COVER_MS and REVEAL_MS
+-- Cover 520ms and reveal 760ms at the 600ms default, matching COVER_MS and
+-- REVEAL_MS; every timing is a multiple of --oa-transition-duration
 ---------------------------------------------------------- */
 
 .oa-transition--circle-reveal .oa-transition__layer {
@@ -17,7 +18,7 @@ CIRCLE REVEAL TRANSITION
 }
 
 html.oa-transition-out .oa-transition--circle-reveal .oa-transition__layer {
-    animation: oa-ci-cover 450ms cubic-bezier(0.65, 0, 0.35, 1) 70ms both;
+    animation: oa-ci-cover calc(var(--oa-transition-duration, 600ms) * 0.75) cubic-bezier(0.65, 0, 0.35, 1) calc(var(--oa-transition-duration, 600ms) * 0.117) both;
 }
 
 html.oa-transition-out .oa-transition--circle-reveal .oa-transition__layer--b {
@@ -25,11 +26,11 @@ html.oa-transition-out .oa-transition--circle-reveal .oa-transition__layer--b {
 }
 
 html.oa-transition-reveal .oa-transition--circle-reveal .oa-transition__layer {
-    animation: oa-ci-reveal 680ms cubic-bezier(0.65, 0, 0.35, 1) both;
+    animation: oa-ci-reveal calc(var(--oa-transition-duration, 600ms) * 1.133) cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
 html.oa-transition-reveal .oa-transition--circle-reveal .oa-transition__layer--b {
-    animation-delay: 80ms;
+    animation-delay: calc(var(--oa-transition-duration, 600ms) * 0.133);
 }
 
 @keyframes oa-ci-cover {

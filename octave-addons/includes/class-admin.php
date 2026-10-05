@@ -459,6 +459,16 @@ class Octave_Addons_Admin {
 			}
 
 			/*
+			ADMIN MENU DASHBOARD ITEM
+			-- Hidden rather than removed: WordPress links the top-level item to
+			-- the first submenu entry, so it must stay registered.
+			---------------------------------------------------------- */
+
+			#toplevel_page_<?= esc_html( OCTAVE_ADDONS_SLUG ); ?> .wp-submenu .wp-first-item {
+				display: none;
+			}
+
+			/*
 			ADMIN FOOTER CREDIT
 			---------------------------------------------------------- */
 

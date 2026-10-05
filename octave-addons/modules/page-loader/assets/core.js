@@ -8,7 +8,8 @@ PAGE TRANSITIONS CORE
 -- duration setting), including a minimum display time that paces progress
 -- so a fast page still shows the whole animation
 -- Transitions: eligible same-origin clicks cover the page and navigate as
--- soon as it is covered; the next page reveals itself on DOMContentLoaded
+-- soon as it is covered; the next page reveals itself on DOMContentLoaded.
+-- cfg.cover and cfg.reveal arrive already scaled by the Transition duration
 -- Events on document: oa-loader:start|progress|exit|done,
 -- oa-transition:out|in|done
 ---------------------------------------------------------- */

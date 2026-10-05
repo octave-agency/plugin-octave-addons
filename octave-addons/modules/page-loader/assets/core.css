@@ -6,7 +6,8 @@ PAGE TRANSITIONS CORE
 -- become invisible and the scroll lock lifts.
 -- States: oa-loader-active, oa-loader-exit, oa-loader-cover,
 -- oa-transition-out, oa-transition-in, oa-transition-reveal
--- Loader timings are multiples of --oa-loader-duration, the one base value
+-- Loader timings are multiples of --oa-loader-duration and transition
+-- timings of --oa-transition-duration, one base value each
 ---------------------------------------------------------- */
 
 .oa-loader,

@@ -3,7 +3,8 @@ CURVE RISE TRANSITION
 -- A surface rises with a soft elliptical leading edge that flattens as it
 -- lands, led by a thin accent wave; on the next page it lifts away with the
 -- curve trailing beneath it
--- Cover 560ms and reveal 760ms, matching COVER_MS and REVEAL_MS
+-- Cover 560ms and reveal 760ms at the 600ms default, matching COVER_MS and
+-- REVEAL_MS; every timing is a multiple of --oa-transition-duration
 ---------------------------------------------------------- */
 
 .oa-transition--curve-rise .oa-transition__layer {
@@ -17,7 +18,7 @@ CURVE RISE TRANSITION
 }
 
 html.oa-transition-out .oa-transition--curve-rise .oa-transition__layer {
-    animation: oa-cr-cover 500ms cubic-bezier(0.83, 0, 0.17, 1) 60ms both;
+    animation: oa-cr-cover calc(var(--oa-transition-duration, 600ms) * 0.833) cubic-bezier(0.83, 0, 0.17, 1) calc(var(--oa-transition-duration, 600ms) * 0.1) both;
 }
 
 html.oa-transition-out .oa-transition--curve-rise .oa-transition__layer--b {
@@ -25,11 +26,11 @@ html.oa-transition-out .oa-transition--curve-rise .oa-transition__layer--b {
 }
 
 html.oa-transition-reveal .oa-transition--curve-rise .oa-transition__layer {
-    animation: oa-cr-reveal 690ms cubic-bezier(0.83, 0, 0.17, 1) both;
+    animation: oa-cr-reveal calc(var(--oa-transition-duration, 600ms) * 1.15) cubic-bezier(0.83, 0, 0.17, 1) both;
 }
 
 html.oa-transition-reveal .oa-transition--curve-rise .oa-transition__layer--b {
-    animation-delay: 70ms;
+    animation-delay: calc(var(--oa-transition-duration, 600ms) * 0.117);
 }
 
 @keyframes oa-cr-cover {

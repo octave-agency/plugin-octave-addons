@@ -2,8 +2,9 @@
 COLUMN STAGGER TRANSITION
 -- Five vertical strips rise in a left-to-right cascade to cover the page,
 -- then continue upward in the same order on the next page
--- Strips carry --oa-i (0-4) from the markup; 45ms between strips
--- Cover 580ms and reveal 720ms, matching COVER_MS and REVEAL_MS
+-- Strips carry --oa-i (0-4) from the markup; 45ms between strips at 600ms
+-- Cover 580ms and reveal 720ms at the 600ms default, matching COVER_MS and
+-- REVEAL_MS; every timing is a multiple of --oa-transition-duration
 ---------------------------------------------------------- */
 
 .oa-transition--column-stagger .oa-transition__layer {
@@ -24,11 +25,11 @@ COLUMN STAGGER TRANSITION
 }
 
 html.oa-transition-out .oa-transition__col {
-    animation: oa-cs-cover 400ms cubic-bezier(0.76, 0, 0.24, 1) calc(var(--oa-i) * 45ms) both;
+    animation: oa-cs-cover calc(var(--oa-transition-duration, 600ms) * 0.667) cubic-bezier(0.76, 0, 0.24, 1) calc(var(--oa-i) * var(--oa-transition-duration, 600ms) * 0.075) both;
 }
 
 html.oa-transition-reveal .oa-transition__col {
-    animation: oa-cs-reveal 540ms cubic-bezier(0.76, 0, 0.24, 1) calc(var(--oa-i) * 45ms) both;
+    animation: oa-cs-reveal calc(var(--oa-transition-duration, 600ms) * 0.9) cubic-bezier(0.76, 0, 0.24, 1) calc(var(--oa-i) * var(--oa-transition-duration, 600ms) * 0.075) both;
 }
 
 @keyframes oa-cs-cover {

@@ -7,7 +7,8 @@ MODULE: PAGE TRANSITIONS
 -- through wp_body_open and removed on real readiness signals
 -- Internal page transitions that cover the page on same-origin link clicks,
 -- navigate normally, and reveal the destination
--- Every loader timing derives from one base value, the Loader duration
+-- Every loader timing derives from one base value, the Loader duration,
+-- and every transition timing from another, the Transition duration
 -- A core script that custom code cannot replace owns the lifecycle, the
 -- hard timeouts and the scroll lock, and a CSS failsafe releases the page
 -- even if that script never runs
@@ -27,8 +28,14 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 	protected const ASSETS = 'modules/page-loader/assets/';
 
 	/**
-	 * How long each transition takes to cover the page, in ms. Navigation
-	 * starts as soon as this has passed.
+	 * The Transition duration the COVER_MS and REVEAL_MS values are written
+	 * against; a saved duration scales them in proportion.
+	 */
+	protected const TRANSITION_BASE_MS = 600;
+
+	/**
+	 * How long each transition takes to cover the page, in ms at the base
+	 * duration. Navigation starts as soon as this has passed.
 	 */
 	protected const COVER_MS = [
 		'slide-up'       => 420,
@@ -43,7 +50,8 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 	];
 
 	/**
-	 * How long each transition takes to reveal the destination, in ms.
+	 * How long each transition takes to reveal the destination, in ms at the
+	 * base duration.
 	 */
 	protected const REVEAL_MS = [
 		'slide-up'       => 620,
@@ -105,6 +113,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			'transitions_enabled'    => false,
 			'transition_type'        => 'slide-up',
 			'transition_loader_type' => 'match',
+			'transition_duration'    => 600,
 			'transition_css'         => '',
 			'transition_js'          => '',
 
@@ -177,9 +186,10 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$replay                          = sanitize_key( $input['transition_loader_type'] ?? '' );
 		$clean['transition_loader_type'] = 'match' === $replay || array_key_exists( $replay, $this->loader_types() ) ? $replay : 'match';
 
-		$clean['loader_frequency'] = 'every' === ( $input['loader_frequency'] ?? '' ) ? 'every' : 'session';
-		$clean['loader_duration']  = max( 400, min( 2000, absint( $input['loader_duration'] ?? 900 ) ) );
-		$clean['loader_text']      = sanitize_text_field( $input['loader_text'] ?? '' );
+		$clean['loader_frequency']    = 'every' === ( $input['loader_frequency'] ?? '' ) ? 'every' : 'session';
+		$clean['loader_duration']     = max( 400, min( 2000, absint( $input['loader_duration'] ?? 900 ) ) );
+		$clean['transition_duration'] = max( 300, min( 1500, absint( $input['transition_duration'] ?? 600 ) ) );
+		$clean['loader_text']         = sanitize_text_field( $input['loader_text'] ?? '' );
 
 		$clean['loader_logo']  = Octave_Addons_Fields::sanitize_media_asset( $input['loader_logo'] ?? 0 );
 		$clean['loader_image'] = Octave_Addons_Fields::sanitize_media_asset( $input['loader_image'] ?? 0 );
@@ -212,21 +222,22 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		$colors   = Octave_Addons_Colors::resolved_values();
 		$controls = [
-			'loaderType'       => $this->field_id( 'loader_type' ),
-			'transitionType'   => $this->field_id( 'transition_type' ),
-			'replayType'       => $this->field_id( 'transition_loader_type' ),
-			'progress'         => $this->field_id( 'loader_show_progress' ),
-			'text'             => $this->field_id( 'loader_text' ),
-			'duration'         => $this->field_id( 'loader_duration' ),
-			'logo'             => $this->field_id( 'loader_logo' ),
-			'image'            => $this->field_id( 'loader_image' ),
-			'accentSource'     => $this->field_id( 'accent_source' ),
-			'accentColor'      => $this->field_id( 'accent_color' ) . '-value',
-			'backgroundSource' => $this->field_id( 'background_source' ),
-			'backgroundColor'  => $this->field_id( 'background_color' ) . '-value',
-			'textSource'       => $this->field_id( 'text_source' ),
-			'textColor'        => $this->field_id( 'text_color' ) . '-value',
-			'siteName'         => get_bloginfo( 'name' ),
+			'loaderType'         => $this->field_id( 'loader_type' ),
+			'transitionType'     => $this->field_id( 'transition_type' ),
+			'replayType'         => $this->field_id( 'transition_loader_type' ),
+			'progress'           => $this->field_id( 'loader_show_progress' ),
+			'text'               => $this->field_id( 'loader_text' ),
+			'duration'           => $this->field_id( 'loader_duration' ),
+			'transitionDuration' => $this->field_id( 'transition_duration' ),
+			'logo'               => $this->field_id( 'loader_logo' ),
+			'image'              => $this->field_id( 'loader_image' ),
+			'accentSource'       => $this->field_id( 'accent_source' ),
+			'accentColor'        => $this->field_id( 'accent_color' ) . '-value',
+			'backgroundSource'   => $this->field_id( 'background_source' ),
+			'backgroundColor'    => $this->field_id( 'background_color' ) . '-value',
+			'textSource'         => $this->field_id( 'text_source' ),
+			'textColor'          => $this->field_id( 'text_color' ) . '-value',
+			'siteName'           => get_bloginfo( 'name' ),
 		];
 
 		?>
@@ -385,7 +396,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 					Octave_Addons_Fields::switch_field( [
 						'name'    => $this->field_name( 'transitions_enabled' ),
 						'checked' => ! empty( $s['transitions_enabled'] ),
-						'data'    => [ 'controls-row' => 'oaPlRowTransitionType,oaPlRowTransitionPreview,oaPlRowReplay,oaPlRowTransitionCss,oaPlRowTransitionJs' ],
+						'data'    => [ 'controls-row' => 'oaPlRowTransitionType,oaPlRowTransitionPreview,oaPlRowTransitionDuration,oaPlRowReplay,oaPlRowTransitionCss,oaPlRowTransitionJs' ],
 						'help'    => __( 'Covers the page on same-origin link clicks and reveals the destination. Normal page loads, so forms, analytics and plugins are unaffected.', 'octave-addons' ),
 					] );
 
@@ -398,7 +409,10 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 				'label' => __( 'Transition type', 'octave-addons' ),
 				'field' => function () use ( $s ) {
 
-					$this->render_select( 'transition_type', $this->transition_types(), $s['transition_type'], 'oaPlRowReplay:replay-loader' );
+					// Replay Loader runs on the Loader duration, so it hides this one.
+					$timed = implode( '|', array_diff( array_keys( $this->transition_types() ), [ 'replay-loader' ] ) );
+
+					$this->render_select( 'transition_type', $this->transition_types(), $s['transition_type'], 'oaPlRowReplay:replay-loader,oaPlRowTransitionDuration:' . $timed );
 
 					?>
 
@@ -414,6 +428,26 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 				'field' => function () use ( $controls, $colors ) {
 
 					Octave_Addons_Fields::motion_preview( 'transition', $controls, $colors );
+
+				},
+			] );
+
+			Octave_Addons_Fields::row( [
+				'id'    => 'oaPlRowTransitionDuration',
+				'for'   => $this->field_id( 'transition_duration' ),
+				'label' => __( 'Transition duration', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					Octave_Addons_Fields::number( [
+						'id'     => $this->field_id( 'transition_duration' ),
+						'name'   => $this->field_name( 'transition_duration' ),
+						'value'  => $s['transition_duration'],
+						'min'    => 300,
+						'max'    => 1500,
+						'step'   => 50,
+						'suffix' => 'ms',
+						'help'   => __( 'One base value for every transition: the cover, the wait before navigating, the reveal on the next page and each preset\'s staggers all scale from it. Higher is slower; 600ms is the default. Replay Loader uses the Loader duration instead.', 'octave-addons' ),
+					] );
 
 				},
 			] );
@@ -448,7 +482,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			$this->render_code_row( 'oaPlRowLoaderCss', 'loader_css', __( 'Loader CSS', 'octave-addons' ), '#oa-page-loader { }', __( 'Printed after the loader preset. States: html.oa-loader-active while shown, html.oa-loader-exit while revealing; --oa-progress runs from 0 to 1.', 'octave-addons' ), $s );
 			$this->render_code_row( 'oaPlRowLoaderJs', 'loader_js', __( 'Loader JavaScript', 'octave-addons' ), "document.addEventListener( 'oa-loader:progress', function ( event ) { } );", __( 'Runs after the lifecycle script, which cannot be replaced. Events: oa-loader:start, oa-loader:progress (detail.progress), oa-loader:exit and oa-loader:done. The 8-second safety timeout always applies.', 'octave-addons' ), $s );
 
-			$this->render_code_row( 'oaPlRowTransitionCss', 'transition_css', __( 'Transition CSS', 'octave-addons' ), '#oa-page-transition { }', __( 'Printed after the transition preset. States: html.oa-transition-out while covering, html.oa-transition-in then html.oa-transition-reveal on the destination.', 'octave-addons' ), $s );
+			$this->render_code_row( 'oaPlRowTransitionCss', 'transition_css', __( 'Transition CSS', 'octave-addons' ), '#oa-page-transition { }', __( 'Printed after the transition preset. States: html.oa-transition-out while covering, html.oa-transition-in then html.oa-transition-reveal on the destination. Time animations from --oa-transition-duration to follow the Transition duration.', 'octave-addons' ), $s );
 			$this->render_code_row( 'oaPlRowTransitionJs', 'transition_js', __( 'Transition JavaScript', 'octave-addons' ), "document.addEventListener( 'oa-transition:out', function ( event ) { } );", __( 'Runs after the lifecycle script, which cannot be replaced. Events: oa-transition:out (detail.url), oa-transition:in and oa-transition:done.', 'octave-addons' ), $s );
 
 			?>
@@ -720,7 +754,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 	/*
 	ROOT CSS
-	-- Colours and the reveal duration as custom properties. A Breakdance
+	-- Colours and both base durations as custom properties. A Breakdance
 	-- source follows its variable, with the saved hex as fallback for sites
 	-- where the variable is missing.
 	---------------------------------------------------------- */
@@ -728,11 +762,12 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 	protected function root_css( array $s ): string {
 
 		return sprintf(
-			':root{--oa-pm-accent:%s;--oa-pm-bg:%s;--oa-pm-fg:%s;--oa-loader-duration:%dms;}',
+			':root{--oa-pm-accent:%s;--oa-pm-bg:%s;--oa-pm-fg:%s;--oa-loader-duration:%dms;--oa-transition-duration:%dms;}',
 			$this->color_value( 'accent', $s ),
 			$this->color_value( 'background', $s ),
 			$this->color_value( 'text', $s ),
-			(int) $s['loader_duration']
+			(int) $s['loader_duration'],
+			(int) $s['transition_duration']
 		);
 
 	}
@@ -766,14 +801,16 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		}
 
+		$scale = (int) $s['transition_duration'] / self::TRANSITION_BASE_MS;
+
 		return [
 			'loader'     => ! empty( $s['loader_enabled'] ),
 			'frequency'  => $s['loader_frequency'],
 			'duration'   => (int) $s['loader_duration'],
 			'transition' => $transition,
 			'replay'     => 'replay-loader' === $transition,
-			'cover'      => 'replay-loader' === $transition ? (int) round( $s['loader_duration'] / 3 ) : ( self::COVER_MS[ $transition ] ?? 400 ),
-			'reveal'     => self::REVEAL_MS[ $transition ] ?? 600,
+			'cover'      => 'replay-loader' === $transition ? (int) round( $s['loader_duration'] / 3 ) : (int) round( ( self::COVER_MS[ $transition ] ?? 400 ) * $scale ),
+			'reveal'     => (int) round( ( self::REVEAL_MS[ $transition ] ?? 600 ) * $scale ),
 			'exclude'    => array_values( array_unique( array_filter( $exclude ) ) ),
 		];
 

@@ -3,15 +3,16 @@ FROSTED FADE TRANSITION
 -- The page blurs behind a translucent surface that settles to solid, which
 -- then fades and gently expands away on the next page. Browsers without
 -- backdrop-filter get a plain fade.
--- Cover 320ms and reveal 460ms, matching COVER_MS and REVEAL_MS
+-- Cover 320ms and reveal 460ms at the 600ms default, matching COVER_MS and
+-- REVEAL_MS; every timing is a multiple of --oa-transition-duration
 ---------------------------------------------------------- */
 
 html.oa-transition-out .oa-transition--soft-fade .oa-transition__layer {
-    animation: oa-sf-cover 320ms cubic-bezier(0.33, 1, 0.68, 1) both;
+    animation: oa-sf-cover calc(var(--oa-transition-duration, 600ms) * 0.533) cubic-bezier(0.33, 1, 0.68, 1) both;
 }
 
 html.oa-transition-reveal .oa-transition--soft-fade .oa-transition__layer {
-    animation: oa-sf-reveal 460ms cubic-bezier(0.65, 0, 0.35, 1) both;
+    animation: oa-sf-reveal calc(var(--oa-transition-duration, 600ms) * 0.767) cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
 @keyframes oa-sf-cover {

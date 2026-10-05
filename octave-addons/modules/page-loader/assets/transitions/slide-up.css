@@ -2,7 +2,8 @@
 SLIDE UP TRANSITION
 -- An accent edge leads a colour surface up over the page; on the next page
 -- the surface continues upward to reveal it
--- Cover 420ms and reveal 620ms, matching COVER_MS and REVEAL_MS
+-- Cover 420ms and reveal 620ms at the 600ms default, matching COVER_MS and
+-- REVEAL_MS; every timing is a multiple of --oa-transition-duration
 ---------------------------------------------------------- */
 
 .oa-transition--slide-up .oa-transition__layer {
@@ -16,7 +17,7 @@ SLIDE UP TRANSITION
 }
 
 html.oa-transition-out .oa-transition--slide-up .oa-transition__layer {
-    animation: oa-su-cover 420ms cubic-bezier(0.76, 0, 0.24, 1) 40ms both;
+    animation: oa-su-cover calc(var(--oa-transition-duration, 600ms) * 0.7) cubic-bezier(0.76, 0, 0.24, 1) calc(var(--oa-transition-duration, 600ms) * 0.067) both;
 }
 
 html.oa-transition-out .oa-transition--slide-up .oa-transition__layer--b {
@@ -24,11 +25,11 @@ html.oa-transition-out .oa-transition--slide-up .oa-transition__layer--b {
 }
 
 html.oa-transition-reveal .oa-transition--slide-up .oa-transition__layer {
-    animation: oa-su-reveal 620ms cubic-bezier(0.76, 0, 0.24, 1) both;
+    animation: oa-su-reveal calc(var(--oa-transition-duration, 600ms) * 1.033) cubic-bezier(0.76, 0, 0.24, 1) both;
 }
 
 html.oa-transition-reveal .oa-transition--slide-up .oa-transition__layer--b {
-    animation-delay: 60ms;
+    animation-delay: calc(var(--oa-transition-duration, 600ms) * 0.1);
 }
 
 @keyframes oa-su-cover {

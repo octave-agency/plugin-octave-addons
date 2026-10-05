@@ -4914,6 +4914,9 @@ MOTION PREVIEWS
 		function transitionPreview( run, type ) {
 
 			var pageA = mockPage( stage, 'a' );
+			// Step timings are written at the 600ms default and scale with the
+			// Transition duration, as on the frontend.
+			var scale = Math.max( 300, Math.min( 1500, parseInt( value( 'transitionDuration' ), 10 ) || 600 ) ) / 600;
 			var overlay = make( 'div', 'oa-pv-transition', stage );
 			var layer = make( 'span', 'oa-pv-layer', overlay );
 			var layerB = make( 'span', 'oa-pv-layer oa-pv-layer--b', overlay );
@@ -5026,7 +5029,7 @@ MOTION PREVIEWS
 
 			cover.forEach( function ( step ) {
 
-				var animation = animate( step[0], step[1], { duration: step[2], delay: 500 + step[3], easing: sweep } );
+				var animation = animate( step[0], step[1], { duration: step[2] * scale, delay: 500 + step[3] * scale, easing: sweep } );
 
 				if ( step[2] + step[3] >= lastEnd ) {
 
@@ -5044,7 +5047,7 @@ MOTION PREVIEWS
 
 				reveal.forEach( function ( step ) {
 
-					animate( step[0], step[1], { duration: step[2], delay: 160 + step[3], easing: sweep } );
+					animate( step[0], step[1], { duration: step[2] * scale, delay: 160 + step[3] * scale, easing: sweep } );
 
 				} );
 
