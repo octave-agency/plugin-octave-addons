@@ -1,0 +1,25 @@
+/*
+LUXURY PRESET
+-- Gentle rise, a whisper of scale and blur resolving to sharp, and refined
+-- word masks on headings with a restrained stagger
+---------------------------------------------------------- */
+
+.oa-anim-ready {
+    --oa-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --oa-fade: 800ms;
+
+    --oa-item-from: translate3d(0, 24px, 0) scale(0.988);
+    --oa-item-filter: blur(4px);
+    --oa-item-dur: 1000ms;
+
+    --oa-media-from: translate3d(0, 22px, 0) scale(0.99);
+    --oa-media-filter: blur(4px);
+    --oa-media-zoom: 1.02;
+    --oa-media-dur: 1100ms;
+
+    --oa-text-from: translate3d(0, 18px, 0);
+    --oa-text-filter: blur(3px);
+    --oa-text-dur: 900ms;
+
+    --oa-heading-dur: 950ms;
+}

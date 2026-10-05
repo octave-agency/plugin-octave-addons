@@ -1,0 +1,65 @@
+/*
+SPLIT CURTAIN TRANSITION
+-- Two half panels close from the sides and part again on the next page
+-- Cover 460ms and reveal 680ms, matching COVER_MS and REVEAL_MS
+---------------------------------------------------------- */
+
+.oa-transition--split-curtain .oa-transition__layer {
+    right: 50%;
+    margin-right: -1px;
+}
+
+.oa-transition--split-curtain .oa-transition__layer--b {
+    display: block;
+    right: 0;
+    left: 50%;
+    margin-right: 0;
+}
+
+html.oa-transition-out .oa-transition--split-curtain .oa-transition__layer {
+    animation: oa-sc-from-left 460ms cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+html.oa-transition-out .oa-transition--split-curtain .oa-transition__layer--b {
+    animation-name: oa-sc-from-right;
+}
+
+html.oa-transition-reveal .oa-transition--split-curtain .oa-transition__layer {
+    animation: oa-sc-to-left 680ms cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+html.oa-transition-reveal .oa-transition--split-curtain .oa-transition__layer--b {
+    animation-name: oa-sc-to-right;
+}
+
+@keyframes oa-sc-from-left {
+
+    from {
+        transform: translate3d(-100%, 0, 0);
+    }
+
+}
+
+@keyframes oa-sc-from-right {
+
+    from {
+        transform: translate3d(100%, 0, 0);
+    }
+
+}
+
+@keyframes oa-sc-to-left {
+
+    to {
+        transform: translate3d(-100%, 0, 0);
+    }
+
+}
+
+@keyframes oa-sc-to-right {
+
+    to {
+        transform: translate3d(100%, 0, 0);
+    }
+
+}

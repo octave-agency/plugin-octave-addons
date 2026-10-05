@@ -1,0 +1,17 @@
+/*
+MINIMAL PRESET
+-- Fast, subtle fades with a short rise and no heading restructuring
+---------------------------------------------------------- */
+
+.oa-anim-ready {
+    --oa-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    --oa-item-from: translate3d(0, 14px, 0);
+    --oa-item-dur: 550ms;
+
+    --oa-media-from: translate3d(0, 12px, 0);
+    --oa-media-dur: 600ms;
+
+    --oa-text-from: translate3d(0, 10px, 0);
+    --oa-text-dur: 500ms;
+}

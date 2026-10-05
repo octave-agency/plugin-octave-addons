@@ -1,0 +1,25 @@
+/*
+EDITORIAL PRESET
+-- Line-masked headings and inset clip-path image reveals, with media
+-- following the type a beat later and almost no scale
+---------------------------------------------------------- */
+
+.oa-anim-ready {
+    --oa-ease: cubic-bezier(0.77, 0, 0.175, 1);
+    --oa-fade: 600ms;
+
+    --oa-item-from: translate3d(0, 16px, 0);
+    --oa-item-dur: 850ms;
+
+    --oa-media-from: none;
+    --oa-media-start: 1;
+    --oa-media-clip: inset(100% 0 0 0);
+    --oa-media-clip-to: inset(0 0 0 0);
+    --oa-media-zoom: 1.03;
+    --oa-media-dur: 1200ms;
+
+    --oa-text-from: translate3d(0, 12px, 0);
+    --oa-text-dur: 800ms;
+
+    --oa-heading-dur: 900ms;
+}

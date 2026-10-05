@@ -15,6 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 
+	/**
+	 * Shared colour sources this module offers.
+	 */
+	protected const SOURCE_KEYS = [ 'brand', 'brand_secondary', 'body_text', 'headings' ];
+
 	public function get_id(): string {
 
 		return 'text-selection';
@@ -47,41 +52,13 @@ class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 
 	/*
 	COLOR SOURCES
-	-- The Breakdance variables a colour can follow. Each one names the global
-	-- settings path Breakdance builds the variable from, so the admin preview
-	-- can show the real colour, and the fallback Breakdance itself applies when
-	-- that path is empty. Sources without a native settings path can resolve
-	-- directly from a matching variable in Breakdance's global colour palette.
+	-- The Breakdance variables a selection colour can follow, from the shared
+	-- colour-source list
 	---------------------------------------------------------- */
 
 	protected function color_sources(): array {
 
-		return [
-			'brand' => [
-				'label'    => __( 'brand primary', 'octave-addons' ),
-				'variable' => '--bde-brand-primary-color',
-				'paths'    => [ [ 'colors', 'brand' ] ],
-				'fallback' => '#3B82F6',
-			],
-			'brand_secondary' => [
-				'label'    => __( 'brand secondary', 'octave-addons' ),
-				'variable' => '--bde-brand-secondary-color',
-				'paths'    => [],
-				'fallback' => '',
-			],
-			'body_text' => [
-				'label'    => __( 'body text', 'octave-addons' ),
-				'variable' => '--bde-body-text-color',
-				'paths'    => [ [ 'colors', 'text' ], [ 'typography', 'advanced', 'body', 'color' ] ],
-				'fallback' => '#374151',
-			],
-			'headings' => [
-				'label'    => __( 'headings', 'octave-addons' ),
-				'variable' => '--bde-headings-color',
-				'paths'    => [ [ 'colors', 'headings' ] ],
-				'fallback' => '#111827',
-			],
-		];
+		return array_intersect_key( Octave_Addons_Colors::sources(), array_flip( self::SOURCE_KEYS ) );
 
 	}
 
@@ -230,30 +207,12 @@ class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 
 	/*
 	RENDER SOURCE OPTIONS
-	-- Keeps the human-readable colour name in the dropdown while the source key
-	-- retains its CSS variable mapping behind the scenes.
+	-- Prints the Breakdance colour options this module offers
 	---------------------------------------------------------- */
 
 	protected function render_source_options( string $selected ): void {
 
-		foreach ( $this->color_sources() as $key => $source ) {
-
-			?>
-
-			<option value="<?= esc_attr( $key ); ?>" <?php selected( $selected, $key ); ?>>
-				<?php
-
-				printf(
-					/* translators: %s: Breakdance colour name. */
-					esc_html__( 'Breakdance %s', 'octave-addons' ),
-					esc_html( $source['label'] )
-				);
-
-				?>
-			</option>
-			<?php
-
-		}
+		Octave_Addons_Colors::render_options( $selected, self::SOURCE_KEYS );
 
 	}
 
@@ -331,199 +290,34 @@ class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 
 	/*
 	RESOLVED SOURCE COLORS
-	-- Reads each Breakdance colour straight out of the global settings so the
-	-- admin preview can show it, since Breakdance only prints the variables on
-	-- the frontend. A colour that cannot be read is returned as an empty
-	-- string, which the preview treats as unknown.
+	-- Reads the real Breakdance colours for the admin preview
 	---------------------------------------------------------- */
 
 	protected function resolved_source_colors(): array {
 
-		$settings = function_exists( 'Breakdance\\Data\\get_global_settings_array' )
-			? \Breakdance\Data\get_global_settings_array()['settings'] ?? []
-			: null;
-
-		$resolved = [];
-
-		foreach ( $this->color_sources() as $key => $source ) {
-
-			$resolved[ $key ] = [
-				'variable' => $source['variable'],
-				'value'    => is_array( $settings ) ? $this->read_color( $settings, $source ) : '',
-			];
-
-		}
-
-		return $resolved;
-
-	}
-
-	/*
-	READ COLOR
-	-- Walks the global settings paths in the order Breakdance falls back
-	-- through them. A source without a native path is matched directly against
-	-- the global palette by CSS variable name, while a path value can still
-	-- follow one level of palette indirection.
-	---------------------------------------------------------- */
-
-	protected function read_color( array $settings, array $source ): string {
-
-		$value = '';
-
-		foreach ( $source['paths'] as $path ) {
-
-			$value = $this->flatten_color( $this->dig( $settings, $path ) );
-
-			if ( '' !== $value ) {
-
-				break;
-
-			}
-
-		}
-
-		if ( '' === $value ) {
-
-			$value = $this->read_palette_color( $settings, ltrim( $source['variable'], '-' ) );
-
-		}
-
-		if ( '' === $value ) {
-
-			return $source['fallback'];
-
-		}
-
-		if ( ! preg_match( '/^var\(\s*--([A-Za-z0-9_-]+)/', $value, $match ) ) {
-
-			return $value;
-
-		}
-
-		$value = $this->read_palette_color( $settings, $match[1] );
-
-		return 0 === strpos( $value, 'var(' ) ? '' : $value;
-
-	}
-
-	/*
-	READ PALETTE COLOR
-	-- Finds a Breakdance global colour by the CSS variable name it emits.
-	---------------------------------------------------------- */
-
-	protected function read_palette_color( array $settings, string $variable ): string {
-
-		foreach ( $settings['colors']['palette']['colors'] ?? [] as $entry ) {
-
-			if ( ( $entry['cssVariableName'] ?? '' ) !== $variable ) {
-
-				continue;
-
-			}
-
-			return $this->flatten_color( $entry['value'] ?? '' );
-
-		}
-
-		return '';
-
-	}
-
-	/*
-	DIG
-	-- Reads a nested settings value without tripping over a missing branch.
-	---------------------------------------------------------- */
-
-	protected function dig( array $settings, array $path ) {
-
-		$value = $settings;
-
-		foreach ( $path as $key ) {
-
-			if ( ! is_array( $value ) || ! isset( $value[ $key ] ) ) {
-
-				return null;
-
-			}
-
-			$value = $value[ $key ];
-
-		}
-
-		return $value;
-
-	}
-
-	/*
-	FLATTEN COLOR
-	-- A Breakdance colour is normally a plain CSS string, but palette entries
-	-- wrap the same string in a value key.
-	---------------------------------------------------------- */
-
-	protected function flatten_color( $color ): string {
-
-		if ( is_array( $color ) ) {
-
-			$color = $color['value'] ?? '';
-
-		}
-
-		return is_string( $color ) ? trim( $color ) : '';
+		return array_intersect_key( Octave_Addons_Colors::resolved_values(), array_flip( self::SOURCE_KEYS ) );
 
 	}
 
 	/*
 	PREVIEW COLOR
-	-- The Breakdance variables are only defined on the frontend, so the sample
-	-- uses the colour read from the global settings and names the saved hex as
-	-- its fallback rather than rendering as nothing.
+	-- Shows the resolved colour in the admin, falling back to the saved hex
 	---------------------------------------------------------- */
 
 	protected function preview_color( string $source, string $color, array $resolved ): string {
 
-		if ( ! isset( $resolved[ $source ] ) ) {
-
-			return $this->resolve_color( $source, $color );
-
-		}
-
-		if ( '' !== $resolved[ $source ]['value'] ) {
-
-			return $resolved[ $source ]['value'];
-
-		}
-
-		$fallback = sanitize_hex_color( $color ) ?: '';
-
-		return '' !== $fallback
-			? 'var(' . $resolved[ $source ]['variable'] . ', ' . $fallback . ')'
-			: 'var(' . $resolved[ $source ]['variable'] . ')';
+		return Octave_Addons_Colors::preview( $source, $color, $resolved );
 
 	}
 
 	/*
 	RESOLVE COLOR
-	-- Turns a source and its saved hex into the value written to CSS. A
-	-- Breakdance source stays a variable so it keeps tracking the site palette.
+	-- Turns a source and its saved hex into the value written to CSS
 	---------------------------------------------------------- */
 
 	protected function resolve_color( string $source, string $color ): string {
 
-		$sources = $this->color_sources();
-
-		if ( isset( $sources[ $source ] ) ) {
-
-			return 'var(' . $sources[ $source ]['variable'] . ')';
-
-		}
-
-		if ( 'custom' === $source ) {
-
-			return sanitize_hex_color( $color ) ?: '';
-
-		}
-
-		return '';
+		return Octave_Addons_Colors::resolve( $source, $color );
 
 	}
 

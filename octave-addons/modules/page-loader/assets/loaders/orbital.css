@@ -1,0 +1,68 @@
+/*
+ORBITAL SIGNAL LOADER
+-- A faint ring, an accent arc that follows real progress and one tracking
+-- point in steady orbit. Generated SVG; no asset required.
+---------------------------------------------------------- */
+
+.oa-loader__orbit {
+    width: 88px;
+    height: 88px;
+    overflow: visible;
+    animation: oa-os-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.oa-loader__ring,
+.oa-loader__arc {
+    fill: none;
+    stroke-width: 1;
+}
+
+.oa-loader__ring {
+    stroke: currentColor;
+    opacity: 0.16;
+}
+
+.oa-loader__arc {
+    stroke: var(--oa-pm-accent);
+    stroke-linecap: round;
+    stroke-dasharray: 100;
+    stroke-dashoffset: calc(100 - var(--oa-progress, 0) * 100);
+    transform: rotate(-90deg);
+    transform-origin: 60px 60px;
+}
+
+.oa-loader__tracker {
+    fill: var(--oa-pm-accent);
+    transform-origin: 60px 60px;
+    animation: oa-os-orbit 1800ms linear infinite;
+}
+
+html.oa-loader-exit .oa-loader__orbit {
+    animation: oa-os-out calc(var(--oa-loader-duration, 900ms) * 0.6) cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+@keyframes oa-os-in {
+
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+}
+
+@keyframes oa-os-orbit {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+@keyframes oa-os-out {
+
+    to {
+        opacity: 0;
+        transform: scale(1.12);
+    }
+
+}

@@ -93,7 +93,9 @@ ADMIN INTERACTIONS
 
 	/* Field row show/hide — control attributes accept comma-separated IDs.
 	   A control carrying data-controls-value shows its rows while it holds that
-	   value, so a select can drive a row as well as a checkbox can.
+	   value, or any value of a comma-separated list, so a select can drive a
+	   row as well as a checkbox can. A row id written as "id:a|b" carries its
+	   own accepted values instead.
 	   More than one control may claim the same row, and every one of them has
 	   to agree before it shows, so a field nested under another stays hidden
 	   while the field above it is. */
@@ -127,11 +129,23 @@ ADMIN INTERACTIONS
 
 	}
 
-	function isControlOn( control ) {
+	function isControlOn( link ) {
 
-		var match = control.dataset.controlsValue;
+		var control = link.control;
+		var match = link.values || control.dataset.controlsValue;
 
-		return undefined === match ? control.checked : match === control.value;
+		if ( undefined === match ) {
+
+			return control.checked;
+
+		}
+
+		// A list accepts any one of its values.
+		return match.split( /[,|]/ ).some( function ( value ) {
+
+			return value.trim() === control.value;
+
+		} );
 
 	}
 
@@ -139,13 +153,10 @@ ADMIN INTERACTIONS
 
 		conditionalRows.forEach( function ( entry ) {
 
-			var isVisible = entry.controls.every( function ( control ) {
+			var isVisible = entry.controls.every( isControlOn );
 
-				return isControlOn( control );
-
-			} );
-
-			entry.row.classList.toggle( 'oa-hidden', ! isVisible );
+			// Hidden rows release their required flags so they never block a save.
+			setFieldVisibility( entry.row, isVisible );
 
 		} );
 
@@ -153,9 +164,12 @@ ADMIN INTERACTIONS
 
 	document.querySelectorAll( '[data-controls-row]' ).forEach( function ( control ) {
 
-		control.dataset.controlsRow.split( ',' ).forEach( function ( id ) {
+		// An entry may carry its own values as "rowId:valueA|valueB", so one
+		// select can show different rows for different choices.
+		control.dataset.controlsRow.split( ',' ).forEach( function ( item ) {
 
-			var row = document.getElementById( id.trim() );
+			var parts = item.split( ':' );
+			var row = document.getElementById( parts[0].trim() );
 
 			if ( ! row ) {
 
@@ -163,7 +177,7 @@ ADMIN INTERACTIONS
 
 			}
 
-			conditionalRow( row ).controls.push( control );
+			conditionalRow( row ).controls.push( { control: control, values: parts[1] } );
 
 		} );
 
@@ -1109,8 +1123,9 @@ ADMIN INTERACTIONS
 	} ).observe( document.querySelector( '.oa-app' ), { childList: true, subtree: true } );
 
 	/*
-	MEDIA IMAGE FIELDS
-	-- Uses the WordPress Media Library and maintains the existing URL setting.
+	MEDIA ASSET FIELDS
+	-- Uses the WordPress Media Library. A field stores the attachment ID or,
+	-- for legacy settings, the URL, and always previews the current URL.
 	---------------------------------------------------------- */
 
 	document.querySelectorAll( '.oa-media-field' ).forEach( function ( field ) {
@@ -1120,16 +1135,20 @@ ADMIN INTERACTIONS
 		var placeholder = field.querySelector( '.oa-media-placeholder' );
 		var selectButton = field.querySelector( '.oa-media-select' );
 		var removeButton = field.querySelector( '.oa-media-remove' );
+		var storesId = 'id' === field.dataset.store;
 		var frame;
 
-		function syncMediaField( url ) {
+		function syncMediaField( value, url ) {
 
-			input.value = url;
+			input.value = value;
+			input.dataset.url = url;
 			field.classList.toggle( 'has-image', Boolean( url ) );
 			image.hidden = ! url;
 			placeholder.hidden = Boolean( url );
 			removeButton.hidden = ! url;
-			selectButton.textContent = url ? oaAdmin.replaceImageText : oaAdmin.selectImageText;
+			selectButton.textContent = url
+				? ( field.dataset.replaceText || oaAdmin.replaceImageText )
+				: ( field.dataset.selectText || oaAdmin.selectImageText );
 
 			if ( url ) {
 
@@ -1142,20 +1161,30 @@ ADMIN INTERACTIONS
 			}
 
 			input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+			input.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 
 		}
 
 		selectButton.addEventListener( 'click', function () {
 
-			if ( frame ) {
+			if ( 'undefined' === typeof wp || ! wp.media ) {
 
-				frame.open();
 				return;
 
 			}
 
+			if ( frame ) {
+
+				frame.open();
+
+				return;
+
+			}
+
+			// The image library type includes image/svg+xml, so SVGs appear only
+			// where the site already allows them to be uploaded.
 			frame = wp.media( {
-				title: oaAdmin.selectImageTitle,
+				title: field.dataset.title || oaAdmin.selectImageTitle,
 				button: { text: oaAdmin.useImageText },
 				library: { type: 'image' },
 				multiple: false
@@ -1165,7 +1194,7 @@ ADMIN INTERACTIONS
 
 				var attachment = frame.state().get( 'selection' ).first().toJSON();
 
-				syncMediaField( attachment.url );
+				syncMediaField( storesId ? String( attachment.id ) : attachment.url, attachment.url );
 
 			} );
 
@@ -1175,7 +1204,7 @@ ADMIN INTERACTIONS
 
 		removeButton.addEventListener( 'click', function () {
 
-			syncMediaField( '' );
+			syncMediaField( '', '' );
 			selectButton.focus();
 
 		} );
@@ -4489,5 +4518,606 @@ TEXT SELECTION PREVIEW
 	} );
 
 	sync();
+
+})();
+
+/*
+MOTION PREVIEWS
+-- Compact previews for initial loaders, page transitions and scroll presets
+-- Built and animated with the Web Animations API inside a scoped .oa-pv-*
+-- stage, so no frontend class, stylesheet or script is involved. Each
+-- preview follows its fields live and replays from its Replay button.
+---------------------------------------------------------- */
+
+(function () {
+
+	'use strict';
+
+	var previews = document.querySelectorAll( '[data-oa-motion-preview]' );
+
+	if ( ! previews.length || ! Element.prototype.animate ) {
+
+		return;
+
+	}
+
+	var reduced = window.matchMedia && window.matchMedia( '( prefers-reduced-motion: reduce )' ).matches;
+	var silk = 'cubic-bezier(0.16, 1, 0.3, 1)';
+	var sweep = 'cubic-bezier(0.76, 0, 0.24, 1)';
+
+	/*
+	SCROLL PRESET MOTION
+	-- Mirrors the feel of each frontend preset at preview scale
+	---------------------------------------------------------- */
+
+	var scrollPresets = {
+		luxury: {
+			ease: silk, words: 'words', wordStagger: 45, stagger: 90, duration: 1000,
+			block: { opacity: 0, transform: 'translate3d(0, 20px, 0) scale(0.988)', filter: 'blur(4px)' },
+			media: { opacity: 0, transform: 'translate3d(0, 18px, 0) scale(0.99)', filter: 'blur(4px)' }
+		},
+		editorial: {
+			ease: 'cubic-bezier(0.77, 0, 0.175, 1)', words: 'lines', wordStagger: 120, stagger: 110, duration: 900, mediaDelay: 140,
+			block: { opacity: 0, transform: 'translate3d(0, 12px, 0)' },
+			media: { clipPath: 'inset(100% 0 0 0)' }
+		},
+		creative: {
+			ease: 'cubic-bezier(0.2, 0.8, 0.2, 1)', words: 'words', wordStagger: 35, stagger: 100, duration: 1000, alternate: true,
+			block: { opacity: 0, transform: 'translate3d(0, 18px, 0)' },
+			media: { opacity: 0, clipPath: 'inset(0 100% 0 0)', transform: 'translate3d(0, 16px, 0)' }
+		},
+		cinematic: {
+			ease: 'cubic-bezier(0.33, 0, 0.15, 1)', words: 'lines', wordStagger: 160, stagger: 160, duration: 1400, zoom: 1.05,
+			block: { opacity: 0, transform: 'translate3d(0, 14px, 0) scale(0.97)', filter: 'blur(10px)' },
+			media: { opacity: 0, clipPath: 'inset(7% 0 7% 0)', filter: 'blur(8px)' }
+		},
+		minimal: {
+			ease: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)', words: false, stagger: 60, duration: 550,
+			block: { opacity: 0, transform: 'translate3d(0, 10px, 0)' },
+			media: { opacity: 0, transform: 'translate3d(0, 12px, 0)' }
+		}
+	};
+
+	var creativeEntrances = [
+		'translate3d(-20px, 0, 0) rotate(-2deg)',
+		'perspective(600px) translate3d(0, 24px, 0) rotateX(4deg)',
+		'translate3d(20px, 0, 0) rotate(2deg)'
+	];
+
+	/*
+	HELPERS
+	---------------------------------------------------------- */
+
+	function make( tag, className, parent, text ) {
+
+		var node = document.createElement( tag );
+
+		node.className = className;
+
+		if ( text ) {
+
+			node.textContent = text;
+
+		}
+
+		if ( parent ) {
+
+			parent.appendChild( node );
+
+		}
+
+		return node;
+
+	}
+
+	function settledFrame( frame ) {
+
+		var settled = {};
+
+		Object.keys( frame ).forEach( function ( key ) {
+
+			settled[ key ] = 'opacity' === key ? 1 : ( 'clipPath' === key ? 'inset(0 0 0 0)' : ( 'filter' === key ? 'blur(0px)' : 'none' ) );
+
+		} );
+
+		return settled;
+
+	}
+
+	function mockPage( parent, variant ) {
+
+		var page = make( 'div', 'oa-pv-page oa-pv-page--' + variant, parent );
+
+		make( 'span', 'oa-pv-bar oa-pv-bar--title', page );
+		make( 'span', 'oa-pv-bar', page );
+		make( 'span', 'oa-pv-bar oa-pv-bar--short', page );
+		make( 'span', 'oa-pv-block', page );
+
+		return page;
+
+	}
+
+	/*
+	SETUP
+	-- Wires one preview to its fields
+	---------------------------------------------------------- */
+
+	function setup( preview ) {
+
+		var kind = preview.dataset.oaMotionPreview;
+		var controls = JSON.parse( preview.dataset.controls || '{}' );
+		var colors = JSON.parse( preview.dataset.colors || '{}' );
+		var stage = preview.querySelector( '.oa-motion-stage' );
+		var label = preview.querySelector( '.oa-motion-label' );
+		var button = preview.querySelector( '.oa-motion-replay' );
+		var running = [];
+		var token = 0;
+		var debounce = null;
+
+		function field( role ) {
+
+			return controls[ role ] ? document.getElementById( controls[ role ] ) : null;
+
+		}
+
+		function value( role ) {
+
+			var input = field( role );
+
+			return input ? input.value : '';
+
+		}
+
+		function selectedText( role ) {
+
+			var select = field( role );
+
+			return select && select.options && select.selectedIndex > -1 ? select.options[ select.selectedIndex ].text : '';
+
+		}
+
+		function color( role, fallback ) {
+
+			var source = value( role + 'Source' );
+			var custom = value( role + 'Color' ) || fallback;
+
+			if ( ! source || 'custom' === source ) {
+
+				return custom;
+
+			}
+
+			return colors[ source ] && colors[ source ].value ? colors[ source ].value : custom;
+
+		}
+
+		function media( role ) {
+
+			var input = field( role );
+
+			return input && input.dataset.url ? input.dataset.url : '';
+
+		}
+
+		function animate( node, keyframes, options ) {
+
+			var timing = Object.assign( { fill: 'both', easing: silk }, options );
+
+			if ( reduced ) {
+
+				timing.duration = 1;
+				timing.delay = 0;
+				timing.iterations = 1;
+
+			}
+
+			var animation = node.animate( keyframes, timing );
+
+			running.push( animation );
+
+			return animation;
+
+		}
+
+		function after( animation, run, callback ) {
+
+			animation.finished.then( function () {
+
+				if ( run === token ) {
+
+					callback();
+
+				}
+
+			} ).catch( function () {} );
+
+		}
+
+		/*
+		LOADER PREVIEW
+		-- A mock page under the loader, simulated progress, then the reveal
+		---------------------------------------------------------- */
+
+		function loaderPreview( run, type ) {
+
+			var text = value( 'text' ) || controls.siteName || '';
+			var reveal = Math.max( 400, Math.min( 1600, parseInt( value( 'duration' ), 10 ) || 900 ) );
+			var loader = make( 'div', 'oa-pv-loader oa-pv-loader--' + type, stage );
+			var surface = make( 'span', 'oa-pv-surface', loader );
+			var inner = make( 'div', 'oa-pv-inner', loader );
+			var progress = null;
+			var exits = [];
+			var count = null;
+
+			// The mock page sits under the loader, which is moved above it.
+			stage.insertBefore( mockPage( stage, 'a' ), loader );
+
+			if ( 'brand-counter' === type ) {
+
+				var brand = make( 'span', 'oa-pv-brand', inner, text );
+				var meter = make( 'span', 'oa-pv-meter', inner );
+				var line = make( 'span', 'oa-pv-line', meter );
+
+				progress = make( 'span', 'oa-pv-progress', line );
+				count = field( 'progress' ) && ! field( 'progress' ).checked ? null : make( 'span', 'oa-pv-count', meter, '0' );
+
+				animate( brand, [ { opacity: 0, transform: 'translate3d(0, 10px, 0)', clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, transform: 'none', clipPath: 'inset(0 0 0 0)' } ], { duration: 900, delay: 80 } );
+				exits.push( [ surface, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], sweep, 1 ] );
+				exits.push( [ inner, [ { opacity: 1 }, { opacity: 0, transform: 'translate3d(0, -14px, 0)' } ], 'cubic-bezier(0.7, 0, 0.84, 0)', 0.6 ] );
+
+			} else if ( 'logo-mask' === type ) {
+
+				var logoUrl = media( 'logo' );
+				var logo = make( 'span', 'oa-pv-logo', inner, logoUrl ? '' : text );
+				var logoLine = make( 'span', 'oa-pv-line oa-pv-line--short', inner );
+
+				if ( logoUrl ) {
+
+					make( 'img', '', logo ).src = logoUrl;
+
+				}
+
+				progress = make( 'span', 'oa-pv-progress', logoLine );
+
+				animate( logo, [ { clipPath: 'inset(0 100% 0 0)', transform: 'translate3d(-6px, 0, 0)' }, { clipPath: 'inset(0 0 0 0)', transform: 'none' } ], { duration: 1100, delay: 100, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
+				exits.push( [ logo, [ { clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 0 100%)', transform: 'translate3d(6px, 0, 0)' } ], 'cubic-bezier(0.7, 0, 0.84, 0)', 0.55 ] );
+				exits.push( [ surface, [ { opacity: 1 }, { opacity: 0 } ], 'cubic-bezier(0.7, 0, 0.2, 1)', 1 ] );
+				exits.push( [ logoLine, [ { opacity: 1 }, { opacity: 0 } ], 'ease-out', 0.3 ] );
+
+			} else if ( 'image-window' === type ) {
+
+				var imageUrl = media( 'image' );
+				var frame = make( 'span', 'oa-pv-window', inner );
+
+				if ( imageUrl ) {
+
+					var picture = make( 'img', '', frame );
+
+					picture.src = imageUrl;
+					animate( picture, [ { transform: 'scale(1.18)' }, { transform: 'scale(1.06)' } ], { duration: 1300, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
+
+				}
+
+				animate( frame, [ { clipPath: 'inset(38% 32% 38% 32%)' }, { clipPath: 'inset(18% 26% 30% 14%)', offset: 0.4 }, { clipPath: 'inset(8% 6% 12% 22%)' } ], { duration: 1300, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
+				exits.push( [ frame, [ { clipPath: 'inset(8% 6% 12% 22%)' }, { clipPath: 'inset(0 0 0 0)', transform: 'scale(1.06)' } ], sweep, 1 ] );
+				exits.push( [ loader, [ { opacity: 1 }, { opacity: 0 } ], 'cubic-bezier(0.7, 0, 0.84, 0)', 1 ] );
+
+			} else if ( 'curtain' === type ) {
+
+				surface.hidden = true;
+
+				var top = make( 'span', 'oa-pv-panel oa-pv-panel--a', loader );
+				var bottom = make( 'span', 'oa-pv-panel oa-pv-panel--b', loader );
+				var curtainBrand = make( 'span', 'oa-pv-brand oa-pv-brand--center', loader, text );
+
+				progress = make( 'span', 'oa-pv-seam', top );
+
+				animate( curtainBrand, [ { opacity: 0, clipPath: 'inset(100% 0 0 0)' }, { opacity: 1, clipPath: 'inset(0 0 0 0)' } ], { duration: 800, delay: 60 } );
+				exits.push( [ top, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], sweep, 1 ] );
+				exits.push( [ bottom, [ { transform: 'none' }, { transform: 'translate3d(0, 100%, 0)' } ], sweep, 1 ] );
+				exits.push( [ curtainBrand, [ { opacity: 1 }, { opacity: 0 } ], 'ease-out', 0.3 ] );
+
+			} else if ( 'orbital' === type ) {
+
+				var svgNs = 'http://www.w3.org/2000/svg';
+				var svg = document.createElementNS( svgNs, 'svg' );
+
+				svg.setAttribute( 'viewBox', '0 0 120 120' );
+				svg.setAttribute( 'class', 'oa-pv-orbit' );
+				svg.innerHTML = '<circle class="oa-pv-ring" cx="60" cy="60" r="44"></circle><circle class="oa-pv-arc" cx="60" cy="60" r="44" pathLength="100"></circle><g class="oa-pv-tracker"><circle cx="60" cy="16" r="3"></circle></g>';
+				inner.appendChild( svg );
+
+				animate( svg.querySelector( '.oa-pv-tracker' ), [ { transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' } ], { duration: 1800, iterations: Infinity, easing: 'linear' } );
+				animate( svg.querySelector( '.oa-pv-arc' ), [ { strokeDashoffset: 100 }, { strokeDashoffset: 0 } ], { duration: 1400, easing: 'linear' } );
+				exits.push( [ svg, [ { opacity: 1 }, { opacity: 0, transform: 'scale(1.12)' } ], 'cubic-bezier(0.7, 0, 0.84, 0)', 0.6 ] );
+				exits.push( [ surface, [ { opacity: 1 }, { opacity: 0 } ], 'cubic-bezier(0.7, 0, 0.2, 1)', 1 ] );
+
+			} else {
+
+				make( 'span', 'oa-pv-brand', inner, text );
+				label.textContent = oaAdmin.previewCustomLoader;
+				exits.push( [ loader, [ { opacity: 1 }, { opacity: 0 } ], 'ease', 1 ] );
+
+			}
+
+			var load = animate( progress || inner, progress ? [ { transform: 'scaleX(0)' }, { transform: 'scaleX(1)' } ] : [ { opacity: 1 }, { opacity: 1 } ], { duration: 1400, easing: 'cubic-bezier(0.3, 0.1, 0.3, 1)' } );
+
+			if ( count ) {
+
+				( function tick() {
+
+					if ( run !== token ) {
+
+						return;
+
+					}
+
+					var timing = load.effect.getComputedTiming();
+
+					count.textContent = String( Math.round( ( timing.progress === null ? 1 : timing.progress ) * 100 ) );
+
+					if ( 'finished' !== load.playState ) {
+
+						window.requestAnimationFrame( tick );
+
+					}
+
+				} )();
+
+			}
+
+			after( load, run, function () {
+
+				exits.forEach( function ( exit ) {
+
+					animate( exit[0], exit[1], { duration: reveal * exit[3], easing: exit[2] } );
+
+				} );
+
+			} );
+
+		}
+
+		/*
+		TRANSITION PREVIEW
+		-- Page A is covered, swapped for page B, then revealed
+		---------------------------------------------------------- */
+
+		function transitionPreview( run, type ) {
+
+			var pageA = mockPage( stage, 'a' );
+			var overlay = make( 'div', 'oa-pv-transition', stage );
+			var layer = make( 'span', 'oa-pv-layer', overlay );
+			var layerB = make( 'span', 'oa-pv-layer oa-pv-layer--b', overlay );
+			var cover = [];
+			var reveal = [];
+
+			layerB.hidden = true;
+
+			if ( 'slide-up' === type ) {
+
+				layerB.hidden = false;
+				layerB.classList.add( 'oa-pv-layer--accent' );
+				overlay.insertBefore( layerB, layer );
+				cover = [ [ layerB, [ { transform: 'translate3d(0, 100%, 0)' }, { transform: 'none' } ], 420, 0 ], [ layer, [ { transform: 'translate3d(0, 100%, 0)' }, { transform: 'none' } ], 420, 40 ] ];
+				reveal = [ [ layer, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], 620, 0 ], [ layerB, [ { transform: 'none' }, { transform: 'translate3d(0, -100%, 0)' } ], 620, 60 ] ];
+
+			} else if ( 'split-curtain' === type ) {
+
+				layerB.hidden = false;
+				layer.classList.add( 'oa-pv-layer--left' );
+				layerB.classList.add( 'oa-pv-layer--right' );
+				cover = [ [ layer, [ { transform: 'translate3d(-100%, 0, 0)' }, { transform: 'none' } ], 460, 0 ], [ layerB, [ { transform: 'translate3d(100%, 0, 0)' }, { transform: 'none' } ], 460, 0 ] ];
+				reveal = [ [ layer, [ { transform: 'none' }, { transform: 'translate3d(-100%, 0, 0)' } ], 680, 0 ], [ layerB, [ { transform: 'none' }, { transform: 'translate3d(100%, 0, 0)' } ], 680, 0 ] ];
+
+			} else if ( 'brand-wipe' === type ) {
+
+				var brand = make( 'span', 'oa-pv-brand oa-pv-brand--wipe', overlay, value( 'text' ) || controls.siteName || '' );
+
+				layer.classList.add( 'oa-pv-layer--accent' );
+				cover = [ [ layer, [ { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' } ], 460, 0 ], [ brand, [ { opacity: 0, clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, clipPath: 'inset(0 0 0 0)' } ], 460, 140 ] ];
+				reveal = [ [ layer, [ { clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 0 100%)' } ], 640, 80 ], [ brand, [ { opacity: 1 }, { opacity: 0 } ], 200, 0 ] ];
+
+			} else if ( 'soft-fade' === type ) {
+
+				cover = [ [ layer, [ { opacity: 0 }, { opacity: 1 } ], 260, 0 ] ];
+				reveal = [ [ layer, [ { opacity: 1 }, { opacity: 0 } ], 360, 0 ] ];
+
+			} else if ( 'replay-loader' === type ) {
+
+				overlay.remove();
+
+				var replay = value( 'replayType' );
+
+				label.textContent = selectedText( 'replayType' );
+				loaderPreview( run, ! replay || 'match' === replay ? value( 'loaderType' ) || 'brand-counter' : replay );
+
+				return;
+
+			} else {
+
+				label.textContent = oaAdmin.previewCustomTransition;
+				cover = [ [ layer, [ { opacity: 0 }, { opacity: 1 } ], 400, 0 ] ];
+				reveal = [ [ layer, [ { opacity: 1 }, { opacity: 0 } ], 600, 0 ] ];
+
+			}
+
+			var last = null;
+
+			cover.forEach( function ( step ) {
+
+				last = animate( step[0], step[1], { duration: step[2], delay: 500 + step[3], easing: sweep } );
+
+			} );
+
+			after( last, run, function () {
+
+				pageA.remove();
+				stage.insertBefore( mockPage( stage, 'b' ), overlay );
+
+				reveal.forEach( function ( step ) {
+
+					animate( step[0], step[1], { duration: step[2], delay: 160 + step[3], easing: sweep } );
+
+				} );
+
+			} );
+
+		}
+
+		/*
+		SCROLL PREVIEW
+		-- A heading, an image and three cards revealed with the preset motion
+		---------------------------------------------------------- */
+
+		function scrollPreview( run, type ) {
+
+			var config = scrollPresets[ type ];
+			var page = make( 'div', 'oa-pv-scroll', stage );
+			var heading = make( 'div', 'oa-pv-heading', page );
+			var lines = [ 'Crafted with', 'quiet intent' ];
+			var row = make( 'div', 'oa-pv-row', page );
+			var image = make( 'span', 'oa-pv-image', row );
+			var copy = make( 'div', 'oa-pv-copy', row );
+			var cards = make( 'div', 'oa-pv-cards', page );
+			var words = [];
+
+			make( 'span', 'oa-pv-image-inner', image );
+			make( 'span', 'oa-pv-bar', copy );
+			make( 'span', 'oa-pv-bar oa-pv-bar--short', copy );
+			make( 'span', 'oa-pv-card', cards );
+			make( 'span', 'oa-pv-card', cards );
+			make( 'span', 'oa-pv-card', cards );
+
+			lines.forEach( function ( text, lineIndex ) {
+
+				var line = make( 'span', 'oa-pv-heading-line', heading );
+
+				text.split( ' ' ).forEach( function ( word ) {
+
+					var mask = make( 'span', 'oa-pv-mask', line );
+
+					words.push( { node: make( 'span', 'oa-pv-word', mask, word ), line: lineIndex } );
+					line.appendChild( document.createTextNode( ' ' ) );
+
+				} );
+
+			} );
+
+			if ( ! config ) {
+
+				label.textContent = 'off' === type ? oaAdmin.previewOff : oaAdmin.previewCustomScroll;
+
+				return;
+
+			}
+
+			label.textContent = '';
+
+			var options = { duration: config.duration, easing: config.ease };
+
+			if ( config.words ) {
+
+				words.forEach( function ( word, index ) {
+
+					var delay = 'lines' === config.words ? word.line * config.wordStagger : index * config.wordStagger;
+					var from = 'cinematic' === type ? { opacity: 0, transform: 'translate3d(0, 40%, 0)', filter: 'blur(8px)' } : { transform: 'creative' === type ? 'translate3d(0, 110%, 0) rotate(3deg)' : 'translate3d(0, 105%, 0)' };
+
+					animate( word.node, [ from, settledFrame( from ) ], Object.assign( {}, options, { delay: 200 + delay } ) );
+
+				} );
+
+			} else {
+
+				animate( heading, [ config.block, settledFrame( config.block ) ], Object.assign( {}, options, { delay: 200 } ) );
+
+			}
+
+			animate( image, [ config.media, settledFrame( config.media ) ], Object.assign( {}, options, { delay: 200 + config.stagger + ( config.mediaDelay || 0 ), duration: config.duration * 1.1 } ) );
+
+			if ( config.zoom ) {
+
+				animate( image.firstChild, [ { transform: 'scale(' + config.zoom + ')' }, { transform: 'none' } ], Object.assign( {}, options, { delay: 200 + config.stagger, duration: config.duration * 1.3 } ) );
+
+			}
+
+			animate( copy, [ config.block, settledFrame( config.block ) ], Object.assign( {}, options, { delay: 200 + config.stagger * 2 } ) );
+
+			Array.prototype.forEach.call( cards.children, function ( card, index ) {
+
+				var from = config.alternate ? Object.assign( {}, config.block, { transform: creativeEntrances[ index ], clipPath: 'inset(6% 6% 6% 6% round 8px)' } ) : config.block;
+
+				animate( card, [ from, settledFrame( from ) ], Object.assign( {}, options, { delay: 200 + config.stagger * ( 3 + index ) + ( config.alternate ? ( index % 3 ) * 40 : 0 ) } ) );
+
+			} );
+
+		}
+
+		/*
+		PLAY
+		-- Rebuilds the stage with the current field values and runs it
+		---------------------------------------------------------- */
+
+		function play() {
+
+			token++;
+
+			running.forEach( function ( animation ) {
+
+				animation.cancel();
+
+			} );
+
+			running = [];
+			stage.innerHTML = '';
+			label.textContent = reduced ? oaAdmin.previewReduced : '';
+
+			stage.style.setProperty( '--oa-pv-accent', color( 'accent', '#3B82F6' ) );
+			stage.style.setProperty( '--oa-pv-bg', color( 'background', '#0E0E0F' ) );
+			stage.style.setProperty( '--oa-pv-fg', color( 'text', '#F4F2EE' ) );
+
+			if ( 'loader' === kind ) {
+
+				loaderPreview( token, value( 'loaderType' ) || 'brand-counter' );
+
+			} else if ( 'transition' === kind ) {
+
+				transitionPreview( token, value( 'transitionType' ) || 'slide-up' );
+
+			} else {
+
+				scrollPreview( token, value( 'type' ) || 'luxury' );
+
+			}
+
+		}
+
+		function schedule() {
+
+			window.clearTimeout( debounce );
+			debounce = window.setTimeout( play, 180 );
+
+		}
+
+		Object.keys( controls ).forEach( function ( role ) {
+
+			var input = field( role );
+
+			if ( input ) {
+
+				input.addEventListener( 'change', schedule );
+				input.addEventListener( 'input', schedule );
+
+			}
+
+		} );
+
+		button.addEventListener( 'click', play );
+
+		play();
+
+	}
+
+	previews.forEach( setup );
 
 })();

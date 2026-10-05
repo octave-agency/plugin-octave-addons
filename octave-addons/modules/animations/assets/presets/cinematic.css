@@ -1,0 +1,30 @@
+/*
+CINEMATIC PRESET
+-- Slower opacity, blur and scale; media settles from a slight zoom inside
+-- a letterbox that opens like a composed shot. Blur is cleared once settled.
+---------------------------------------------------------- */
+
+.oa-anim-ready {
+    --oa-ease: cubic-bezier(0.33, 0, 0.15, 1);
+    --oa-fade: 1200ms;
+
+    --oa-item-from: translate3d(0, 20px, 0) scale(0.97);
+    --oa-item-filter: blur(10px);
+    --oa-item-dur: 1400ms;
+
+    --oa-media-from: none;
+    --oa-media-filter: blur(8px);
+    --oa-media-clip: inset(7% 0 7% 0);
+    --oa-media-clip-to: inset(0 0 0 0);
+    --oa-media-zoom: 1.05;
+    --oa-media-dur: 1600ms;
+
+    --oa-text-from: translate3d(0, 14px, 0);
+    --oa-text-filter: blur(6px);
+    --oa-text-dur: 1200ms;
+
+    --oa-word-from: translate3d(0, 40%, 0);
+    --oa-word-start: 0;
+    --oa-word-filter: blur(8px);
+    --oa-heading-dur: 1300ms;
+}

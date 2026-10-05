@@ -1,0 +1,168 @@
+/*
+SCROLL ANIMATION BASE
+-- Shared hidden, revealing and settled states for every preset
+-- Nothing is hidden unless the controller has added .oa-anim-ready to the
+-- document, so content stays visible without JavaScript or if it fails
+-- Presets only set the per-kind custom properties consumed here
+---------------------------------------------------------- */
+
+/*
+PRE-SCAN
+-- Hides targets by selector until the controller tags them, so nothing
+-- flashes on first paint. Kept in step with the kinds in controller.js.
+---------------------------------------------------------- */
+
+.oa-anim-ready:not(.oa-anim-scanned) .bde-section :is(.bde-heading, .bde-image, .bde-video, .swiper, .bde-column, .bde-grid > div, .bde-loop:not(.ee-posts-isotope) > .bde-loop-item, .bde-faq__item, .bde-text, .bde-rich-text, .bde-button),
+.oa-anim-ready:not(.oa-anim-scanned) .oa_anim {
+    opacity: 0;
+}
+
+/*
+KIND VARIABLES
+-- Each target reads its own kind's values, so nested targets never inherit
+-- a parent target's motion
+---------------------------------------------------------- */
+
+.oa-anim-ready [data-oa-anim] {
+    --oa-from: var(--oa-text-from, translate3d(0, 16px, 0));
+    --oa-filter: var(--oa-text-filter, none);
+    --oa-clip: var(--oa-text-clip, none);
+    --oa-clip-to: var(--oa-text-clip-to, none);
+    --oa-start: var(--oa-text-start, 0);
+    --oa-dur: var(--oa-text-dur, 700ms);
+}
+
+.oa-anim-ready [data-oa-anim="item"] {
+    --oa-from: var(--oa-item-from, translate3d(0, 24px, 0));
+    --oa-filter: var(--oa-item-filter, none);
+    --oa-clip: var(--oa-item-clip, none);
+    --oa-clip-to: var(--oa-item-clip-to, none);
+    --oa-start: var(--oa-item-start, 0);
+    --oa-dur: var(--oa-item-dur, 800ms);
+}
+
+.oa-anim-ready [data-oa-anim="media"] {
+    --oa-from: var(--oa-media-from, translate3d(0, 24px, 0));
+    --oa-filter: var(--oa-media-filter, none);
+    --oa-clip: none;
+    --oa-clip-to: none;
+    --oa-start: var(--oa-media-start, 0);
+    --oa-dur: var(--oa-media-dur, 900ms);
+}
+
+.oa-anim-ready [data-oa-anim="heading"] {
+    --oa-from: none;
+    --oa-filter: var(--oa-heading-filter, none);
+    --oa-clip: none;
+    --oa-clip-to: none;
+    --oa-start: var(--oa-heading-start, 1);
+    --oa-dur: var(--oa-heading-dur, 800ms);
+}
+
+/*
+HIDDEN AND REVEALING STATES
+-- Animation-only styles exist only until .oa-done, so the element's own
+-- transitions, transforms and filters return once it has settled
+---------------------------------------------------------- */
+
+.oa-anim-ready [data-oa-anim]:not(.visible) {
+    opacity: var(--oa-start);
+    transform: var(--oa-from);
+    filter: var(--oa-filter);
+    clip-path: var(--oa-clip);
+}
+
+.oa-anim-ready [data-oa-anim].visible:not(.oa-done) {
+    clip-path: var(--oa-clip-to);
+    transition:
+        opacity var(--oa-fade, var(--oa-dur)) var(--oa-fade-ease, ease-out) var(--oa-delay, 0ms),
+        transform var(--oa-dur) var(--oa-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--oa-delay, 0ms),
+        filter var(--oa-dur) var(--oa-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--oa-delay, 0ms),
+        clip-path var(--oa-dur) var(--oa-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--oa-delay, 0ms);
+    will-change: opacity, transform;
+}
+
+/*
+MEDIA CLIP AND ZOOM
+-- IntersectionObserver honours a target's own clip-path, so a fully clipped
+-- target would never count as on screen. Media clips are therefore applied
+-- to the target's children, while the image settles from a slight scale.
+-- Clips set on other kinds must stay partial for the same reason.
+---------------------------------------------------------- */
+
+.oa-anim-ready [data-oa-anim="media"]:not(.oa-done) {
+    overflow: hidden;
+}
+
+.oa-anim-ready [data-oa-anim="media"]:not(.visible) > * {
+    clip-path: var(--oa-media-clip, none);
+}
+
+.oa-anim-ready [data-oa-anim="media"]:not(.visible) img {
+    transform: scale(var(--oa-media-zoom, 1));
+}
+
+.oa-anim-ready [data-oa-anim="media"].visible:not(.oa-done) > *,
+.oa-anim-ready [data-oa-anim="media"].visible:not(.oa-done) img {
+    clip-path: var(--oa-media-clip-to, none);
+    transition:
+        clip-path var(--oa-dur) var(--oa-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--oa-delay, 0ms),
+        transform calc(var(--oa-dur) * 1.25) var(--oa-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--oa-delay, 0ms);
+}
+
+/*
+HEADING MASKS
+-- Words rise inside a mask; the extra bottom padding keeps descenders clear
+---------------------------------------------------------- */
+
+.oa-w {
+    display: inline-block;
+    overflow: hidden;
+    padding-bottom: 0.12em;
+    margin-bottom: -0.12em;
+    vertical-align: top;
+}
+
+.oa-wi {
+    display: inline-block;
+}
+
+.oa-done .oa-w {
+    overflow: visible;
+}
+
+.oa-anim-ready [data-oa-anim="heading"]:not(.visible) .oa-wi {
+    opacity: var(--oa-word-start, 1);
+    transform: var(--oa-word-from, translate3d(0, 105%, 0));
+    filter: var(--oa-word-filter, none);
+}
+
+.oa-anim-ready [data-oa-anim="heading"].visible:not(.oa-done) .oa-wi {
+    transition:
+        opacity var(--oa-dur) ease-out calc(var(--oa-delay, 0ms) + var(--oa-wd, 0ms)),
+        transform var(--oa-dur) var(--oa-ease, cubic-bezier(0.22, 1, 0.36, 1)) calc(var(--oa-delay, 0ms) + var(--oa-wd, 0ms)),
+        filter var(--oa-dur) ease-out calc(var(--oa-delay, 0ms) + var(--oa-wd, 0ms));
+    will-change: transform;
+}
+
+/*
+REDUCED MOTION
+-- The controller already skips these visitors; this is the CSS backstop
+---------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .oa-anim-ready [data-oa-anim],
+    .oa-anim-ready [data-oa-anim] img,
+    .oa-anim-ready [data-oa-anim="media"] > *,
+    .oa-anim-ready .oa-wi,
+    .oa-anim-ready .bde-section :is(.bde-heading, .bde-image, .bde-video, .swiper, .bde-column, .bde-grid > div, .bde-loop > .bde-loop-item, .bde-faq__item, .bde-text, .bde-rich-text, .bde-button),
+    .oa-anim-ready .oa_anim {
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+        clip-path: none !important;
+        transition: none !important;
+    }
+
+}

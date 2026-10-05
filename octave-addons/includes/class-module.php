@@ -160,4 +160,78 @@ abstract class Octave_Addons_Module {
 
 	}
 
+	/*
+	IS BUILDER REQUEST
+	-- Detects Breakdance builder canvases, server-side renders and the block
+	-- editor iframe without disabling frontend features across all of wp-admin
+	---------------------------------------------------------- */
+
+	public static function is_builder_request(): bool {
+
+		$breakdance_mode = isset( $_GET['breakdance'] ) ? sanitize_key( wp_unslash( $_GET['breakdance'] ) ) : '';
+		$admin_page      = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$iframe_mode     = isset( $_GET['breakdance_iframe'] ) ? sanitize_key( wp_unslash( $_GET['breakdance_iframe'] ) ) : '';
+
+		if ( 'builder' === $breakdance_mode || isset( $_GET['breakdance_frame'] ) || isset( $_GET['breakdance_gutenberg_iframe'] ) ) {
+
+			return true;
+
+		}
+
+		if ( '' !== $iframe_mode || isset( $_GET['breakdance_open_document'] ) ) {
+
+			return true;
+
+		}
+
+		if ( is_admin() && false !== strpos( $admin_page, 'breakdance' ) ) {
+
+			return true;
+
+		}
+
+		return false;
+
+	}
+
+	/*
+	IS SENSITIVE WOOCOMMERCE VIEW
+	-- Cart, checkout and account views replace parts of the DOM via AJAX
+	-- fragments during critical flows, so motion features stay off them
+	---------------------------------------------------------- */
+
+	public static function is_sensitive_woocommerce_view(): bool {
+
+		foreach ( [ 'is_cart', 'is_checkout', 'is_account_page' ] as $tag ) {
+
+			if ( function_exists( $tag ) && $tag() ) {
+
+				return true;
+
+			}
+
+		}
+
+		return false;
+
+	}
+
+	/*
+	FILE VERSION
+	-- Uses the file mtime as asset version so edits bust browser caches
+	-- without having to bump the plugin version
+	---------------------------------------------------------- */
+
+	public static function file_version( string $path ): string {
+
+		if ( file_exists( $path ) ) {
+
+			return (string) filemtime( $path );
+
+		}
+
+		return OCTAVE_ADDONS_VERSION;
+
+	}
+
 }

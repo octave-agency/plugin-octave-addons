@@ -2,11 +2,15 @@
 
 /*
 BREAKDANCE LAZY LOAD
--- Turns Breakdance's own Lazy Load toggles off, because lazy loading on
--- Octave sites is handled by a third-party performance plugin
--- Every element that exposes a "Lazy Load" toggle stores it under a
--- lazy_load property, so both the builder defaults and the rendered
--- output are walked for that key and forced to off
+-- Image and background lazy loading stays delegated to the site's
+-- third-party performance plugin, so every Breakdance "Lazy Load" toggle is
+-- still forced off in both the builder defaults and the rendered output
+-- Videos are the exception and are lazy loaded by default: Breakdance Video
+-- elements use their lightweight YouTube/Vimeo players, HTML5 and section
+-- background videos start with preload="none" and are loaded by a small
+-- viewport observer, and provider iframes receive loading="lazy"
+-- Rewrites run only on known video markup through WP_HTML_Tag_Processor,
+-- never on the whole page
 -- Always on and hidden from the admin — there is nothing to configure
 ---------------------------------------------------------- */
 
@@ -22,6 +26,21 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 	 * Property key every Breakdance Lazy Load toggle writes to.
 	 */
 	protected const LAZY_KEY = 'lazy_load';
+
+	/**
+	 * Breakdance Video element type.
+	 */
+	protected const VIDEO_TYPE = 'EssentialElements\\Video';
+
+	/**
+	 * Script handle for the viewport video loader.
+	 */
+	protected const SCRIPT_HANDLE = 'octave-addons-lazy-video';
+
+	/**
+	 * Whether this request rendered a video that needs the viewport loader.
+	 */
+	protected static $needs_script = false;
 
 	/*
 	GET ID
@@ -52,7 +71,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Keeps every Breakdance Lazy Load toggle off so images, backgrounds and embeds are left to the site\'s third-party performance plugin.', 'octave-addons' );
+		return __( 'Keeps every Breakdance Lazy Load toggle off so images and backgrounds are left to the site\'s third-party performance plugin, while videos load lazily as they approach the viewport.', 'octave-addons' );
 
 	}
 
@@ -80,13 +99,21 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 	/*
 	RUN
-	-- Registers the two Breakdance filters the module needs
+	-- Registers the Breakdance property filters and the video markup filters
 	---------------------------------------------------------- */
 
 	public function run( array $s ): void {
 
 		add_filter( 'breakdance_element_default_properties', [ __CLASS__, 'filter_default_properties' ] );
 		add_filter( 'breakdance_before_render_node', [ __CLASS__, 'filter_render_node' ] );
+
+		add_filter( 'breakdance_render_element_html', [ __CLASS__, 'filter_video_element_html' ], 10, 2 );
+		add_filter( 'render_block_core/video', [ __CLASS__, 'filter_video_markup' ] );
+		add_filter( 'wp_video_shortcode', [ __CLASS__, 'filter_video_markup' ] );
+		add_filter( 'render_block_core/embed', [ __CLASS__, 'filter_video_markup' ] );
+		add_filter( 'embed_oembed_html', [ __CLASS__, 'filter_video_markup' ] );
+
+		add_action( 'wp_footer', [ __CLASS__, 'print_late_script' ], 100 );
 
 	}
 
@@ -105,7 +132,16 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
-		return self::disable_lazy_load( $properties );
+		$properties = self::disable_lazy_load( $properties );
+
+		// Defaults carry no element type, so a Video is recognised by its shape.
+		if ( isset( $properties['content']['video']['video'] ) ) {
+
+			$properties = self::apply_video_defaults( $properties );
+
+		}
+
+		return $properties;
 
 	}
 
@@ -126,7 +162,272 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		$node['data']['properties'] = self::disable_lazy_load( $node['data']['properties'] );
 
+		if ( self::VIDEO_TYPE === ( $node['data']['type'] ?? '' ) ) {
+
+			$node['data']['properties'] = self::apply_video_defaults( $node['data']['properties'] );
+
+		}
+
 		return $node;
+
+	}
+
+	/*
+	APPLY VIDEO DEFAULTS
+	-- Fills an unset Load Method with the lightest option that keeps the
+	-- element's behaviour: YouTube and Vimeo use their lightweight facades, so
+	-- the real player loads only on click, unless autoplay is on, which the
+	-- facades cannot honour, so those use Breakdance's viewport lazy load
+	-- An explicit choice an editor made is always respected
+	---------------------------------------------------------- */
+
+	protected static function apply_video_defaults( array $properties ): array {
+
+		$methods = [
+			'youtube'     => 'lightweight',
+			'vimeo'       => 'lightweight',
+			'dailymotion' => 'lazyload',
+		];
+
+		foreach ( $methods as $provider => $method ) {
+
+			$settings = $properties['content'][ $provider ] ?? [];
+
+			if ( ! is_array( $settings ) || ! empty( $settings['loading_method'] ) ) {
+
+				continue;
+
+			}
+
+			if ( 'lightweight' === $method && ! empty( $settings['autoplay'] ) ) {
+
+				$method = 'lazyload';
+
+			}
+
+			$properties['content'][ $provider ]['loading_method'] = $method;
+
+		}
+
+		return $properties;
+
+	}
+
+	/*
+	FILTER VIDEO ELEMENT HTML
+	-- Applies the video markup policy to Breakdance Video elements, and to
+	-- the background video of any element using a video background
+	---------------------------------------------------------- */
+
+	public static function filter_video_element_html( $html, $node ) {
+
+		if ( ! is_array( $node ) ) {
+
+			return $html;
+
+		}
+
+		if ( self::VIDEO_TYPE === ( $node['data']['type'] ?? '' ) ) {
+
+			return self::filter_video_markup( $html );
+
+		}
+
+		return self::filter_background_video( $html );
+
+	}
+
+	/*
+	FILTER BACKGROUND VIDEO
+	-- Breakdance prints background videos with a hardcoded autoplay, so each
+	-- one downloads in full on page load wherever it sits on the page
+	-- An element's HTML includes its children, so only the video directly
+	-- inside .section-background-video is touched, never other child markup
+	---------------------------------------------------------- */
+
+	protected static function filter_background_video( $html ) {
+
+		if ( ! is_string( $html ) || false === strpos( $html, 'section-background-video' ) || ! self::should_rewrite() ) {
+
+			return $html;
+
+		}
+
+		$tags = new WP_HTML_Tag_Processor( $html );
+
+		while ( $tags->next_tag( [ 'class_name' => 'section-background-video' ] ) ) {
+
+			if ( $tags->next_tag() && 'VIDEO' === $tags->get_tag() ) {
+
+				self::defer_video( $tags );
+
+			}
+
+		}
+
+		return $tags->get_updated_html();
+
+	}
+
+	/*
+	FILTER VIDEO MARKUP
+	-- Shared by the Breakdance Video element, the core video and embed blocks,
+	-- the [video] shortcode and oEmbed output. Each filter hands over one small
+	-- fragment of known video markup rather than the whole page.
+	-- Without WP_HTML_Tag_Processor (WordPress before 6.2) markup is untouched
+	---------------------------------------------------------- */
+
+	public static function filter_video_markup( $html ) {
+
+		if ( ! is_string( $html ) || '' === $html || ! self::should_rewrite() ) {
+
+			return $html;
+
+		}
+
+		if ( false === stripos( $html, '<video' ) && false === stripos( $html, '<iframe' ) ) {
+
+			return $html;
+
+		}
+
+		$tags = new WP_HTML_Tag_Processor( $html );
+
+		while ( $tags->next_tag() ) {
+
+			$tag = $tags->get_tag();
+
+			if ( 'VIDEO' === $tag ) {
+
+				self::defer_video( $tags );
+
+				continue;
+
+			}
+
+			if ( 'IFRAME' === $tag && null === $tags->get_attribute( 'loading' ) && null !== $tags->get_attribute( 'src' ) ) {
+
+				$tags->set_attribute( 'loading', 'lazy' );
+
+			}
+
+		}
+
+		return $tags->get_updated_html();
+
+	}
+
+	/*
+	DEFER VIDEO
+	-- Starts an HTML5 video with preload="none" and parks autoplay in a data
+	-- attribute, so an offscreen autoplay video neither downloads nor plays
+	-- until the viewport loader activates it. src, poster, controls, tracks,
+	-- loop, muted and playsinline are untouched, so without JavaScript the
+	-- video keeps its poster and dimensions and still plays from its controls.
+	-- Videos opted out of lazy loading by a performance plugin are skipped
+	---------------------------------------------------------- */
+
+	protected static function defer_video( WP_HTML_Tag_Processor $tags ): void {
+
+		if ( null !== $tags->get_attribute( 'data-oa-lazy-video' ) ) {
+
+			return;
+
+		}
+
+		if ( null !== $tags->get_attribute( 'data-no-lazy' ) || null !== $tags->get_attribute( 'data-skip-lazy' ) ) {
+
+			return;
+
+		}
+
+		$preload = strtolower( (string) $tags->get_attribute( 'preload' ) );
+
+		$tags->set_attribute( 'data-oa-lazy-video', '' );
+		$tags->set_attribute( 'data-oa-preload', in_array( $preload, [ 'auto', 'metadata' ], true ) ? $preload : 'metadata' );
+		$tags->set_attribute( 'preload', 'none' );
+
+		if ( null !== $tags->get_attribute( 'autoplay' ) ) {
+
+			$tags->remove_attribute( 'autoplay' );
+			$tags->set_attribute( 'data-oa-autoplay', '' );
+
+		}
+
+		self::enqueue_script();
+
+	}
+
+	/*
+	SHOULD REWRITE
+	-- Frontend page requests only: builder canvases, Breakdance server-side
+	-- renders, AJAX fragments, REST responses and feeds keep the raw markup
+	---------------------------------------------------------- */
+
+	protected static function should_rewrite(): bool {
+
+		if ( ! class_exists( 'WP_HTML_Tag_Processor' ) ) {
+
+			return false;
+
+		}
+
+		if ( is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+
+			return false;
+
+		}
+
+		if ( is_feed() || self::is_builder_request() ) {
+
+			return false;
+
+		}
+
+		return true;
+
+	}
+
+	/*
+	ENQUEUE SCRIPT
+	-- Loads the viewport loader only on pages that rendered a deferred video
+	---------------------------------------------------------- */
+
+	protected static function enqueue_script(): void {
+
+		if ( self::$needs_script ) {
+
+			return;
+
+		}
+
+		self::$needs_script = true;
+
+		$path = OCTAVE_ADDONS_DIR . 'modules/breakdance/lazy-load/assets/lazy-video.js';
+
+		wp_enqueue_script(
+			self::SCRIPT_HANDLE,
+			OCTAVE_ADDONS_URL . 'modules/breakdance/lazy-load/assets/lazy-video.js',
+			[],
+			self::file_version( $path ),
+			true
+		);
+
+	}
+
+	/*
+	PRINT LATE SCRIPT
+	-- A video rendered after the footer scripts printed (inside a late footer
+	-- template, for instance) still gets its loader, so autoplay is never lost
+	---------------------------------------------------------- */
+
+	public static function print_late_script(): void {
+
+		if ( self::$needs_script && ! wp_script_is( self::SCRIPT_HANDLE, 'done' ) ) {
+
+			wp_print_scripts( self::SCRIPT_HANDLE );
+
+		}
 
 	}
 

@@ -5986,3 +5986,362 @@ MARKDOWN FOR AGENTS
     background: var(--oa-green);
     box-shadow: 0 0 0 4px var(--oa-green-bg);
 }
+
+/*
+MOTION PREVIEW
+-- Isolated stages for loader, transition and scroll previews. Every class
+-- is prefixed .oa-pv- and lives inside .oa-motion-stage, so nothing can
+-- collide with frontend animation classes.
+---------------------------------------------------------- */
+
+.oa-motion-preview {
+    width: min(100%, 480px);
+    margin-top: 12px;
+}
+
+.oa-motion-stage {
+    position: relative;
+    isolation: isolate;
+    height: 200px;
+    overflow: hidden;
+    border: 1px solid var(--oa-border);
+    border-radius: 12px;
+    background: #F4F3F0;
+    color: var(--oa-pv-fg);
+}
+
+.oa-motion-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.oa-motion-label {
+    color: var(--oa-text-muted);
+    font-size: 12px;
+}
+
+.oa-motion-replay {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.oa-motion-replay .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+}
+
+/*
+Mock pages
+---------------------------------------------------------- */
+
+.oa-motion-stage .oa-pv-page,
+.oa-motion-stage .oa-pv-scroll {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 22px 24px;
+}
+
+.oa-motion-stage .oa-pv-bar {
+    display: block;
+    width: 70%;
+    height: 7px;
+    border-radius: 4px;
+    background: rgba(17, 17, 17, 0.14);
+}
+
+.oa-motion-stage .oa-pv-bar--title {
+    width: 46%;
+    height: 14px;
+    background: rgba(17, 17, 17, 0.7);
+}
+
+.oa-motion-stage .oa-pv-bar--short {
+    width: 42%;
+}
+
+.oa-motion-stage .oa-pv-block {
+    flex: 1;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(17, 17, 17, 0.12), rgba(17, 17, 17, 0.04));
+}
+
+.oa-motion-stage .oa-pv-page--b {
+    flex-direction: column-reverse;
+}
+
+.oa-motion-stage .oa-pv-page--b .oa-pv-bar--title {
+    width: 58%;
+}
+
+/*
+Loader layers
+---------------------------------------------------------- */
+
+.oa-motion-stage .oa-pv-loader,
+.oa-motion-stage .oa-pv-transition {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.oa-motion-stage .oa-pv-surface,
+.oa-motion-stage .oa-pv-layer,
+.oa-motion-stage .oa-pv-panel {
+    position: absolute;
+    inset: 0;
+    background: var(--oa-pv-bg);
+}
+
+.oa-motion-stage .oa-pv-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+
+.oa-motion-stage .oa-pv-loader--brand-counter .oa-pv-inner {
+    align-items: stretch;
+    justify-content: flex-end;
+    padding: 20px 22px;
+}
+
+.oa-motion-stage .oa-pv-brand {
+    color: var(--oa-pv-fg);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.oa-motion-stage .oa-pv-brand--center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    transform: translate(-50%, calc(-100% - 10px));
+    white-space: nowrap;
+}
+
+.oa-motion-stage .oa-pv-brand--wipe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: var(--oa-pv-bg);
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+}
+
+.oa-motion-stage .oa-pv-meter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.oa-motion-stage .oa-pv-line {
+    position: relative;
+    flex: 1;
+    height: 1px;
+    overflow: hidden;
+    background: rgba(127, 127, 127, 0.35);
+}
+
+.oa-motion-stage .oa-pv-line--short {
+    flex: none;
+    width: 110px;
+}
+
+.oa-motion-stage .oa-pv-progress {
+    position: absolute;
+    inset: 0;
+    background: var(--oa-pv-accent);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+}
+
+.oa-motion-stage .oa-pv-count {
+    min-width: 3ch;
+    color: var(--oa-pv-fg);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.oa-motion-stage .oa-pv-logo {
+    display: block;
+    color: var(--oa-pv-fg);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.oa-motion-stage .oa-pv-logo img {
+    display: block;
+    max-width: 160px;
+    max-height: 56px;
+}
+
+.oa-motion-stage .oa-pv-window {
+    position: relative;
+    width: 110px;
+    height: 136px;
+    overflow: hidden;
+    background: var(--oa-pv-accent);
+}
+
+.oa-motion-stage .oa-pv-window img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.oa-motion-stage .oa-pv-panel {
+    bottom: auto;
+    height: 50.5%;
+}
+
+.oa-motion-stage .oa-pv-panel--b {
+    top: auto;
+    bottom: 0;
+}
+
+.oa-motion-stage .oa-pv-seam {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1px;
+    height: 1px;
+    background: var(--oa-pv-accent);
+    transform: scaleX(0);
+}
+
+.oa-motion-stage .oa-pv-orbit {
+    width: 64px;
+    height: 64px;
+    overflow: visible;
+}
+
+.oa-motion-stage .oa-pv-ring,
+.oa-motion-stage .oa-pv-arc {
+    fill: none;
+    stroke-width: 1.5;
+}
+
+.oa-motion-stage .oa-pv-ring {
+    stroke: var(--oa-pv-fg);
+    opacity: 0.18;
+}
+
+.oa-motion-stage .oa-pv-arc {
+    stroke: var(--oa-pv-accent);
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 60px 60px;
+}
+
+.oa-motion-stage .oa-pv-tracker {
+    fill: var(--oa-pv-accent);
+    transform-origin: 60px 60px;
+}
+
+/*
+Transition layers
+---------------------------------------------------------- */
+
+.oa-motion-stage .oa-pv-layer--accent {
+    background: var(--oa-pv-accent);
+}
+
+.oa-motion-stage .oa-pv-layer--left {
+    right: 50%;
+    margin-right: -1px;
+}
+
+.oa-motion-stage .oa-pv-layer--right {
+    left: 50%;
+}
+
+/*
+Scroll mock
+---------------------------------------------------------- */
+
+.oa-motion-stage .oa-pv-scroll {
+    gap: 14px;
+    color: #111111;
+}
+
+.oa-motion-stage .oa-pv-heading {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.oa-motion-stage .oa-pv-heading-line {
+    display: block;
+}
+
+.oa-motion-stage .oa-pv-mask {
+    display: inline-block;
+    overflow: hidden;
+    padding-bottom: 0.12em;
+    margin-bottom: -0.12em;
+    vertical-align: top;
+}
+
+.oa-motion-stage .oa-pv-word {
+    display: inline-block;
+    transform-origin: 0 100%;
+}
+
+.oa-motion-stage .oa-pv-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.oa-motion-stage .oa-pv-image {
+    display: block;
+    width: 120px;
+    height: 54px;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.oa-motion-stage .oa-pv-image-inner {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--oa-pv-accent), #1B1B1B);
+}
+
+.oa-motion-stage .oa-pv-copy {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.oa-motion-stage .oa-pv-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    flex: 1;
+}
+
+.oa-motion-stage .oa-pv-card {
+    border-radius: 6px;
+    background: rgba(17, 17, 17, 0.08);
+}

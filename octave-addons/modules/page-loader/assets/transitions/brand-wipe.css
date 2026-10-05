@@ -1,0 +1,75 @@
+/*
+BRAND WIPE TRANSITION
+-- An accent surface wipes across with the brand name set inside it, then
+-- wipes onward to reveal the next page
+-- Cover 460ms and reveal 640ms, matching COVER_MS and REVEAL_MS
+---------------------------------------------------------- */
+
+.oa-transition--brand-wipe .oa-transition__layer {
+    background: var(--oa-pm-accent);
+}
+
+.oa-transition__brand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: var(--oa-pm-bg);
+    font-size: clamp(18px, 2.4vw, 30px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+}
+
+html.oa-transition-out .oa-transition--brand-wipe .oa-transition__layer {
+    animation: oa-bw-cover 460ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+html.oa-transition-out .oa-transition__brand {
+    animation: oa-bw-text 460ms cubic-bezier(0.16, 1, 0.3, 1) 140ms both;
+}
+
+html.oa-transition-reveal .oa-transition--brand-wipe .oa-transition__layer {
+    animation: oa-bw-reveal 640ms cubic-bezier(0.65, 0, 0.35, 1) 80ms both;
+}
+
+html.oa-transition-reveal .oa-transition__brand {
+    animation: oa-pm-fade-out 200ms ease-out both;
+}
+
+@keyframes oa-bw-cover {
+
+    from {
+        clip-path: inset(0 100% 0 0);
+    }
+
+    to {
+        clip-path: inset(0 0 0 0);
+    }
+
+}
+
+@keyframes oa-bw-reveal {
+
+    from {
+        clip-path: inset(0 0 0 0);
+    }
+
+    to {
+        clip-path: inset(0 0 0 100%);
+    }
+
+}
+
+@keyframes oa-bw-text {
+
+    from {
+        opacity: 0;
+        clip-path: inset(0 0 100% 0);
+    }
+
+    to {
+        clip-path: inset(0 0 0 0);
+    }
+
+}

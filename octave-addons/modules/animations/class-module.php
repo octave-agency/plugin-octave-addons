@@ -2,13 +2,14 @@
 
 /*
 MODULE: ANIMATIONS
--- Enqueues the Octave scroll-animation CSS/JS on the frontend. Both can
--- be individually toggled on/off, and either can be extended by entering
--- custom CSS or JS in the admin. The CSS override prints after the
--- bundled sheet when Load CSS is on, and stands in for it when Load CSS
--- is off. The JS override is used verbatim *instead of* the bundled
--- script, so the animation behaviour can be tweaked per-site without
--- editing plugin source.
+-- Enqueues one scroll-animation preset on the frontend: a shared controller,
+-- the shared base stylesheet, and the selected preset's CSS and JS
+-- The controller is never replaced by custom code, so content always becomes
+-- visible: it reveals every hidden target as it scrolls into view, releases
+-- everything if anything fails, and does nothing for reduced-motion visitors
+-- The CSS override prints after the selected preset, and the JS override
+-- replaces the preset-specific script while the controller keeps running
+-- Custom only loads no preset and runs only the overrides; Off loads nothing
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,6 +20,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
+	/**
+	 * Bundled presets, each shipping presets/<key>.css and presets/<key>.js.
+	 */
+	protected const PRESETS = [ 'luxury', 'editorial', 'creative', 'cinematic', 'minimal' ];
+
+	/**
+	 * Asset folder relative to the plugin root.
+	 */
+	protected const ASSETS = 'modules/animations/assets/';
 
 	public function get_id(): string {
 
@@ -34,19 +44,88 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Adds the Octave fade/slide-in scroll animations to Bricks columns, grids, FAQ items, headings and images. Each layer can be toggled on or overridden with your own CSS/JS.', 'octave-addons' );
+		return __( 'Reveals Breakdance headings, images, text, columns, grids, loops and FAQ items as they scroll into view, using one curated motion preset or your own CSS/JS.', 'octave-addons' );
 
 	}
 
 	public function get_defaults(): array {
+
 		return [
-			'enabled'       => false,
-			'load_css'      => true,
-			'load_js'       => true,
-			'css_override'  => '',
-			'js_override'   => '',
-			'load_in_editor'=> false,  // Load in Bricks builder / block editor previews
+			'enabled'        => false,
+			'type'           => 'luxury',
+			'css_override'   => '',
+			'js_override'    => '',
+			'load_in_editor' => false,
 		];
+
+	}
+
+	/*
+	TYPES
+	-- Every selectable scroll animation type, in dropdown order
+	---------------------------------------------------------- */
+
+	protected function types(): array {
+
+		return [
+			'luxury'    => __( 'Luxury', 'octave-addons' ),
+			'editorial' => __( 'Editorial', 'octave-addons' ),
+			'creative'  => __( 'Creative', 'octave-addons' ),
+			'cinematic' => __( 'Cinematic', 'octave-addons' ),
+			'minimal'   => __( 'Minimal', 'octave-addons' ),
+			'custom'    => __( 'Custom only', 'octave-addons' ),
+			'off'       => __( 'Off', 'octave-addons' ),
+		];
+
+	}
+
+	/*
+	GET SETTINGS
+	-- Settings saved before 3.23.0 carry Load CSS / Load JavaScript switches
+	-- instead of a type, so they are mapped to the closest safe type here
+	---------------------------------------------------------- */
+
+	public function get_settings( array $saved ): array {
+
+		if ( $saved && ! isset( $saved['type'] ) ) {
+
+			$saved['type'] = $this->legacy_type( $saved );
+
+		}
+
+		unset( $saved['load_css'], $saved['load_js'] );
+
+		return parent::get_settings( $saved );
+
+	}
+
+	/*
+	LEGACY TYPE
+	-- Bundled CSS (with the bundled or a custom script) maps to Luxury, the
+	-- preset closest to the old fade/slide and word-mask motion. Bundled JS
+	-- alone only did visible work alongside a CSS override, so it maps to
+	-- Luxury when one exists. Neither switch on means only the overrides ran,
+	-- which is exactly Custom only. Override content is carried over untouched.
+	---------------------------------------------------------- */
+
+	protected function legacy_type( array $saved ): string {
+
+		$load_css = ! array_key_exists( 'load_css', $saved ) || ! empty( $saved['load_css'] );
+		$load_js  = ! array_key_exists( 'load_js', $saved ) || ! empty( $saved['load_js'] );
+
+		if ( $load_css ) {
+
+			return 'luxury';
+
+		}
+
+		if ( $load_js && '' !== trim( (string) ( $saved['css_override'] ?? '' ) ) ) {
+
+			return 'luxury';
+
+		}
+
+		return 'custom';
 
 	}
 
@@ -54,15 +133,16 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 		$clean                   = $this->get_defaults();
 		$clean['enabled']        = ! empty( $input['enabled'] );
-		$clean['load_css']       = ! empty( $input['load_css'] );
-		$clean['load_js']        = ! empty( $input['load_js'] );
 		$clean['load_in_editor'] = ! empty( $input['load_in_editor'] );
+
+		$type          = sanitize_key( $input['type'] ?? '' );
+		$clean['type'] = array_key_exists( $type, $this->types() ) ? $type : 'luxury';
 
 		// Overrides are raw CSS/JS — we do NOT KSES them (that would
 		// destroy valid CSS/JS). They're only settable by users with
 		// manage_options, same as the theme's Additional CSS field.
 		$clean['css_override'] = isset( $input['css_override'] ) ? (string) $input['css_override'] : '';
-		$clean['js_override']  = isset( $input['js_override'] )  ? (string) $input['js_override'] : '';
+		$clean['js_override']  = isset( $input['js_override'] ) ? (string) $input['js_override'] : '';
 
 		return $clean;
 
@@ -70,55 +150,63 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 	public function render_settings( array $s ): void {
 
-		$default_css_url = OCTAVE_ADDONS_URL . 'modules/animations/assets/animation.css';
-		$default_js_url  = OCTAVE_ADDONS_URL . 'modules/animations/assets/animation.js';
+		$active = 'luxury,editorial,creative,cinematic,minimal,custom';
+
 		?>
 
 		<table class="form-table oa-form-table" role="presentation">
 
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Load CSS', 'octave-addons' ),
-				'field' => function () use ( $s, $default_css_url ) {
-					Octave_Addons_Fields::switch_field( [
-						'name'    => $this->field_name( 'load_css' ),
-						'checked' => ! empty( $s['load_css'] ),
-						'help'    => __( 'Enqueue the bundled animation.css on the frontend', 'octave-addons' ),
-					] );
-					?><span class="oa-help"><?php printf(
-						/* translators: %s is a URL to the default file */
-						esc_html__( 'Default file: %s', 'octave-addons' ),
-						'<a href="' . esc_url( $default_css_url ) . '" target="_blank" rel="noopener">animation.css</a>'
-					); ?></span><?php
+			<?php
+
+			Octave_Addons_Fields::row( [
+				'for'   => $this->field_id( 'type' ),
+				'label' => __( 'Scroll animation type', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					?>
+
+					<select id="<?= esc_attr( $this->field_id( 'type' ) ); ?>"
+					        name="<?= esc_attr( $this->field_name( 'type' ) ); ?>"
+					        data-controls-row="oaAnimRowEditor,oaAnimRowCss,oaAnimRowJs"
+					        data-controls-value="luxury,editorial,creative,cinematic,minimal,custom">
+						<?php
+
+						foreach ( $this->types() as $key => $label ) {
+
+							?>
+
+							<option value="<?= esc_attr( $key ); ?>" <?php selected( $s['type'], $key ); ?>><?= esc_html( $label ); ?></option>
+							<?php
+
+						}
+
+						?>
+
+					</select>
+					<span class="oa-help"><?php esc_html_e( 'Only the selected preset\'s CSS and JavaScript load. Custom only runs just your overrides, and Off loads nothing and leaves all content visible.', 'octave-addons' ); ?></span>
+					<?php
+
+					Octave_Addons_Fields::motion_preview( 'scroll', [ 'type' => $this->field_id( 'type' ) ] );
+
 				},
-			] ); ?>
-			<?php Octave_Addons_Fields::row( [
-				'label' => __( 'Load JavaScript', 'octave-addons' ),
-				'field' => function () use ( $s, $default_js_url ) {
-					Octave_Addons_Fields::switch_field( [
-						'name'    => $this->field_name( 'load_js' ),
-						'checked' => ! empty( $s['load_js'] ),
-						'help'    => __( 'Enqueue the bundled animation.js on the frontend', 'octave-addons' ),
-					] );
-					?><span class="oa-help"><?php printf(
-						/* translators: %s is a URL to the default file */
-						esc_html__( 'Default file: %s', 'octave-addons' ),
-						'<a href="' . esc_url( $default_js_url ) . '" target="_blank" rel="noopener">animation.js</a>'
-					); ?></span><?php
-				},
-			] ); ?>
-			<?php Octave_Addons_Fields::row( [
+			] );
+
+			Octave_Addons_Fields::row( [
+				'id'    => 'oaAnimRowEditor',
 				'label' => __( 'Load in page builder', 'octave-addons' ),
 				'field' => function () use ( $s ) {
 
 					Octave_Addons_Fields::switch_field( [
 						'name'    => $this->field_name( 'load_in_editor' ),
 						'checked' => ! empty( $s['load_in_editor'] ),
-						'help'    => __( 'Also load inside Bricks builder / block editor previews', 'octave-addons' ),
+						'help'    => __( 'Also load inside block editor previews. Breakdance builder canvases are always excluded.', 'octave-addons' ),
 					] );
-					?><span class="oa-help"><?php esc_html_e( 'Off by default — animations often fight the in-editor preview.', 'octave-addons' ); ?></span><?php
+
 				},
-			] ); ?>
-			<?php Octave_Addons_Fields::row( [
+			] );
+
+			Octave_Addons_Fields::row( [
+				'id'    => 'oaAnimRowCss',
 				'for'   => $this->field_id( 'css_override' ),
 				'label' => __( 'CSS override', 'octave-addons' ),
 				'field' => function () use ( $s ) {
@@ -130,13 +218,15 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						'class'       => 'oa-code-editor',
 						'rows'        => 12,
 						'spellcheck'  => false,
-						'placeholder' => __( 'Added on top of the bundled animation.css.', 'octave-addons' ),
-						'help'        => __( 'Printed after the bundled animation.css, or used on its own when Load CSS is disabled.', 'octave-addons' ),
+						'placeholder' => '.oa-anim-ready [data-oa-anim="media"] { --oa-media-dur: 1200ms; }',
+						'help'        => __( 'Printed after the selected preset. Targets carry data-oa-anim (heading, media, text or item) and gain .visible when revealed.', 'octave-addons' ),
 					] );
 
 				},
-			] ); ?>
-			<?php Octave_Addons_Fields::row( [
+			] );
+
+			Octave_Addons_Fields::row( [
+				'id'    => 'oaAnimRowJs',
 				'for'   => $this->field_id( 'js_override' ),
 				'label' => __( 'JavaScript override', 'octave-addons' ),
 				'field' => function () use ( $s ) {
@@ -148,12 +238,15 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						'class'       => 'oa-code-editor',
 						'rows'        => 14,
 						'spellcheck'  => false,
-						'placeholder' => __( 'Replaces the bundled animation.js.', 'octave-addons' ),
-						'help'        => __( 'Used as the main animation JavaScript instead of the bundled file, even when Load JavaScript is disabled.', 'octave-addons' ),
+						'placeholder' => "OctaveAnimations.preset( { split: 'words', stagger: 90 } );",
+						'help'        => __( 'Replaces the preset script. The safety controller still runs, so content is always revealed; configure it with OctaveAnimations.preset() or reveal elements with OctaveAnimations.reveal().', 'octave-addons' ),
 					] );
 
 				},
-			] ); ?>
+			] );
+
+			?>
+
 		</table>
 		<?php
 
@@ -164,6 +257,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 		add_action( 'wp_enqueue_scripts', function () use ( $s ) {
 
 			$this->enqueue_assets( $s );
+
 		} );
 
 		if ( ! empty( $s['load_in_editor'] ) ) {
@@ -171,148 +265,115 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 			add_action( 'enqueue_block_editor_assets', function () use ( $s ) {
 
 				$this->enqueue_assets( $s );
+
 			} );
 
 		}
 
 	}
 
+	/*
+	ENQUEUE ASSETS
+	-- Loads the controller, base sheet and selected preset only, never the
+	-- other presets. The CSS override is attached to the last sheet so it
+	-- prints after the preset; the JS override stands in for the preset script.
+	---------------------------------------------------------- */
+
 	protected function enqueue_assets( array $s ): void {
 
-		if ( $this->is_breakdance_builder_request() ) {
+		$type = (string) ( $s['type'] ?? 'luxury' );
+
+		if ( 'off' === $type || self::is_builder_request() ) {
 
 			return;
 
 		}
 
-		// WooCommerce cart/checkout/account views replace parts of the DOM via
-		// AJAX. The generic stagger rules in this module can catch payment-method
-		// and notice list items, leaving fresh fragments hidden or offset after
-		// WooCommerce updates them. Keep animations off these sensitive flows.
-		if ( $this->is_sensitive_woocommerce_view() ) {
+		// The reveal targets include list and loop items that WooCommerce
+		// replaces via AJAX on these views, so animations stay off them.
+		if ( self::is_sensitive_woocommerce_view() ) {
 
 			return;
+
+		}
+
+		$is_preset    = in_array( $type, self::PRESETS, true );
+		$css_override = trim( (string) ( $s['css_override'] ?? '' ) );
+		$js_override  = trim( (string) ( $s['js_override'] ?? '' ) );
+
+		if ( ! $is_preset && '' === $css_override && '' === $js_override ) {
+
+			return;
+
+		}
+
+		// -------- Controller --------
+		$controller = 'octave-addons-animations-controller';
+
+		if ( $is_preset || '' !== $js_override ) {
+
+			$this->enqueue_script( $controller, 'controller.js', [], false );
 
 		}
 
 		// -------- CSS --------
-		$css_handle       = 'octave-addons-animations';
-		$css_override     = (string) ( $s['css_override'] ?? '' );
-		$has_css_override = '' !== trim( $css_override );
+		$css_handle = 'octave-addons-animations';
 
-		if ( ! empty( $s['load_css'] ) ) {
+		if ( $is_preset ) {
 
-			$css_url = OCTAVE_ADDONS_URL . 'modules/animations/assets/animation.css';
-			$css_ver = $this->file_version( OCTAVE_ADDONS_DIR . 'modules/animations/assets/animation.css' );
+			$this->enqueue_style( 'octave-addons-animations-base', 'presets/base.css', [] );
+			$this->enqueue_style( $css_handle, 'presets/' . $type . '.css', [ 'octave-addons-animations-base' ] );
 
-			wp_enqueue_style( $css_handle, $css_url, [], $css_ver );
-
-		} elseif ( $has_css_override ) {
+		} elseif ( '' !== $css_override ) {
 
 			wp_register_style( $css_handle, false, [], null );
 			wp_enqueue_style( $css_handle );
 
 		}
 
-		// Inline styles print after the file they are attached to, so the
-		// override tops up the bundled sheet rather than replacing it.
-		if ( $has_css_override && wp_style_is( $css_handle, 'enqueued' ) ) {
+		if ( '' !== $css_override ) {
 
 			wp_add_inline_style( $css_handle, $css_override );
 
 		}
 
 		// -------- JS --------
-		$js_handle   = 'octave-addons-animations';
-		$js_override = (string) ( $s['js_override'] ?? '' );
+		$js_handle = 'octave-addons-animations';
 
-		if ( '' !== trim( $js_override ) ) {
+		if ( '' !== $js_override ) {
 
-			wp_register_script( $js_handle, false, [], null, true );
+			wp_register_script( $js_handle, false, [ $controller ], null, true );
 			wp_enqueue_script( $js_handle );
 			wp_add_inline_script( $js_handle, $js_override );
 
-		} elseif ( ! empty( $s['load_js'] ) ) {
+		} elseif ( $is_preset ) {
 
-			$js_url = OCTAVE_ADDONS_URL . 'modules/animations/assets/animation.js';
-			$js_ver = $this->file_version( OCTAVE_ADDONS_DIR . 'modules/animations/assets/animation.js' );
-
-			wp_enqueue_script( $js_handle, $js_url, [], $js_ver, true );
+			$this->enqueue_script( $js_handle, 'presets/' . $type . '.js', [ $controller ], true );
 
 		}
 
 	}
 
-	/**
-	 * Detect actual Breakdance builder requests without disabling animations
-	 * across the whole WordPress admin.
-	 */
-	protected function is_breakdance_builder_request(): bool {
+	/*
+	ENQUEUE STYLE
+	-- Enqueues a bundled stylesheet versioned by its modification time
+	---------------------------------------------------------- */
 
-		$breakdance_mode = isset( $_GET['breakdance'] ) ? sanitize_key( wp_unslash( $_GET['breakdance'] ) ) : '';
-		$admin_page      = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-		$iframe_mode     = isset( $_GET['breakdance_iframe'] ) ? sanitize_key( wp_unslash( $_GET['breakdance_iframe'] ) ) : '';
+	protected function enqueue_style( string $handle, string $file, array $deps ): void {
 
-		if ( 'builder' === $breakdance_mode || isset( $_GET['breakdance_frame'] ) ) {
-
-			return true;
-
-		}
-
-		if ( '' !== $iframe_mode || isset( $_GET['breakdance_open_document'] ) ) {
-
-			return true;
-
-		}
-
-		if ( is_admin() && false !== strpos( $admin_page, 'breakdance' ) ) {
-
-			return true;
-
-		}
-
-		return false;
+		wp_enqueue_style( $handle, OCTAVE_ADDONS_URL . self::ASSETS . $file, $deps, self::file_version( OCTAVE_ADDONS_DIR . self::ASSETS . $file ) );
 
 	}
 
-	/**
-	 * Skip animation assets on WooCommerce views that rely on AJAX fragment
-	 * replacement during critical purchase/account flows.
-	 */
-	protected function is_sensitive_woocommerce_view(): bool {
+	/*
+	ENQUEUE SCRIPT
+	-- The controller loads in the head so hidden states never flash; preset
+	-- scripts load in the footer and only configure it
+	---------------------------------------------------------- */
 
-		$conditional_tags = [
-			'is_cart',
-			'is_checkout',
-			'is_account_page',
-		];
+	protected function enqueue_script( string $handle, string $file, array $deps, bool $in_footer ): void {
 
-		foreach ( $conditional_tags as $tag ) {
-
-			if ( function_exists( $tag ) && $tag() ) {
-
-				return true;
-
-			}
-
-		}
-
-		return false;
-
-	}
-
-	/**
-	 * Use the file mtime as asset version so edits bust browser caches
-	 * without having to bump the plugin version.
-	 */
-	protected function file_version( string $path ): string {
-
-		if ( file_exists( $path ) ) {
-
-			return (string) filemtime( $path );
-
-		}
-		return OCTAVE_ADDONS_VERSION;
+		wp_enqueue_script( $handle, OCTAVE_ADDONS_URL . self::ASSETS . $file, $deps, self::file_version( OCTAVE_ADDONS_DIR . self::ASSETS . $file ), $in_footer );
 
 	}
 

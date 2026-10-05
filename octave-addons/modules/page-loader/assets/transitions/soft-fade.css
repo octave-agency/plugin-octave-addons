@@ -1,0 +1,13 @@
+/*
+SOFT FADE TRANSITION
+-- The surface fades in quickly and fades out on the next page
+-- Cover 260ms and reveal 360ms, matching COVER_MS and REVEAL_MS
+---------------------------------------------------------- */
+
+html.oa-transition-out .oa-transition--soft-fade .oa-transition__layer {
+    animation: oa-pm-fade-in 260ms ease-out both;
+}
+
+html.oa-transition-reveal .oa-transition--soft-fade .oa-transition__layer {
+    animation: oa-pm-fade-out 360ms ease-in-out both;
+}

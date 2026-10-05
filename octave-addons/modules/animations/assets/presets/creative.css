@@ -1,0 +1,31 @@
+/*
+CREATIVE PRESET
+-- Layered clip-path reveals with entrances that alternate direction by
+-- position, and a small tilt kept within a few degrees
+---------------------------------------------------------- */
+
+.oa-anim-ready {
+    --oa-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --oa-fade: 700ms;
+
+    --oa-item-from: translate3d(0, 32px, 0) rotate(1.5deg);
+    --oa-item-clip: inset(6% 6% 6% 6% round 14px);
+    --oa-item-clip-to: inset(0 0 0 0 round 0);
+    --oa-item-dur: 1000ms;
+
+    --oa-media-from: translate3d(0, 24px, 0);
+    --oa-media-clip: inset(0 100% 0 0);
+    --oa-media-clip-to: inset(0 0 0 0);
+    --oa-media-zoom: 1.04;
+    --oa-media-dur: 1100ms;
+
+    --oa-text-from: translate3d(0, 18px, 0);
+    --oa-text-dur: 800ms;
+
+    --oa-word-from: translate3d(0, 110%, 0) rotate(3deg);
+    --oa-heading-dur: 900ms;
+}
+
+.oa-anim-ready [data-oa-anim="heading"] .oa-wi {
+    transform-origin: 0 100%;
+}

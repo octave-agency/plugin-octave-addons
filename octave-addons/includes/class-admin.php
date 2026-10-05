@@ -19,6 +19,9 @@ class Octave_Addons_Admin {
 	protected Octave_Addons_Module_Manager $modules;
 	protected Octave_Addons_Admin_Experience $admin_experience;
 
+	/** @var string[] Hook suffixes of every Octave Addons admin page. */
+	protected array $page_hooks = [];
+
 	public function __construct( Octave_Addons_Module_Manager $modules, Octave_Addons_Admin_Experience $admin_experience ) {
 
 		$this->modules          = $modules;
@@ -60,11 +63,18 @@ class Octave_Addons_Admin {
 
 	}
 
+	/*
+	REGISTER MENU
+	-- The top-level page is the dashboard, followed by one submenu item per
+	-- admin entry, so the WordPress menu always mirrors the discovered modules.
+	-- Every route shares render_page(), which reads the entry from the slug.
+	---------------------------------------------------------- */
+
 	public function register_menu(): void {
 
 		$icon_url = OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png';
 
-		add_menu_page(
+		$this->page_hooks[] = add_menu_page(
 			__( 'Octave Addons', 'octave-addons' ),
 			__( 'Octave Addons', 'octave-addons' ),
 			'manage_options',
@@ -73,6 +83,90 @@ class Octave_Addons_Admin {
 			$icon_url,
 			80
 		);
+
+		// Sharing the parent slug replaces the duplicate item WordPress would
+		// otherwise add at the top of the submenu.
+		add_submenu_page(
+			OCTAVE_ADDONS_SLUG,
+			__( 'Octave Addons', 'octave-addons' ),
+			__( 'Dashboard', 'octave-addons' ),
+			'manage_options',
+			OCTAVE_ADDONS_SLUG,
+			[ $this, 'render_page' ]
+		);
+
+		foreach ( $this->modules->admin_entries() as $entry_id => $entry ) {
+
+			$title = $this->entry_meta( $entry )['title'];
+
+			$this->page_hooks[] = add_submenu_page(
+				OCTAVE_ADDONS_SLUG,
+				$title,
+				$title,
+				'manage_options',
+				self::entry_slug( $entry_id ),
+				[ $this, 'render_page' ]
+			);
+
+		}
+
+		add_action( 'load-' . $this->page_hooks[0], [ $this, 'redirect_legacy_tab' ] );
+
+	}
+
+	/*
+	ENTRY SLUG
+	-- The admin page slug for one navigation entry.
+	---------------------------------------------------------- */
+
+	public static function entry_slug( string $entry_id ): string {
+
+		return OCTAVE_ADDONS_SLUG . '-' . $entry_id;
+
+	}
+
+	/*
+	ENTRY URL
+	-- The admin URL for one navigation entry, or the dashboard when no entry
+	-- is given.
+	---------------------------------------------------------- */
+
+	public static function entry_url( string $entry_id = '' ): string {
+
+		$slug = '' !== $entry_id ? self::entry_slug( $entry_id ) : OCTAVE_ADDONS_SLUG;
+
+		return add_query_arg( [ 'page' => $slug ], admin_url( 'admin.php' ) );
+
+	}
+
+	/*
+	REDIRECT LEGACY TAB
+	-- Sends ?page=octave-addons&tab={id} links to the entry's own submenu page,
+	-- keeping any other query arguments, so old links and bookmarks still land
+	-- on the right module and WordPress highlights its submenu item. A tab
+	-- that no longer resolves stays on the dashboard.
+	---------------------------------------------------------- */
+
+	public function redirect_legacy_tab(): void {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect.
+		$requested = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
+		$entry_id  = '' !== $requested ? $this->modules->entry_id_for( $requested ) : '';
+
+		if ( '' === $entry_id ) {
+
+			return;
+
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect.
+		$args = urlencode_deep( wp_unslash( $_GET ) );
+
+		unset( $args['page'], $args['tab'] );
+
+		wp_safe_redirect( add_query_arg( $args, self::entry_url( $entry_id ) ) );
+
+		exit;
 
 	}
 
@@ -92,11 +186,12 @@ class Octave_Addons_Admin {
 
 	public function enqueue_admin_assets( string $hook ): void {
 
-		if ( 'toplevel_page_' . OCTAVE_ADDONS_SLUG !== $hook ) {
+		if ( ! in_array( $hook, $this->page_hooks, true ) ) {
 
 			return;
 
 		}
+
 		$css_path = OCTAVE_ADDONS_DIR . 'assets/css/admin.css';
 		$js_path  = OCTAVE_ADDONS_DIR . 'assets/js/admin.js';
 
@@ -125,10 +220,15 @@ class Octave_Addons_Admin {
 			'savedText'           => __( 'All changes saved', 'octave-addons' ),
 			'unsavedText'         => __( 'Unsaved changes', 'octave-addons' ),
 			'savingText'          => __( 'Saving changes…', 'octave-addons' ),
-			'selectImageTitle'    => __( 'Choose a custom logo', 'octave-addons' ),
+			'selectImageTitle'    => __( 'Choose an image', 'octave-addons' ),
 			'useImageText'        => __( 'Use this image', 'octave-addons' ),
 			'selectImageText'     => __( 'Select image', 'octave-addons' ),
 			'replaceImageText'    => __( 'Replace image', 'octave-addons' ),
+			'previewCustomLoader'     => __( 'Custom only: styled by your Loader CSS.', 'octave-addons' ),
+			'previewCustomTransition' => __( 'Custom only: styled by your Transition CSS.', 'octave-addons' ),
+			'previewCustomScroll'     => __( 'Custom only: animated by your CSS and JavaScript overrides.', 'octave-addons' ),
+			'previewOff'              => __( 'Off: content is shown with no animation.', 'octave-addons' ),
+			'previewReduced'          => __( 'Reduced motion is on, so the final frame is shown.', 'octave-addons' ),
 			'searchOptionsText'   => __( 'Search options…', 'octave-addons' ),
 			'confirmTitleText'    => __( 'Please confirm', 'octave-addons' ),
 			'confirmActionText'   => __( 'Confirm', 'octave-addons' ),
@@ -389,7 +489,7 @@ class Octave_Addons_Admin {
 
 	public function plugin_action_links( array $links ): array {
 
-		$url      = admin_url( 'admin.php?page=' . OCTAVE_ADDONS_SLUG );
+		$url      = self::entry_url();
 		$settings = sprintf( '<a href="%s">%s</a>', esc_url( $url ), esc_html__( 'Settings', 'octave-addons' ) );
 		array_unshift( $links, $settings );
 		return $links;
@@ -442,10 +542,26 @@ class Octave_Addons_Admin {
 
 	}
 
+	/*
+	CURRENT TAB
+	-- The entry the open page shows, read from its submenu slug, or from the
+	-- legacy tab argument on the top-level page. Anything unknown falls back
+	-- to the dashboard.
+	---------------------------------------------------------- */
+
 	protected function current_tab(): string {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab switch.
+		$page      = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$prefix    = OCTAVE_ADDONS_SLUG . '-';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab switch.
 		$requested = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
+
+		if ( 0 === strpos( $page, $prefix ) ) {
+
+			$requested = substr( $page, strlen( $prefix ) );
+
+		}
 
 		if ( '' === $requested ) {
 
@@ -598,7 +714,7 @@ class Octave_Addons_Admin {
 		$entries       = $this->modules->admin_entries();
 		$active_tab    = $this->current_tab();
 		$icon_url      = OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png';
-		$dashboard_url = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG ], admin_url( 'admin.php' ) );
+		$dashboard_url = self::entry_url();
 		$is_themed     = $this->admin_experience->is_enabled();
 
 		$module_settings = [];
@@ -675,7 +791,7 @@ class Octave_Addons_Admin {
 						foreach ( $entries as $entry_id => $entry ) :
 							$meta      = $this->entry_meta( $entry );
 							$enabled   = $this->entry_is_enabled( $entry, $module_settings );
-							$url       = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG, 'tab' => $entry_id ], admin_url( 'admin.php' ) );
+							$url       = self::entry_url( $entry_id );
 							$is_active = ( $entry_id === $active_tab );
 						?>
 
@@ -701,7 +817,7 @@ class Octave_Addons_Admin {
 
 						foreach ( $entries as $entry_id => $entry ) :
 							$meta      = $this->entry_meta( $entry );
-							$url       = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG, 'tab' => $entry_id ], admin_url( 'admin.php' ) );
+							$url       = self::entry_url( $entry_id );
 							$is_active = ( $entry_id === $active_tab );
 						?>
 
@@ -799,7 +915,7 @@ class Octave_Addons_Admin {
 
 							$meta    = $this->entry_meta( $entry );
 							$enabled = $this->entry_is_enabled( $entry, $module_settings );
-							$url     = add_query_arg( [ 'page' => OCTAVE_ADDONS_SLUG, 'tab' => $entry_id ], admin_url( 'admin.php' ) );
+							$url     = self::entry_url( $entry_id );
 
 						?>
 

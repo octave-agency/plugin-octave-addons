@@ -408,42 +408,67 @@ class Octave_Addons_Fields {
 
     }
 
-    /**
-     * WordPress Media Library image field with preview and replace/remove actions.
-     *
-     * @param array $args {
-     *
-     *     @type string $name   Field name (required).
-     *     @type string $id     Field id (required).
-     *     @type string $value  Current image URL.
-     *     @type string $help   Optional description as .oa-help span.
-     * }
-     */
+    /*
+    MEDIA IMAGE
+    -- Legacy Media Library field that stores the image URL
+    -- Kept for existing settings; new fields should use ::media_asset()
+    ---------------------------------------------------------- */
+
     public static function media_image( array $args ): void {
 
-        $name      = $args['name']  ?? '';
-        $id        = $args['id']    ?? '';
-        $value     = $args['value'] ?? '';
-        $help      = $args['help']  ?? '';
-        $has_image = '' !== $value;
+        self::media_asset( array_merge( $args, [ 'store' => 'url' ] ) );
+
+    }
+
+    /*
+    MEDIA ASSET
+    -- Reusable WordPress Media Library field with preview and Select, Replace
+    -- and Remove actions. Stores an attachment ID by default and resolves the
+    -- current URL from WordPress, while a legacy URL value still previews.
+    -- SVGs appear only when the installation already permits SVG uploads.
+    -- Args: name, id, value, store ('id' or 'url'), help, title, empty_text,
+    -- select_text, replace_text
+    ---------------------------------------------------------- */
+
+    public static function media_asset( array $args ): void {
+
+        $name  = $args['name']  ?? '';
+        $id    = $args['id']    ?? '';
+        $value = $args['value'] ?? '';
+        $help  = $args['help']  ?? '';
+        $store = 'url' === ( $args['store'] ?? 'id' ) ? 'url' : 'id';
+
+        $title        = $args['title']        ?? __( 'Choose an image', 'octave-addons' );
+        $empty_text   = $args['empty_text']   ?? __( 'No image selected', 'octave-addons' );
+        $select_text  = $args['select_text']  ?? __( 'Select image', 'octave-addons' );
+        $replace_text = $args['replace_text'] ?? __( 'Replace image', 'octave-addons' );
+
+        $url       = self::media_asset_url( $value );
+        $has_image = '' !== $url;
+        $stored    = $has_image ? (string) $value : '';
         ?>
 
-        <div class="oa-media-field<?= $has_image ? ' has-image' : ''; ?>">
+        <div class="oa-media-field<?= $has_image ? ' has-image' : ''; ?>"
+             data-store="<?= esc_attr( $store ); ?>"
+             data-title="<?= esc_attr( $title ); ?>"
+             data-select-text="<?= esc_attr( $select_text ); ?>"
+             data-replace-text="<?= esc_attr( $replace_text ); ?>">
             <input type="hidden"
                    id="<?= esc_attr( $id ); ?>"
                    name="<?= esc_attr( $name ); ?>"
-                   value="<?= esc_attr( $value ); ?>"
-                   class="oa-media-url">
+                   value="<?= esc_attr( $stored ); ?>"
+                   class="oa-media-url"
+                   data-url="<?= esc_url( $url ); ?>">
             <div class="oa-media-preview">
-                <img src="<?= esc_url( $value ); ?>" alt=""<?= $has_image ? '' : ' hidden'; ?>>
+                <img src="<?= esc_url( $url ); ?>" alt=""<?= $has_image ? '' : ' hidden'; ?>>
                 <span class="oa-media-placeholder"<?= $has_image ? ' hidden' : ''; ?>>
                     <span class="dashicons dashicons-format-image" aria-hidden="true"></span>
-                    <?php esc_html_e( 'No image selected', 'octave-addons' ); ?>
+                    <?= esc_html( $empty_text ); ?>
                 </span>
             </div>
             <div class="oa-media-actions">
                 <button type="button" id="<?= esc_attr( $id . '-select' ); ?>" class="button oa-media-select">
-                    <?= $has_image ? esc_html__( 'Replace image', 'octave-addons' ) : esc_html__( 'Select image', 'octave-addons' ); ?>
+                    <?= esc_html( $has_image ? $replace_text : $select_text ); ?>
                 </button>
                 <button type="button" class="button oa-media-remove"<?= $has_image ? '' : ' hidden'; ?>>
                     <?php esc_html_e( 'Remove', 'octave-addons' ); ?>
@@ -460,6 +485,78 @@ class Octave_Addons_Fields {
         <?php
 
         endif;
+
+    }
+
+    /*
+    MEDIA ASSET URL
+    -- Resolves a stored attachment ID, or a legacy URL, to the current URL
+    -- Returns an empty string when the attachment is gone or not an image
+    ---------------------------------------------------------- */
+
+    public static function media_asset_url( $value ): string {
+
+        if ( is_numeric( $value ) ) {
+
+            $attachment_id = absint( $value );
+
+            if ( ! $attachment_id || ! self::is_image_attachment( $attachment_id ) ) {
+
+                return '';
+
+            }
+
+            return (string) wp_get_attachment_url( $attachment_id );
+
+        }
+
+        return is_string( $value ) ? esc_url_raw( $value ) : '';
+
+    }
+
+    /*
+    SANITIZE MEDIA ASSET
+    -- Accepts an existing image attachment ID, or a legacy http(s) URL when
+    -- the field stores URLs. Anything else is cleared.
+    ---------------------------------------------------------- */
+
+    public static function sanitize_media_asset( $value, string $store = 'id' ) {
+
+        if ( is_numeric( $value ) ) {
+
+            $attachment_id = absint( $value );
+
+            return $attachment_id && self::is_image_attachment( $attachment_id ) ? $attachment_id : 0;
+
+        }
+
+        if ( 'url' !== $store || ! is_string( $value ) ) {
+
+            return 0;
+
+        }
+
+        return esc_url_raw( $value, [ 'http', 'https' ] );
+
+    }
+
+    /*
+    IS IMAGE ATTACHMENT
+    -- Raster images and SVGs only; the upload itself was already allowed by
+    -- the installation's own MIME rules, which this never widens
+    ---------------------------------------------------------- */
+
+    protected static function is_image_attachment( int $attachment_id ): bool {
+
+        if ( 'attachment' !== get_post_type( $attachment_id ) ) {
+
+            return false;
+
+        }
+
+        $mime = (string) get_post_mime_type( $attachment_id );
+
+        return 0 === strpos( $mime, 'image/' );
 
     }
 
@@ -569,6 +666,36 @@ class Octave_Addons_Fields {
         <?php
 
         endif;
+
+    }
+
+    /*
+    MOTION PREVIEW
+    -- Compact, isolated admin preview for loaders, page transitions and
+    -- scroll presets. The stage is built and animated by admin.js with the
+    -- Web Animations API inside a scoped wrapper, so no frontend class or
+    -- script is involved. $controls maps preview roles (type, colours, text,
+    -- media) to the ids of the fields it should read.
+    ---------------------------------------------------------- */
+
+    public static function motion_preview( string $kind, array $controls, array $colors = [] ): void {
+
+        ?>
+
+        <div class="oa-motion-preview"
+             data-oa-motion-preview="<?= esc_attr( $kind ); ?>"
+             data-controls="<?= esc_attr( (string) wp_json_encode( $controls ) ); ?>"
+             data-colors="<?= esc_attr( (string) wp_json_encode( $colors ) ); ?>">
+            <div class="oa-motion-stage" aria-hidden="true"></div>
+            <div class="oa-motion-bar">
+                <span class="oa-motion-label" aria-live="polite"></span>
+                <button type="button" class="button oa-motion-replay">
+                    <span class="dashicons dashicons-controls-repeat" aria-hidden="true"></span>
+                    <?php esc_html_e( 'Replay preview', 'octave-addons' ); ?>
+                </button>
+            </div>
+        </div>
+        <?php
 
     }
 

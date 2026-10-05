@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.22.2
+Stable tag:        3.23.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -25,8 +25,17 @@ Octave Addons ships with a growing collection of focused modules:
     featured images, sitting after the date column and before any SEO plugin
     columns. Hovering a thumbnail reveals controls to swap the image through
     the media library or clear it, applied without leaving the table.
-*   **Scroll Animations** – enqueues Octave's fade/slide-in CSS and
-    IntersectionObserver JS, with an editable override for each file.
+*   **Scroll Animations** – reveals Breakdance content as it scrolls into
+    view using one curated preset (Luxury, Editorial, Creative, Cinematic or
+    Minimal), Custom only, or Off. Only the selected preset loads, a shared
+    safety controller guarantees content is never left hidden, and reduced
+    motion shows everything immediately. CSS and JS overrides remain.
+*   **Page Loader & Transitions** – an initial loader for full page loads
+    (Brand Counter, Logo Mask, Image Window, Curtain Reveal, Orbital Signal or
+    Custom only) and separate internal page transitions (Slide Up, Split
+    Curtain, Brand Wipe, Soft Fade, Replay Loader or Custom only), with
+    intent-based prefetching. Both are off by default, use normal document
+    navigation, and always release the page through hard timeouts.
 *   **Notifications Bar** – shows scheduled announcement banners across the
     top or bottom of the site. Each banner carries its own message, button,
     link, show from and show to dates and background, closes to a cookie for
@@ -38,8 +47,11 @@ Octave Addons ships with a growing collection of focused modules:
     shared spacing tokens, replacing the hand-written spacing stylesheet
     a site would otherwise need.
 *   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
-    every Breakdance Lazy Load toggle off so images, backgrounds and
-    embeds are left to the site's third-party performance plugin.
+    every Breakdance Lazy Load toggle off so images and backgrounds are left
+    to the site's third-party performance plugin, while videos load lazily:
+    Breakdance YouTube and Vimeo videos default to their lightweight players,
+    HTML5 and background videos start with `preload="none"` and load as
+    they near the viewport, and video iframes receive `loading="lazy"`.
 *   **Breakdance Launcher Styles** – always on and hidden from the admin.
     Declares Breakdance's launcher stylesheet as a block editor style so it
     reaches the block editor canvas iframe, which an admin stylesheet cannot.
@@ -76,6 +88,11 @@ Octave Addons ships with a growing collection of focused modules:
     Custom Login URL keeps its login address private. A site running an OAuth
     authorization server can publish Protected Resource Metadata through the
     `octave_addons_oauth_protected_resource` filter.
+*   **Accessibility Tree Repairs** – gives unlabelled Breakdance controls a
+    name and role so browser agents can navigate them and screen reader users
+    hear what they do. Content Toggle checkboxes are named by the visible
+    label for their on state and exposed as switches, including toggles added
+    later by popups or AJAX. Controls that already have a name are untouched.
 *   **Post Types** – can display Posts as Blogs and provides separate managers for
     post types, reusable taxonomies, and typed post fields. Fields use registered
     WordPress post meta and are available in Breakdance Dynamic Data.
@@ -124,6 +141,20 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.23.1 =
+* Added the Accessibility Tree Repairs module to the AI Agents area, on by default. It gives each Breakdance Content Toggle checkbox an accessible name from its visible on-state label and the `switch` role, so a Monthly / Yearly toggle reads as "Yearly, switch, off", addressing the "Form elements must have labels" and "Accessibility tree is not well-formed" audits. It targets only Breakdance's stable semantic classes, repairs every toggle on the page including ones added later, and never replaces a name or role that is already present.
+* Octave Addons now has a WordPress admin submenu: Dashboard plus one item per module or module group, generated from the discovered modules so it always matches the plugin's own navigation. Each item has its own page and is highlighted when open, and older `admin.php?page=octave-addons&tab=…` links redirect to the matching page.
+
+= 3.23.0 =
+* Added the Page Loader & Transitions module with two independently controlled systems, both off by default. The initial page loader offers Brand Counter, Logo Mask, Image Window, Curtain Reveal, Orbital Signal and Custom only presets, renders through `wp_body_open`, reports real loading progress, can show once per session or on every full load, and always clears within 8 seconds, with a CSS failsafe that releases the page even if its script never runs. Internal page transitions offer Slide Up, Split Curtain, Brand Wipe, Soft Fade, Replay Loader and Custom only, use normal document navigation, skip external, hash, file, download, targeted, modified, admin, login, REST, AJAX, preview, builder and WooCommerce cart, checkout, account and cart-action links, and honour `data-oa-no-transition`. Quick navigation prefetches internal pages on hover, focus or touch, using Speculation Rules where supported, and respects Save-Data and slow connections.
+* Replaced the Scroll Animations "Load CSS" and "Load JavaScript" switches with a single Scroll animation type: Luxury, Editorial, Creative, Cinematic, Minimal, Custom only or Off. Only the selected preset's assets load. A shared controller that custom JavaScript cannot replace keeps content visible without JavaScript, on errors and for reduced-motion visitors, reveals each target once, and clears transitions, filters and `will-change` once each reveal settles. Headings keep their links, spans, icons, line breaks and inline styling when split into masked words or lines. Very tall columns and short footer lines now reveal reliably.
+* Existing Scroll Animations settings are migrated automatically: sites that loaded the bundled CSS move to Luxury, sites that ran only their overrides move to Custom only, and CSS and JavaScript override content is kept unchanged.
+* Breakdance Lazy Load now lazy loads videos by default while still leaving images and backgrounds to the site's performance plugin. Breakdance YouTube and Vimeo videos without a chosen Load Method use their lightweight players (or Breakdance's lazy load when autoplay is on), HTML5 videos from Breakdance Video elements, Breakdance section video backgrounds, the core video block and the `[video]` shortcode start with `preload="none"` and load, and autoplay, as they approach the viewport, and video iframes from Breakdance, core embeds and oEmbed receive `loading="lazy"`.
+* Added a reusable Media Library asset field that stores an attachment ID, previews raster images and SVGs (where the site already allows SVG uploads) and stays compatible with existing URL-based image fields.
+* Conditional settings rows can now accept several values and give each row its own values, and hidden rows never block saving.
+* Added compact, scoped admin previews with a Replay button for every loader, transition and scroll preset.
+* Moved the Breakdance colour-source handling used by Text Selection into a shared helper so other modules can follow Breakdance colour variables the same way.
 
 = 3.22.2 =
 * Fixed Breakdance AJAX Filtering overriding a Post List's own posts-per-page limit. AJAX pagination now uses the detected query size, and unpaginated queries remain untouched.
