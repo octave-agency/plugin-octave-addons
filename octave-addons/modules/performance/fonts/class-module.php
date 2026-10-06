@@ -141,12 +141,21 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 			Octave_Addons_Perf_Html::register( 'fonts', [ $this, 'transform' ], 40 );
 
 			add_action( Octave_Addons_Perf_Google_Fonts::FETCH_HOOK, [ 'Octave_Addons_Perf_Google_Fonts', 'process_queue' ] );
+			add_action( Octave_Addons_Perf_Google_Fonts::DISCOVER_HOOK, [ 'Octave_Addons_Perf_Google_Fonts', 'discover_and_fetch' ] );
 			add_action( Octave_Addons_Perf_Google_Fonts::REFRESH_HOOK, [ $this, 'refresh_stale' ] );
 			add_action( 'octave_addons_perf_fonts_changed', [ __CLASS__, 'on_fonts_changed' ] );
 
 			if ( ! wp_next_scheduled( Octave_Addons_Perf_Google_Fonts::REFRESH_HOOK ) ) {
 
 				wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', Octave_Addons_Perf_Google_Fonts::REFRESH_HOOK );
+
+			}
+
+			// Nothing cached yet: look at the home page in the background rather
+			// than wait for an uncached page view, at most once a day.
+			if ( empty( Octave_Addons_Perf_Google_Fonts::manifest() ) && false === get_transient( Octave_Addons_Perf_Google_Fonts::DISCOVERED_FLAG ) && ! wp_next_scheduled( Octave_Addons_Perf_Google_Fonts::DISCOVER_HOOK ) ) {
+
+				wp_schedule_single_event( time() + 10, Octave_Addons_Perf_Google_Fonts::DISCOVER_HOOK );
 
 			}
 
@@ -163,6 +172,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 	public static function unschedule(): void {
 
 		wp_clear_scheduled_hook( Octave_Addons_Perf_Google_Fonts::REFRESH_HOOK );
+		wp_clear_scheduled_hook( Octave_Addons_Perf_Google_Fonts::DISCOVER_HOOK );
 
 	}
 
@@ -356,23 +366,44 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	/*
 	TRANSFORM
-	-- Points Google Fonts stylesheet links at their local copies. When every
-	-- Google stylesheet on the page was replaced, preconnect and dns-prefetch
-	-- hints for Google's font hosts are disabled too, so no connection to
-	-- Google is opened at all
+	-- Points every Google Fonts stylesheet the page loads at its local copy:
+	-- <link> tags, @import rules in inline styles, and WebFont.load() calls,
+	-- which become the loader's custom module so its loading classes and
+	-- events still fire. When every Google stylesheet on the page was
+	-- replaced, preconnect and dns-prefetch hints for Google's font hosts are
+	-- disabled too, so no connection to Google is opened at all
 	---------------------------------------------------------- */
 
 	public function transform( string $html ): string {
 
-		if ( ! Octave_Addons_Perf::has_html_api() || false === stripos( $html, Octave_Addons_Perf_Google_Fonts::CSS_HOST ) ) {
+		$host = Octave_Addons_Perf_Google_Fonts::CSS_HOST;
+
+		if ( ! Octave_Addons_Perf::has_html_api() || ( false === stripos( $html, $host ) && false === stripos( $html, 'WebFont' ) ) ) {
 
 			return $html;
 
 		}
 
-		$tags     = new WP_HTML_Tag_Processor( $html );
 		$missing  = 0;
 		$replaced = 0;
+
+		$local_for = static function ( string $source ) use ( &$missing ): string {
+
+			$local = Octave_Addons_Perf_Google_Fonts::local_url( $source );
+
+			Octave_Addons_Perf_Log::note( 'fonts', [ 'stylesheet' => Octave_Addons_Perf_Google_Fonts::normalize( $source ), 'local' => $local ] );
+
+			if ( '' === $local ) {
+
+				$missing++;
+
+			}
+
+			return $local;
+
+		};
+
+		$tags = new WP_HTML_Tag_Processor( $html );
 
 		while ( $tags->next_tag( 'LINK' ) ) {
 
@@ -384,13 +415,9 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 			}
 
-			$local = Octave_Addons_Perf_Google_Fonts::local_url( $href );
-
-			Octave_Addons_Perf_Log::note( 'fonts', [ 'stylesheet' => $href, 'local' => $local ] );
+			$local = $local_for( $href );
 
 			if ( '' === $local ) {
-
-				$missing++;
 
 				continue;
 
@@ -402,15 +429,54 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		}
 
-		if ( 0 === $replaced ) {
+		$html = $tags->get_updated_html();
 
-			return $html;
+		// @import url(...) or @import "..." of a Google stylesheet.
+		$html = (string) preg_replace_callback( '#@import\s+(?:url\(\s*)?([\'"]?)((?:https?:)?//' . preg_quote( $host, '#' ) . '/[^\'")\s;]+)\1\s*\)?#i', static function ( array $match ) use ( $local_for, &$replaced ): string {
+
+			if ( ! Octave_Addons_Perf_Google_Fonts::is_stylesheet_url( $match[2] ) ) {
+
+				return $match[0];
+
+			}
+
+			$local = $local_for( $match[2] );
+
+			if ( '' === $local ) {
+
+				return $match[0];
+
+			}
+
+			$replaced++;
+
+			return '@import url("' . $local . '")';
+
+		}, $html );
+
+		foreach ( Octave_Addons_Perf_Google_Fonts::webfont_configs( $html ) as $config ) {
+
+			$local = $local_for( $config['url'] );
+
+			if ( '' === $local ) {
+
+				continue;
+
+			}
+
+			$names  = array_values( array_unique( array_map( static function ( string $family ): string {
+
+				return trim( explode( ':', $family )[0] );
+
+			}, $config['families'] ) ) );
+			$custom = 'custom: ' . wp_json_encode( [ 'families' => $names, 'urls' => [ $local ] ], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG );
+			$html   = str_replace( $config['match'], $custom, $html );
+
+			$replaced++;
 
 		}
 
-		$html = $tags->get_updated_html();
-
-		if ( $missing > 0 ) {
+		if ( 0 === $replaced || $missing > 0 ) {
 
 			return $html;
 
@@ -523,7 +589,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 					if ( empty( $manifest ) ) {
 
-						echo '<p class="oa-help">' . esc_html__( 'Nothing cached yet. Stylesheets are found as logged-out visitors view pages, then downloaded in the background.', 'octave-addons' ) . '</p>';
+						echo '<p class="oa-help">' . esc_html__( 'Nothing cached yet. Google Fonts on the home page are found automatically, others as logged-out visitors view pages, then downloaded in the background. Refresh to look again now.', 'octave-addons' ) . '</p>';
 
 					}
 
@@ -573,7 +639,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 						?>
 					</ul>
 					<button type="button" class="button" data-oa-perf-action="oa_perf_fonts_refresh" data-result="oa-perf-fonts-result"><?php esc_html_e( 'Refresh self-hosted fonts', 'octave-addons' ); ?></button>
-					<div class="oa-perf-result" id="oa-perf-fonts-result" role="status" aria-live="polite"></div>
+					<div id="oa-perf-fonts-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
 					<?php
 

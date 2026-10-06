@@ -7,7 +7,6 @@ PERFORMANCE ADMIN
 .oa-perf {
     display: grid;
     gap: 18px;
-    margin-bottom: 24px;
 }
 
 .oa-perf h3 {
@@ -104,35 +103,34 @@ STATUS CARDS
 
 /*
 RESULTS
--- Live regions stay empty until an action reports back
+-- Live regions stay empty until an action reports back, then hold one of
+-- the plugin's standard inline notices
 ---------------------------------------------------------- */
 
-.oa-perf-result:empty {
+[data-oa-perf-result]:empty {
     display: none;
 }
 
-.oa-perf-result {
-    padding: 10px 14px;
-    border-left: 3px solid var(--oa-accent);
-    border-radius: 8px;
-    background: var(--oa-bg-soft);
-    color: var(--oa-text);
+[data-oa-perf-result] .notice {
+    margin: 0;
 }
 
-.oa-perf-result.is-error {
-    border-left-color: #f87171;
+[data-oa-perf-result] .notice p + p {
+    margin-top: 4px;
 }
 
-.oa-perf-result p {
-    margin: 0 0 4px;
-    color: inherit;
+[data-oa-perf-result] .notice ul {
+    margin: 4px 0 8px 18px;
+    list-style: disc;
+    overflow-wrap: anywhere;
 }
 
-.oa-perf-layers,
-.oa-perf-scan-list,
-.oa-perf-log,
-.oa-perf-font-list,
-.oa-perf-font-sources {
+#oa-perf-scan-result {
+    max-height: 420px;
+    overflow: auto;
+}
+
+.oa-perf-layers {
     display: grid;
     gap: 6px;
     margin: 6px 0 0;
@@ -140,15 +138,13 @@ RESULTS
     list-style: none;
 }
 
-.oa-perf-layers li,
-.oa-perf-scan-list li {
+.oa-perf-layers li {
     position: relative;
     padding-left: 16px;
     overflow-wrap: anywhere;
 }
 
-.oa-perf-layers li::before,
-.oa-perf-scan-list li::before {
+.oa-perf-layers li::before {
     content: "";
     position: absolute;
     top: 0.55em;
@@ -159,33 +155,12 @@ RESULTS
     background: var(--oa-text-dim);
 }
 
-.oa-perf-layers .is-success::before,
-.oa-perf-scan-list .is-success::before {
+.oa-perf-layers .is-success::before {
     background: var(--oa-green);
 }
 
 .oa-perf-layers .is-error::before {
     background: #f87171;
-}
-
-.oa-perf-layers .is-queued::before,
-.oa-perf-scan-list .is-queued::before {
-    background: var(--oa-warning);
-}
-
-.oa-perf-layers strong,
-.oa-perf-scan-list strong {
-    margin-right: 6px;
-    color: var(--oa-text);
-}
-
-.oa-perf-scan-list code {
-    margin-right: 6px;
-}
-
-.oa-perf-scan {
-    max-height: 420px;
-    overflow: auto;
 }
 
 .oa-perf-warning {
@@ -195,6 +170,16 @@ RESULTS
 /*
 LISTS INSIDE SETTINGS
 ---------------------------------------------------------- */
+
+.oa-perf-log,
+.oa-perf-font-list,
+.oa-perf-font-sources {
+    display: grid;
+    gap: 6px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+}
 
 .oa-perf-log li,
 .oa-perf-font-list li,
@@ -223,6 +208,13 @@ LISTS INSIDE SETTINGS
 
 .oa-perf-inline-check {
     margin-top: 8px;
+}
+
+.oa-perf-checklist .oa-perf-select-all {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--oa-border-light);
+    color: var(--oa-text);
+    font-weight: 600;
 }
 
 .oa-perf-code {

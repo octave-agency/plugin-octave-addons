@@ -63,7 +63,9 @@ class Octave_Addons_Perf_Html {
 
 	public static function start(): void {
 
-		if ( self::$started || empty( self::$transformers ) ) {
+		// A diagnostics scan always gets a buffer, so it records a report even
+		// when no page transformation is switched on.
+		if ( self::$started || ( empty( self::$transformers ) && ! Octave_Addons_Perf_Log::is_reporting() ) ) {
 
 			return;
 

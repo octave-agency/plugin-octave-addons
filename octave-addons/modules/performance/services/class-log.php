@@ -79,11 +79,14 @@ class Octave_Addons_Perf_Log {
 	START SCAN
 	-- Creates the token an administrator's loopback scan carries. The report
 	-- is stored against it and can only be read back by the admin endpoint
+	-- Lowercase, so the sanitize_key() the scanned request applies leaves it
+	-- unchanged: a persistent object cache keys transients case-sensitively,
+	-- and a mixed-case token was never found there
 	---------------------------------------------------------- */
 
 	public static function start_scan(): string {
 
-		$token = wp_generate_password( 24, false, false );
+		$token = strtolower( wp_generate_password( 24, false, false ) );
 
 		set_transient( 'oa_perf_scan_' . $token, [ 'status' => 'pending' ], 5 * MINUTE_IN_SECONDS );
 
@@ -169,13 +172,16 @@ class Octave_Addons_Perf_Log {
 
 	/*
 	READ SCAN
-	-- Returns and forgets a finished report
+	-- Returns and forgets a finished report. The report was written by the
+	-- scanned request, while this request still holds the pending marker it
+	-- wrote itself in its in-memory cache, so that copy is skipped and the
+	-- stored value read fresh
 	---------------------------------------------------------- */
 
 	public static function read_scan( string $token ): array {
 
 		$key    = 'oa_perf_scan_' . sanitize_key( $token );
-		$stored = get_transient( $key );
+		$stored = self::fresh_transient( $key );
 
 		if ( is_array( $stored ) && 'done' === ( $stored['status'] ?? '' ) ) {
 
@@ -186,6 +192,28 @@ class Octave_Addons_Perf_Log {
 		}
 
 		return [];
+
+	}
+
+	/*
+	FRESH TRANSIENT
+	-- Reads a transient from its store rather than this request's memory:
+	-- straight from a persistent object cache, or from the database once the
+	-- in-memory options copy is dropped
+	---------------------------------------------------------- */
+
+	protected static function fresh_transient( string $key ) {
+
+		if ( wp_using_ext_object_cache() ) {
+
+			return wp_cache_get( $key, 'transient', true );
+
+		}
+
+		wp_cache_delete( '_transient_' . $key, 'options' );
+		wp_cache_delete( '_transient_timeout_' . $key, 'options' );
+
+		return get_transient( $key );
 
 	}
 

@@ -27,8 +27,21 @@ function test_performance_modules_share_one_admin_entry_in_order(): void {
 	$entries = $GLOBALS['oa_manager']->admin_entries();
 
 	oa_assert( isset( $entries['performance'] ), 'performance entry exists' );
-	oa_assert_same( OA_PERF_MODULES, array_keys( $entries['performance']['modules'] ), 'grouped modules in order' );
+	oa_assert_same( array_slice( OA_PERF_MODULES, 1 ), array_keys( $entries['performance']['modules'] ), 'grouped modules in order, cache hidden' );
 	oa_assert_same( 'performance', $GLOBALS['oa_manager']->entry_id_for( 'performance-fonts' ) );
+
+}
+
+function test_only_performance_lists_quick_scroll_links(): void {
+
+	require_once OCTAVE_ADDONS_DIR . 'includes/class-admin.php';
+
+	$admin  = ( new ReflectionClass( 'Octave_Addons_Admin' ) )->newInstanceWithoutConstructor();
+	$scroll = new ReflectionMethod( $admin, 'has_quick_scroll' );
+
+	oa_assert( $scroll->invoke( $admin, [ 'group' => 'performance', 'modules' => [ 'a' => 1, 'b' => 2 ] ] ), 'performance' );
+	oa_assert( ! $scroll->invoke( $admin, [ 'group' => 'ai-agents', 'modules' => [ 'a' => 1, 'b' => 2 ] ] ), 'ai agents stays one link' );
+	oa_assert( ! $scroll->invoke( $admin, [ 'group' => 'breakdance', 'modules' => [ 'a' => 1, 'b' => 2 ] ] ), 'breakdance stays one link' );
 
 }
 
@@ -166,12 +179,92 @@ function test_bypass_reasons_by_context(): void {
 
 }
 
-function test_logged_in_users_can_be_optimised_when_enabled(): void {
+function test_logged_in_users_always_see_unoptimised_pages(): void {
 
 	$GLOBALS['oa_flags']['logged_in'] = true;
 	oa_set_settings( 'performance-cache', [ 'optimize_logged_in' => true ] );
 
-	oa_assert( Octave_Addons_Perf_Context::can_optimize( 'media' ) );
+	oa_assert_same( 'logged-in', Octave_Addons_Perf_Context::bypass_reason( 'media' ), 'the old setting no longer opts in' );
+
+}
+
+function test_cache_module_has_no_settings_page(): void {
+
+	oa_assert( ! oa_module( 'performance-cache' )->show_in_admin() );
+
+}
+
+/*
+DIAGNOSTICS SCAN
+---------------------------------------------------------- */
+
+function oa_scanned_request( string $token ): void {
+
+	$_GET[ Octave_Addons_Perf_Log::SCAN_ARG ] = $token;
+
+	Octave_Addons_Perf_Log::maybe_begin_report();
+	Octave_Addons_Perf_Log::note( 'media', [ 'tag' => 'img', 'action' => 'lazy' ] );
+	Octave_Addons_Perf_Log::save_report();
+
+}
+
+function test_scan_token_survives_the_scanned_request_sanitising_it(): void {
+
+	$token = Octave_Addons_Perf_Log::start_scan();
+
+	oa_assert_same( sanitize_key( $token ), $token, 'token is already a valid key' );
+
+	oa_scanned_request( $token );
+
+	$scan = Octave_Addons_Perf_Log::read_scan( $token );
+
+	oa_assert_same( 'done', $scan['status'] ?? '' );
+	oa_assert_same( 'lazy', $scan['report']['media'][0]['action'] ?? '' );
+
+}
+
+function test_scan_is_read_past_this_request_memory(): void {
+
+	$token = Octave_Addons_Perf_Log::start_scan();
+
+	oa_scanned_request( $token );
+	Octave_Addons_Perf_Log::read_scan( $token );
+
+	oa_assert( in_array( [ '_transient_oa_perf_scan_' . $token, 'options' ], $GLOBALS['oa_cache_deleted'], true ), 'in-memory option copy dropped' );
+
+	oa_test_reset();
+	$GLOBALS['oa_flags']['ext_cache'] = true;
+
+	$token = Octave_Addons_Perf_Log::start_scan();
+
+	oa_scanned_request( $token );
+
+	oa_assert_same( 'done', Octave_Addons_Perf_Log::read_scan( $token )['status'] ?? '' );
+	oa_assert( in_array( [ 'oa_perf_scan_' . $token, 'transient', true ], $GLOBALS['oa_cache_reads'], true ), 'persistent cache read forced' );
+
+}
+
+function test_scan_opens_a_buffer_with_no_transformations(): void {
+
+	$_GET[ Octave_Addons_Perf_Log::SCAN_ARG ] = Octave_Addons_Perf_Log::start_scan();
+
+	Octave_Addons_Perf_Log::maybe_begin_report();
+
+	$level = ob_get_level();
+
+	Octave_Addons_Perf_Html::start();
+
+	$started = ob_get_level() > $level;
+
+	if ( $started ) {
+
+		ob_end_clean();
+
+	}
+
+	Octave_Addons_Perf_Log::save_report();
+
+	oa_assert( $started, 'buffer started so the report is saved' );
 
 }
 
@@ -183,7 +276,6 @@ function test_no_optimize_argument_needs_admin_or_site_key(): void {
 
 	$GLOBALS['oa_flags']['logged_in'] = true;
 	$GLOBALS['oa_caps']               = [ 'manage_options' ];
-	oa_set_settings( 'performance-cache', [ 'optimize_logged_in' => true ] );
 
 	oa_assert_same( 'query-arg', Octave_Addons_Perf_Context::bypass_reason( 'media' ), 'administrator bypass' );
 

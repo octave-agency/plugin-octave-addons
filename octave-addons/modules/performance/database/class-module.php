@@ -180,10 +180,13 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 		</div>
 
 		<div class="oa-perf-db" data-oa-perf-db data-oa-perf-local>
-			<table class="widefat striped oa-perf-db-table">
+			<table class="widefat striped oa-perf-db-table" data-oa-perf-select-group>
 				<thead>
 					<tr>
-						<th scope="col" class="check-column"><span class="screen-reader-text"><?php esc_html_e( 'Select', 'octave-addons' ); ?></span></th>
+						<td class="check-column">
+							<label class="screen-reader-text" for="oa-perf-db-all"><?php esc_html_e( 'Select all', 'octave-addons' ); ?></label>
+							<input type="checkbox" id="oa-perf-db-all" data-oa-perf-select-all>
+						</td>
 						<th scope="col"><?php esc_html_e( 'Data', 'octave-addons' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Found', 'octave-addons' ); ?></th>
 					</tr>
@@ -240,7 +243,6 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 			</p>
 			<?php
 
-			// No whitespace inside the region, so :empty hides it until there is something to say.
 			$last_text = empty( $last['time'] ) ? '' : sprintf(
 				/* translators: 1: manual or scheduled, 2: relative time, 3: number removed. */
 				__( 'Last %1$s cleanup %2$s removed %3$d entries.', 'octave-addons' ),
@@ -251,7 +253,15 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 
 			?>
 
-			<div class="oa-perf-result" data-oa-perf-db-result role="status" aria-live="polite"><?= esc_html( $last_text ); ?></div>
+			<div data-oa-perf-result data-oa-perf-db-result role="status" aria-live="polite"><?php
+
+			if ( '' !== $last_text ) :
+
+			?><div class="notice notice-info inline oa-inline-notice"><p><?= esc_html( $last_text ); ?></p></div><?php
+
+			endif;
+
+			?></div>
 		</div>
 
 		<table class="form-table oa-form-table" role="presentation">

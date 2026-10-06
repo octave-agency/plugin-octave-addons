@@ -104,16 +104,32 @@ PERFORMANCE ADMIN
 
 	}
 
-	function showMessage( region, message, isError ) {
+	/*
+	NOTICE
+	-- Every response is shown as the plugin's standard inline notice, so a
+	-- purge, a test or a scan reads the same way as any other message
+	---------------------------------------------------------- */
+
+	function notice( region, type ) {
+
+		var box = element( 'div', 'notice notice-' + type + ' inline oa-inline-notice' );
 
 		clear( region );
-		region.classList.toggle( 'is-error', !! isError );
+		region.appendChild( box );
+
+		return box;
+
+	}
+
+	function showMessage( region, message, type ) {
+
+		var box = notice( region, type || 'success' );
 
 		String( message || '' ).split( '\n' ).forEach( function ( line ) {
 
 			if ( line ) {
 
-				region.appendChild( element( 'p', '', line ) );
+				box.appendChild( element( 'p', '', line ) );
 
 			}
 
@@ -123,22 +139,23 @@ PERFORMANCE ADMIN
 
 	function showLayers( region, layers ) {
 
-		var list = element( 'ul', 'oa-perf-layers' );
+		var failed = layers.some( function ( layer ) {
 
-		clear( region );
-		region.classList.remove( 'is-error' );
-
-		layers.forEach( function ( layer ) {
-
-			var item = element( 'li', 'is-' + ( layer.status || 'skipped' ) );
-
-			item.appendChild( element( 'strong', '', layer.label ) );
-			item.appendChild( document.createTextNode( ' ' + ( layer.message || '' ) ) );
-			list.appendChild( item );
+			return 'error' === layer.status;
 
 		} );
 
-		region.appendChild( list );
+		var box = notice( region, failed ? 'warning' : 'success' );
+
+		layers.forEach( function ( layer ) {
+
+			var line = element( 'p' );
+
+			line.appendChild( element( 'strong', '', layer.label + ':' ) );
+			line.appendChild( document.createTextNode( ' ' + ( layer.message || '' ) ) );
+			box.appendChild( line );
+
+		} );
 
 	}
 
@@ -147,16 +164,31 @@ PERFORMANCE ADMIN
 	-- Summarises what each module decided for the scanned page
 	---------------------------------------------------------- */
 
+	function scanList( box, heading, rows ) {
+
+		var title = element( 'p' );
+		var list = element( 'ul' );
+
+		title.appendChild( element( 'strong', '', heading ) );
+		box.appendChild( title );
+
+		rows.forEach( function ( text ) {
+
+			list.appendChild( element( 'li', '', text ) );
+
+		} );
+
+		box.appendChild( list );
+
+	}
+
 	function showScan( region, data ) {
 
 		var report = data.report || {};
 
-		clear( region );
-		region.classList.remove( 'is-error' );
-
 		if ( data.bypass ) {
 
-			region.appendChild( element( 'p', 'oa-perf-warning', i18n.scanBypass + ' ' + data.bypass ) );
+			showMessage( region, i18n.scanBypass + ' ' + data.bypass, 'warning' );
 
 			return;
 
@@ -168,30 +200,21 @@ PERFORMANCE ADMIN
 
 		if ( ! delay.length && ! media.length && ! fonts.length ) {
 
-			region.appendChild( element( 'p', '', i18n.scanEmpty ) );
+			showMessage( region, i18n.scanEmpty, 'info' );
 
 			return;
 
 		}
 
+		var box = notice( region, 'success' );
+
 		if ( delay.length ) {
 
-			var delayList = element( 'ul', 'oa-perf-scan-list' );
+			scanList( box, i18n.scanScripts, delay.map( function ( item ) {
 
-			region.appendChild( element( 'h4', '', i18n.scanScripts ) );
+				return item.action + ': ' + item.script + ( item.reason ? ' (' + item.reason + ')' : '' );
 
-			delay.forEach( function ( item ) {
-
-				var row = element( 'li', 'delayed' === item.action ? 'is-success' : 'is-skipped' );
-
-				row.appendChild( element( 'strong', '', item.action ) );
-				row.appendChild( element( 'code', '', item.script ) );
-				row.appendChild( element( 'span', '', item.reason ) );
-				delayList.appendChild( row );
-
-			} );
-
-			region.appendChild( delayList );
+			} ) );
 
 		}
 
@@ -207,17 +230,11 @@ PERFORMANCE ADMIN
 
 			} );
 
-			var mediaList = element( 'ul', 'oa-perf-scan-list' );
+			scanList( box, i18n.scanMedia, Object.keys( counts ).map( function ( key ) {
 
-			region.appendChild( element( 'h4', '', i18n.scanMedia ) );
+				return key + ' × ' + counts[ key ];
 
-			Object.keys( counts ).forEach( function ( key ) {
-
-				mediaList.appendChild( element( 'li', '', key + ' × ' + counts[ key ] ) );
-
-			} );
-
-			region.appendChild( mediaList );
+			} ) );
 
 		}
 
@@ -229,21 +246,11 @@ PERFORMANCE ADMIN
 
 		if ( stylesheets.length ) {
 
-			var sheetList = element( 'ul', 'oa-perf-scan-list' );
+			scanList( box, i18n.scanFonts, stylesheets.map( function ( item ) {
 
-			region.appendChild( element( 'h4', '', i18n.scanFonts ) );
+				return item.stylesheet + ' → ' + ( item.local || i18n.scanQueued );
 
-			stylesheets.forEach( function ( item ) {
-
-				var row = element( 'li', item.local ? 'is-success' : 'is-queued' );
-
-				row.appendChild( element( 'code', '', item.stylesheet ) );
-				row.appendChild( element( 'span', '', item.local ? '→ ' + item.local : i18n.scanQueued ) );
-				sheetList.appendChild( row );
-
-			} );
-
-			region.appendChild( sheetList );
+			} ) );
 
 		}
 
@@ -320,7 +327,7 @@ PERFORMANCE ADMIN
 
 		if ( region ) {
 
-			showMessage( region, i18n.working, false );
+			showMessage( region, i18n.working, 'info' );
 
 		}
 
@@ -336,7 +343,7 @@ PERFORMANCE ADMIN
 
 			if ( ! json.success ) {
 
-				showMessage( region, data.message || i18n.failed, true );
+				showMessage( region, data.message || i18n.failed, 'error' );
 
 				return;
 
@@ -352,7 +359,7 @@ PERFORMANCE ADMIN
 
 			} else {
 
-				showMessage( region, data.message, false );
+				showMessage( region, data.message, 'success' );
 
 			}
 
@@ -360,7 +367,7 @@ PERFORMANCE ADMIN
 
 			if ( region ) {
 
-				showMessage( region, i18n.failed, true );
+				showMessage( region, i18n.failed, 'error' );
 
 			}
 
@@ -418,6 +425,77 @@ PERFORMANCE ADMIN
 	} );
 
 	/*
+	SELECT ALL
+	-- A master checkbox ([data-oa-perf-select-all]) ticks every checkbox in its
+	-- [data-oa-perf-select-group]. Ticked boxes fire their own change event, so
+	-- saved fields still mark the form as changed. The master shows as partly
+	-- ticked while only some of its boxes are
+	---------------------------------------------------------- */
+
+	function groupBoxes( master ) {
+
+		var group = master.closest( '[data-oa-perf-select-group]' );
+
+		return group ? Array.prototype.filter.call( group.querySelectorAll( 'input[type="checkbox"]' ), function ( box ) {
+
+			return box !== master && ! box.disabled;
+
+		} ) : [];
+
+	}
+
+	function syncMaster( master ) {
+
+		var boxes = groupBoxes( master );
+		var ticked = boxes.filter( function ( box ) {
+
+			return box.checked;
+
+		} ).length;
+
+		master.checked = boxes.length > 0 && ticked === boxes.length;
+		master.indeterminate = ticked > 0 && ticked < boxes.length;
+
+	}
+
+	function syncMasters() {
+
+		entry.querySelectorAll( '[data-oa-perf-select-all]' ).forEach( syncMaster );
+
+	}
+
+	entry.addEventListener( 'change', function ( event ) {
+
+		var target = event.target;
+
+		if ( ! target || 'checkbox' !== target.type ) {
+
+			return;
+
+		}
+
+		if ( target.hasAttribute( 'data-oa-perf-select-all' ) ) {
+
+			groupBoxes( target ).forEach( function ( box ) {
+
+				if ( box.checked !== target.checked ) {
+
+					box.checked = target.checked;
+					box.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+
+				}
+
+			} );
+
+		}
+
+		syncMasters();
+
+	} );
+
+	syncMasters();
+
+	/*
 	DATABASE CLEANUP
 	-- Counts load on view; a run works through each selected item in batches
 	-- until nothing is left or a batch removes nothing
@@ -469,7 +547,7 @@ PERFORMANCE ADMIN
 			var batch = json.data;
 			var total = removed + batch.done;
 
-			showMessage( dbResult, i18n.dbProgress.replace( '%1$s', label ).replace( '%2$d', total ), false );
+			showMessage( dbResult, i18n.dbProgress.replace( '%1$s', label ).replace( '%2$d', total ), 'info' );
 
 			if ( batch.done > 0 && batch.remaining > 0 ) {
 
@@ -495,7 +573,7 @@ PERFORMANCE ADMIN
 
 		if ( ! selected.length ) {
 
-			showMessage( dbResult, i18n.dbNothing, true );
+			showMessage( dbResult, i18n.dbNothing, 'error' );
 
 			return;
 
@@ -531,11 +609,11 @@ PERFORMANCE ADMIN
 
 			chain.then( function () {
 
-				showMessage( dbResult, i18n.dbDone + '\n' + summary.join( '\n' ), false );
+				showMessage( dbResult, i18n.dbDone + '\n' + summary.join( '\n' ), 'success' );
 
 			} ).catch( function ( error ) {
 
-				showMessage( dbResult, error.message, true );
+				showMessage( dbResult, error.message, 'error' );
 
 			} ).then( function () {
 
@@ -546,6 +624,8 @@ PERFORMANCE ADMIN
 					box.checked = false;
 
 				} );
+
+				syncMasters();
 
 				return loadCounts();
 

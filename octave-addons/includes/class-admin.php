@@ -166,6 +166,18 @@ class Octave_Addons_Admin {
 	}
 
 	/*
+	HAS QUICK SCROLL
+	-- Performance keeps every module on one long page, so its navigation
+	-- lists each panel as a link that scrolls to it.
+	---------------------------------------------------------- */
+
+	protected function has_quick_scroll( array $entry ): bool {
+
+		return 'performance' === $entry['group'] && count( $entry['modules'] ) > 1;
+
+	}
+
+	/*
 	CURRENT MODULES
 	-- The modules the open page renders: the requested module of a split
 	-- group, no modules on its overview, or every module in a shared entry.
@@ -953,7 +965,9 @@ class Octave_Addons_Admin {
 							$url       = self::entry_url( $entry_id );
 							$is_active = ( $entry_id === $active_tab );
 
-							if ( ! $this->is_split_entry( $entry ) ) :
+							// Split groups list their module pages underneath, and Performance
+							// lists quick scroll links to its panels. Everything else is one link.
+							if ( ! $this->is_split_entry( $entry ) && ! $this->has_quick_scroll( $entry ) ) :
 
 						?>
 
@@ -995,7 +1009,7 @@ class Octave_Addons_Admin {
 
 									<a href="<?= esc_url( $module_href ); ?>"
 									   class="oa-nav-subitem<?= $is_current ? ' is-active' : ''; ?>"<?= $is_current ? ' aria-current="page"' : ''; ?>
-									   data-module="<?= esc_attr( $module_id ); ?>">
+									   data-module="<?= esc_attr( $module_id ); ?>"<?= $is_split ? '' : ' data-oa-scroll="oa-panel-' . esc_attr( $module_id ) . '"'; ?>>
 										<span class="oa-dot <?= $module_on ? 'is-on' : 'is-off'; ?>" aria-hidden="true"></span>
 										<span class="oa-nav-label"><?= esc_html( $module->get_title() ); ?></span>
 									</a>

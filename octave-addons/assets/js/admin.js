@@ -1732,6 +1732,73 @@ ADMIN INTERACTIONS
 	window.oaNotify = oaNotify;
 
 	/*
+	QUICK SCROLL
+	-- Sidebar links to a panel on the open page glide to it instead of
+	-- jumping, and the link for the panel in view stays highlighted
+	---------------------------------------------------------- */
+
+	var scrollLinks = Array.prototype.filter.call( document.querySelectorAll( '[data-oa-scroll]' ), function ( link ) {
+
+		return !! document.getElementById( link.dataset.oaScroll );
+
+	} );
+
+	function markScrollLink( id ) {
+
+		scrollLinks.forEach( function ( link ) {
+
+			link.classList.toggle( 'is-active', link.dataset.oaScroll === id );
+
+		} );
+
+	}
+
+	scrollLinks.forEach( function ( link ) {
+
+		link.addEventListener( 'click', function ( event ) {
+
+			var target = document.getElementById( link.dataset.oaScroll );
+			var reduce = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+
+			event.preventDefault();
+			target.scrollIntoView( { behavior: reduce ? 'auto' : 'smooth', block: 'start' } );
+			markScrollLink( link.dataset.oaScroll );
+
+			if ( window.history && window.history.replaceState ) {
+
+				window.history.replaceState( null, '', '#' + link.dataset.oaScroll );
+
+			}
+
+		} );
+
+	} );
+
+	if ( scrollLinks.length && 'IntersectionObserver' in window ) {
+
+		var scrollSpy = new IntersectionObserver( function ( entries ) {
+
+			entries.forEach( function ( item ) {
+
+				if ( item.isIntersecting ) {
+
+					markScrollLink( item.target.id );
+
+				}
+
+			} );
+
+		}, { rootMargin: '-20% 0px -70% 0px' } );
+
+		scrollLinks.forEach( function ( link ) {
+
+			scrollSpy.observe( document.getElementById( link.dataset.oaScroll ) );
+
+		} );
+
+	}
+
+	/*
 	SAVE REDIRECT
 	-- WordPress returns to the referer the form carries once the settings are
 	-- stored, so pointing that at another screen sends the save there instead.
