@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.29.0
+Stable tag:        3.29.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -162,6 +162,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.29.1 =
+* Maintenance release.
 
 = 3.29.0 =
 * File Optimization can now inline small local stylesheets (up to 8 KB by default), including Breakdance's per-page CSS and the self-hosted Google Fonts stylesheet. The page no longer waits on a separate request for each one before its first paint. Order, ids and media are kept, and large files stay as links. On by default whenever File Optimization is enabled.
