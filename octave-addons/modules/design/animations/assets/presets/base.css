@@ -10,10 +10,11 @@ SCROLL ANIMATION BASE
 PRE-SCAN
 -- Hides targets by selector until the controller tags them, so nothing
 -- flashes on first paint. Kept in step with the kinds in controller.js.
+-- Elements inside or carrying .oa-no-anim are opted out and never hidden.
 ---------------------------------------------------------- */
 
-.oa-anim-ready:not(.oa-anim-scanned) .bde-section :is(.bde-heading, .bde-image, .bde-video, .swiper, .bde-column, .bde-grid > div, .bde-loop:not(.ee-posts-isotope) > .bde-loop-item, .bde-faq__item, .bde-text, .bde-rich-text, .bde-button),
-.oa-anim-ready:not(.oa-anim-scanned) .oa_anim {
+.oa-anim-ready:not(.oa-anim-scanned) .bde-section :is(.bde-heading, .bde-image, .bde-video, .swiper, .bde-column, .bde-grid > div, .bde-loop:not(.ee-posts-isotope) > .bde-loop-item, .bde-faq__item, .bde-text, .bde-rich-text, .bde-button):not(.oa-no-anim, .oa-no-anim *),
+.oa-anim-ready:not(.oa-anim-scanned) .oa_anim:not(.oa-no-anim, .oa-no-anim *) {
     opacity: 0;
 }
 
