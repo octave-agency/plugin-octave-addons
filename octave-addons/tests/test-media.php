@@ -235,3 +235,31 @@ function test_video_posters_use_a_smaller_generated_size(): void {
 	oa_assert_same( $page, oa_media( [ 'poster_width' => 0, 'images' => false, 'iframes' => false, 'dimensions' => false, 'header_eager' => false ] )->transform( $page ), 'off' );
 
 }
+
+function test_posters_below_the_hero_wait_for_the_viewport(): void {
+
+	$poster = oa_upload( 'later-poster-640x360.jpg', 640, 360 );
+	$video  = '<video data-oa-lazy-video preload="none" src="/v.mp4" poster="%s"%s></video>';
+	$page   = oa_page(
+		'<header><video data-oa-lazy-video src="/h.mp4" poster="/head.jpg"></video></header>' .
+		sprintf( $video, '/hero.jpg', '' ) .
+		sprintf( $video, $poster, '' ) .
+		sprintf( $video, $poster, ' width="640" height="360"' ) .
+		'<video src="/plain.mp4" poster="/plain.jpg"></video>'
+	);
+	$html   = oa_media()->transform( $page );
+
+	oa_assert_contains( 'poster="/head.jpg"', $html, 'site header keeps its poster' );
+	oa_assert_contains( 'poster="/hero.jpg"', $html, 'first video keeps its poster' );
+	oa_assert_contains( 'data-oa-poster="' . $poster . '" style="aspect-ratio: 640 / 360;"', $html, 'later poster parked, shape held' );
+	oa_assert_same( 1, substr_count( $html, 'aspect-ratio' ), 'sized video needs no aspect ratio' );
+	oa_assert_same( 2, substr_count( $html, 'data-oa-poster=' ) );
+	oa_assert_contains( 'poster="/plain.jpg"', $html, 'videos the loader does not handle keep their poster' );
+
+	$hero = oa_media()->transform( oa_page( '<img src="/hero.jpg" width="1600">' . sprintf( $video, '/first.jpg', '' ) ) );
+
+	oa_assert_contains( 'data-oa-poster="/first.jpg"', $hero, 'a hero image before it means the first video is below' );
+	oa_assert_not_contains( 'data-oa-poster=', oa_media( [ 'lazy_posters' => false ] )->transform( $page ), 'off' );
+	oa_assert_not_contains( 'data-oa-poster=', oa_media( [ 'videos' => false ] )->transform( $page ), 'needs lazy videos' );
+
+}

@@ -6,6 +6,8 @@ LAZY VIDEO
 -- Nothing starts until the page has finished loading, so a large video in
 -- view on arrival never competes with the stylesheets, fonts and hero image
 -- the first render needs. The poster shows until then
+-- Posters parked in data-oa-poster by Media Lazy Loading come back as their
+-- video nears the viewport, from the start rather than after the load event
 ---------------------------------------------------------- */
 
 ( function () {
@@ -13,6 +15,73 @@ LAZY VIDEO
 	'use strict';
 
 	var selector = 'video[data-oa-lazy-video]';
+
+	/*
+	SHOW POSTER
+	-- Restores a parked poster once
+	---------------------------------------------------------- */
+
+	function showPoster( video ) {
+
+		var poster = video.getAttribute( 'data-oa-poster' );
+
+		if ( poster ) {
+
+			video.removeAttribute( 'data-oa-poster' );
+			video.poster = poster;
+
+		}
+
+	}
+
+	/*
+	WATCH POSTERS
+	-- Runs as soon as the script does, with a wide margin so a poster is in
+	-- place before its video scrolls into view. Without IntersectionObserver
+	-- every poster is restored at once
+	---------------------------------------------------------- */
+
+	var posterObserver = null;
+
+	function watchPosters() {
+
+		var videos = Array.prototype.slice.call( document.querySelectorAll( 'video[data-oa-poster]:not([data-oa-poster-watched])' ) );
+
+		if ( 'function' !== typeof window.IntersectionObserver ) {
+
+			videos.forEach( showPoster );
+
+			return;
+
+		}
+
+		if ( ! posterObserver ) {
+
+			posterObserver = new IntersectionObserver( function ( entries ) {
+
+				entries.forEach( function ( entry ) {
+
+					if ( entry.isIntersecting ) {
+
+						posterObserver.unobserve( entry.target );
+						showPoster( entry.target );
+
+					}
+
+				} );
+
+			}, { rootMargin: '600px 0px' } );
+
+		}
+
+		videos.forEach( function ( video ) {
+
+			video.setAttribute( 'data-oa-poster-watched', '' );
+			posterObserver.observe( video );
+
+		} );
+
+	}
 
 	/*
 	ACTIVATE
@@ -30,6 +99,7 @@ LAZY VIDEO
 		var autoplay = video.hasAttribute( 'data-oa-autoplay' );
 
 		video.dataset.oaVideoActive = '1';
+		showPoster( video );
 		video.preload = autoplay ? 'auto' : ( video.dataset.oaPreload || 'metadata' );
 
 		if ( autoplay ) {
@@ -120,6 +190,14 @@ LAZY VIDEO
 		}
 
 		window.setTimeout( init, 1 );
+
+	}
+
+	watchPosters();
+
+	if ( 'loading' === document.readyState ) {
+
+		document.addEventListener( 'DOMContentLoaded', watchPosters );
 
 	}
 

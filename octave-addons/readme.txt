@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.30.1
+Stable tag:        3.31.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -162,6 +162,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.31.0 =
+* Media Lazy Loading: video posters below the hero now load as their video nears the viewport instead of with the page. The first video keeps its poster (unless a hero image comes before it), as do videos in the site header. Videos without width and height take the poster's shape so the page does not jump. On by default; turn off with "Load video posters as they near the viewport".
 
 = 3.30.1 =
 * Fixed inline notices (such as the Database cleanup result) showing dark text in the dark admin theme. Their text is now light.

@@ -14,6 +14,7 @@ PERFORMANCE: MEDIA LAZY LOADING
 -- header always load eagerly, images without dimensions get width and height
 -- from the file, so the space is held before they arrive, and video posters
 -- point at a smaller size WordPress has already generated
+-- Posters of lazy videos below the hero wait until they near the viewport
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -84,6 +85,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 			'header_eager'       => true,
 			'dimensions'         => true,
 			'poster_width'       => 768,
+			'lazy_posters'       => true,
 			'exclude_classes'    => '',
 			'exclude_attributes' => '',
 			'exclude_urls'       => '',
@@ -95,7 +97,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		$clean = parent::sanitize( $input );
 
-		foreach ( [ 'images', 'iframes', 'videos', 'header_eager', 'dimensions' ] as $key ) {
+		foreach ( [ 'images', 'iframes', 'videos', 'header_eager', 'dimensions', 'lazy_posters' ] as $key ) {
 
 			$clean[ $key ] = ! empty( $input[ $key ] );
 
@@ -130,7 +132,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		add_filter( 'octave_addons_perf_skip_lazy', [ $this, 'filter_user_exclusions' ], 10, 2 );
 
-		if ( ! empty( $s['images'] ) || ! empty( $s['iframes'] ) || ! empty( $s['header_eager'] ) || ! empty( $s['dimensions'] ) || ! empty( $s['poster_width'] ) ) {
+		if ( ! empty( $s['images'] ) || ! empty( $s['iframes'] ) || ! empty( $s['header_eager'] ) || ! empty( $s['dimensions'] ) || ! empty( $s['poster_width'] ) || ! empty( $s['lazy_posters'] ) ) {
 
 			Octave_Addons_Perf_Html::register( 'media', [ $this, 'transform' ], 20 );
 
@@ -159,6 +161,9 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		$notes       = 0;
 		$prioritise  = $do_images && ! preg_match( '/fetchpriority\s*=\s*["\']?high/i', $html );
 		$poster      = (int) ( $s['poster_width'] ?? 0 );
+		$lazy_poster = ! empty( $s['lazy_posters'] ) && ! empty( $s['videos'] );
+		$hero_seen   = false;
+		$videos      = 0;
 
 		// Only the first <header> is the site header; later ones belong to articles.
 		$header_depth = 0;
@@ -191,9 +196,20 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 			}
 
-			if ( 'VIDEO' === $tag && $poster > 0 ) {
+			if ( 'VIDEO' === $tag ) {
 
-				self::resize_poster( $tags, $poster );
+				if ( $poster > 0 ) {
+
+					self::resize_poster( $tags, $poster );
+
+				}
+
+				// The first video is the hero unless an image already is, so it keeps its poster.
+				if ( $lazy_poster && null !== $tags->get_attribute( 'data-oa-lazy-video' ) && $header_depth <= 0 && ( $hero_seen || ++$videos > 1 ) ) {
+
+					self::defer_poster( $tags );
+
+				}
 
 				continue;
 
@@ -208,6 +224,12 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 			if ( 'IMG' === $tag ) {
 
 				$image_index++;
+
+				if ( $header_depth <= 0 && 'high' === strtolower( (string) $tags->get_attribute( 'fetchpriority' ) ) ) {
+
+					$hero_seen = true;
+
+				}
 
 				if ( ! empty( $s['dimensions'] ) ) {
 
@@ -237,6 +259,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 				$tags->set_attribute( 'fetchpriority', 'high' );
 				$prioritise = false;
+				$hero_seen  = true;
 				$reason     = 'fetchpriority-high';
 
 			}
@@ -409,6 +432,44 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		if ( '' !== $smaller ) {
 
 			$tags->set_attribute( 'poster', $smaller );
+
+		}
+
+	}
+
+	/*
+	DEFER POSTER
+	-- Parks the poster in data-oa-poster for the lazy video loader to restore
+	-- as the video nears the viewport. A video without width and height takes
+	-- the poster's shape as its aspect ratio, so its space is held meanwhile
+	---------------------------------------------------------- */
+
+	public static function defer_poster( WP_HTML_Tag_Processor $tags ): void {
+
+		$poster = trim( (string) $tags->get_attribute( 'poster' ) );
+
+		if ( '' === $poster || null !== $tags->get_attribute( 'data-oa-poster' ) ) {
+
+			return;
+
+		}
+
+		$tags->set_attribute( 'data-oa-poster', $poster );
+		$tags->remove_attribute( 'poster' );
+
+		$style = trim( (string) $tags->get_attribute( 'style' ) );
+
+		if ( null !== $tags->get_attribute( 'width' ) || null !== $tags->get_attribute( 'height' ) || false !== stripos( $style, 'aspect-ratio' ) ) {
+
+			return;
+
+		}
+
+		$size = self::image_size( $poster );
+
+		if ( ! empty( $size ) ) {
+
+			$tags->set_attribute( 'style', ( '' === $style ? '' : rtrim( $style, ';' ) . '; ' ) . 'aspect-ratio: ' . $size[0] . ' / ' . $size[1] . ';' );
 
 		}
 
@@ -679,6 +740,8 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 				1024 => __( 'Up to 1024px wide', 'octave-addons' ),
 				0    => __( 'Full size, as uploaded', 'octave-addons' ),
 			], __( 'Video posters use a smaller size WordPress has already made from the same upload, instead of the full-size image. Posters that are not media library uploads are left alone.', 'octave-addons' ), $s );
+
+			$this->switch_row( 'lazy_posters', __( 'Load video posters as they near the viewport', 'octave-addons' ), __( 'Needs Videos above. The first video keeps its poster, unless a hero image comes before it, as do videos in the site header. Every other poster waits until its video is close to view. Add data-oa-no-lazy to a video to keep its poster.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Exclusions', 'octave-addons' ) ] );
 
