@@ -4,7 +4,8 @@
 PERFORMANCE: CACHE
 -- Always on and hidden from the Performance page, because it only manages
 -- the plugin's own cache directory and the purge coordination other layers
--- hook into
+-- hook into. It is not a full-page cache: it passes purges on to whichever
+-- page cache the site has and refills it in the background
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -69,6 +70,7 @@ class Octave_Addons_Module_Performance_Cache extends Octave_Addons_Module {
 	public function run( array $s ): void {
 
 		Octave_Addons_Perf_Cache::register_invalidation();
+		Octave_Addons_Perf_Page_Cache::boot();
 
 	}
 

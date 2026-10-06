@@ -413,5 +413,136 @@ test( 'save-data and slow connections disable preloading', () => {
 
 } );
 
+/*
+SCROLL ANIMATIONS
+-- The controller against a few fake Breakdance elements
+---------------------------------------------------------- */
+
+function animationEnvironment( light ) {
+
+	const classes = new Set();
+	const listeners = {};
+
+	function element( top ) {
+
+		const attributes = {};
+
+		return {
+			top: top,
+			childNodes: [],
+			getClientRects: () => [ 1 ],
+			getBoundingClientRect: () => ( { top: top } ),
+			closest: () => null,
+			hasAttribute: ( name ) => name in attributes,
+			getAttribute: ( name ) => ( name in attributes ? attributes[ name ] : null ),
+			setAttribute: ( name, value ) => {
+
+				attributes[ name ] = String( value );
+
+			},
+			classList: { add() {}, remove() {}, contains: () => false },
+			style: { setProperty() {}, removeProperty() {} },
+		};
+
+	}
+
+	const hero = element( 120 );
+	const lower = element( 2400 );
+	const observed = [];
+
+	const window = {
+		innerHeight: 900,
+		oaAnimPerformance: light,
+		matchMedia: () => ( { matches: false } ),
+		setTimeout: () => 0,
+		clearTimeout: () => {},
+		addEventListener: () => {},
+		IntersectionObserver: function () {
+
+			this.observe = ( target ) => observed.push( target );
+			this.disconnect = () => {};
+
+		},
+	};
+
+	const document = {
+		readyState: 'loading',
+		documentElement: { classList: { add: ( name ) => classes.add( name ), remove: ( name ) => classes.delete( name ), contains: ( name ) => classes.has( name ) } },
+		addEventListener: ( name, callback ) => {
+
+			listeners[ name ] = callback;
+
+		},
+		querySelectorAll: ( selector ) => ( /bde-heading/.test( selector ) ? [ hero, lower ] : [] ),
+	};
+
+	window.document = document;
+
+	vm.runInNewContext( fs.readFileSync( path.join( __dirname, '..', '..', 'modules', 'design', 'animations', 'assets', 'controller.js' ), 'utf8' ), { window: window, document: document, IntersectionObserver: window.IntersectionObserver } );
+
+	// Splitting needs real text nodes, so only performance mode, which must skip it, asks for it.
+	window.OctaveAnimations.preset( { split: light ? 'words' : false } );
+
+	return { classes, listeners, hero, lower, observed };
+
+}
+
+test( 'performance mode leaves the first screen visible and never splits headings', () => {
+
+	const env = animationEnvironment( true );
+
+	assert.ok( ! env.classes.has( 'oa-anim-ready' ), 'nothing hidden before the scan' );
+
+	env.listeners.DOMContentLoaded();
+
+	assert.strictEqual( env.hero.getAttribute( 'data-oa-anim' ), null, 'hero left alone' );
+	assert.strictEqual( env.lower.getAttribute( 'data-oa-anim' ), 'text', 'lower heading animates as text' );
+	assert.strictEqual( env.lower.getAttribute( 'data-oa-split' ), null, 'not split' );
+	assert.deepStrictEqual( env.observed, [ env.lower ] );
+	assert.ok( env.classes.has( 'oa-anim-ready' ), 'hiding starts only after the scan' );
+
+} );
+
+test( 'without performance mode existing motion is unchanged', () => {
+
+	const env = animationEnvironment( false );
+
+	assert.ok( env.classes.has( 'oa-anim-ready' ), 'pre-scan hiding as before' );
+
+	env.listeners.DOMContentLoaded();
+
+	assert.strictEqual( env.observed.length, 2, 'every target animates' );
+
+} );
+
+/*
+MINIFIED ASSETS
+-- Every frontend asset ships a minified copy built from its current source
+---------------------------------------------------------- */
+
+test( 'every frontend asset has a current, valid minified copy', () => {
+
+	const assets = require( './assets.js' );
+
+	assets.sources().forEach( ( source ) => {
+
+		const file = path.join( assets.root, assets.minified( source ) );
+
+		assert.ok( fs.existsSync( file ), source + ' has no minified copy; run tests/build-assets.sh' );
+
+		const code = fs.readFileSync( file, 'utf8' );
+
+		assert.ok( code.includes( '/*oa:' + assets.hash( source ) + '*/' ), source + ' changed since it was minified; run tests/build-assets.sh' );
+
+		if ( source.endsWith( '.js' ) ) {
+
+			assert.doesNotThrow( () => new vm.Script( code ), source + ' minified copy does not parse' );
+
+		}
+
+	} );
+
+} );
+
 console.log( '\n\n' + results.passed + ' passed, ' + results.failed + ' failed' );
 process.exit( results.failed ? 1 : 0 );

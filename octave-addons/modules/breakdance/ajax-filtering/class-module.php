@@ -5,6 +5,11 @@ BREAKDANCE AJAX FILTERING
 -- Turns the Breakdance Filter Bar into server-backed filtering and paging
 -- The post type and taxonomy are read from the loop itself, so there is no
 -- per-page connection to configure
+-- Assets are registered on every page but only enqueued once a loop is
+-- adopted or the controls render, so unrelated pages load nothing
+-- Breakdance passes every custom loop query through
+-- breakdance_query_control_query, where it is tagged, so a secondary query
+-- is recognised as Breakdance's without inspecting the call stack
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,6 +29,13 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	protected static ?int $detected_posts_per_page = null;
 
 	protected static bool $hooks_registered = false;
+
+	protected static bool $needs_assets = false;
+
+	/** Query variable tagging a query built by a Breakdance loop. */
+	public const QUERY_MARKER = 'oa_breakdance_loop';
+
+	public const HANDLE = 'octave-breakdance-ajax-filtering';
 
 	/*
 	GET ID
@@ -384,8 +396,9 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 		}
 
-		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'wp_enqueue_scripts', [ __CLASS__, 'register_assets' ] );
 		add_filter( 'breakdance_query_control_query', [ $this, 'filter_breakdance_query' ], 50 );
+		add_filter( 'breakdance_query_control_query', [ __CLASS__, 'mark_breakdance_query' ], 1000 );
 		add_action( 'pre_get_posts', [ $this, 'filter_loop_query' ], 50 );
 		add_action( 'wp_footer', [ $this, 'render_automatic_controls' ], 5 );
 
@@ -466,6 +479,8 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 		self::$detected_post_type      = $post_type;
 		self::$detected_posts_per_page = $query['posts_per_page'];
 
+		self::enqueue_assets();
+
 		return $query;
 
 	}
@@ -520,6 +535,8 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 		self::$detected_post_type      = $post_type;
 		self::$detected_posts_per_page = $per_page;
 
+		self::enqueue_assets();
+
 		$query->set( 'posts_per_page', $per_page );
 		$query->set( 'ignore_sticky_posts', true );
 
@@ -561,7 +578,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	-- Queries requesting all posts keep their existing unpaginated behaviour
 	-- The main query counts on a posts page or archive, because that is exactly
 	-- what Breakdance hands to a Post Loop that has no Custom Query
-	-- A secondary query must originate from Breakdance unless a page path pins it
+	-- A secondary query must carry Breakdance's tag unless a page path pins it
 	---------------------------------------------------------- */
 
 	protected static function is_loop_query( WP_Query $query ): bool {
@@ -590,7 +607,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 		} else {
 
-			$is_loop = self::is_breakdance_context() || '' !== self::configured_page_path();
+			$is_loop = ! empty( $query->get( self::QUERY_MARKER ) ) || '' !== self::configured_page_path();
 
 		}
 
@@ -599,84 +616,112 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	}
 
 	/*
-	IS BREAKDANCE CONTEXT
-	-- Confirms the running query was started while Breakdance rendered an element
-	-- Keeps "apply to all archives" from adopting an unrelated secondary query
+	MARK BREAKDANCE QUERY
+	-- Runs last on Breakdance's query filter and tags the arguments, which
+	-- WP_Query keeps in its query vars, so pre_get_posts can tell a loop
+	-- Breakdance built from any other secondary query. Text queries arrive
+	-- as a query string
 	---------------------------------------------------------- */
 
-	protected static function is_breakdance_context(): bool {
+	public static function mark_breakdance_query( $query ) {
 
-		$frames = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 30 ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
+		if ( is_array( $query ) ) {
 
-		foreach ( $frames as $frame ) {
+			$query[ self::QUERY_MARKER ] = true;
 
-			if ( isset( $frame['class'] ) && 0 === stripos( (string) $frame['class'], 'breakdance' ) ) {
+		} elseif ( is_string( $query ) && '' !== trim( $query ) ) {
 
-				return true;
-
-			}
-
-			if ( isset( $frame['file'] ) && false !== stripos( (string) $frame['file'], 'breakdance' ) ) {
-
-				return true;
-
-			}
+			$query .= '&' . self::QUERY_MARKER . '=1';
 
 		}
 
-		return false;
+		return $query;
 
 	}
 
 	/*
-	ENQUEUE ASSETS
-	-- Loads the small frontend bridge whenever the enabled module can be used
+	REGISTER ASSETS
+	-- Registered on every frontend page so any later step can enqueue them,
+	-- but never enqueued here. The script is deferred and minified unless
+	-- SCRIPT_DEBUG is on
 	---------------------------------------------------------- */
 
-	public function enqueue_assets(): void {
+	public static function register_assets(): void {
 
-		if ( $this->is_breakdance_builder_request() ) {
+		if ( self::is_builder_request() ) {
 
 			return;
 
 		}
 
-		$assets_dir = OCTAVE_ADDONS_DIR . 'modules/breakdance/ajax-filtering/assets/';
-		$assets_url = OCTAVE_ADDONS_URL . 'modules/breakdance/ajax-filtering/assets/';
-		$css_path   = $assets_dir . 'filtering.css';
-		$js_path    = $assets_dir . 'filtering.js';
+		$css = self::asset( 'modules/breakdance/ajax-filtering/assets/filtering.css' );
+		$js  = self::asset( 'modules/breakdance/ajax-filtering/assets/filtering.js' );
 
-		wp_enqueue_style(
-			'octave-breakdance-ajax-filtering',
-			$assets_url . 'filtering.css',
-			[],
-			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
-		);
-
-		wp_enqueue_script(
-			'octave-breakdance-ajax-filtering',
-			$assets_url . 'filtering.js',
-			[],
-			file_exists( $js_path ) ? (string) filemtime( $js_path ) : OCTAVE_ADDONS_VERSION,
-			true
-		);
+		wp_register_style( self::HANDLE, $css['url'], [], $css['version'] );
+		wp_register_script( self::HANDLE, $js['url'], [], $js['version'], [ 'in_footer' => true, 'strategy' => 'defer' ] );
 
 		wp_localize_script(
-			'octave-breakdance-ajax-filtering',
-				'OctaveBreakdanceAjax',
-				[
-					'errorMessage'    => __( 'The posts could not be loaded. Please try again.', 'octave-addons' ),
-					'loadedMessage'   => __( 'Posts updated.', 'octave-addons' ),
-					'loadingMessage'  => __( 'Loading posts…', 'octave-addons' ),
-					'loadingMore'     => __( 'Loading…', 'octave-addons' ),
-					'nextLabel'       => __( 'Next', 'octave-addons' ),
-					'noResults'       => __( 'No posts match this filter.', 'octave-addons' ),
-					'paginationLabel' => __( 'Posts pagination', 'octave-addons' ),
-					'postPlural'      => __( 'posts', 'octave-addons' ),
-					'postSingular'    => __( 'post', 'octave-addons' ),
-					'previousLabel'   => __( 'Previous', 'octave-addons' ),
-				]
-			);
+			self::HANDLE,
+			'OctaveBreakdanceAjax',
+			[
+				'errorMessage'    => __( 'The posts could not be loaded. Please try again.', 'octave-addons' ),
+				'loadedMessage'   => __( 'Posts updated.', 'octave-addons' ),
+				'loadingMessage'  => __( 'Loading posts…', 'octave-addons' ),
+				'loadingMore'     => __( 'Loading…', 'octave-addons' ),
+				'nextLabel'       => __( 'Next', 'octave-addons' ),
+				'noResults'       => __( 'No posts match this filter.', 'octave-addons' ),
+				'paginationLabel' => __( 'Posts pagination', 'octave-addons' ),
+				'postPlural'      => __( 'posts', 'octave-addons' ),
+				'postSingular'    => __( 'post', 'octave-addons' ),
+				'previousLabel'   => __( 'Previous', 'octave-addons' ),
+			]
+		);
+
+		if ( self::$needs_assets ) {
+
+			self::$needs_assets = false;
+
+			self::enqueue_assets();
+
+		}
+
+	}
+
+	/*
+	ENQUEUE ASSETS
+	-- Called when a loop is adopted or controls render. The main query is
+	-- adopted before scripts are registered, so that case is remembered and
+	-- enqueued as soon as registration happens. Styles enqueued after the
+	-- head print in the footer, which suits controls that stay hidden
+	---------------------------------------------------------- */
+
+	public static function enqueue_assets(): void {
+
+		if ( self::is_builder_request() ) {
+
+			return;
+
+		}
+
+		if ( ! did_action( 'wp_enqueue_scripts' ) ) {
+
+			self::$needs_assets = true;
+
+			return;
+
+		}
+
+		wp_enqueue_style( self::HANDLE );
+		wp_enqueue_script( self::HANDLE );
+
+	}
+
+	public static function reset(): void {
+
+		self::$query_applied           = false;
+		self::$needs_assets            = false;
+		self::$detected_post_type      = '';
+		self::$detected_posts_per_page = null;
 
 	}
 
@@ -687,7 +732,15 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 	public function render_controls_shortcode( $attributes = [] ): string {
 
-		return $this->render_controls( false );
+		$html = $this->render_controls( false );
+
+		if ( '' !== $html ) {
+
+			self::enqueue_assets();
+
+		}
+
+		return $html;
 
 	}
 
@@ -699,13 +752,21 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 	public function render_automatic_controls(): void {
 
-		if ( ! self::$query_applied || $this->is_breakdance_builder_request() ) {
+		if ( ! self::$query_applied || self::is_builder_request() ) {
 
 			return;
 
 		}
 
-		echo $this->render_controls( true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$html = $this->render_controls( true );
+
+		if ( '' !== $html ) {
+
+			self::enqueue_assets();
+
+		}
+
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped while rendered.
 
 	}
 
@@ -1054,39 +1115,6 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 		$request_uri = strtok( $request_uri, '?' );
 
 		return home_url( is_string( $request_uri ) ? $request_uri : '/' );
-
-	}
-
-	/*
-	IS BREAKDANCE BUILDER REQUEST
-	-- Prevents the live bridge from replacing elements inside builder previews
-	---------------------------------------------------------- */
-
-	protected function is_breakdance_builder_request(): bool {
-
-		$breakdance_mode = isset( $_GET['breakdance'] ) ? sanitize_key( wp_unslash( $_GET['breakdance'] ) ) : '';
-		$admin_page      = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-		$iframe_mode     = isset( $_GET['breakdance_iframe'] ) ? sanitize_key( wp_unslash( $_GET['breakdance_iframe'] ) ) : '';
-
-		if ( 'builder' === $breakdance_mode || isset( $_GET['breakdance_frame'] ) ) {
-
-			return true;
-
-		}
-
-		if ( '' !== $iframe_mode || isset( $_GET['breakdance_open_document'] ) ) {
-
-			return true;
-
-		}
-
-		if ( is_admin() && false !== strpos( $admin_page, 'breakdance' ) ) {
-
-			return true;
-
-		}
-
-		return false;
 
 	}
 

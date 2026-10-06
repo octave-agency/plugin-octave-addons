@@ -235,4 +235,32 @@ abstract class Octave_Addons_Module {
 
 	}
 
+	/*
+	ASSET
+	-- URL and version of a bundled CSS or JS file, relative to the plugin
+	-- root. The shipped .min. sibling is used unless SCRIPT_DEBUG asks for
+	-- readable files; tests/build-assets.sh regenerates the minified copies
+	---------------------------------------------------------- */
+
+	public static function asset( string $relative ): array {
+
+		if ( ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ) {
+
+			$min = (string) preg_replace( '/(?<!\.min)\.(js|css)$/', '.min.$1', $relative );
+
+			if ( file_exists( OCTAVE_ADDONS_DIR . $min ) ) {
+
+				$relative = $min;
+
+			}
+
+		}
+
+		return [
+			'url'     => OCTAVE_ADDONS_URL . $relative,
+			'version' => self::file_version( OCTAVE_ADDONS_DIR . $relative ),
+		];
+
+	}
+
 }

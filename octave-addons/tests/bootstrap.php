@@ -68,14 +68,33 @@ function oa_test_reset(): void {
 	$GLOBALS['oa_deregistered'] = [];
 	$GLOBALS['oa_enqueued']  = [];
 	$GLOBALS['oa_localized'] = [];
+	$GLOBALS['oa_attachments'] = [];
+	$GLOBALS['oa_registered']  = [];
+	$GLOBALS['oa_posts']       = [];
+	$GLOBALS['oa_permalinks']  = [];
+	$GLOBALS['oa_meta']        = [];
+	$GLOBALS['oa_object_cache'] = [];
+
+	unset( $GLOBALS['oa_post_ids'] );
+
+	unset( $GLOBALS['oa_upload_baseurl'] );
 	$GLOBALS['pagenow']      = 'index.php';
 	$_GET                    = [];
 	$_POST                   = [];
 	$_SERVER['REQUEST_METHOD'] = 'GET';
 
+	unset( $_SERVER['HTTP_X_OCTAVE_WARM'] );
+
 	if ( class_exists( 'Octave_Addons_Perf_Html' ) ) {
 
 		Octave_Addons_Perf_Html::reset();
+		Octave_Addons_Perf_Owners::reset();
+
+	}
+
+	if ( class_exists( 'Octave_Addons_Module_Breakdance_Lazy_Load' ) ) {
+
+		Octave_Addons_Module_Breakdance_Lazy_Load::reset();
 
 	}
 
@@ -176,9 +195,15 @@ function update_option( $name, $value, $autoload = null ) {
 
 }
 
-function add_option( $name, $value ) {
+function add_option( $name, $value, $deprecated = '', $autoload = null ) {
 
-	return update_option( $name, $value );
+	if ( array_key_exists( $name, $GLOBALS['oa_options'] ) ) {
+
+		return false;
+
+	}
+
+	return update_option( $name, $value, $autoload );
 
 }
 
@@ -220,7 +245,15 @@ function wp_cache_get( $key, $group = '', $force = false ) {
 
 	$GLOBALS['oa_cache_reads'][] = [ $key, $group, $force ];
 
-	return 'transient' === $group ? ( $GLOBALS['oa_transients'][ $key ] ?? false ) : false;
+	return 'transient' === $group ? ( $GLOBALS['oa_transients'][ $key ] ?? false ) : ( $GLOBALS['oa_object_cache'][ $group ][ $key ] ?? false );
+
+}
+
+function wp_cache_set( $key, $value, $group = '', $ttl = 0 ) {
+
+	$GLOBALS['oa_object_cache'][ $group ][ $key ] = $value;
+
+	return true;
 
 }
 
@@ -341,6 +374,36 @@ function is_favicon() {
 }
 
 function is_embed() {
+
+	return false;
+
+}
+
+function is_front_page() {
+
+	return oa_flag( 'front_page' );
+
+}
+
+function is_home() {
+
+	return oa_flag( 'home' );
+
+}
+
+function is_singular() {
+
+	return oa_flag( 'singular' );
+
+}
+
+function is_archive() {
+
+	return oa_flag( 'archive' );
+
+}
+
+function is_search() {
 
 	return false;
 
@@ -656,6 +719,54 @@ function content_url( $path = '' ) {
 
 }
 
+function wp_upload_dir( $time = null, $create = true ) {
+
+	return [ 'basedir' => WP_CONTENT_DIR . '/uploads', 'baseurl' => $GLOBALS['oa_upload_baseurl'] ?? content_url( 'uploads' ) ];
+
+}
+
+/*
+ATTACHMENTS
+-- $GLOBALS['oa_attachments'] maps an ID to [ file, url ]; get_posts returns
+-- $GLOBALS['oa_post_ids'] when set, otherwise those attachment IDs
+---------------------------------------------------------- */
+
+function get_permalink( $post ) {
+
+	return $GLOBALS['oa_permalinks'][ is_object( $post ) ? $post->ID : $post ] ?? false;
+
+}
+
+function get_posts( $args = [] ) {
+
+	return $GLOBALS['oa_post_ids'] ?? array_keys( $GLOBALS['oa_attachments'] ?? [] );
+
+}
+
+function get_attached_file( $id ) {
+
+	return $GLOBALS['oa_attachments'][ $id ][0] ?? false;
+
+}
+
+function wp_get_attachment_url( $id ) {
+
+	return $GLOBALS['oa_attachments'][ $id ][1] ?? false;
+
+}
+
+function includes_url( $path = '' ) {
+
+	return 'https://example.com/wp-includes/' . ltrim( $path, '/' );
+
+}
+
+function number_format_i18n( $number, $decimals = 0 ) {
+
+	return number_format( (float) $number, $decimals );
+
+}
+
 function admin_url( $path = '' ) {
 
 	return 'https://example.com/wp-admin/' . ltrim( $path, '/' );
@@ -677,6 +788,22 @@ function wp_enqueue_script( $handle ) {
 function wp_enqueue_style( $handle ) {
 
 	$GLOBALS['oa_enqueued'][] = $handle;
+
+}
+
+function wp_register_script( $handle, $src = '', $deps = [], $ver = false, $args = [] ) {
+
+	$GLOBALS['oa_registered'][ $handle ] = [ 'src' => $src, 'args' => $args ];
+
+	return true;
+
+}
+
+function wp_register_style( $handle, $src = '' ) {
+
+	$GLOBALS['oa_registered'][ $handle . ':style' ] = [ 'src' => $src ];
+
+	return true;
 
 }
 

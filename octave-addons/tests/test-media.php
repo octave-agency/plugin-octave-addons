@@ -107,7 +107,7 @@ function test_iframes_are_lazy_and_can_be_switched_off(): void {
 
 function test_media_steps_aside_when_wp_rocket_lazy_loads(): void {
 
-	define( 'WP_ROCKET_VERSION', '3.0' );
+	oa_define_plugins();
 	update_option( 'wp_rocket_settings', [ 'lazyload' => 1, 'lazyload_iframes' => 0 ] );
 
 	$html = oa_media()->transform( oa_page( '<img src="/a.jpg"><iframe src="https://x.test/"></iframe>' ) );
@@ -293,10 +293,10 @@ function test_reported_lcp_is_fetched_first(): void {
 
 	$_SERVER['REQUEST_URI'] = '/page/?utm=1';
 
-	update_option( Octave_Addons_Perf_Lcp::OPTION, [ '/page/' => [
+	Octave_Addons_Perf_Lcp::store( '/page/', [
 		'm' => [ 'kind' => 'bg', 'url' => 'https://example.com/wp-content/uploads/hero-m.jpg', 'time' => time() ],
 		'd' => [ 'kind' => 'img', 'url' => 'https://cdn.example.net/wp-content/uploads/photo-1024x576.jpg?v=2', 'time' => time() ],
-	] ] );
+	] );
 
 	$page = '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/a.css"></head><body>'
 		. '<img src="/logo.png" width="900"><img src="/wp-content/uploads/photo.jpg" srcset="/wp-content/uploads/photo-1024x576.jpg 1024w" loading="lazy"></body></html>';
@@ -308,17 +308,17 @@ function test_reported_lcp_is_fetched_first(): void {
 	oa_assert_same( 1, substr_count( $html, 'fetchpriority="high"' ) - 1, 'the guess is not also applied' );
 	oa_assert_not_contains( 'oa_perf_lcp_report', $html, 'no reporter once both sizes are known' );
 
-	update_option( Octave_Addons_Perf_Lcp::OPTION, [ '/page/' => [
+	Octave_Addons_Perf_Lcp::store( '/page/', [
 		'm' => [ 'kind' => 'bg', 'url' => 'https://evil.test/x.jpg', 'time' => time() ],
 		'd' => [ 'kind' => 'poster', 'url' => 'https://example.com/p.jpg', 'time' => time() ],
-	] ] );
+	] );
 
 	$html = oa_media()->transform( $page );
 
 	oa_assert_not_contains( 'evil.test', $html, 'a host the page never uses is not preloaded' );
 	oa_assert_contains( 'href="https://example.com/p.jpg" fetchpriority="high" media="(min-width: 768px)"', $html );
 
-	update_option( Octave_Addons_Perf_Lcp::OPTION, [] );
+	Octave_Addons_Perf_Lcp::forget( '/page/' );
 
 	$html = oa_media()->transform( $page );
 
@@ -326,7 +326,7 @@ function test_reported_lcp_is_fetched_first(): void {
 	oa_assert_contains( '"path":"\/page\/"', $html );
 	oa_assert_contains( '"devices":["m","d"]', $html );
 
-	update_option( Octave_Addons_Perf_Lcp::OPTION, [ '/page/' => [ 'm' => [ 'kind' => 'none', 'url' => '', 'time' => time() ] ] ] );
+	Octave_Addons_Perf_Lcp::store( '/page/', [ 'm' => [ 'kind' => 'none', 'url' => '', 'time' => time() ] ] );
 
 	oa_assert_contains( '"devices":["d"]', oa_media()->transform( $page ), 'only the screen size still unknown reports' );
 	oa_assert_contains( '<img fetchpriority="high" src="/logo.png"', $html, 'falls back to the guess' );

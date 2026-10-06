@@ -55,9 +55,13 @@ function oa_fake_google( bool $up = true ): void {
 PRELOAD
 ---------------------------------------------------------- */
 
-function oa_detected_fonts( array $urls, int $age = 0 ): void {
+function oa_detected_fonts( array $urls, int $age = 0, string $family = 'other' ): void {
 
-	update_option( Octave_Addons_Module_Performance_Fonts::DETECTED_OPTION, [ 'urls' => $urls, 'time' => time() - $age ] );
+	$all = get_option( Octave_Addons_Module_Performance_Fonts::DETECTED_OPTION, [] );
+
+	$all['families'][ $family ] = [ 'urls' => $urls, 'time' => time() - $age ];
+
+	update_option( Octave_Addons_Module_Performance_Fonts::DETECTED_OPTION, $all );
 
 }
 
@@ -65,7 +69,7 @@ function test_font_preloads_are_deduplicated_with_correct_attributes(): void {
 
 	oa_detected_fonts( [ '/wp-content/fonts/body.woff2', 'https://example.com/fonts/head.woff?v=3' ] );
 
-	$module = oa_fonts();
+	$module = oa_fonts( [ 'preload_max' => 3 ] );
 
 	add_filter( 'octave_addons_perf_preload_fonts', static function ( $urls ) {
 
@@ -398,14 +402,72 @@ function test_self_hosted_latin_fonts_are_preloaded_until_detection_reports(): v
 	Octave_Addons_Perf_Google_Fonts::fetch( OA_GOOGLE_CSS );
 	oa_detected_fonts( [] );
 
-	$urls = oa_fonts( [ 'self_host' => true ] )->preload_list();
+	$urls = oa_fonts( [ 'self_host' => true, 'preload_max' => 3 ] )->preload_list();
 
 	oa_assert_same( 2, count( $urls ), 'both Latin files' );
+	oa_assert_same( 1, count( oa_fonts( [ 'self_host' => true ] )->preload_list() ), 'one face by default' );
 	oa_assert_contains( '/cache/octave-addons/fonts/', $urls[0] );
 	oa_assert_same( [], oa_fonts()->preload_list(), 'not without self-hosting' );
 
 	oa_detected_fonts( [ '/wp-content/fonts/own.woff2' ] );
 
 	oa_assert_same( [ '/wp-content/fonts/own.woff2' ], oa_fonts( [ 'self_host' => true ] )->preload_list(), 'detection wins' );
+
+}
+
+function test_font_preloads_are_scoped_to_the_template_family(): void {
+
+	oa_detected_fonts( [ '/wp-content/fonts/display.woff2' ], 0, 'front' );
+	oa_detected_fonts( [ '/wp-content/fonts/body.woff2' ], 0, 'single-post' );
+
+	$GLOBALS['oa_flags']['front_page'] = true;
+
+	oa_assert_same( [ '/wp-content/fonts/display.woff2' ], oa_fonts()->preload_list() );
+
+	$GLOBALS['oa_flags']['front_page'] = false;
+	$GLOBALS['oa_flags']['archive']    = true;
+
+	oa_assert_same( [], oa_fonts()->preload_list(), 'archives have no record yet' );
+
+	$_POST = [ 'family' => 'archive', 'urls' => [ '/wp-content/fonts/list.woff2' ] ];
+
+	oa_json_call( [ 'Octave_Addons_Module_Performance_Fonts', 'ajax_detect' ] );
+
+	oa_assert_same( [ '/wp-content/fonts/list.woff2' ], oa_fonts()->preload_list(), 'reported for archives only' );
+	oa_assert_same( [ '/wp-content/fonts/display.woff2' ], Octave_Addons_Module_Performance_Fonts::detected( 'front' )['urls'], 'other families untouched' );
+
+	$_POST = [ 'family' => str_repeat( 'x', 60 ), 'urls' => [ '/wp-content/fonts/x.woff2' ] ];
+
+	oa_json_call( [ 'Octave_Addons_Module_Performance_Fonts', 'ajax_detect' ] );
+
+	oa_assert( ! empty( Octave_Addons_Module_Performance_Fonts::detected( 'other' ) ), 'an invalid family is filed as other' );
+
+}
+
+function test_woff2_is_preferred_and_one_face_is_preloaded_by_default(): void {
+
+	oa_detected_fonts( [ '/wp-content/fonts/body.woff', '/wp-content/fonts/head.woff2', '/wp-content/fonts/body.woff2' ] );
+
+	oa_assert_same( [ '/wp-content/fonts/head.woff2' ], oa_fonts()->preload_list(), 'one essential face' );
+	oa_assert_same( [ '/wp-content/fonts/head.woff2', '/wp-content/fonts/body.woff2' ], oa_fonts( [ 'preload_max' => 3 ] )->preload_list(), 'WOFF dropped beside its WOFF2' );
+	oa_assert_same( 3, oa_module( 'performance-fonts' )->sanitize( [ 'preload_max' => '9' ] )['preload_max'] );
+
+}
+
+function test_breakdance_custom_fonts_count_as_self_hosted(): void {
+
+	oa_assert_contains( 'Breakdance custom font', Octave_Addons_Module_Performance_Fonts::font_origin( 'https://example.com/wp-content/uploads/breakdance/fonts/inter.woff2' ) );
+	oa_assert( Octave_Addons_Perf::is_same_origin( 'https://example.com/wp-content/uploads/breakdance/fonts/inter.woff2' ), 'same origin, so preloadable' );
+
+}
+
+function test_font_changes_retire_cached_pages_and_detection(): void {
+
+	oa_detected_fonts( [ '/wp-content/fonts/a.woff2' ] );
+
+	Octave_Addons_Module_Performance_Fonts::on_fonts_changed();
+
+	oa_assert_same( false, get_option( Octave_Addons_Module_Performance_Fonts::DETECTED_OPTION ) );
+	oa_assert_same( 1, did_action( 'octave_addons_perf_purged_all' ) );
 
 }

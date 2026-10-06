@@ -122,6 +122,8 @@ class Octave_Addons_Perf_Log {
 		self::$token  = $token;
 		self::$report = [];
 
+		add_action( 'wp_footer', [ 'Octave_Addons_Perf_Diagnostics', 'note_assets' ], PHP_INT_MAX );
+
 	}
 
 	public static function is_reporting(): bool {
@@ -144,6 +146,21 @@ class Octave_Addons_Perf_Log {
 		}
 
 		self::$report[ $feature ][] = $item;
+
+	}
+
+	/*
+	SUMMARY
+	-- Stores one named value in the open report, if any
+	---------------------------------------------------------- */
+
+	public static function summary( string $key, $value ): void {
+
+		if ( null !== self::$report ) {
+
+			self::$report['summary'][ $key ] = $value;
+
+		}
 
 	}
 

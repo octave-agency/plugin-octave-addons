@@ -7,6 +7,8 @@ CLAUDE.md
 
 .DS_Store
 
+/wp-rocket/
+
 # Third-party plugin source kept locally for reference only
 /Breakdance Plugins/
 

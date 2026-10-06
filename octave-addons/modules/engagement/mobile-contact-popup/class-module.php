@@ -316,26 +316,11 @@ class Octave_Addons_Module_Mobile_Contact_Popup extends Octave_Addons_Module {
 
 	protected function enqueue_assets(): void {
 
-		$base_dir = OCTAVE_ADDONS_DIR . 'modules/engagement/mobile-contact-popup/assets/';
-		$base_url = OCTAVE_ADDONS_URL . 'modules/engagement/mobile-contact-popup/assets/';
+		$css = self::asset( 'modules/engagement/mobile-contact-popup/assets/mobile-contact-popup.css' );
+		$js  = self::asset( 'modules/engagement/mobile-contact-popup/assets/mobile-contact-popup.js' );
 
-		$css_path = $base_dir . 'mobile-contact-popup.css';
-		$js_path  = $base_dir . 'mobile-contact-popup.js';
-
-		wp_enqueue_style(
-			'octave-mobile-contact-popup',
-			$base_url . 'mobile-contact-popup.css',
-			[],
-			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
-		);
-
-		wp_enqueue_script(
-			'octave-mobile-contact-popup',
-			$base_url . 'mobile-contact-popup.js',
-			[],
-			file_exists( $js_path ) ? (string) filemtime( $js_path ) : OCTAVE_ADDONS_VERSION,
-			true
-		);
+		wp_enqueue_style( 'octave-mobile-contact-popup', $css['url'], [], $css['version'] );
+		wp_enqueue_script( 'octave-mobile-contact-popup', $js['url'], [], $js['version'], true );
 
 	}
 

@@ -4,9 +4,14 @@
 PERFORMANCE: FONTS
 -- Two independent tools:
 -- Preload — outputs <link rel="preload" as="font"> for the font files the
--- front end reports it downloaded while loading the page, at most three, so
--- preloads never compete with the page's other resources. The list is
+-- front end reports it needed before its Largest Contentful Paint, kept
+-- separately for each kind of template (front page, blog, each post type,
+-- archives), so a page only preloads faces its own kind of page uses above
+-- the fold. One face by default; up to three when the report shows that
+-- many were needed first. WOFF2 is preferred over WOFF. Each list is
 -- refreshed daily by the first visitor after it goes stale
+-- Breakdance custom fonts are already served from this site, so they are
+-- preloaded like any other local font and never treated as Google Fonts
 -- Self-host Google Fonts — serves cached local copies of Google Fonts
 -- stylesheets and their font files, so visitors never contact Google. Until
 -- a stylesheet has been cached successfully, Google's URL is kept
@@ -25,8 +30,11 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	use Octave_Addons_Perf_Field_Rows;
 
-	/** Most fonts preloaded; extra preloads compete with images and scripts. */
+	/** Most fonts ever preloaded; extra preloads compete with images and scripts. */
 	public const PRELOAD_MAX = 3;
+
+	/** Template families remembered; the oldest is dropped beyond this. */
+	public const MAX_FAMILIES = 30;
 
 	public const DETECTED_OPTION = 'octave_addons_perf_fonts_detected';
 	public const DETECT_ACTION   = 'oa_perf_fonts_detect';
@@ -66,6 +74,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		return [
 			'enabled'      => false,
+			'preload_max'  => 1,
 			'self_host'    => false,
 			'font_display' => 'swap',
 			'refresh_days' => 30,
@@ -78,6 +87,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 		$clean   = parent::sanitize( $input );
 		$display = sanitize_key( $input['font_display'] ?? 'swap' );
 
+		$clean['preload_max']  = max( 1, min( self::PRELOAD_MAX, absint( $input['preload_max'] ?? 1 ) ) );
 		$clean['self_host']    = ! empty( $input['self_host'] );
 		$clean['font_display'] = in_array( $display, [ 'swap', 'optional', 'fallback', 'block', 'auto', 'keep' ], true ) ? $display : 'swap';
 		$clean['refresh_days'] = max( 1, min( 365, absint( $input['refresh_days'] ?? 30 ) ) );
@@ -138,7 +148,11 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		if ( ! empty( $s['self_host'] ) ) {
 
-			Octave_Addons_Perf_Html::register( 'fonts', [ $this, 'transform' ], 40 );
+			Octave_Addons_Perf_Html::register( 'fonts', [ $this, 'transform' ], 40, static function (): bool {
+
+				return '' === Octave_Addons_Perf::handled_elsewhere( 'google_fonts' );
+
+			} );
 
 			add_action( Octave_Addons_Perf_Google_Fonts::FETCH_HOOK, [ 'Octave_Addons_Perf_Google_Fonts', 'process_queue' ] );
 			add_action( Octave_Addons_Perf_Google_Fonts::DISCOVER_HOOK, [ 'Octave_Addons_Perf_Google_Fonts', 'discover_and_fetch' ] );
@@ -182,28 +196,79 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	}
 
+	/*
+	ON FONTS CHANGED
+	-- New font files change every page, so cached pages and every family's
+	-- detection record are retired with a full purge
+	---------------------------------------------------------- */
+
 	public static function on_fonts_changed(): void {
 
-		Octave_Addons_Perf_Cache::purge_all( 'files', 'fonts' );
+		Octave_Addons_Perf_Cache::purge_all( 'all', 'fonts' );
+
+	}
+
+	/*
+	FAMILY
+	-- The kind of template this request renders, which keys the preloads
+	---------------------------------------------------------- */
+
+	public static function family(): string {
+
+		if ( is_front_page() ) {
+
+			$family = 'front';
+
+		} elseif ( is_home() ) {
+
+			$family = 'blog';
+
+		} elseif ( is_singular() ) {
+
+			$family = 'single-' . sanitize_key( (string) get_post_type() );
+
+		} elseif ( is_archive() || is_search() ) {
+
+			$family = 'archive';
+
+		} else {
+
+			$family = 'other';
+
+		}
+
+		/**
+		 * Filters the template family whose fonts are preloaded on this request.
+		 *
+		 * @param string $family front, blog, single-{post type}, archive or other.
+		 */
+		return self::clean_family( (string) apply_filters( 'octave_addons_perf_font_family', $family ) );
+
+	}
+
+	public static function clean_family( string $family ): string {
+
+		return preg_match( '/^[a-z0-9_-]{1,40}$/', $family ) ? $family : 'other';
 
 	}
 
 	/*
 	DETECTED / NEEDS DETECTION
-	-- The stored list is refreshed once it is a day old
+	-- One record per template family, refreshed once it is a day old
 	---------------------------------------------------------- */
 
-	public static function detected(): array {
+	public static function detected( ?string $family = null ): array {
 
-		$detected = get_option( self::DETECTED_OPTION, [] );
+		$all    = get_option( self::DETECTED_OPTION, [] );
+		$record = is_array( $all ) ? ( $all['families'][ $family ?? self::family() ] ?? [] ) : [];
 
-		return is_array( $detected ) ? $detected : [];
+		return is_array( $record ) ? $record : [];
 
 	}
 
-	public static function needs_detection(): bool {
+	public static function needs_detection( ?string $family = null ): bool {
 
-		return (int) ( self::detected()['time'] ?? 0 ) < time() - DAY_IN_SECONDS;
+		return (int) ( self::detected( $family )['time'] ?? 0 ) < time() - DAY_IN_SECONDS;
 
 	}
 
@@ -227,6 +292,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 			'action'  => self::DETECT_ACTION,
 			'max'     => self::PRELOAD_MAX,
+			'family'  => self::family(),
 		] );
 
 	}
@@ -241,7 +307,10 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	public static function ajax_detect(): void {
 
-		if ( ! self::needs_detection() ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- public report, validated by clean_family().
+		$family = self::clean_family( isset( $_POST['family'] ) ? sanitize_key( wp_unslash( $_POST['family'] ) ) : 'other' );
+
+		if ( ! self::needs_detection( $family ) ) {
 
 			wp_send_json_success();
 
@@ -263,7 +332,15 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		}
 
-		update_option( self::DETECTED_OPTION, [ 'urls' => array_slice( array_keys( $urls ), 0, self::PRELOAD_MAX ), 'time' => time() ], false );
+		$all      = get_option( self::DETECTED_OPTION, [] );
+		$families = is_array( $all['families'] ?? null ) ? $all['families'] : [];
+
+		unset( $families[ $family ] );
+
+		$families[ $family ] = [ 'urls' => array_slice( array_keys( $urls ), 0, self::PRELOAD_MAX ), 'time' => time() ];
+		$families            = array_slice( $families, -self::MAX_FAMILIES, null, true );
+
+		update_option( self::DETECTED_OPTION, [ 'families' => $families ], false );
 
 		wp_send_json_success();
 
@@ -271,16 +348,20 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	/*
 	PRELOAD LIST
-	-- The final, de-duplicated list, after developers have had their say
+	-- The final, de-duplicated list for this template family, after
+	-- developers have had their say: WOFF2 first, a WOFF dropped when the
+	-- same face exists as WOFF2, and no more than the setting allows
 	---------------------------------------------------------- */
 
 	public function preload_list(): array {
 
-		$urls = self::needs_detection() ? [] : (array) ( self::detected()['urls'] ?? [] );
+		$family = self::family();
+		$fresh  = ! self::needs_detection( $family );
+		$urls   = $fresh ? (array) ( self::detected( $family )['urls'] ?? [] ) : [];
 
 		// Nothing reported yet: the self-hosted Latin fonts are the best guess,
 		// and they are already on this site, so a wrong guess costs little.
-		if ( empty( $urls ) && ! self::needs_detection() && ! empty( $this->settings['self_host'] ) ) {
+		if ( empty( $urls ) && $fresh && ! empty( $this->settings['self_host'] ) ) {
 
 			$urls = Octave_Addons_Perf_Google_Fonts::latin_files( self::PRELOAD_MAX );
 
@@ -306,7 +387,61 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		}
 
-		return array_keys( $clean );
+		return array_slice( self::prefer_woff2( array_keys( $clean ) ), 0, max( 1, min( self::PRELOAD_MAX, (int) ( $this->settings['preload_max'] ?? 1 ) ) ) );
+
+	}
+
+	/*
+	PREFER WOFF2
+	-- WOFF2 files first, keeping their order, and a WOFF left out when the
+	-- same file name exists as WOFF2
+	---------------------------------------------------------- */
+
+	public static function prefer_woff2( array $urls ): array {
+
+		$woff2 = [];
+		$woff  = [];
+
+		foreach ( $urls as $url ) {
+
+			$base = (string) preg_replace( '/\.woff2?$/i', '', (string) wp_parse_url( $url, PHP_URL_PATH ) );
+
+			if ( 'font/woff2' === self::font_type( $url ) ) {
+
+				$woff2[ $base ] = $url;
+
+			} else {
+
+				$woff[ $base ] = $url;
+
+			}
+
+		}
+
+		return array_values( array_merge( $woff2, array_diff_key( $woff, $woff2 ) ) );
+
+	}
+
+	/*
+	FONT ORIGIN
+	-- A short note on where a preloaded file comes from, for the admin
+	---------------------------------------------------------- */
+
+	public static function font_origin( string $url ): string {
+
+		if ( false !== strpos( $url, '/cache/octave-addons/fonts/' ) ) {
+
+			return __( 'Google Font, self-hosted by Octave', 'octave-addons' );
+
+		}
+
+		if ( false !== strpos( $url, '/breakdance/' ) ) {
+
+			return __( 'Breakdance custom font, already self-hosted', 'octave-addons' );
+
+		}
+
+		return __( 'Local font', 'octave-addons' );
 
 	}
 
@@ -325,6 +460,8 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		$resources = is_array( $resources ) ? $resources : [];
 		$existing  = wp_list_pluck( array_filter( $resources, 'is_array' ), 'href' );
+
+		Octave_Addons_Perf_Log::summary( 'preloaded_fonts', $this->preload_list() );
 
 		foreach ( $this->preload_list() as $url ) {
 
@@ -360,6 +497,8 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		}
 
+		Octave_Addons_Perf_Log::summary( 'preloaded_fonts', $this->preload_list() );
+
 		foreach ( $this->preload_list() as $url ) {
 
 			printf(
@@ -386,7 +525,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		$host = Octave_Addons_Perf_Google_Fonts::CSS_HOST;
 
-		if ( ! Octave_Addons_Perf::has_html_api() || ( false === stripos( $html, $host ) && false === stripos( $html, 'WebFont' ) ) ) {
+		if ( ! Octave_Addons_Perf::has_html_api() || '' !== Octave_Addons_Perf::handled_elsewhere( 'google_fonts' ) || ( false === stripos( $html, $host ) && false === stripos( $html, 'WebFont' ) ) ) {
 
 			return $html;
 
@@ -516,7 +655,8 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	public function render_settings( array $s ): void {
 
-		$preloads = (array) ( self::detected()['urls'] ?? [] );
+		$all      = get_option( self::DETECTED_OPTION, [] );
+		$families = is_array( $all['families'] ?? null ) ? $all['families'] : [];
 		$manifest = Octave_Addons_Perf_Google_Fonts::manifest();
 
 		?>
@@ -526,13 +666,19 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Font preloading', 'octave-addons' ), 'first' => true ] );
 
+			$this->select_row( 'preload_max', __( 'Fonts to preload', 'octave-addons' ), [
+				1 => __( 'One essential face (recommended)', 'octave-addons' ),
+				2 => __( 'Up to two, when needed above the fold', 'octave-addons' ),
+				3 => __( 'Up to three, when needed above the fold', 'octave-addons' ),
+			], __( 'Every preload competes with the hero image. More than one is only used when visitors\' browsers report that many fonts were fetched before the page\'s largest element appeared.', 'octave-addons' ), $s );
+
 			Octave_Addons_Fields::row( [
-				'label' => __( 'Preloaded fonts', 'octave-addons' ),
-				'field' => function () use ( $preloads ) {
+				'label' => __( 'Detected fonts', 'octave-addons' ),
+				'field' => function () use ( $families ) {
 
-					if ( empty( $preloads ) ) {
+					if ( empty( $families ) ) {
 
-						echo '<p class="oa-help">' . esc_html__( 'Detected automatically. The fonts a page downloads while loading are reported by the next visitor and preloaded from then on, refreshed daily.', 'octave-addons' ) . '</p>';
+						echo '<p class="oa-help">' . esc_html__( 'Detected automatically for each kind of page: the fonts a page needs before its largest element appears are reported by the next visitor and preloaded from then on, refreshed daily.', 'octave-addons' ) . '</p>';
 
 						return;
 
@@ -543,11 +689,40 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 					<ul class="oa-perf-font-list">
 						<?php
 
-						foreach ( $preloads as $url ) :
+						foreach ( $families as $family => $record ) :
+
+							$urls = (array) ( $record['urls'] ?? [] );
 
 						?>
 
-						<li><code><?= esc_html( (string) $url ); ?></code></li>
+						<li>
+							<strong><?= esc_html( (string) $family ); ?></strong>
+
+							<?php
+
+							if ( empty( $urls ) ) :
+
+							?>
+
+							<span><?php esc_html_e( 'No fonts needed above the fold', 'octave-addons' ); ?></span>
+
+							<?php
+
+							endif;
+
+							foreach ( $urls as $url ) :
+
+							?>
+
+							<code><?= esc_html( (string) $url ); ?></code>
+							<span><?= esc_html( self::font_origin( (string) $url ) ); ?></span>
+
+							<?php
+
+							endforeach;
+
+							?>
+						</li>
 
 						<?php
 

@@ -133,9 +133,34 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		if ( ! empty( $s['images'] ) || ! empty( $s['iframes'] ) || ! empty( $s['header_eager'] ) || ! empty( $s['dimensions'] ) || ! empty( $s['lazy_posters'] ) || ! empty( $s['lcp'] ) ) {
 
-			Octave_Addons_Perf_Html::register( 'media', [ $this, 'transform' ], 20 );
+			Octave_Addons_Perf_Html::register( 'media', [ $this, 'transform' ], 20, [ $this, 'is_needed' ] );
 
 		}
+
+	}
+
+	/*
+	IS NEEDED
+	-- False when another plugin lazy loads every kind of media this module
+	-- would and none of its other fixes is on, so no buffer is started
+	---------------------------------------------------------- */
+
+	public function is_needed(): bool {
+
+		$s = $this->settings;
+
+		foreach ( [ 'header_eager', 'dimensions', 'lazy_posters', 'lcp' ] as $key ) {
+
+			if ( ! empty( $s[ $key ] ) ) {
+
+				return true;
+
+			}
+
+		}
+
+		return ( ! empty( $s['images'] ) && '' === Octave_Addons_Perf::handled_elsewhere( 'lazy_images' ) )
+			|| ( ! empty( $s['iframes'] ) && '' === Octave_Addons_Perf::handled_elsewhere( 'lazy_iframes' ) );
 
 	}
 
@@ -250,7 +275,16 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 				$image_index++;
 
-				if ( $header_depth <= 0 && 'high' === strtolower( (string) $tags->get_attribute( 'fetchpriority' ) ) ) {
+				$high = 'high' === strtolower( (string) $tags->get_attribute( 'fetchpriority' ) );
+
+				// A builder can print both; lazy wins in the browser and the hero waits.
+				if ( $high && 'lazy' === strtolower( (string) $tags->get_attribute( 'loading' ) ) ) {
+
+					$tags->remove_attribute( 'loading' );
+
+				}
+
+				if ( $header_depth <= 0 && $high ) {
 
 					$hero_seen = true;
 

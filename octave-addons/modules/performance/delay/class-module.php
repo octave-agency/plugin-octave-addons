@@ -86,7 +86,11 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 		}
 
-		Octave_Addons_Perf_Html::register( 'delay', [ $this, 'transform' ], 30 );
+		Octave_Addons_Perf_Html::register( 'delay', [ $this, 'transform' ], 30, static function (): bool {
+
+			return '' === Octave_Addons_Perf::handled_elsewhere( 'delay' );
+
+		} );
 
 	}
 

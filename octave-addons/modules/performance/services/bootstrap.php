@@ -16,15 +16,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/trait-field-rows.php';
 require_once __DIR__ . '/class-context.php';
+require_once __DIR__ . '/class-owners.php';
 require_once __DIR__ . '/class-store.php';
 require_once __DIR__ . '/class-log.php';
 require_once __DIR__ . '/class-cache.php';
+require_once __DIR__ . '/class-page-cache.php';
 require_once __DIR__ . '/class-html.php';
 require_once __DIR__ . '/class-cloudflare.php';
 require_once __DIR__ . '/class-cleanup.php';
 require_once __DIR__ . '/class-minifier.php';
 require_once __DIR__ . '/class-google-fonts.php';
 require_once __DIR__ . '/class-lcp.php';
+require_once __DIR__ . '/class-imagify.php';
+require_once __DIR__ . '/class-diagnostics.php';
 require_once __DIR__ . '/class-admin.php';
 
 class Octave_Addons_Perf {
@@ -145,43 +149,23 @@ class Octave_Addons_Perf {
 
 	/*
 	HANDLED ELSEWHERE
-	-- Names another active plugin already doing the same job, so Octave can
-	-- step aside rather than process the same markup twice. Only settings
-	-- whose keys are known are read; other plugins can declare themselves
-	-- through the octave_addons_perf_handled_elsewhere filter
+	-- Names whichever other plugin or host already does the same job, so
+	-- Octave can step aside rather than process the same markup twice. The
+	-- owners come from the integration registry, which only reads settings
+	-- whose keys are known; other plugins can declare themselves through
+	-- the octave_addons_perf_handled_elsewhere filter
 	---------------------------------------------------------- */
 
 	public static function handled_elsewhere( string $feature ): string {
 
-		$rocket_keys = [
-			'lazy_images'  => 'lazyload',
-			'lazy_iframes' => 'lazyload_iframes',
-			'delay'        => 'delay_js',
-			'minify_css'   => 'minify_css',
-			'minify_js'    => 'minify_js',
-		];
-
-		$owner = '';
-
-		if ( defined( 'WP_ROCKET_VERSION' ) && isset( $rocket_keys[ $feature ] ) ) {
-
-			$rocket = get_option( 'wp_rocket_settings', [] );
-
-			if ( is_array( $rocket ) && ! empty( $rocket[ $rocket_keys[ $feature ] ] ) ) {
-
-				$owner = 'WP Rocket';
-
-			}
-
-		}
-
 		/**
 		 * Filters which plugin, if any, already handles a Performance feature.
 		 *
-		 * @param string $owner   Plugin name, or '' when Octave should handle it.
-		 * @param string $feature lazy_images, lazy_iframes, delay, minify_css or minify_js.
+		 * @param string $owner   Plugin names, or '' when Octave should handle it.
+		 * @param string $feature lazy_images, lazy_iframes, delay, minify_css, minify_js,
+		 *                        page_cache, nextgen_images or google_fonts.
 		 */
-		return (string) apply_filters( 'octave_addons_perf_handled_elsewhere', $owner, $feature );
+		return (string) apply_filters( 'octave_addons_perf_handled_elsewhere', Octave_Addons_Perf_Owners::owner( $feature ), $feature );
 
 	}
 
@@ -199,18 +183,19 @@ class Octave_Addons_Perf {
 
 	/*
 	ASSET URL
-	-- Public URL and cache-busting version for a file in the shared assets folder
+	-- Public URL and cache-busting version for a file in the shared assets
+	-- folder, minified unless SCRIPT_DEBUG is on
 	---------------------------------------------------------- */
 
 	public static function asset_url( string $file ): string {
 
-		return OCTAVE_ADDONS_URL . 'modules/performance/assets/' . $file;
+		return Octave_Addons_Module::asset( 'modules/performance/assets/' . $file )['url'];
 
 	}
 
 	public static function asset_version( string $file ): string {
 
-		return Octave_Addons_Module::file_version( OCTAVE_ADDONS_DIR . 'modules/performance/assets/' . $file );
+		return Octave_Addons_Module::asset( 'modules/performance/assets/' . $file )['version'];
 
 	}
 

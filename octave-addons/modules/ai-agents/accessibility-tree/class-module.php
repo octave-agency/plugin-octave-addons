@@ -75,15 +75,9 @@ class Octave_Addons_Module_Accessibility_Tree extends Octave_Addons_Module {
 
 		}
 
-		$js_path = __DIR__ . '/assets/accessibility-tree.js';
+		$asset = self::asset( 'modules/ai-agents/accessibility-tree/assets/accessibility-tree.js' );
 
-		wp_enqueue_script(
-			'octave-accessibility-tree',
-			plugin_dir_url( __FILE__ ) . 'assets/accessibility-tree.js',
-			[],
-			self::file_version( $js_path ),
-			true
-		);
+		wp_enqueue_script( 'octave-accessibility-tree', $asset['url'], [], $asset['version'], true );
 
 	}
 

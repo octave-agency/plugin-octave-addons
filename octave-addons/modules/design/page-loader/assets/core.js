@@ -640,7 +640,8 @@ PAGE TRANSITIONS CORE
 
 		}
 
-		var arrived = ! reduced && cfg.transition && flag && Date.now() - flag.t < 10000;
+		// Performance mode never covers an arriving page, so its largest element shows at once.
+		var arrived = ! reduced && ! cfg.performance && cfg.transition && flag && Date.now() - flag.t < 10000;
 
 		if ( arrived && cfg.replay ) {
 

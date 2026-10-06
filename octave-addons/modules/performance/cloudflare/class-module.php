@@ -110,7 +110,9 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 	/*
 	PURGE ALL LAYER
-	-- Purge everything only for a manual full purge with the option on
+	-- Purge everything only with the option on, and only for a manual full
+	-- purge or a Breakdance change that restyles every page. Settings saves
+	-- and other automatic purges never empty the whole zone
 	---------------------------------------------------------- */
 
 	public static function purge_all_layer( array $report, string $reason, array $s ): array {
@@ -125,7 +127,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 		}
 
-		if ( 'manual' !== $reason || empty( $s['purge_on_full'] ) ) {
+		if ( ! in_array( $reason, [ 'manual', 'breakdance' ], true ) || empty( $s['purge_on_full'] ) ) {
 
 			$report['cloudflare'] = [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'Not purged. Turn on "Purge Cloudflare during a full purge" to include it.', 'octave-addons' ) ];
 
@@ -281,7 +283,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 			Octave_Addons_Fields::section( [ 'label' => __( 'Automatic purging', 'octave-addons' ) ] );
 
 			$this->switch_row( 'auto_purge', __( 'Purge changed pages', 'octave-addons' ), __( 'Recommended. When content is published, updated or removed, its URL, the home page and related archives are purged in a batch shortly after.', 'octave-addons' ), $s );
-			$this->switch_row( 'purge_on_full', __( 'Purge Cloudflare during a full purge', 'octave-addons' ), __( 'When an administrator uses Clear Performance Cache or the admin bar, also purge everything in the zone. Settings saves never purge everything.', 'octave-addons' ), $s );
+			$this->switch_row( 'purge_on_full', __( 'Purge Cloudflare during a full purge', 'octave-addons' ), __( 'When an administrator uses Clear Performance Cache or the admin bar, or a Breakdance header, footer, template, global block or global style changes, also purge everything in the zone. Settings saves never purge everything.', 'octave-addons' ), $s );
 
 			?>
 		</table>

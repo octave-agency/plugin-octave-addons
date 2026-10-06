@@ -18,6 +18,9 @@ function oa_theme_file( string $name, string $contents ): string {
 
 function oa_files( array $values = [] ): Octave_Addons_Module_Performance_Files {
 
+	// The warmer's requests create minified copies; visitors are served originals meanwhile.
+	$_SERVER['HTTP_X_OCTAVE_WARM'] = '1';
+
 	$module = oa_module( 'performance-files' );
 
 	$module->run( oa_set_settings( 'performance-files', array_merge( [ 'enabled' => true, 'minify_css' => true, 'minify_js' => true ], $values ) ) );
@@ -216,5 +219,92 @@ function test_inlining_respects_exclusions_and_imports(): void {
 	$html = oa_files( [ 'exclude' => 'plain.css' ] )->inline_styles( $page );
 
 	oa_assert_same( $page, $html, 'excluded and @import files stay as links' );
+
+}
+
+function test_visitors_never_wait_for_minification(): void {
+
+	$module = oa_files();
+
+	unset( $_SERVER['HTTP_X_OCTAVE_WARM'] );
+
+	$_SERVER['REQUEST_URI'] = '/landing/?utm=1';
+
+	$url = oa_theme_file( 'visitor.css', "body {\n  color: red;\n}\n" );
+	$tag = "<link rel='stylesheet' id='v-css' href='" . $url . "' media='all' />";
+
+	oa_assert_same( $tag, $module->filter_style_tag( $tag, 'v', $url ), 'original served' );
+	oa_assert_same( [ 'https://example.com/landing/' ], Octave_Addons_Perf_Page_Cache::state()['queue'], 'page queued for the warmer' );
+
+	$module->filter_style_tag( $tag, 'v', $url );
+
+	oa_assert_same( 1, count( $GLOBALS['oa_cron'] ), 'queued once' );
+
+	$_SERVER['HTTP_X_OCTAVE_WARM'] = '1';
+
+	oa_assert_contains( '/cache/octave-addons/min/', $module->filter_style_tag( $tag, 'v', $url ), 'the warmer creates the copy' );
+
+}
+
+function oa_content_file( string $relative, string $contents ): string {
+
+	$path = WP_CONTENT_DIR . '/' . $relative;
+
+	@mkdir( dirname( $path ), 0777, true );
+	file_put_contents( $path, $contents );
+
+	return 'https://example.com/wp-content/' . $relative;
+
+}
+
+function test_shared_stylesheets_stay_as_cached_links(): void {
+
+	$plugin = oa_content_file( 'plugins/forms/forms.css', '.f{color:red}' );
+	$global = oa_content_file( 'uploads/breakdance/css/global-settings.css', ':root{--a:1}' );
+	$post   = oa_content_file( 'uploads/breakdance/css/post-12.css', '.p{color:blue}' );
+
+	$html = oa_files()->inline_styles( oa_page( '<link rel="stylesheet" href="' . $plugin . '"><link rel="stylesheet" href="' . $global . '"><link rel="stylesheet" href="' . $post . '">' ) );
+
+	oa_assert_contains( '<link rel="stylesheet" href="' . $plugin . '">', $html, 'plugin CSS shared by every page' );
+	oa_assert_contains( '<link rel="stylesheet" href="' . $global . '">', $html, 'Breakdance global CSS shared by every page' );
+	oa_assert_contains( '<style data-oa-inlined="' . $post . '">.p{color:blue}</style>', $html, 'page-specific Breakdance CSS inlined' );
+
+}
+
+function test_breakdance_page_styles_get_the_budget_first(): void {
+
+	$theme = oa_theme_file( 'early.css', '.t{color:red}' );
+	$post  = oa_content_file( 'uploads/breakdance/css/post-7-defaults.css', '.p{color:blue}' );
+
+	$candidates = [
+		10 => [ 'size' => 60 * 1024, 'page' => false ],
+		90 => [ 'size' => 30 * 1024, 'page' => true ],
+		50 => [ 'size' => 10 * 1024, 'page' => false ],
+	];
+
+	oa_assert_same( [ 50, 90 ], array_keys( Octave_Addons_Module_Performance_Files::allot_budget( $candidates, 80 * 1024 ) ), 'page CSS first, rest in page order, results in page order' );
+
+	$html = oa_files()->inline_styles( oa_page( '<link rel="stylesheet" href="' . $theme . '"><link rel="stylesheet" href="' . $post . '">' ) );
+
+	oa_assert( strpos( $html, '.t{color:red}' ) < strpos( $html, '.p{color:blue}' ), 'cascade order unchanged' );
+
+}
+
+function test_inlining_records_total_bytes_and_caches_file_reads(): void {
+
+	$_GET[ Octave_Addons_Perf_Log::SCAN_ARG ] = Octave_Addons_Perf_Log::start_scan();
+	Octave_Addons_Perf_Log::maybe_begin_report();
+
+	$a = oa_theme_file( 'a.css', '.a{color:red}' );
+	$b = oa_theme_file( 'b.css', '.bb{color:red}' );
+
+	oa_files()->inline_styles( oa_page( '<link rel="stylesheet" href="' . $a . '"><link rel="stylesheet" href="' . $b . '">' ) );
+	Octave_Addons_Perf_Log::save_report();
+
+	$scan = Octave_Addons_Perf_Log::read_scan( $_GET[ Octave_Addons_Perf_Log::SCAN_ARG ] );
+
+	oa_assert_same( 27, $scan['report']['summary']['inlined_css_bytes'] );
+	oa_assert_same( 2, count( $GLOBALS['oa_object_cache']['octave_addons_perf_inline'] ), 'size and contents cached' );
+	oa_assert_same( 4, oa_module( 'performance-files' )->get_defaults()['inline_max'], '4 KB recommended' );
 
 }

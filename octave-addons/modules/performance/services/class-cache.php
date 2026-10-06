@@ -29,6 +29,24 @@ class Octave_Addons_Perf_Cache {
 	/** Sub-folder holding minified CSS and JavaScript. */
 	public const MIN_DIR = 'min';
 
+	/** Breakdance global options whose change restyles every page. */
+	public const BREAKDANCE_GLOBALS = [
+		'global_settings_json_string',
+		'breakdance_classes_json_string',
+		'oxy_selectors_json_string',
+		'presets_json_string',
+		'variables_json_string',
+	];
+
+	/** Breakdance documents shown on many pages: templates, headers, footers, global blocks and popups. */
+	public const BREAKDANCE_SHARED_TYPES = [ 'breakdance_template', 'breakdance_header', 'breakdance_footer', 'breakdance_block', 'breakdance_popup' ];
+
+	/** Shortest gap between two automatic full purges from Breakdance. */
+	protected const BREAKDANCE_DEBOUNCE = MINUTE_IN_SECONDS;
+
+	/** @var string Reason of a full purge waiting for the end of the request, or ''. */
+	protected static string $queued_full = '';
+
 	/*
 	GENERATION
 	-- Changes on every full purge. Part of every generated file's cache key,
@@ -62,6 +80,19 @@ class Octave_Addons_Perf_Cache {
 
 		$report = [ 'files' => self::clear_files() ];
 
+		// Design-wide changes also retire what was learned from the old design.
+		if ( 'all' === $scope && in_array( $reason, [ 'breakdance', 'fonts', 'manual' ], true ) ) {
+
+			Octave_Addons_Perf_Lcp::forget_all();
+
+			if ( class_exists( 'Octave_Addons_Module_Performance_Fonts' ) ) {
+
+				delete_option( Octave_Addons_Module_Performance_Fonts::DETECTED_OPTION );
+
+			}
+
+		}
+
 		if ( 'all' === $scope ) {
 
 			/**
@@ -70,7 +101,7 @@ class Octave_Addons_Perf_Cache {
 			 * Each layer adds [ 'label' => string, 'status' => success|error|skipped|queued, 'message' => string ].
 			 *
 			 * @param array  $report Per-layer results so far.
-			 * @param string $reason manual, settings, theme, plugins or fonts.
+			 * @param string $reason manual, settings, environment, fonts, breakdance, imagify or update.
 			 */
 			$report = (array) apply_filters( 'octave_addons_perf_purge_all_layers', $report, $reason );
 
@@ -100,7 +131,7 @@ class Octave_Addons_Perf_Cache {
 		 * Filters the URLs a targeted purge covers.
 		 *
 		 * @param string[] $urls   Absolute URLs.
-		 * @param string   $reason content, menu, manual.
+		 * @param string   $reason content, menu, lcp, manual.
 		 */
 		$urls = self::normalize_urls( (array) apply_filters( 'octave_addons_perf_purge_urls', $urls, $reason ) );
 
@@ -123,7 +154,7 @@ class Octave_Addons_Perf_Cache {
 		 *
 		 * @param array    $report Per-layer results so far.
 		 * @param string[] $urls   Absolute URLs.
-		 * @param string   $reason content, menu, manual.
+		 * @param string   $reason content, menu, lcp, manual.
 		 */
 		$report = (array) apply_filters( 'octave_addons_perf_purge_url_layers', $report, $urls, $reason );
 
@@ -233,6 +264,98 @@ class Octave_Addons_Perf_Cache {
 		add_action( 'activated_plugin', [ __CLASS__, 'on_environment_change' ] );
 		add_action( 'deactivated_plugin', [ __CLASS__, 'on_environment_change' ] );
 		add_action( 'update_option_' . OCTAVE_ADDONS_OPTION_KEY, [ __CLASS__, 'on_settings_update' ], 10, 2 );
+
+		// Breakdance: its documents, its global design data, its custom fonts
+		// and its own cache regeneration. Breakdance's code is never changed.
+		add_action( 'breakdance_after_save_document', [ __CLASS__, 'on_breakdance_document' ] );
+
+		foreach ( self::BREAKDANCE_GLOBALS as $field ) {
+
+			add_action( 'breakdance_option_updated_' . $field, [ __CLASS__, 'on_breakdance_global' ] );
+
+		}
+
+		add_action( 'wp_ajax_breakdance_save_font_families', [ __CLASS__, 'on_breakdance_global' ], 1 );
+		add_action( 'wp_ajax_breakdance_regenerate_global_settings_cache', [ __CLASS__, 'on_breakdance_global' ], 1 );
+
+	}
+
+	/*
+	ON BREAKDANCE DOCUMENT
+	-- A template, header, footer, global block or popup can appear on any
+	-- page, so it purges everything. An ordinary page's URLs were already
+	-- purged when Breakdance saved the post; its learned LCP record is
+	-- retired here so the next view relearns it
+	---------------------------------------------------------- */
+
+	public static function on_breakdance_document( $post_id ): void {
+
+		$type = (string) get_post_type( (int) $post_id );
+
+		if ( in_array( $type, self::BREAKDANCE_SHARED_TYPES, true ) || in_array( str_replace( 'oxygen_', 'breakdance_', $type ), self::BREAKDANCE_SHARED_TYPES, true ) ) {
+
+			self::queue_full_purge( 'breakdance' );
+
+			return;
+
+		}
+
+		Octave_Addons_Perf_Lcp::forget_post( (int) $post_id );
+
+	}
+
+	/*
+	ON BREAKDANCE GLOBAL
+	-- Global settings, classes, selectors, presets, variables and fonts
+	-- restyle every page. The AJAX hooks fire before Breakdance checks
+	-- permissions, so only users who could make the change count
+	---------------------------------------------------------- */
+
+	public static function on_breakdance_global(): void {
+
+		if ( wp_doing_ajax() && ! current_user_can( 'edit_posts' ) ) {
+
+			return;
+
+		}
+
+		self::queue_full_purge( 'breakdance' );
+
+	}
+
+	/*
+	QUEUE FULL PURGE
+	-- One Breakdance save can update several global options. They become a
+	-- single full purge once the request has finished, and at most one a
+	-- minute, so Breakdance has written its new CSS before caches refill
+	---------------------------------------------------------- */
+
+	public static function queue_full_purge( string $reason ): void {
+
+		if ( '' === self::$queued_full ) {
+
+			add_action( 'shutdown', [ __CLASS__, 'run_queued_full_purge' ] );
+
+		}
+
+		self::$queued_full = $reason;
+
+	}
+
+	public static function run_queued_full_purge(): array {
+
+		$reason            = self::$queued_full;
+		self::$queued_full = '';
+
+		if ( '' === $reason || false !== get_transient( 'oa_perf_full_purge_' . $reason ) ) {
+
+			return [];
+
+		}
+
+		set_transient( 'oa_perf_full_purge_' . $reason, 1, self::BREAKDANCE_DEBOUNCE );
+
+		return self::purge_all( 'all', $reason );
 
 	}
 

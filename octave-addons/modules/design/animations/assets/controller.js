@@ -4,6 +4,9 @@ SCROLL ANIMATION CONTROLLER
 -- Hides targets only while it is in charge, reveals each one once as it
 -- scrolls into view, and releases everything if anything fails
 -- Presets and custom JavaScript only configure it via OctaveAnimations.preset()
+-- Performance mode (window.oaAnimPerformance) hides nothing before the scan,
+-- leaves everything in the first screen untouched so the largest element is
+-- painted at once, and never splits headings
 ---------------------------------------------------------- */
 
 ( function () {
@@ -12,6 +15,7 @@ SCROLL ANIMATION CONTROLLER
 
 	var root = document.documentElement;
 	var reduced = window.matchMedia && window.matchMedia( '( prefers-reduced-motion: reduce )' ).matches;
+	var light = true === window.oaAnimPerformance;
 
 	/*
 	TARGETS
@@ -58,7 +62,12 @@ SCROLL ANIMATION CONTROLLER
 
 	}
 
-	root.classList.add( 'oa-anim-ready' );
+	// In performance mode nothing is hidden until the scan has skipped the first screen.
+	if ( ! light ) {
+
+		root.classList.add( 'oa-anim-ready' );
+
+	}
 
 	// If the scan never completes, nothing may stay hidden.
 	var guard = window.setTimeout( release, 6000 );
@@ -371,9 +380,15 @@ SCROLL ANIMATION CONTROLLER
 
 				}
 
+				if ( light && element.getBoundingClientRect().top < window.innerHeight ) {
+
+					return;
+
+				}
+
 				var kind = group.kind;
 
-				if ( 'heading' === kind && ! ( config.split && splitHeading( element, config.split ) ) ) {
+				if ( 'heading' === kind && ! ( ! light && config.split && splitHeading( element, config.split ) ) ) {
 
 					kind = 'text';
 
@@ -405,6 +420,12 @@ SCROLL ANIMATION CONTROLLER
 		}
 
 		root.classList.add( 'oa-anim-scanned' );
+
+		if ( light ) {
+
+			root.classList.add( 'oa-anim-ready' );
+
+		}
 
 		return targets;
 

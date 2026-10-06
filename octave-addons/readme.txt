@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.32.0
+Stable tag:        3.34.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -56,6 +56,9 @@ Octave Addons ships with a growing collection of focused modules:
     Breakdance YouTube and Vimeo videos default to their lightweight players,
     HTML5 and background videos start with `preload="none"` and load as
     they near the viewport, and video iframes receive `loading="lazy"`.
+*   **Breakdance Heading Tags** – always on and hidden from the admin. Adds
+    `p` and `div` choices to the native Heading element so its typography can
+    be used without adding a heading to the document outline.
 *   **Breakdance Launcher Styles** – always on and hidden from the admin.
     Declares Breakdance's launcher stylesheet as a block editor style so it
     reaches the block editor canvas iframe, which an admin stylesheet cannot.
@@ -162,6 +165,24 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.34.0 =
+* Breakdance Heading elements can now render as `p` or `div`, retaining the Heading element's typography controls without adding a heading to the document outline.
+
+= 3.33.0 =
+* Breakdance's image Lazy Load toggles are now only taken over when Media Lazy Loading or another plugin (such as WP Rocket) lazy loads images. With neither, Breakdance keeps its toggles, defaults and saved values. Breakdance video handling is unchanged. The Performance page shows who lazy loads images, iframes and videos.
+* New Imagify Next-Gen Images module, shown while Imagify 2.2.2 or newer is active. It chooses WebP or AVIF and rewrite-rule or picture-tag delivery through Imagify's own settings lifecycle, so Imagify still writes its own rules. Automatic delivery picks rewrite rules only on Apache or LiteSpeed with a writable .htaccess and no CDN or Cloudflare in front of images. .htaccess is backed up first and restored if the site answers HTTP 500. Repair and delivery-test buttons are included, and Nginx sites are shown Imagify's configuration to add by hand. Both settings default to Keep, so enabling the module changes nothing in Imagify on its own.
+* Ownership detection now covers WP Rocket, LiteSpeed Cache, Perfmatters, FlyingPress, Autoptimize, Imagify, Breeze and managed hosts. It reads their settings, not just whether they are active, for lazy loading, script delay, minification, page caching, WebP/AVIF delivery and Google Fonts. Two plugins doing the same job are flagged on the Performance page.
+* AJAX Filtering now loads its CSS and JavaScript (minified and deferred) only on pages where a Breakdance loop is filtered or the controls render. Breakdance loops are recognised by a tag on Breakdance's own query filter instead of inspecting the call stack.
+* Saving a Breakdance header, footer, template, global block or popup now purges every connected cache once the save finishes. So does changing global settings, classes, presets, variables or custom fonts, or regenerating Breakdance's cache. Each of these also retires learned LCP and font records. Saving an ordinary page only expires that page's LCP record.
+* Purges now also reach the site's page cache (WP Rocket, LiteSpeed Cache, Breeze, FlyingPress, WP Engine, SiteGround, Pantheon, Nginx Helper) for changes it cannot see itself. After a full purge, pages are warmed again in small background batches that skip cart, checkout, account, admin, preview, nonce and noindex pages. The Performance page explains that Octave's own cache is not a full-page cache.
+* Page Transitions and Scroll Animations each gain an opt-in Performance mode, plus a warning about their effect on LCP and INP. In Performance mode the page loader never shows and an arriving page is never covered, and animations leave the first screen visible and never split headings.
+* File Optimization recommends a 4 KB inline limit. Breakdance's per-page CSS gets the inline budget first. Plugin, WordPress core and Breakdance global stylesheets stay as cached links. Inlined file contents are cached. Minified copies are created by the cache warmer rather than during a visitor's page view.
+* Octave's own frontend scripts and styles now ship minified (readable copies load when SCRIPT_DEBUG is on).
+* Each page transformation is timed. Diagnostics scans and a private Server-Timing link report media, delay, font and inlining times, and no output buffer starts when every transformation is owned by another plugin.
+* Learned LCP records are stored per page instead of in one large option. The report endpoint is rate limited, and a page can trigger at most one cache purge an hour. Records now include the image's format, size and weight, with warnings for oversized or non-WebP/AVIF images. Imagify picture-tag copies match their original image. A second high-priority image preload is never added, and an image never keeps both loading="lazy" and fetchpriority="high".
+* Font preloads are kept per kind of page and limited to fonts needed before the largest element appears: one by default, WOFF2 preferred. Breakdance custom fonts are recognised as already self-hosted, and font changes retire cached pages and detection records.
+* New read-only Static delivery check (Brotli/Gzip, browser caching, WebP/AVIF MIME types, font CORS, Vary: Accept and CDN status) and Breakdance performance audit. Diagnostics scans now report response times, cache and edge status, inlined CSS, Octave and Breakdance assets, LCP details, preloaded fonts, Imagify status and duplicate optimisation.
 
 = 3.32.0 =
 * Media Lazy Loading now learns each page's real largest image (its Largest Contentful Paint) from the browsers that load it, once for phones and once for larger screens, refreshed weekly and whenever the page is saved. Later visits fetch it first, whatever it is: an image gets fetchpriority="high", and a CSS background or video poster, which browsers otherwise find late, is preloaded in the head for the screen size that reported it. Until a page has reported, the hero image is guessed as before. A new report clears that page from the cache. On by default; turn off with "Fetch each page's largest image first".

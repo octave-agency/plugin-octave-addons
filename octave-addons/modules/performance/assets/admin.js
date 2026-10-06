@@ -197,8 +197,9 @@ PERFORMANCE ADMIN
 		var delay = report.delay || [];
 		var media = report.media || [];
 		var fonts = report.fonts || [];
+		var details = data.details || [];
 
-		if ( ! delay.length && ! media.length && ! fonts.length ) {
+		if ( ! delay.length && ! media.length && ! fonts.length && ! details.length ) {
 
 			showMessage( region, i18n.scanEmpty, 'info' );
 
@@ -207,6 +208,12 @@ PERFORMANCE ADMIN
 		}
 
 		var box = notice( region, 'success' );
+
+		if ( ! delay.length && ! media.length && ! fonts.length ) {
+
+			box.appendChild( element( 'p', '', i18n.scanEmpty ) );
+
+		}
 
 		if ( delay.length ) {
 
@@ -253,6 +260,13 @@ PERFORMANCE ADMIN
 			} ) );
 
 		}
+
+		// Delivery, timings, assets, LCP and ownership, already worded by the server.
+		details.forEach( function ( section ) {
+
+			scanList( box, section.heading, section.rows || [] );
+
+		} );
 
 	}
 

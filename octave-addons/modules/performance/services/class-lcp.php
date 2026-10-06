@@ -13,6 +13,11 @@ PERFORMANCE: LARGEST CONTENTFUL PAINT
 -- Pages carry a tiny inline reporter only while their record is missing or
 -- a week old. A new record purges that page from the cache so the next view
 -- is served with it
+-- Each page's record is its own transient, keyed by path and a generation
+-- number, so a report never rewrites every other page's record and a
+-- design-wide change can retire them all at once. The public endpoint is
+-- rate limited per visitor and site-wide, and each path can trigger at most
+-- one purge an hour, so forged reports cannot cause a purge storm
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -23,8 +28,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Octave_Addons_Perf_Lcp {
 
-	public const OPTION = 'octave_addons_perf_lcp';
-	public const ACTION = 'oa_perf_lcp_report';
+	/** Single option used before 3.33.0; removed on the next admin request. */
+	public const LEGACY_OPTION = 'octave_addons_perf_lcp';
+
+	public const GENERATION_OPTION = 'octave_addons_perf_lcp_generation';
+	public const ACTION            = 'oa_perf_lcp_report';
 
 	/** Narrower viewports report as phones ('m'), the rest as larger screens ('d'). */
 	public const BREAKPOINT = 768;
@@ -38,8 +46,18 @@ class Octave_Addons_Perf_Lcp {
 	/** Most late-found third-party origins preconnected per screen size. */
 	public const MAX_ORIGINS = 2;
 
-	/** Most pages remembered; the oldest record is dropped beyond this. */
-	public const MAX_PAGES = 500;
+	/** Reports accepted per visitor IP per minute, and site-wide per minute. */
+	public const RATE_PER_IP = 10;
+	public const RATE_SITE   = 120;
+
+	/** Records created for paths not seen before, site-wide per hour. */
+	public const NEW_PER_HOUR = 100;
+
+	/** Purges a changed record may trigger site-wide per hour. */
+	public const PURGES_PER_HOUR = 30;
+
+	/** An image larger than this, or than twice its rendered width, is flagged. */
+	public const OVERSIZED_BYTES = 200 * KB_IN_BYTES;
 
 	/*
 	BOOT
@@ -51,6 +69,17 @@ class Octave_Addons_Perf_Lcp {
 		add_action( 'wp_ajax_' . self::ACTION, [ __CLASS__, 'ajax_report' ] );
 		add_action( 'wp_ajax_nopriv_' . self::ACTION, [ __CLASS__, 'ajax_report' ] );
 		add_action( 'save_post', [ __CLASS__, 'forget_post' ] );
+		add_action( 'admin_init', [ __CLASS__, 'drop_legacy_option' ] );
+
+	}
+
+	public static function drop_legacy_option(): void {
+
+		if ( false !== get_option( self::LEGACY_OPTION, false ) ) {
+
+			delete_option( self::LEGACY_OPTION );
+
+		}
 
 	}
 
@@ -81,21 +110,33 @@ class Octave_Addons_Perf_Lcp {
 
 	/*
 	RECORDS
+	-- One transient per path. Bumping the generation retires every record;
+	-- the old transients simply expire
 	---------------------------------------------------------- */
 
-	public static function all(): array {
+	public static function generation(): int {
 
-		$all = get_option( self::OPTION, [] );
+		return max( 1, (int) get_option( self::GENERATION_OPTION, 1 ) );
 
-		return is_array( $all ) ? $all : [];
+	}
+
+	protected static function key( string $path ): string {
+
+		return 'oa_perf_lcp_' . self::generation() . '_' . md5( $path );
 
 	}
 
 	public static function entry( string $path ): array {
 
-		$entry = self::all()[ $path ] ?? [];
+		$entry = '' === $path ? false : get_transient( self::key( $path ) );
 
 		return is_array( $entry ) ? $entry : [];
+
+	}
+
+	public static function store( string $path, array $entry ): void {
+
+		set_transient( self::key( $path ), $entry, 2 * self::TTL );
 
 	}
 
@@ -123,14 +164,17 @@ class Octave_Addons_Perf_Lcp {
 
 	public static function forget( string $path ): void {
 
-		$all = self::all();
+		if ( '' !== $path ) {
 
-		if ( isset( $all[ $path ] ) ) {
-
-			unset( $all[ $path ] );
-			update_option( self::OPTION, $all, false );
+			delete_transient( self::key( $path ) );
 
 		}
+
+	}
+
+	public static function forget_all(): void {
+
+		update_option( self::GENERATION_OPTION, self::generation() + 1, true );
 
 	}
 
@@ -149,8 +193,9 @@ class Octave_Addons_Perf_Lcp {
 	/*
 	AJAX REPORT
 	-- No nonce, as cached pages outlive them. Instead only a missing or
-	-- stale record is ever written, and the page only acts on an image that
-	-- is the site's own or whose host the page already loads from
+	-- stale record is ever written, reports are rate limited, a path not
+	-- seen before counts against an hourly budget, and the page only acts
+	-- on an image that is the site's own or whose host it already loads from
 	---------------------------------------------------------- */
 
 	public static function ajax_report(): void {
@@ -168,6 +213,14 @@ class Octave_Addons_Perf_Lcp {
 
 		}
 
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+
+		if ( ! self::allow( 'ip:' . $ip, self::RATE_PER_IP, MINUTE_IN_SECONDS ) || ! self::allow( 'site', self::RATE_SITE, MINUTE_IN_SECONDS ) ) {
+
+			wp_send_json_error( null, 429 );
+
+		}
+
 		$url = 'none' === $kind ? '' : self::clean_url( $url );
 
 		if ( 'none' !== $kind && '' === $url ) {
@@ -176,12 +229,17 @@ class Octave_Addons_Perf_Lcp {
 
 		}
 
-		$all   = self::all();
-		$entry = is_array( $all[ $path ] ?? null ) ? $all[ $path ] : [];
+		$entry = self::entry( $path );
 
 		if ( ! self::is_stale( $entry, $device ) ) {
 
 			wp_send_json_success();
+
+		}
+
+		if ( empty( $entry ) && ! self::allow( 'new', self::NEW_PER_HOUR, HOUR_IN_SECONDS ) ) {
+
+			wp_send_json_error( null, 429 );
 
 		}
 
@@ -193,29 +251,140 @@ class Octave_Addons_Perf_Lcp {
 
 		$changed = $changed || ( $entry[ $device ]['origins'] ?? [] ) !== $origins;
 
-		$entry[ $device ] = [ 'url' => $url, 'kind' => $kind, 'origins' => $origins, 'time' => time() ];
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- public report, validated in clean_details().
+		$entry[ $device ] = array_merge( [ 'url' => $url, 'kind' => $kind, 'origins' => $origins, 'time' => time() ], 'none' === $kind ? [] : self::clean_details( wp_unslash( $_POST ) ) );
 
-		unset( $all[ $path ] );
-		$all[ $path ] = $entry;
+		self::store( $path, $entry );
 
-		if ( count( $all ) > self::MAX_PAGES ) {
+		// A purge per path per hour, and a site-wide hourly budget, at most.
+		if ( $changed && false === get_transient( 'oa_perf_lcp_purged_' . md5( $path ) ) && self::allow( 'purge', self::PURGES_PER_HOUR, HOUR_IN_SECONDS ) ) {
 
-			$all = array_slice( $all, -self::MAX_PAGES, null, true );
-
-		}
-
-		update_option( self::OPTION, $all, false );
-
-		if ( $changed ) {
+			set_transient( 'oa_perf_lcp_purged_' . md5( $path ), 1, HOUR_IN_SECONDS );
 
 			// The path already holds any subdirectory, so only the origin is added.
 			$origin = (string) preg_replace( '#^(https?://[^/]+).*$#i', '$1', home_url() );
 
-			Octave_Addons_Perf_Cache::purge_urls( [ $origin . $path ], 'content' );
+			Octave_Addons_Perf_Cache::purge_urls( [ $origin . $path ], 'lcp' );
 
 		}
 
 		wp_send_json_success();
+
+	}
+
+	/*
+	ALLOW
+	-- A fixed-window counter: true while the bucket has room this window
+	---------------------------------------------------------- */
+
+	public static function allow( string $bucket, int $limit, int $window ): bool {
+
+		$key   = 'oa_perf_lcp_rl_' . md5( $bucket );
+		$state = get_transient( $key );
+		$state = is_array( $state ) && (int) ( $state['start'] ?? 0 ) > time() - $window ? $state : [ 'start' => time(), 'count' => 0 ];
+
+		if ( (int) $state['count'] >= $limit ) {
+
+			return false;
+
+		}
+
+		$state['count'] = (int) $state['count'] + 1;
+
+		set_transient( $key, $state, $window );
+
+		return true;
+
+	}
+
+	/*
+	CLEAN DETAILS
+	-- What the browser measured about the image: intrinsic and rendered
+	-- size, bytes transferred and the MIME type it arrived as. Anything out
+	-- of range is dropped rather than trusted
+	---------------------------------------------------------- */
+
+	public static function clean_details( array $post ): array {
+
+		$details = [];
+
+		foreach ( [ 'w', 'h', 'rw', 'rh', 'bytes' ] as $key ) {
+
+			$value = isset( $post[ $key ] ) ? (int) $post[ $key ] : 0;
+
+			if ( $value > 0 && $value <= ( 'bytes' === $key ? 50 * MB_IN_BYTES : 20000 ) ) {
+
+				$details[ $key ] = $value;
+
+			}
+
+		}
+
+		$type = strtolower( trim( (string) ( $post['type'] ?? '' ) ) );
+
+		if ( preg_match( '#^image/[a-z0-9.+-]{1,20}$#', $type ) ) {
+
+			$details['type'] = $type;
+
+		}
+
+		return $details;
+
+	}
+
+	/*
+	FORMAT
+	-- The delivered format: the MIME type the browser saw, which reveals a
+	-- WebP or AVIF served under a .jpg URL by rewrite rules, else the URL's
+	-- extension
+	---------------------------------------------------------- */
+
+	public static function format( array $record ): string {
+
+		if ( ! empty( $record['type'] ) ) {
+
+			return strtoupper( (string) preg_replace( '#^image/(x-)?#', '', (string) $record['type'] ) );
+
+		}
+
+		$extension = strtolower( pathinfo( (string) wp_parse_url( (string) ( $record['url'] ?? '' ), PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+
+		return 'jpg' === $extension ? 'JPEG' : strtoupper( $extension );
+
+	}
+
+	/*
+	WARNINGS
+	-- Readable problems with a record's image for the diagnostics
+	---------------------------------------------------------- */
+
+	public static function warnings( array $record ): array {
+
+		$warnings = [];
+		$format   = self::format( $record );
+
+		if ( '' !== (string) ( $record['url'] ?? '' ) && ! in_array( $format, [ 'WEBP', 'AVIF', 'SVG+XML' ], true ) ) {
+
+			/* translators: %s: image format. */
+			$warnings[] = sprintf( __( 'Delivered as %s rather than WebP or AVIF.', 'octave-addons' ), $format );
+
+		}
+
+		if ( (int) ( $record['bytes'] ?? 0 ) > self::OVERSIZED_BYTES ) {
+
+			/* translators: %s: file size. */
+			$warnings[] = sprintf( __( 'The image transferred %s; aim for under 200 KB.', 'octave-addons' ), size_format( (int) $record['bytes'] ) );
+
+		}
+
+		if ( (int) ( $record['rw'] ?? 0 ) > 0 && (int) ( $record['w'] ?? 0 ) > 2 * (int) $record['rw'] ) {
+
+			/* translators: 1: intrinsic width, 2: rendered width. */
+			$warnings[] = sprintf( __( 'The image is %1$dpx wide but shown at %2$dpx; serve a smaller size.', 'octave-addons' ), (int) $record['w'], (int) $record['rw'] );
+
+		}
+
+		return $warnings;
 
 	}
 
@@ -256,10 +425,26 @@ class Octave_Addons_Perf_Lcp {
 
 	public static function same_file( string $a, string $b ): bool {
 
-		$a = (string) wp_parse_url( trim( $a ), PHP_URL_PATH );
-		$b = (string) wp_parse_url( trim( $b ), PHP_URL_PATH );
+		$a = self::source_path( $a );
+		$b = self::source_path( $b );
 
 		return '' !== $a && $a === $b;
+
+	}
+
+	/*
+	SOURCE PATH
+	-- A URL's path with any next-generation suffix removed. Imagify's picture
+	-- delivery names its copies photo.jpg.webp, so the browser reports that
+	-- file while the page's <img> names photo.jpg; rewrite delivery keeps
+	-- photo.jpg throughout
+	---------------------------------------------------------- */
+
+	public static function source_path( string $url ): string {
+
+		$path = (string) wp_parse_url( trim( $url ), PHP_URL_PATH );
+
+		return (string) preg_replace( '/(\.(?:jpe?g|png|gif))\.(?:webp|avif)$/i', '$1', $path );
 
 	}
 
@@ -326,10 +511,13 @@ class Octave_Addons_Perf_Lcp {
 
 		}
 
+		// Another plugin already chose a high-priority image preload; a second would compete with it.
+		$competing = (bool) preg_match( '#<link\b(?=[^>]*rel=["\']?preload)(?=[^>]*as=["\']?image)(?=[^>]*fetchpriority=["\']?high)[^>]*>#i', $html );
+
 		foreach ( $urls as $url => $devices ) {
 
 			// Already preloaded by the theme or another plugin.
-			if ( preg_match( '#<link\b[^>]*rel=["\']?preload[^>]*' . preg_quote( esc_url( $url ), '#' ) . '#i', $html ) ) {
+			if ( $competing || preg_match( '#<link\b[^>]*rel=["\']?preload[^>]*' . preg_quote( esc_url( $url ), '#' ) . '#i', $html ) ) {
 
 				continue;
 
@@ -390,10 +578,12 @@ class Octave_Addons_Perf_Lcp {
 	/*
 	REPORTER
 	-- Inline, so it costs no request. Watches Largest Contentful Paint and
-	-- sends the final candidate, for a screen size still unknown, shortly after the load event, or as the page
-	-- is hidden, whichever comes first. Third-party origins are reported when
--- their first request started after the HTML arrived and before the LCP
--- image was shown; a font or fetch from one means it needs CORS
+	-- sends the final candidate, for a screen size still unknown, shortly
+	-- after the load event, or as the page is hidden, whichever comes first,
+	-- with the image's intrinsic and rendered size, bytes and MIME type
+	-- Third-party origins are reported when their first request started
+	-- after the HTML arrived and before the LCP image was shown; a font or
+	-- fetch from one means it needs CORS
 	---------------------------------------------------------- */
 
 	public static function reporter( string $path, array $devices = self::DEVICES ): string {
@@ -416,6 +606,9 @@ class Octave_Addons_Perf_Lcp {
 			. 'var el=last.element,tag=el&&el.tagName?el.tagName.toUpperCase():"",kind=!last.url?"none":("IMG"===tag?"img":("VIDEO"===tag?"poster":"bg"));'
 			. 'var b=new FormData();b.append("action",c.action);b.append("path",c.path);'
 			. 'b.append("device",device);b.append("kind",kind);b.append("url",last.url||"");'
+			. 'try{if(el&&el.naturalWidth){b.append("w",el.naturalWidth);b.append("h",el.naturalHeight);}'
+			. 'if(el&&el.getBoundingClientRect){var box=el.getBoundingClientRect();b.append("rw",Math.round(box.width));b.append("rh",Math.round(box.height));}'
+			. 'var res=last.url?performance.getEntriesByName(last.url)[0]:null;if(res){b.append("bytes",res.encodedBodySize||res.transferSize||0);if(res.contentType)b.append("type",res.contentType);}}catch(e){}'
 			. 'try{var nav=performance.getEntriesByType("navigation")[0],after=nav?nav.responseEnd+50:0,seen={},list=[];'
 			. 'performance.getEntriesByType("resource").forEach(function(r){var o=new URL(r.name).origin;if(o===location.origin||0!==o.indexOf("https:"))return;'
 			. 'var s=seen[o]||(seen[o]={t:r.startTime,f:false});if(r.startTime<s.t)s.t=r.startTime;'

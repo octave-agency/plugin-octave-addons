@@ -111,6 +111,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			'loader_js'              => '',
 
 			'transitions_enabled'    => false,
+			'performance'            => false,
 			'transition_type'        => 'slide-up',
 			'transition_loader_type' => 'match',
 			'transition_duration'    => 600,
@@ -176,6 +177,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$clean['loader_enabled']       = ! empty( $input['loader_enabled'] );
 		$clean['loader_show_progress'] = ! empty( $input['loader_show_progress'] );
 		$clean['transitions_enabled']  = ! empty( $input['transitions_enabled'] );
+		$clean['performance']          = ! empty( $input['performance'] );
 
 		$loader_type          = sanitize_key( $input['loader_type'] ?? '' );
 		$clean['loader_type'] = array_key_exists( $loader_type, $this->loader_types() ) ? $loader_type : $defaults['loader_type'];
@@ -242,11 +244,30 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		?>
 
+		<div class="notice notice-warning inline oa-inline-notice">
+			<p><?php esc_html_e( 'Loaders and page transitions cover the page while they play, so the largest element appears later and taps wait. That can lower Lighthouse LCP and INP scores. Performance mode keeps every page visible the moment it arrives.', 'octave-addons' ); ?></p>
+		</div>
+
 		<table class="form-table oa-form-table" role="presentation">
 
 			<?php
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Initial page loader', 'octave-addons' ), 'first' => true ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Performance', 'octave-addons' ), 'first' => true ] );
+
+			Octave_Addons_Fields::row( [
+				'label' => __( 'Performance mode', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					Octave_Addons_Fields::switch_field( [
+						'name'    => $this->field_name( 'performance' ),
+						'checked' => ! empty( $s['performance'] ),
+						'help'    => __( 'Recommended for speed. The initial loader never shows and an arriving page is never covered; transitions only play on the page being left after an internal link is clicked. Reduced-motion visitors and back/forward navigation never see an overlay either way.', 'octave-addons' ),
+					] );
+
+				},
+			] );
+
+			Octave_Addons_Fields::section( [ 'label' => __( 'Initial page loader', 'octave-addons' ) ] );
 
 			Octave_Addons_Fields::row( [
 				'label' => __( 'Initial page loader', 'octave-addons' ),
@@ -663,6 +684,14 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$transition = ! empty( $s['transitions_enabled'] ) ? $s['transition_type'] : '';
 		$loader     = ! empty( $s['loader_enabled'] ) ? $s['loader_type'] : '';
 
+		// Performance mode never covers a page as it loads, so no loader is
+		// needed, and a Replay Loader transition has nothing left to play.
+		if ( ! empty( $s['performance'] ) ) {
+
+			return [ '', 'replay-loader' === $transition ? '' : $transition ];
+
+		}
+
 		// One loader element serves both systems, so the initial loader's own
 		// style replays whenever it is on.
 		if ( 'replay-loader' === $transition && '' === $loader ) {
@@ -690,6 +719,13 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		}
 
 		list( $loader, $transition ) = $this->active_types( $s );
+
+		// Performance mode can leave nothing to play; then nothing loads.
+		if ( '' === $loader && '' === $transition ) {
+
+			return;
+
+		}
 
 		$this->enqueue_style( 'octave-addons-page-motion', 'core.css', [] );
 
@@ -724,13 +760,13 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		}
 
-		$path = OCTAVE_ADDONS_DIR . self::ASSETS . 'core.js';
+		$core = self::asset( self::ASSETS . 'core.js' );
 
-		wp_enqueue_script( 'octave-addons-page-motion', OCTAVE_ADDONS_URL . self::ASSETS . 'core.js', [], self::file_version( $path ), false );
+		wp_enqueue_script( 'octave-addons-page-motion', $core['url'], [], $core['version'], false );
 		wp_add_inline_script( 'octave-addons-page-motion', 'window.oaPageMotion = ' . wp_json_encode( $this->script_config( $s, $loader, $transition ) ) . ';', 'before' );
 
 		$custom = [
-			'loader'     => ! empty( $s['loader_enabled'] ) ? $s['loader_js'] : '',
+			'loader'     => ! empty( $s['loader_enabled'] ) && empty( $s['performance'] ) ? $s['loader_js'] : '',
 			'transition' => '' !== $transition ? $s['transition_js'] : '',
 		];
 
@@ -804,14 +840,15 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$scale = (int) $s['transition_duration'] / self::TRANSITION_BASE_MS;
 
 		return [
-			'loader'     => ! empty( $s['loader_enabled'] ),
-			'frequency'  => $s['loader_frequency'],
-			'duration'   => (int) $s['loader_duration'],
-			'transition' => $transition,
-			'replay'     => 'replay-loader' === $transition,
-			'cover'      => 'replay-loader' === $transition ? (int) round( $s['loader_duration'] / 3 ) : (int) round( ( self::COVER_MS[ $transition ] ?? 400 ) * $scale ),
-			'reveal'     => (int) round( ( self::REVEAL_MS[ $transition ] ?? 600 ) * $scale ),
-			'exclude'    => array_values( array_unique( array_filter( $exclude ) ) ),
+			'loader'      => ! empty( $s['loader_enabled'] ) && empty( $s['performance'] ),
+			'performance' => ! empty( $s['performance'] ),
+			'frequency'   => $s['loader_frequency'],
+			'duration'    => (int) $s['loader_duration'],
+			'transition'  => $transition,
+			'replay'      => 'replay-loader' === $transition,
+			'cover'       => 'replay-loader' === $transition ? (int) round( $s['loader_duration'] / 3 ) : (int) round( ( self::COVER_MS[ $transition ] ?? 400 ) * $scale ),
+			'reveal'      => (int) round( ( self::REVEAL_MS[ $transition ] ?? 600 ) * $scale ),
+			'exclude'     => array_values( array_unique( array_filter( $exclude ) ) ),
 		];
 
 	}
@@ -1016,7 +1053,9 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 	protected function enqueue_style( string $handle, string $file, array $deps ): void {
 
-		wp_enqueue_style( $handle, OCTAVE_ADDONS_URL . self::ASSETS . $file, $deps, self::file_version( OCTAVE_ADDONS_DIR . self::ASSETS . $file ) );
+		$asset = self::asset( self::ASSETS . $file );
+
+		wp_enqueue_style( $handle, $asset['url'], $deps, $asset['version'] );
 
 	}
 

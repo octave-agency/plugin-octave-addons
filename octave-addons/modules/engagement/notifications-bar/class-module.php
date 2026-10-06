@@ -1182,26 +1182,11 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 		}
 
-		$base_dir = OCTAVE_ADDONS_DIR . 'modules/engagement/notifications-bar/assets/';
-		$base_url = OCTAVE_ADDONS_URL . 'modules/engagement/notifications-bar/assets/';
+		$css = self::asset( 'modules/engagement/notifications-bar/assets/notifications-bar.css' );
+		$js  = self::asset( 'modules/engagement/notifications-bar/assets/notifications-bar.js' );
 
-		$css_path = $base_dir . 'notifications-bar.css';
-		$js_path  = $base_dir . 'notifications-bar.js';
-
-		wp_enqueue_style(
-			'octave-notifications-bar',
-			$base_url . 'notifications-bar.css',
-			[],
-			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
-		);
-
-		wp_enqueue_script(
-			'octave-notifications-bar',
-			$base_url . 'notifications-bar.js',
-			[],
-			file_exists( $js_path ) ? (string) filemtime( $js_path ) : OCTAVE_ADDONS_VERSION,
-			true
-		);
+		wp_enqueue_style( 'octave-notifications-bar', $css['url'], [], $css['version'] );
+		wp_enqueue_script( 'octave-notifications-bar', $js['url'], [], $js['version'], true );
 
 		wp_add_inline_style( 'octave-notifications-bar', $this->inline_css( $s ) );
 

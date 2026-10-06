@@ -475,3 +475,104 @@ function test_url_purge_targets_same_origin_urls_only(): void {
 	oa_assert_same( [ 'https://example.com/a/' ], $seen );
 
 }
+
+/*
+PIPELINE TIMINGS AND OWNERSHIP
+---------------------------------------------------------- */
+
+function test_each_transformer_is_timed_and_failures_still_fail_open(): void {
+
+	$html = '<!doctype html><html><body><p>Original</p></body></html>';
+
+	Octave_Addons_Perf_Html::register( 'media', static function ( string $html ): string {
+
+		throw new RuntimeException( 'parser exploded' );
+
+	} );
+
+	Octave_Addons_Perf_Html::register( 'files', static function ( string $html ): string {
+
+		return str_replace( 'Original', 'Inlined', $html );
+
+	}, 50 );
+
+	oa_assert_contains( 'Inlined', Octave_Addons_Perf_Html::process( $html ), 'the working transformer still applied' );
+
+	$timings = Octave_Addons_Perf_Html::timings();
+
+	oa_assert_same( [ 'oa-media', 'oa-css-inline', 'oa-total' ], array_keys( $timings ) );
+	oa_assert( $timings['oa-total'] >= $timings['oa-media'], 'total covers every transformer' );
+
+}
+
+function test_no_buffer_starts_when_every_transformer_is_owned_elsewhere(): void {
+
+	Octave_Addons_Perf_Html::register( 'delay', 'strtoupper', 30, static function (): bool {
+
+		return false;
+
+	} );
+
+	$level = ob_get_level();
+
+	Octave_Addons_Perf_Html::start();
+
+	$started = ob_get_level() > $level;
+
+	if ( $started ) {
+
+		ob_end_clean();
+
+	}
+
+	oa_assert( ! $started, 'nothing to do, so no output buffer' );
+
+}
+
+function test_media_is_not_needed_when_another_plugin_lazy_loads_everything(): void {
+
+	oa_define_plugins();
+	update_option( 'wp_rocket_settings', [ 'lazyload' => 1, 'lazyload_iframes' => 1 ] );
+
+	$module = oa_media( [ 'header_eager' => false, 'dimensions' => false, 'lazy_posters' => false, 'lcp' => false ] );
+
+	oa_assert( ! $module->is_needed() );
+	oa_assert( oa_media( [ 'lcp' => true ] )->is_needed(), 'learned LCP still needs the page' );
+
+}
+
+function test_server_timing_needs_the_signed_argument(): void {
+
+	oa_assert( ! Octave_Addons_Perf_Html::timing_requested() );
+
+	$_GET[ Octave_Addons_Perf_Html::TIMING_ARG ] = '1';
+
+	oa_assert( ! Octave_Addons_Perf_Html::timing_requested(), 'a guessable value is refused' );
+
+	$_GET[ Octave_Addons_Perf_Html::TIMING_ARG ] = Octave_Addons_Perf_Html::timing_key();
+
+	oa_assert( Octave_Addons_Perf_Html::timing_requested() );
+
+}
+
+/*
+LOADER AND ANIMATION PERFORMANCE MODE
+---------------------------------------------------------- */
+
+function test_performance_mode_is_opt_in_and_drops_arrival_overlays(): void {
+
+	$loader     = oa_module( 'page-loader' );
+	$animations = oa_module( 'animations' );
+	$types      = new ReflectionMethod( $loader, 'active_types' );
+
+	oa_assert_same( false, $loader->get_defaults()['performance'], 'existing sites keep their loader' );
+	oa_assert_same( false, $animations->get_defaults()['performance'], 'existing sites keep their motion' );
+
+	$s = array_merge( $loader->get_defaults(), [ 'loader_enabled' => true, 'transitions_enabled' => true, 'transition_type' => 'slide-up' ] );
+
+	oa_assert_same( [ 'brand-counter', 'slide-up' ], $types->invoke( $loader, $s ), 'unchanged without performance mode' );
+	oa_assert_same( [ '', 'slide-up' ], $types->invoke( $loader, [ 'performance' => true ] + $s ), 'no initial loader, exit transitions kept' );
+	oa_assert_same( [ '', '' ], $types->invoke( $loader, [ 'performance' => true, 'transition_type' => 'replay-loader' ] + $s ), 'a replayed loader would cover the arriving page' );
+	oa_assert( $animations->sanitize( [ 'performance' => '1' ] )['performance'] );
+
+}

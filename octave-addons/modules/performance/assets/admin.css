@@ -248,3 +248,33 @@ DATABASE TABLE
     }
 
 }
+
+/*
+Status tables
+---------------------------------------------------------- */
+
+.oa-perf-table {
+    margin-top: 12px;
+}
+
+.oa-perf-table th {
+    width: 220px;
+    font-weight: 600;
+}
+
+.oa-perf-table td {
+    overflow-wrap: anywhere;
+}
+
+.oa-perf-table .oa-perf-conflict th,
+.oa-perf-table .oa-perf-conflict td {
+    color: var(--oa-warning);
+}
+
+@media (max-width: 782px) {
+
+    .oa-perf-table th {
+        width: auto;
+    }
+
+}

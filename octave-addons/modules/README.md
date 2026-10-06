@@ -125,4 +125,12 @@ Modules under `performance/` share the services in `performance/services/`
 rewrites page markup registers a transformer with
 `Octave_Addons_Perf_Html::register()` instead of starting its own output
 buffer, and checks `Octave_Addons_Perf_Context::can_optimize()` for anything
-it does outside that pipeline.
+it does outside that pipeline. `register()` takes an optional fourth argument,
+a callable returning false when the transformer has nothing to do on the
+request (for instance because `Octave_Addons_Perf::handled_elsewhere()` names
+another plugin), so no buffer starts when nothing needs it.
+
+Frontend assets are enqueued through `Octave_Addons_Module::asset()`, which
+serves the committed `.min.js` / `.min.css` copy unless `SCRIPT_DEBUG` is on.
+After editing a frontend asset, run `tests/build-assets.sh`; the JS tests fail
+while a minified copy is missing or stale.

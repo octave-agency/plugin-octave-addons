@@ -10,6 +10,10 @@ MODULE: ANIMATIONS
 -- The CSS override prints after the selected preset, and the JS override
 -- replaces the preset-specific script while the controller keeps running
 -- Custom only loads no preset and runs only the overrides; Off loads nothing
+-- Performance mode leaves everything in the first screen visible and still,
+-- so the largest element is never hidden, animates only what is further
+-- down, and never splits headings into words or lines. It is off unless
+-- chosen, so existing sites keep their motion
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -53,6 +57,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 		return [
 			'enabled'        => false,
 			'type'           => 'luxury',
+			'performance'    => false,
 			'css_override'   => '',
 			'js_override'    => '',
 			'load_in_editor' => false,
@@ -134,6 +139,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 		$clean                   = $this->get_defaults();
 		$clean['enabled']        = ! empty( $input['enabled'] );
 		$clean['load_in_editor'] = ! empty( $input['load_in_editor'] );
+		$clean['performance']    = ! empty( $input['performance'] );
 
 		$type          = sanitize_key( $input['type'] ?? '' );
 		$clean['type'] = array_key_exists( $type, $this->types() ) ? $type : 'luxury';
@@ -154,9 +160,26 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 		?>
 
+		<div class="notice notice-warning inline oa-inline-notice">
+			<p><?php esc_html_e( 'Entrance animations keep content hidden until it animates in. When that includes the hero, the largest element appears late, and splitting many headings into words costs main-thread time, both of which can lower Lighthouse LCP and INP scores. Performance mode avoids both.', 'octave-addons' ); ?></p>
+		</div>
+
 		<table class="form-table oa-form-table" role="presentation">
 
 			<?php
+
+			Octave_Addons_Fields::row( [
+				'label' => __( 'Performance mode', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					Octave_Addons_Fields::switch_field( [
+						'name'    => $this->field_name( 'performance' ),
+						'checked' => ! empty( $s['performance'] ),
+						'help'    => __( 'Recommended for speed. Everything visible when the page opens stays visible and still; only content further down animates as it scrolls in, and headings are never split into words or lines.', 'octave-addons' ),
+					] );
+
+				},
+			] );
 
 			Octave_Addons_Fields::row( [
 				'for'   => $this->field_id( 'type' ),
@@ -316,6 +339,12 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 			$this->enqueue_script( $controller, 'controller.js', [], false );
 
+			if ( ! empty( $s['performance'] ) ) {
+
+				wp_add_inline_script( $controller, 'window.oaAnimPerformance = true;', 'before' );
+
+			}
+
 		}
 
 		// -------- CSS --------
@@ -363,7 +392,9 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 	protected function enqueue_style( string $handle, string $file, array $deps ): void {
 
-		wp_enqueue_style( $handle, OCTAVE_ADDONS_URL . self::ASSETS . $file, $deps, self::file_version( OCTAVE_ADDONS_DIR . self::ASSETS . $file ) );
+		$asset = self::asset( self::ASSETS . $file );
+
+		wp_enqueue_style( $handle, $asset['url'], $deps, $asset['version'] );
 
 	}
 
@@ -375,7 +406,9 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 	protected function enqueue_script( string $handle, string $file, array $deps, bool $in_footer ): void {
 
-		wp_enqueue_script( $handle, OCTAVE_ADDONS_URL . self::ASSETS . $file, $deps, self::file_version( OCTAVE_ADDONS_DIR . self::ASSETS . $file ), $in_footer );
+		$asset = self::asset( self::ASSETS . $file );
+
+		wp_enqueue_script( $handle, $asset['url'], $deps, $asset['version'], $in_footer );
 
 	}
 
