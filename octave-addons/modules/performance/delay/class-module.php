@@ -185,7 +185,11 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 						?>
 
-						<fieldset class="oa-perf-checklist">
+						<fieldset class="oa-perf-checklist" data-oa-perf-select-group>
+							<label class="oa-perf-select-all">
+								<input type="checkbox" data-oa-perf-select-all>
+								<?php esc_html_e( 'Select all', 'octave-addons' ); ?>
+							</label>
 							<?php
 
 							foreach ( $services as $id => $service ) :

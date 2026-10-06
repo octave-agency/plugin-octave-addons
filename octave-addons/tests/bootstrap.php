@@ -57,6 +57,8 @@ function oa_test_reset(): void {
 	$GLOBALS['oa_options']   = [];
 	$GLOBALS['oa_autoload']  = [];
 	$GLOBALS['oa_transients'] = [];
+	$GLOBALS['oa_cache_reads'] = [];
+	$GLOBALS['oa_cache_deleted'] = [];
 	$GLOBALS['oa_cron']      = [];
 	$GLOBALS['oa_http']      = null;
 	$GLOBALS['oa_http_log']  = [];
@@ -196,6 +198,34 @@ function get_transient( $name ) {
 function set_transient( $name, $value, $ttl = 0 ) {
 
 	$GLOBALS['oa_transients'][ $name ] = $value;
+
+	return true;
+
+}
+
+/*
+OBJECT CACHE
+-- Transients live in $GLOBALS['oa_transients'] either way; oa_flags
+-- ext_cache switches the code onto its persistent object cache path
+---------------------------------------------------------- */
+
+function wp_using_ext_object_cache() {
+
+	return oa_flag( 'ext_cache' );
+
+}
+
+function wp_cache_get( $key, $group = '', $force = false ) {
+
+	$GLOBALS['oa_cache_reads'][] = [ $key, $group, $force ];
+
+	return 'transient' === $group ? ( $GLOBALS['oa_transients'][ $key ] ?? false ) : false;
+
+}
+
+function wp_cache_delete( $key, $group = '' ) {
+
+	$GLOBALS['oa_cache_deleted'][] = [ $key, $group ];
 
 	return true;
 
@@ -550,9 +580,9 @@ function untrailingslashit( $value ) {
 
 }
 
-function wp_json_encode( $value ) {
+function wp_json_encode( $value, $flags = 0 ) {
 
-	return json_encode( $value );
+	return json_encode( $value, $flags );
 
 }
 

@@ -313,3 +313,69 @@ function test_frontend_uses_local_copy_and_drops_google_hints(): void {
 	oa_assert_contains( '/cache/octave-addons/fonts/', $html );
 
 }
+
+/*
+DETECTION
+-- Builders load Google Fonts in more than one way; each must be found
+---------------------------------------------------------- */
+
+const OA_WEBFONT_SCRIPT = "<script>WebFont.load({ google: { families: ['Poppins:400,700:latin,latin-ext', 'Open Sans:400'] } });</script>";
+const OA_WEBFONT_CSS    = 'https://fonts.googleapis.com/css?family=Poppins:400,700|Open+Sans:400&subset=latin,latin-ext';
+
+function test_google_fonts_found_in_links_imports_and_webfont_loader(): void {
+
+	$html = '<link rel="stylesheet" href="' . esc_attr( OA_GOOGLE_CSS ) . '">'
+		. "<style>@import url('https://fonts.googleapis.com/css2?family=Lora&display=swap');</style>"
+		. OA_WEBFONT_SCRIPT;
+
+	$sources = Octave_Addons_Perf_Google_Fonts::sources_in( $html );
+
+	oa_assert_same( [ OA_GOOGLE_CSS, 'https://fonts.googleapis.com/css2?family=Lora&display=swap', OA_WEBFONT_CSS ], $sources );
+
+}
+
+function test_webfont_loader_and_import_use_local_copies(): void {
+
+	$module = oa_fonts( [ 'self_host' => true ] );
+	$page   = oa_page( "<style>@import url('https://fonts.googleapis.com/css2?family=Lora&display=swap');</style>" . OA_WEBFONT_SCRIPT );
+
+	oa_fake_google();
+
+	oa_assert_same( $page, $module->transform( $page ), 'uncached: Google kept' );
+
+	Octave_Addons_Perf_Google_Fonts::process_queue();
+
+	$html = $module->transform( $page );
+
+	oa_assert_not_contains( 'fonts.googleapis.com', $html );
+	oa_assert_contains( 'custom: {"families":["Poppins","Open Sans"],"urls":["https://example.com/wp-content/cache/octave-addons/fonts/', $html );
+	oa_assert_contains( '@import url("https://example.com/wp-content/cache/octave-addons/fonts/', $html );
+
+}
+
+function test_manual_refresh_discovers_fonts_on_the_home_page(): void {
+
+	$GLOBALS['oa_http'] = static function ( string $url ) {
+
+		if ( 0 === strpos( $url, 'https://example.com/' ) ) {
+
+			return oa_http_response( 200, '<!DOCTYPE html><html><head>' . OA_WEBFONT_SCRIPT . '</head></html>', 'text/html' );
+
+		}
+
+		if ( 0 === strpos( $url, 'https://fonts.googleapis.com/' ) ) {
+
+			return oa_http_response( 200, "@font-face { font-family: 'Poppins'; src: url(https://fonts.gstatic.com/s/p/a.woff2) format('woff2'); }", 'text/css' );
+
+		}
+
+		return oa_http_response( 200, 'wOF2' . str_repeat( 'x', 64 ), 'font/woff2' );
+
+	};
+
+	$results = Octave_Addons_Perf_Google_Fonts::refresh();
+
+	oa_assert( ! empty( $results[ OA_WEBFONT_CSS ]['ok'] ), 'found and cached without a visitor' );
+	oa_assert_contains( Octave_Addons_Perf_Context::BYPASS_ARG . '=', $GLOBALS['oa_http_log'][0]['url'], 'home page fetched unoptimised' );
+
+}

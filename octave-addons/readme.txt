@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.27.2
+Stable tag:        3.28.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -162,6 +162,15 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.28.0 =
+* Fixed diagnostics reporting "The page answered but no report was recorded" on every scan. The admin request read back its own in-memory copy of the pending scan instead of the report the scanned page saved, and on sites with a persistent object cache the scan token also failed to match once lowercased. Scans now also record a report when no page transformation is switched on.
+* Self-hosted Google Fonts now finds fonts loaded through inline `@import` rules and the Web Font Loader's `WebFont.load()` (used by builders such as Breakdance and Oxygen), as well as `<link>` tags. The home page is checked in the background as soon as self-hosting is on, and on every manual refresh, so fonts are cached without waiting for an uncached page view.
+* Removed the Cache & Safety panel. The admin bar shortcut is always available to administrators and logged-in users always see unoptimised pages.
+* Removed the unoptimised page link from Troubleshooting.
+* Performance now lists its modules in the left navigation as quick scroll links that glide to each panel and highlight the one in view.
+* Added Select all checkboxes to each Third-Party Script Delay service group and to the Database Cleanup table.
+* Performance action results now use the plugin's standard inline notices, and the extra space below the Performance status area is gone.
 
 = 3.27.2 =
 * Updated Modern WordPress Admin styling for Rank Math's React toggle controls, Links report cards and upgrade prompts.

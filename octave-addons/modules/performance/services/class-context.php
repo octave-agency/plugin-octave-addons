@@ -132,7 +132,9 @@ class Octave_Addons_Perf_Context {
 
 		}
 
-		if ( is_user_logged_in() && empty( Octave_Addons_Perf::settings( 'performance-cache' )['optimize_logged_in'] ) ) {
+		// Logged-in users, including editors and customers in their account, always
+		// see pages exactly as WordPress renders them.
+		if ( is_user_logged_in() ) {
 
 			return 'logged-in';
 
@@ -203,9 +205,9 @@ class Octave_Addons_Perf_Context {
 
 	/*
 	BYPASS REQUESTED
-	-- ?oa_no_optimize=1 works for administrators. The site key shown on the
-	-- Performance page works for anyone, so a logged-out browser can compare
-	-- the original page without the switch becoming a public toggle
+	-- ?oa_no_optimize=1 works for administrators. The site key works for
+	-- anyone, so a logged-out browser can compare the original page without
+	-- the switch becoming a public toggle
 	---------------------------------------------------------- */
 
 	public static function bypass_requested(): bool {

@@ -28,6 +28,8 @@ class Octave_Addons_Perf_Google_Fonts {
 	public const QUEUE_OPTION    = 'octave_addons_perf_google_fonts_queue';
 	public const FETCH_HOOK      = 'octave_addons_perf_fonts_fetch';
 	public const REFRESH_HOOK    = 'octave_addons_perf_fonts_refresh';
+	public const DISCOVER_HOOK   = 'octave_addons_perf_fonts_discover';
+	public const DISCOVERED_FLAG = 'oa_perf_fonts_discovered';
 	public const DIR             = 'fonts';
 
 	public const CSS_HOST  = 'fonts.googleapis.com';
@@ -116,6 +118,195 @@ class Octave_Addons_Perf_Google_Fonts {
 	public static function key( string $url ): string {
 
 		return substr( md5( self::normalize( $url ) ), 0, 16 );
+
+	}
+
+	/*
+	SOURCES IN
+	-- Every Google Fonts stylesheet a page asks for, however it asks: a
+	-- <link> (stylesheet or preload), an @import inside a <style> block, or a
+	-- WebFont.load() call from the Web Font Loader that page builders such as
+	-- Breakdance and Oxygen print, which builds its stylesheet URL in the
+	-- browser, so its URL is rebuilt here the same way
+	---------------------------------------------------------- */
+
+	public static function sources_in( string $html ): array {
+
+		$sources = [];
+
+		preg_match_all( '#(?:https?:)?//' . preg_quote( self::CSS_HOST, '#' ) . '/(?:css2?|icon)\?[^"\'\s<>()]+#i', $html, $matches );
+
+		foreach ( $matches[0] as $url ) {
+
+			$url = self::normalize( $url );
+
+			if ( self::is_stylesheet_url( $url ) ) {
+
+				$sources[ $url ] = true;
+
+			}
+
+		}
+
+		foreach ( self::webfont_configs( $html ) as $config ) {
+
+			$sources[ $config['url'] ] = true;
+
+		}
+
+		return array_keys( $sources );
+
+	}
+
+	/*
+	WEBFONT CONFIGS
+	-- The google: { families: [...] } blocks of WebFont.load() calls, each
+	-- with the stylesheet URL the loader would request for them
+	---------------------------------------------------------- */
+
+	public static function webfont_configs( string $html ): array {
+
+		if ( false === stripos( $html, 'WebFont' ) ) {
+
+			return [];
+
+		}
+
+		preg_match_all( '/google\s*:\s*\{\s*families\s*:\s*\[([^\]]*)\][^{}]*\}/i', $html, $matches, PREG_SET_ORDER );
+
+		$configs = [];
+
+		foreach ( $matches as $match ) {
+
+			preg_match_all( '/([\'"])((?:(?!\1).)+)\1/', $match[1], $strings );
+
+			$families = array_values( array_filter( array_map( 'trim', $strings[2] ?? [] ), 'strlen' ) );
+			$url      = self::webfont_url( $families );
+
+			if ( '' !== $url ) {
+
+				$configs[] = [ 'match' => $match[0], 'families' => $families, 'url' => $url ];
+
+			}
+
+		}
+
+		return $configs;
+
+	}
+
+	/*
+	WEBFONT URL
+	-- Mirrors the Web Font Loader: families joined by |, spaces as +, and any
+	-- third :subset part gathered into one subset parameter
+	---------------------------------------------------------- */
+
+	public static function webfont_url( array $families ): string {
+
+		$names   = [];
+		$subsets = [];
+
+		foreach ( $families as $family ) {
+
+			$parts = explode( ':', (string) $family );
+			$name  = trim( $parts[0] );
+
+			if ( '' === $name || ! preg_match( '/^[\w\s\-]+$/u', $name ) ) {
+
+				continue;
+
+			}
+
+			$variants = isset( $parts[1] ) && '' !== trim( $parts[1] ) ? ':' . preg_replace( '/[^\w,;@.]/', '', $parts[1] ) : '';
+
+			foreach ( isset( $parts[2] ) ? explode( ',', $parts[2] ) : [] as $subset ) {
+
+				$subset = sanitize_key( $subset );
+
+				if ( '' !== $subset ) {
+
+					$subsets[ $subset ] = true;
+
+				}
+
+			}
+
+			$names[] = str_replace( ' ', '+', $name ) . $variants;
+
+		}
+
+		if ( empty( $names ) ) {
+
+			return '';
+
+		}
+
+		return 'https://' . self::CSS_HOST . '/css?family=' . implode( '|', $names ) . ( $subsets ? '&subset=' . implode( ',', array_keys( $subsets ) ) : '' );
+
+	}
+
+	/*
+	DISCOVER
+	-- Requests the home page (or the given pages) as a logged-out visitor,
+	-- unoptimised and past any page cache, and returns the Google Fonts
+	-- stylesheets found. Stylesheets used to be found only as uncached pages
+	-- were rendered, which a page cache can prevent indefinitely
+	---------------------------------------------------------- */
+
+	public static function discover( array $urls = [] ): array {
+
+		$found = [];
+
+		foreach ( $urls ?: [ home_url( '/' ) ] as $url ) {
+
+			$response = wp_remote_get( add_query_arg( [
+				Octave_Addons_Perf_Context::BYPASS_ARG => Octave_Addons_Perf_Context::bypass_key(),
+				'oa_cb'                                => time(),
+			], $url ), [
+				'timeout'   => 15,
+				'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
+				'cookies'   => [],
+			] );
+
+			if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+
+				continue;
+
+			}
+
+			foreach ( self::sources_in( (string) wp_remote_retrieve_body( $response ) ) as $source ) {
+
+				$found[ $source ] = true;
+
+			}
+
+		}
+
+		set_transient( self::DISCOVERED_FLAG, time(), DAY_IN_SECONDS );
+
+		return array_keys( $found );
+
+	}
+
+	/*
+	DISCOVER AND QUEUE
+	-- Cron handler: queues every stylesheet the home page uses that has no
+	-- local copy yet, then downloads them
+	---------------------------------------------------------- */
+
+	public static function discover_and_fetch(): void {
+
+		$manifest = self::manifest();
+
+		foreach ( self::discover() as $source ) {
+
+			if ( empty( $manifest[ self::key( $source ) ]['folder'] ) ) {
+
+				self::fetch( $source );
+
+			}
+
+		}
 
 	}
 
@@ -228,9 +419,11 @@ class Octave_Addons_Perf_Google_Fonts {
 
 		$queue = get_option( self::QUEUE_OPTION, [] );
 
-		if ( 0 === $max_age && is_array( $queue ) ) {
+		// A manual refresh also looks at the site itself, so stylesheets are
+		// found even when no uncached page view has reported them.
+		if ( 0 === $max_age ) {
 
-			$sources = array_merge( $sources, $queue );
+			$sources = array_merge( $sources, is_array( $queue ) ? $queue : [], self::discover() );
 
 			delete_option( self::QUEUE_OPTION );
 

@@ -271,7 +271,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 					<button type="button" class="button" data-oa-perf-action="oa_perf_cf_test" data-fields="<?= esc_attr( $fields ); ?>" data-result="oa-perf-cf-result"><?php esc_html_e( 'Test connection', 'octave-addons' ); ?></button>
 					<span class="oa-help"><?php esc_html_e( 'Tests the values above, saved or not, and runs again when they change.', 'octave-addons' ); ?></span>
-					<div class="oa-perf-result" id="oa-perf-cf-result" role="status" aria-live="polite"></div>
+					<div id="oa-perf-cf-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
 					<?php
 

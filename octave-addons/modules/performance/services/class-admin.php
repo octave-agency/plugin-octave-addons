@@ -158,7 +158,6 @@ class Octave_Addons_Perf_Admin {
 		$fonts      = Octave_Addons_Perf_Google_Fonts::manifest();
 		$db_last    = Octave_Addons_Perf_Cleanup::last();
 		$errors     = array_slice( Octave_Addons_Perf_Log::entries(), 0, 10 );
-		$bypass_url = add_query_arg( Octave_Addons_Perf_Context::BYPASS_ARG, Octave_Addons_Perf_Context::bypass_key(), home_url( '/' ) );
 
 		$font_files = 0;
 
@@ -336,7 +335,7 @@ class Octave_Addons_Perf_Admin {
 
 			</div>
 
-			<div class="oa-perf-result" id="oa-perf-purge-result" role="status" aria-live="polite"></div>
+			<div id="oa-perf-purge-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
 			<section class="oa-perf-section">
 				<div class="oa-perf-section-copy">
@@ -346,13 +345,12 @@ class Octave_Addons_Perf_Admin {
 
 						printf(
 							/* translators: %s: query argument. */
-							esc_html__( 'Add %s to any page while logged in as an administrator to see it without performance optimisations. To compare in a logged-out browser, use the site link below.', 'octave-addons' ),
+							esc_html__( 'Add %s to any page while logged in as an administrator to see it without performance optimisations.', 'octave-addons' ),
 							'<code>?' . esc_html( Octave_Addons_Perf_Context::BYPASS_ARG ) . '=1</code>'
 						);
 
 						?>
 					</p>
-					<p><input type="text" class="large-text code" readonly value="<?= esc_attr( $bypass_url ); ?>" aria-label="<?php esc_attr_e( 'Unoptimised page link', 'octave-addons' ); ?>"></p>
 				</div>
 				<div class="oa-perf-inline-form">
 					<label for="oa-perf-scan-url"><?php esc_html_e( 'Scan a page as a logged-out visitor', 'octave-addons' ); ?></label>
@@ -361,7 +359,7 @@ class Octave_Addons_Perf_Admin {
 						<?php esc_html_e( 'Run diagnostics', 'octave-addons' ); ?>
 					</button>
 				</div>
-				<div class="oa-perf-result oa-perf-scan" id="oa-perf-scan-result" role="status" aria-live="polite"></div>
+				<div id="oa-perf-scan-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
 				<?php
 
@@ -393,7 +391,7 @@ class Octave_Addons_Perf_Admin {
 				<button type="button" class="button button-small" data-oa-perf-action="oa_perf_log_clear" data-result="oa-perf-log-result">
 					<?php esc_html_e( 'Clear error log', 'octave-addons' ); ?>
 				</button>
-				<div class="oa-perf-result" id="oa-perf-log-result" role="status" aria-live="polite"></div>
+				<div id="oa-perf-log-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
 				<?php
 
@@ -558,7 +556,15 @@ class Octave_Addons_Perf_Admin {
 
 		if ( empty( $scan ) ) {
 
-			wp_send_json_error( [ 'message' => __( 'The page answered but no report was recorded. A page cache may have served a stored copy; purge it and try again.', 'octave-addons' ) ] );
+			$code = (int) wp_remote_retrieve_response_code( $response );
+
+			wp_send_json_error( [ 'message' => 200 === $code
+				? __( 'The page answered but no report was recorded. A server or CDN cache may have answered instead of WordPress; exclude URLs containing oa_perf_scan from it and try again.', 'octave-addons' )
+				: sprintf(
+					/* translators: %d: HTTP status code. */
+					__( 'The page answered with HTTP %d, so no report was recorded. Check the URL opens for a logged-out visitor.', 'octave-addons' ),
+					$code
+				) ] );
 
 		}
 
@@ -658,7 +664,7 @@ class Octave_Addons_Perf_Admin {
 
 		if ( empty( $results ) ) {
 
-			wp_send_json_success( [ 'message' => __( 'No Google Fonts stylesheets have been found yet. Visit a page that uses them as a logged-out visitor, or run diagnostics, then refresh again.', 'octave-addons' ) ] );
+			wp_send_json_success( [ 'message' => __( 'No Google Fonts were found on the home page. Fonts on other pages are picked up as logged-out visitors view them, or run diagnostics on one of those pages, then refresh again.', 'octave-addons' ) ] );
 
 		}
 
@@ -729,12 +735,12 @@ class Octave_Addons_Perf_Admin {
 
 	/*
 	ADMIN BAR
-	-- Optional shortcut for administrators, switched in Cache & Safety
+	-- Shortcut for administrators to the Performance page and its purges
 	---------------------------------------------------------- */
 
 	public static function admin_bar( WP_Admin_Bar $bar ): void {
 
-		if ( ! current_user_can( 'manage_options' ) || empty( Octave_Addons_Perf::settings( 'performance-cache' )['admin_bar'] ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 
 			return;
 
