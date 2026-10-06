@@ -2,8 +2,9 @@
 
 /*
 PERFORMANCE: FILE OPTIMIZATION
--- Three independent switches: minify local CSS, minify local JavaScript, and
--- defer selected local scripts. Files are never combined, so every
+-- Independent switches: minify local CSS, minify local JavaScript, inline
+-- small local stylesheets, and defer selected local scripts. Files are
+-- never combined, so every
 -- stylesheet and script keeps its own tag, position, dependencies, media
 -- and loading attributes — only the URL changes to a minified copy
 -- Minified copies are cached under a key built from the source path, its
@@ -11,7 +12,9 @@ PERFORMANCE: FILE OPTIMIZATION
 -- edited file or a purge produces a new copy automatically. A file that
 -- cannot be minified safely is logged once a day and served as it is
 -- Breakdance assets, already-minified files, files with an integrity hash
--- and anything dynamic (extra query arguments) are always left alone
+-- and anything dynamic (extra query arguments) are never minified
+-- Inlining moves a small stylesheet's contents into the page in place of
+-- its <link>, Breakdance's per-page files included, without changing order
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -31,6 +34,12 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 	/** URL fragments that are never minified or deferred. */
 	protected const ALWAYS_EXCLUDED = [ 'breakdance', '/cache/octave-addons/', '.min.', '-min.', '/wp-includes/', '/wp-admin/' ];
+
+	/** Inline size limits offered, in KB; 0 turns inlining off. */
+	public const INLINE_SIZES = [ 4, 8, 16 ];
+
+	/** Most CSS inlined into one page, so the HTML itself never grows too heavy. */
+	protected const INLINE_BUDGET = 80 * KB_IN_BYTES;
 
 	/** Handles that are never deferred. */
 	protected const PROTECTED_HANDLES = [ 'jquery', 'jquery-core', 'jquery-migrate', 'wp-hooks', 'wp-i18n', 'wp-polyfill' ];
@@ -68,6 +77,8 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 			'minify_css'    => false,
 			'minify_js'     => false,
 			'defer_js'      => false,
+			'inline_css'    => true,
+			'inline_max'    => 8,
 			'defer_handles' => '',
 			'exclude'       => '',
 		];
@@ -78,11 +89,14 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		$clean = parent::sanitize( $input );
 
-		foreach ( [ 'minify_css', 'minify_js', 'defer_js' ] as $key ) {
+		foreach ( [ 'minify_css', 'minify_js', 'defer_js', 'inline_css' ] as $key ) {
 
 			$clean[ $key ] = ! empty( $input[ $key ] );
 
 		}
+
+		$max                 = absint( $input['inline_max'] ?? 8 );
+		$clean['inline_max'] = in_array( $max, self::INLINE_SIZES, true ) ? $max : 8;
 
 		$clean['defer_handles'] = Octave_Addons_Perf::sanitize_lines( $input['defer_handles'] ?? '' );
 		$clean['exclude']       = Octave_Addons_Perf::sanitize_lines( $input['exclude'] ?? '' );
@@ -118,6 +132,185 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 			add_action( 'wp_print_scripts', [ $this, 'apply_defer' ], 1 );
 
 		}
+
+		// After the font rewrite (40), so a self-hosted fonts.css can be inlined too.
+		if ( ! empty( $s['inline_css'] ) ) {
+
+			Octave_Addons_Perf_Html::register( 'files', [ $this, 'inline_styles' ], 50 );
+
+		}
+
+	}
+
+	/*
+	INLINE STYLES
+	-- Replaces each small local stylesheet <link> with its contents in a
+	-- <style> at the same position, keeping its id and media, so the order
+	-- of the cascade is unchanged while the browser no longer waits for a
+	-- separate request per file before it can paint. Builders such as
+	-- Breakdance print many small per-page files, which is where this pays.
+	-- Links in <noscript> or comments, preloads, alternate and print-swap
+	-- stylesheets, files with an integrity hash, @import, or a closing style
+	-- tag, and anything over the size limit are left as links
+	---------------------------------------------------------- */
+
+	public function inline_styles( string $html ): string {
+
+		if ( ! Octave_Addons_Perf::has_html_api() || false === stripos( $html, '<link' ) ) {
+
+			return $html;
+
+		}
+
+		$limit   = max( 1, (int) ( $this->settings['inline_max'] ?? 8 ) ) * KB_IN_BYTES;
+		$budget  = self::INLINE_BUDGET;
+		$skipped = [];
+
+		// Ranges where a <link> is not a live stylesheet.
+		preg_match_all( '#<!--.*?-->|<noscript\b.*?</noscript>|<template\b.*?</template>#is', $html, $blocks, PREG_OFFSET_CAPTURE );
+
+		foreach ( $blocks[0] as $block ) {
+
+			$skipped[] = [ $block[1], $block[1] + strlen( $block[0] ) ];
+
+		}
+
+		$output = '';
+		$cursor = 0;
+
+		preg_match_all( '#<link\b[^>]*>#i', $html, $links, PREG_OFFSET_CAPTURE );
+
+		foreach ( $links[0] as [ $tag, $offset ] ) {
+
+			foreach ( $skipped as [ $start, $end ] ) {
+
+				if ( $offset >= $start && $offset < $end ) {
+
+					continue 2;
+
+				}
+
+			}
+
+			$style = $this->inline_style( $tag, $limit, $budget );
+
+			if ( '' === $style ) {
+
+				continue;
+
+			}
+
+			$output .= substr( $html, $cursor, $offset - $cursor ) . $style;
+			$cursor  = $offset + strlen( $tag );
+
+		}
+
+		return 0 === $cursor ? $html : $output . substr( $html, $cursor );
+
+	}
+
+	/*
+	INLINE STYLE
+	-- The <style> replacing one <link> tag, or '' to keep the link
+	---------------------------------------------------------- */
+
+	protected function inline_style( string $tag, int $limit, int &$budget ): string {
+
+		$tags = new WP_HTML_Tag_Processor( $tag );
+
+		if ( ! $tags->next_tag( 'LINK' ) ) {
+
+			return '';
+
+		}
+
+		$rel   = preg_split( '/\s+/', strtolower( trim( (string) $tags->get_attribute( 'rel' ) ) ) );
+		$href  = html_entity_decode( trim( (string) $tags->get_attribute( 'href' ) ) );
+		$media = trim( (string) $tags->get_attribute( 'media' ) );
+
+		if ( ! in_array( 'stylesheet', (array) $rel, true ) || in_array( 'alternate', (array) $rel, true ) || '' === $href ) {
+
+			return '';
+
+		}
+
+		foreach ( [ 'integrity', 'disabled', 'onload', 'data-oa-no-inline' ] as $attribute ) {
+
+			if ( null !== $tags->get_attribute( $attribute ) ) {
+
+				return '';
+
+			}
+
+		}
+
+		if ( ! Octave_Addons_Perf::is_same_origin( $href ) || '' !== $this->inline_exclusion( (string) $tags->get_attribute( 'id' ), $href ) ) {
+
+			return '';
+
+		}
+
+		$path = Octave_Addons_Perf_Admin::local_path( $href );
+
+		if ( '' === $path || 'css' !== strtolower( pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
+
+			return '';
+
+		}
+
+		$size = (int) filesize( $path );
+
+		if ( $size > $limit || $size > $budget ) {
+
+			return '';
+
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file.
+		$css = (string) file_get_contents( $path );
+
+		if ( '' === trim( $css ) || false !== stripos( $css, '</style' ) || false !== stripos( $css, '@import' ) ) {
+
+			return '';
+
+		}
+
+		$budget -= $size;
+
+		// Relative url()s were relative to the file; @charset means nothing inline.
+		$css = Octave_Addons_Perf_Minifier::absolutize_css_urls( $css, 0 === strpos( $href, '/' ) && 0 !== strpos( $href, '//' ) ? home_url( $href ) : $href );
+		$css = (string) preg_replace( '/^\s*@charset\s+[^;]+;/i', '', $css );
+
+		Octave_Addons_Perf_Log::note( 'files', [ 'stylesheet' => $href, 'action' => 'inlined', 'bytes' => $size ] );
+
+		$id = (string) $tags->get_attribute( 'id' );
+
+		return sprintf(
+			'<style%s%s data-oa-inlined="%s">%s</style>',
+			'' !== $id ? ' id="' . esc_attr( $id ) . '"' : '',
+			'' !== $media && 'all' !== strtolower( $media ) ? ' media="' . esc_attr( $media ) . '"' : '',
+			esc_attr( $href ),
+			trim( $css )
+		);
+
+	}
+
+	/*
+	INLINE EXCLUSION
+	-- Only the administrator's exclusions apply: the built-in ones exist to
+	-- protect minification, which inlining does not do
+	---------------------------------------------------------- */
+
+	public function inline_exclusion( string $id, string $url ): string {
+
+		/**
+		 * Filters the id and URL patterns whose stylesheets are never inlined.
+		 *
+		 * @param string[] $patterns Case-insensitive substrings.
+		 */
+		$patterns = (array) apply_filters( 'octave_addons_perf_inline_exclusions', Octave_Addons_Perf::lines( $this->settings['exclude'] ?? '' ) );
+
+		return Octave_Addons_Perf::matches_any( $id . ' ' . $url, $patterns );
 
 	}
 
@@ -389,6 +582,16 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 			$this->switch_row( 'minify_css', __( 'Minify local CSS', 'octave-addons' ), __( 'Recommended when files are unminified. Removes comments and whitespace from each local stylesheet; relative image and font URLs are rewritten so they keep working.', 'octave-addons' ), $s );
 			$this->switch_row( 'minify_js', __( 'Minify local JavaScript', 'octave-addons' ), __( 'Advanced. Removes comments and indentation only, keeping every line break so behaviour cannot change. Savings are modest; test interactive features after enabling.', 'octave-addons' ), $s );
 
+			Octave_Addons_Fields::section( [ 'label' => __( 'Small stylesheets', 'octave-addons' ) ] );
+
+			$this->switch_row( 'inline_css', __( 'Inline small stylesheets', 'octave-addons' ), __( 'Recommended. Every stylesheet in the page has to download before anything is shown. Small local ones, such as the per-page CSS Breakdance writes, are placed straight into the page instead, in the same order, so the first paint waits on fewer requests. Large files stay as links, so they can still be cached between pages.', 'octave-addons' ), $s );
+
+			$this->select_row( 'inline_max', __( 'Inline files up to', 'octave-addons' ), [
+				4  => '4 KB',
+				8  => __( '8 KB (recommended)', 'octave-addons' ),
+				16 => '16 KB',
+			], __( 'Larger limits remove more requests but make every page heavier, as inlined CSS is downloaded again with each page instead of being cached.', 'octave-addons' ), $s );
+
 			Octave_Addons_Fields::section( [ 'label' => __( 'Deferral', 'octave-addons' ) ] );
 
 			$this->switch_row( 'defer_js', __( 'Defer selected local JavaScript', 'octave-addons' ), __( 'Advanced. Lets the scripts listed below download without blocking the page (WordPress 6.3+). WordPress skips any script whose dependents or inline code need it to run immediately. jQuery and Breakdance are never deferred.', 'octave-addons' ), $s );
@@ -396,7 +599,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Exclusions', 'octave-addons' ) ] );
 
-			$this->textarea_row( 'exclude', __( 'Never minify', 'octave-addons' ), __( 'One handle or URL pattern per line. Breakdance assets, WordPress core and files already ending in .min.css or .min.js are always excluded.', 'octave-addons' ), $s );
+			$this->textarea_row( 'exclude', __( 'Never minify or inline', 'octave-addons' ), __( 'One handle, stylesheet id or URL pattern per line. Breakdance assets, WordPress core and files already ending in .min.css or .min.js are never minified. A stylesheet can also opt out of inlining with the data-oa-no-inline attribute.', 'octave-addons' ), $s );
 
 			?>
 		</table>

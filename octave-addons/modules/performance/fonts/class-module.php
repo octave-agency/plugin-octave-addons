@@ -278,6 +278,14 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		$urls = self::needs_detection() ? [] : (array) ( self::detected()['urls'] ?? [] );
 
+		// Nothing reported yet: the self-hosted Latin fonts are the best guess,
+		// and they are already on this site, so a wrong guess costs little.
+		if ( empty( $urls ) && ! self::needs_detection() && ! empty( $this->settings['self_host'] ) ) {
+
+			$urls = Octave_Addons_Perf_Google_Fonts::latin_files( self::PRELOAD_MAX );
+
+		}
+
 		/**
 		 * Filters the font URLs preloaded on the frontend.
 		 *

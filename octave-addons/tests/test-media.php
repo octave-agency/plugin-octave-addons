@@ -179,3 +179,59 @@ function test_existing_high_priority_image_is_not_competed_with(): void {
 	oa_assert_not_contains( 'fetchpriority', oa_media()->transform( oa_page( '<img src="/a.jpg"><img src="/b.jpg"><img src="/c.jpg"><img src="/far.jpg" width="1600">' ) ), 'only near the top' );
 
 }
+
+/*
+BUILDER FIXES
+---------------------------------------------------------- */
+
+function oa_upload( string $name, int $width, int $height ): string {
+
+	$path = WP_CONTENT_DIR . '/uploads/2026/10/' . $name;
+
+	@mkdir( dirname( $path ), 0777, true );
+
+	$image = imagecreatetruecolor( $width, $height );
+
+	imagejpeg( $image, $path );
+
+	return 'https://example.com/wp-content/uploads/2026/10/' . $name;
+
+}
+
+function test_header_images_load_eagerly(): void {
+
+	$html = oa_media()->transform( oa_page( '<header class="site"><div><img src="/logo.png" loading="lazy" width="80" height="20"></div></header><img src="/a.png" loading="lazy"><header><img src="/b.png" loading="lazy"></header>' ) );
+
+	oa_assert_contains( '<img src="/logo.png"  width="80" height="20">', $html );
+	oa_assert_contains( '<img src="/a.png" loading="lazy">', $html, 'outside the header' );
+	oa_assert_contains( '<img src="/b.png" loading="lazy">', $html, 'only the first header' );
+
+}
+
+function test_missing_dimensions_come_from_the_file(): void {
+
+	$full = oa_upload( 'photo.jpg', 120, 60 );
+	$html = oa_media()->transform( oa_page( '<img src="https://example.com/wp-content/uploads/2026/10/photo-300x150.jpg"><img src="" srcset="' . $full . ' 120w"><img src="/remote.png"><img src="' . $full . '" width="10">' ) );
+
+	oa_assert_contains( 'height="150" loading="lazy" width="300" src="https://example.com/wp-content/uploads/2026/10/photo-300x150.jpg"', $html );
+	oa_assert_contains( '<img height="60" width="120" src="" srcset="' . $full . ' 120w">', $html );
+	oa_assert_contains( '<img decoding="async" loading="lazy" src="/remote.png">', $html, 'unknown file untouched' );
+	oa_assert_contains( 'src="' . $full . '" width="10">', $html, 'partial dimensions untouched' );
+
+}
+
+function test_video_posters_use_a_smaller_generated_size(): void {
+
+	$poster = oa_upload( 'clip-poster.jpg', 1280, 720 );
+
+	oa_upload( 'clip-poster-768x432.jpg', 768, 432 );
+	oa_upload( 'clip-poster-1024x576.jpg', 1024, 576 );
+	oa_upload( 'clip-poster-150x150.jpg', 150, 150 );
+
+	$page = oa_page( '<video poster="' . $poster . '" src="/clip.mp4"></video>' );
+
+	oa_assert_contains( 'poster="https://example.com/wp-content/uploads/2026/10/clip-poster-768x432.jpg"', oa_media()->transform( $page ) );
+	oa_assert_contains( 'clip-poster-1024x576.jpg"', oa_media( [ 'poster_width' => 1024 ] )->transform( $page ) );
+	oa_assert_same( $page, oa_media( [ 'poster_width' => 0, 'images' => false, 'iframes' => false, 'dimensions' => false, 'header_eager' => false ] )->transform( $page ), 'off' );
+
+}

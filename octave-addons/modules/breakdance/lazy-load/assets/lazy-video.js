@@ -3,6 +3,9 @@ LAZY VIDEO
 -- Loads HTML5 videos rendered with preload="none" as they approach the
 -- viewport, and only then restores autoplay, so offscreen videos neither
 -- download nor play early. Loads everything at once without IntersectionObserver
+-- Nothing starts until the page has finished loading, so a large video in
+-- view on arrival never competes with the stylesheets, fonts and hero image
+-- the first render needs. The poster shows until then
 ---------------------------------------------------------- */
 
 ( function () {
@@ -100,13 +103,33 @@ LAZY VIDEO
 
 	}
 
-	if ( 'loading' === document.readyState ) {
+	/*
+	START
+	-- After the load event, then when the browser is next idle (at most a
+	-- second later), so the page's own resources always finish first
+	---------------------------------------------------------- */
 
-		document.addEventListener( 'DOMContentLoaded', init );
+	function start() {
+
+		if ( 'function' === typeof window.requestIdleCallback ) {
+
+			window.requestIdleCallback( init, { timeout: 1000 } );
+
+			return;
+
+		}
+
+		window.setTimeout( init, 1 );
+
+	}
+
+	if ( 'complete' === document.readyState ) {
+
+		start();
 
 	} else {
 
-		init();
+		window.addEventListener( 'load', start );
 
 	}
 

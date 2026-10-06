@@ -650,6 +650,90 @@ class Octave_Addons_Perf_Google_Fonts {
 	}
 
 	/*
+	LATIN FILES
+	-- Local font files whose @font-face covers basic Latin text, in the order
+	-- the cached stylesheets declare them. Read from the stylesheets on disk,
+	-- so it works for copies cached before this existed
+	---------------------------------------------------------- */
+
+	public static function latin_files( int $max ): array {
+
+		$urls = [];
+
+		foreach ( self::manifest() as $entry ) {
+
+			if ( empty( $entry['folder'] ) ) {
+
+				continue;
+
+			}
+
+			$file = Octave_Addons_Perf_Store::dir( self::DIR . '/' . $entry['folder'] ) . 'fonts.css';
+
+			if ( ! is_readable( $file ) ) {
+
+				continue;
+
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Octave's own cache file.
+			preg_match_all( '/@font-face\s*\{([^}]*)\}/i', (string) file_get_contents( $file ), $blocks );
+
+			foreach ( $blocks[1] as $block ) {
+
+				if ( ! preg_match( '/url\(\s*[\'"]?([^\'")\s]+\.woff2)[\'"]?\s*\)/i', $block, $font ) ) {
+
+					continue;
+
+				}
+
+				if ( preg_match( '/unicode-range\s*:\s*([^;]+)/i', $block, $range ) && ! self::covers_latin( $range[1] ) ) {
+
+					continue;
+
+				}
+
+				$urls[] = Octave_Addons_Perf_Store::url( self::DIR . '/' . $entry['folder'] ) . basename( $font[1] );
+
+			}
+
+		}
+
+		return array_slice( array_values( array_unique( $urls ) ), 0, max( 0, $max ) );
+
+	}
+
+	/*
+	COVERS LATIN
+	-- True when a unicode-range includes the letter A (U+0041)
+	---------------------------------------------------------- */
+
+	public static function covers_latin( string $ranges ): bool {
+
+		foreach ( explode( ',', $ranges ) as $range ) {
+
+			if ( ! preg_match( '/U\+([0-9a-f?]+)(?:-([0-9a-f]+))?/i', trim( $range ), $match ) ) {
+
+				continue;
+
+			}
+
+			$start = hexdec( str_replace( '?', '0', $match[1] ) );
+			$end   = isset( $match[2] ) ? hexdec( $match[2] ) : hexdec( str_replace( '?', 'f', $match[1] ) );
+
+			if ( $start <= 0x41 && $end >= 0x41 ) {
+
+				return true;
+
+			}
+
+		}
+
+		return false;
+
+	}
+
+	/*
 	DOWNLOAD
 	-- One HTTPS GET with no redirects, a size cap and a content-type check
 	---------------------------------------------------------- */

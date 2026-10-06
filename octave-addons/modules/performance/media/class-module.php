@@ -6,10 +6,14 @@ PERFORMANCE: MEDIA LAZY LOADING
 -- always-on Breakdance Lazy Load module rather than beside it: that module
 -- keeps handling HTML5 and background videos, and this one decides whether it may
 -- Only attributes are added (loading, decoding, fetchpriority). src, srcset,
--- sizes, width, height and picture/source markup are never touched, so WebP
--- and AVIF sources, CDN rewrites and responsive images keep working as delivered
+-- sizes and picture/source markup are never touched, so WebP and AVIF
+-- sources, CDN rewrites and responsive images keep working as delivered
 -- The likely hero image is kept eager with high priority. Every other image
 -- is left to the browser, which loads lazy images already in view straight away
+-- Three optional fixes for what page builders print: images in the site
+-- header always load eagerly, images without dimensions get width and height
+-- from the file, so the space is held before they arrive, and video posters
+-- point at a smaller size WordPress has already generated
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,6 +41,12 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 	/** Only this many images from the top of the page can become the hero image. */
 	protected const PRIORITY_WINDOW = 3;
+
+	/** Poster widths offered; 0 leaves posters as they are. */
+	public const POSTER_WIDTHS = [ 0, 768, 1024 ];
+
+	/** A generated size narrower than this is a thumbnail, never a poster. */
+	protected const POSTER_MIN_WIDTH = 400;
 
 	protected array $settings = [];
 
@@ -71,6 +81,9 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 			'images'             => true,
 			'iframes'            => true,
 			'videos'             => true,
+			'header_eager'       => true,
+			'dimensions'         => true,
+			'poster_width'       => 768,
 			'exclude_classes'    => '',
 			'exclude_attributes' => '',
 			'exclude_urls'       => '',
@@ -82,11 +95,14 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		$clean = parent::sanitize( $input );
 
-		foreach ( [ 'images', 'iframes', 'videos' ] as $key ) {
+		foreach ( [ 'images', 'iframes', 'videos', 'header_eager', 'dimensions' ] as $key ) {
 
 			$clean[ $key ] = ! empty( $input[ $key ] );
 
 		}
+
+		$width                 = absint( $input['poster_width'] ?? 0 );
+		$clean['poster_width'] = in_array( $width, self::POSTER_WIDTHS, true ) ? $width : 0;
 
 		foreach ( [ 'exclude_classes', 'exclude_attributes', 'exclude_urls' ] as $key ) {
 
@@ -114,7 +130,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		add_filter( 'octave_addons_perf_skip_lazy', [ $this, 'filter_user_exclusions' ], 10, 2 );
 
-		if ( ! empty( $s['images'] ) || ! empty( $s['iframes'] ) ) {
+		if ( ! empty( $s['images'] ) || ! empty( $s['iframes'] ) || ! empty( $s['header_eager'] ) || ! empty( $s['dimensions'] ) || ! empty( $s['poster_width'] ) ) {
 
 			Octave_Addons_Perf_Html::register( 'media', [ $this, 'transform' ], 20 );
 
@@ -142,10 +158,46 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		$image_index = 0;
 		$notes       = 0;
 		$prioritise  = $do_images && ! preg_match( '/fetchpriority\s*=\s*["\']?high/i', $html );
+		$poster      = (int) ( $s['poster_width'] ?? 0 );
 
-		while ( $tags->next_tag() ) {
+		// Only the first <header> is the site header; later ones belong to articles.
+		$header_depth = 0;
+		$header_done  = false;
+
+		while ( $tags->next_tag( [ 'tag_closers' => 'visit' ] ) ) {
 
 			$tag = $tags->get_tag();
+
+			if ( 'HEADER' === $tag && ! $header_done ) {
+
+				if ( $tags->is_tag_closer() ) {
+
+					$header_depth--;
+					$header_done = $header_depth <= 0;
+
+				} else {
+
+					$header_depth++;
+
+				}
+
+				continue;
+
+			}
+
+			if ( $tags->is_tag_closer() ) {
+
+				continue;
+
+			}
+
+			if ( 'VIDEO' === $tag && $poster > 0 ) {
+
+				self::resize_poster( $tags, $poster );
+
+				continue;
+
+			}
 
 			if ( 'IMG' !== $tag && 'IFRAME' !== $tag ) {
 
@@ -156,6 +208,20 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 			if ( 'IMG' === $tag ) {
 
 				$image_index++;
+
+				if ( ! empty( $s['dimensions'] ) ) {
+
+					self::add_dimensions( $tags );
+
+				}
+
+				if ( ! empty( $s['header_eager'] ) && $header_depth > 0 && self::load_eagerly( $tags ) ) {
+
+					Octave_Addons_Perf_Log::note( 'media', [ 'tag' => 'img', 'src' => (string) $tags->get_attribute( 'src' ), 'action' => 'skipped', 'reason' => 'site-header' ] );
+
+					continue;
+
+				}
 
 			}
 
@@ -205,6 +271,215 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		}
 
 		return $tags->get_updated_html();
+
+	}
+
+	/*
+	LOAD EAGERLY
+	-- An image in the site header is in view on every page, so a builder's
+	-- loading="lazy" only delays it. Opted-out images are left as they are
+	---------------------------------------------------------- */
+
+	public static function load_eagerly( WP_HTML_Tag_Processor $tags ): bool {
+
+		if ( '' === trim( (string) $tags->get_attribute( 'src' ) . (string) $tags->get_attribute( 'srcset' ) ) ) {
+
+			return false;
+
+		}
+
+		foreach ( self::SKIP_ATTRIBUTES as $attribute ) {
+
+			if ( null !== $tags->get_attribute( $attribute ) ) {
+
+				return false;
+
+			}
+
+		}
+
+		if ( 'lazy' === strtolower( (string) $tags->get_attribute( 'loading' ) ) ) {
+
+			$tags->remove_attribute( 'loading' );
+
+		}
+
+		return true;
+
+	}
+
+	/*
+	ADD DIMENSIONS
+	-- Gives an image with neither width nor height the size of its file, as
+	-- WordPress does for content images, so the browser holds its space. The
+	-- size comes from the -WIDTHxHEIGHT suffix of a generated size, or from
+	-- the local file itself. Remote files and SVGs are left alone
+	---------------------------------------------------------- */
+
+	public static function add_dimensions( WP_HTML_Tag_Processor $tags ): void {
+
+		if ( null !== $tags->get_attribute( 'width' ) || null !== $tags->get_attribute( 'height' ) ) {
+
+			return;
+
+		}
+
+		$url = trim( (string) $tags->get_attribute( 'src' ) );
+
+		if ( '' === $url || 0 === stripos( $url, 'data:' ) ) {
+
+			$url = trim( (string) strtok( (string) $tags->get_attribute( 'srcset' ), ' ,' ) );
+
+		}
+
+		$size = '' !== $url ? self::image_size( $url ) : [];
+
+		if ( ! empty( $size ) ) {
+
+			$tags->set_attribute( 'width', (string) $size[0] );
+			$tags->set_attribute( 'height', (string) $size[1] );
+
+		}
+
+	}
+
+	/*
+	IMAGE SIZE
+	-- [ width, height ] of a same-origin image, or [] when it cannot be known
+	---------------------------------------------------------- */
+
+	public static function image_size( string $url ): array {
+
+		static $sizes = [];
+
+		if ( isset( $sizes[ $url ] ) ) {
+
+			return $sizes[ $url ];
+
+		}
+
+		$sizes[ $url ] = [];
+
+		if ( ! Octave_Addons_Perf::is_same_origin( $url ) ) {
+
+			return [];
+
+		}
+
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+
+		if ( preg_match( '/-(\d{2,5})x(\d{2,5})\.(?:jpe?g|png|gif|webp|avif)$/i', $path, $match ) ) {
+
+			return $sizes[ $url ] = [ (int) $match[1], (int) $match[2] ];
+
+		}
+
+		$file = Octave_Addons_Perf_Admin::local_path( $url );
+		$info = '' !== $file && preg_match( '/\.(?:jpe?g|png|gif|webp|avif)$/i', $file ) ? @getimagesize( $file ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unreadable images are skipped.
+
+		if ( is_array( $info ) && $info[0] > 0 && $info[1] > 0 ) {
+
+			$sizes[ $url ] = [ (int) $info[0], (int) $info[1] ];
+
+		}
+
+		return $sizes[ $url ];
+
+	}
+
+	/*
+	RESIZE POSTER
+	-- Swaps a full-size video poster for the widest size WordPress generated
+	-- from the same upload that is no wider than $max and keeps its shape.
+	-- Found on disk beside the original, so it needs no database lookup
+	---------------------------------------------------------- */
+
+	public static function resize_poster( WP_HTML_Tag_Processor $tags, int $max ): void {
+
+		$poster = trim( (string) $tags->get_attribute( 'poster' ) );
+
+		if ( '' === $poster || null !== $tags->get_attribute( 'data-oa-no-lazy' ) ) {
+
+			return;
+
+		}
+
+		$smaller = self::smaller_image( $poster, $max );
+
+		if ( '' !== $smaller ) {
+
+			$tags->set_attribute( 'poster', $smaller );
+
+		}
+
+	}
+
+	public static function smaller_image( string $url, int $max ): string {
+
+		static $found = [];
+
+		$key = $max . '|' . $url;
+
+		if ( isset( $found[ $key ] ) ) {
+
+			return $found[ $key ];
+
+		}
+
+		$found[ $key ] = '';
+		$path          = (string) wp_parse_url( $url, PHP_URL_PATH );
+
+		// Already a generated size, or not an image this can work with.
+		if ( preg_match( '/-\d{2,5}x\d{2,5}\.[a-z0-9]+$/i', $path ) || ! preg_match( '/\.(jpe?g|png|webp)$/i', $path, $extension ) ) {
+
+			return '';
+
+		}
+
+		$file     = Octave_Addons_Perf_Admin::local_path( $url );
+		$original = '' !== $file ? @getimagesize( $file ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unreadable images are skipped.
+
+		if ( ! is_array( $original ) || $original[0] <= $max || $original[1] <= 0 ) {
+
+			return '';
+
+		}
+
+		// Generated sizes are named after the original upload, before -scaled or -rotated.
+		$stem  = preg_replace( '/-(?:scaled|rotated)$/', '', pathinfo( $file, PATHINFO_FILENAME ) );
+		$ratio = $original[0] / $original[1];
+		$best  = 0;
+		$name  = '';
+
+		foreach ( (array) glob( dirname( $file ) . '/' . addcslashes( $stem, '*?[]\\' ) . '-*x*.' . $extension[1] ) as $candidate ) {
+
+			if ( ! preg_match( '/^' . preg_quote( $stem, '/' ) . '-(\d+)x(\d+)\.' . preg_quote( $extension[1], '/' ) . '$/i', basename( (string) $candidate ), $size ) ) {
+
+				continue;
+
+			}
+
+			$width  = (int) $size[1];
+			$height = max( 1, (int) $size[2] );
+
+			if ( $width > $max || $width < self::POSTER_MIN_WIDTH || $width <= $best || abs( $width / $height - $ratio ) > 0.02 * $ratio ) {
+
+				continue;
+
+			}
+
+			$best = $width;
+			$name = basename( (string) $candidate );
+
+		}
+
+		if ( '' !== $name ) {
+
+			$found[ $key ] = substr( $url, 0, (int) strrpos( $url, '/' ) + 1 ) . $name;
+
+		}
+
+		return $found[ $key ];
 
 	}
 
@@ -392,7 +667,18 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 			$this->switch_row( 'images', __( 'Images', 'octave-addons' ), __( 'Safe. Adds loading="lazy" and decoding="async" to images. The hero image is fetched first with fetchpriority="high"; add data-oa-no-priority to an image to pass it over. Images marked eager, high priority or opted out are left alone.', 'octave-addons' ), $s );
 			$this->switch_row( 'iframes', __( 'Iframes', 'octave-addons' ), __( 'Safe. Maps, embeds and other iframes load as they approach the viewport.', 'octave-addons' ), $s );
-			$this->switch_row( 'videos', __( 'Videos', 'octave-addons' ), __( 'Safe. HTML5 and Breakdance background videos wait until they near the viewport before downloading; autoplay resumes then.', 'octave-addons' ), $s );
+			$this->switch_row( 'videos', __( 'Videos', 'octave-addons' ), __( 'Safe. HTML5 and Breakdance background videos wait until the page has loaded and they near the viewport before downloading; autoplay resumes then.', 'octave-addons' ), $s );
+
+			Octave_Addons_Fields::section( [ 'label' => __( 'Builder fixes', 'octave-addons' ) ] );
+
+			$this->switch_row( 'header_eager', __( 'Load header images straight away', 'octave-addons' ), __( 'Safe. The logo and other images in the site header are in view on every page, so a loading="lazy" a builder adds to them is removed.', 'octave-addons' ), $s );
+			$this->switch_row( 'dimensions', __( 'Add missing image dimensions', 'octave-addons' ), __( 'Adds width and height from the file to images that have neither, so their space is held while they load and the page does not jump. Check images still keep their shape after turning this on.', 'octave-addons' ), $s );
+
+			$this->select_row( 'poster_width', __( 'Video poster size', 'octave-addons' ), [
+				768  => __( 'Up to 768px wide (recommended)', 'octave-addons' ),
+				1024 => __( 'Up to 1024px wide', 'octave-addons' ),
+				0    => __( 'Full size, as uploaded', 'octave-addons' ),
+			], __( 'Video posters use a smaller size WordPress has already made from the same upload, instead of the full-size image. Posters that are not media library uploads are left alone.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Exclusions', 'octave-addons' ) ] );
 
