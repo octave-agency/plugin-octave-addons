@@ -88,6 +88,7 @@ class Octave_Addons_Custom_Post_Fields {
 		add_filter( 'default_post_metadata', [ $this, 'read_legacy_meta' ], 10, 4 );
 		add_filter( 'is_protected_meta', [ $this, 'protect_field_meta' ], 10, 3 );
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
+		Octave_Addons_Breakdance_Icons::boot();
 		add_action( 'save_post', [ $this, 'save_post' ], 10, 2 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
 		add_action( 'enqueue_block_assets', [ $this, 'enqueue_structured_content_styles' ] );
@@ -452,8 +453,40 @@ class Octave_Addons_Custom_Post_Fields {
 					'galleryItem'     => __( 'Image %d', 'octave-addons' ),
 					'removeImage'     => __( 'Remove image', 'octave-addons' ),
 				],
+				'icons'      => self::icon_settings(),
 			]
 		);
+
+	}
+
+	/*
+	ICON SETTINGS
+	-- What both icon pickers need: the search endpoint, its nonce, the
+	-- library's sets and their wording
+	---------------------------------------------------------- */
+
+	public static function icon_settings(): array {
+
+		return [
+			'available' => Octave_Addons_Breakdance_Icons::available(),
+			'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+			'action'    => Octave_Addons_Breakdance_Icons::AJAX_ACTION,
+			'nonce'     => wp_create_nonce( Octave_Addons_Breakdance_Icons::NONCE ),
+			'sets'      => Octave_Addons_Breakdance_Icons::sets(),
+			'strings'   => [
+				'none'        => __( 'No icon selected', 'octave-addons' ),
+				'library'     => __( 'Breakdance icon library', 'octave-addons' ),
+				'choose'      => __( 'Choose icon', 'octave-addons' ),
+				'remove'      => __( 'Remove', 'octave-addons' ),
+				'search'      => __( 'Search icons…', 'octave-addons' ),
+				'allSets'     => __( 'All icon sets', 'octave-addons' ),
+				'loading'     => __( 'Loading icons…', 'octave-addons' ),
+				'empty'       => __( 'No icons match your search.', 'octave-addons' ),
+				'failed'      => __( 'Icons could not be loaded. Try again.', 'octave-addons' ),
+				'more'        => __( 'Load more', 'octave-addons' ),
+				'unavailable' => __( 'Breakdance is not active, so its icon library cannot be browsed. The saved icon is kept.', 'octave-addons' ),
+			],
+		];
 
 	}
 
@@ -1042,6 +1075,10 @@ class Octave_Addons_Custom_Post_Fields {
 
 				$this->render_gallery_control( is_array( $value ) ? $value : [], $name, $id );
 
+			} elseif ( 'icon' === $type ) {
+
+				$this->render_icon_control( (string) $value, $name, $id );
+
 			} elseif ( in_array( $type, [ 'image', 'file' ], true ) ) {
 
 				$attachment_id = absint( $value );
@@ -1093,6 +1130,114 @@ class Octave_Addons_Custom_Post_Fields {
 
 			?>
 
+		</div>
+
+		<?php
+
+	}
+
+	/*
+	RENDER ICON CONTROL
+	-- The Breakdance icon picker: the chosen icon with its name and set, and
+	-- a panel that searches Breakdance's icon library on demand. One hidden
+	-- input holds the SVG, so the control is safe inside repeater rows.
+	-- Without Breakdance the saved icon is shown and kept, but not changed
+	---------------------------------------------------------- */
+
+	protected function render_icon_control( string $value, string $name, string $id ): void {
+
+		$value     = Octave_Addons_Breakdance_Icons::sanitize( $value );
+		$settings  = self::icon_settings();
+		$strings   = $settings['strings'];
+		$icon_name = Octave_Addons_Breakdance_Icons::name( $value );
+		$icon_set  = Octave_Addons_Breakdance_Icons::set( $value );
+
+		?>
+
+		<div class="oa-post-field-icon" data-oa-icon-field>
+			<input type="hidden" id="<?= esc_attr( $id ); ?>" name="<?= esc_attr( $name ); ?>" value="<?= esc_attr( $value ); ?>">
+			<div class="oa-icon-picker">
+				<div class="oa-icon-selection">
+					<span class="oa-icon-preview<?= '' !== $value ? ' has-value' : ''; ?>" aria-hidden="true">
+						<?php
+
+						if ( '' !== $value ) {
+
+							// Rebuilt from allowed SVG tags and attributes only, so safe to print.
+							echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+						} else {
+
+							echo '<span class="dashicons dashicons-star-empty"></span>';
+
+						}
+
+						?>
+					</span>
+					<div>
+						<strong><?= esc_html( '' !== $value ? ( '' !== $icon_name ? $icon_name : __( 'Custom icon', 'octave-addons' ) ) : $strings['none'] ); ?></strong>
+						<code><?= esc_html( '' !== $icon_set ? $icon_set : $strings['library'] ); ?></code>
+					</div>
+
+					<?php
+
+					if ( $settings['available'] ) :
+
+					?>
+
+					<div class="oa-icon-actions">
+						<button type="button" class="button-link-delete oa-icon-remove<?= '' !== $value ? '' : ' hidden'; ?>"><?= esc_html( $strings['remove'] ); ?></button>
+						<button type="button" class="button oa-icon-toggle" aria-expanded="false"><?= esc_html( $strings['choose'] ); ?><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button>
+					</div>
+
+					<?php
+
+					endif;
+
+					?>
+				</div>
+
+				<?php
+
+				if ( $settings['available'] ) :
+
+				?>
+
+				<div class="oa-icon-options" hidden>
+					<div class="oa-icon-filters">
+						<label class="oa-icon-search">
+							<span class="screen-reader-text"><?= esc_html( $strings['search'] ); ?></span>
+							<input type="search" placeholder="<?= esc_attr( $strings['search'] ); ?>" autocomplete="off">
+						</label>
+						<label class="oa-icon-set">
+							<span class="screen-reader-text"><?= esc_html( $strings['allSets'] ); ?></span>
+							<select>
+								<option value=""><?= esc_html( $strings['allSets'] ); ?></option>
+								<?php foreach ( $settings['sets'] as $set_slug => $set_name ) : ?>
+								<option value="<?= esc_attr( (string) $set_slug ); ?>"><?= esc_html( $set_name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					</div>
+					<div class="oa-icon-grid" role="listbox" aria-label="<?= esc_attr( $strings['library'] ); ?>"></div>
+					<p class="oa-icon-status" aria-live="polite"></p>
+					<button type="button" class="button oa-icon-more" hidden><?= esc_html( $strings['more'] ); ?></button>
+				</div>
+
+				<?php
+
+				else :
+
+				?>
+
+				<p class="oa-icon-status"><?= esc_html( $strings['unavailable'] ); ?></p>
+
+				<?php
+
+				endif;
+
+				?>
+			</div>
 		</div>
 
 		<?php
@@ -1333,6 +1478,10 @@ class Octave_Addons_Custom_Post_Fields {
 			<?php elseif ( 'gallery' === $type ) :
 
 				$this->render_gallery_control( is_array( $value ) ? $value : [], $name, $id );
+
+			elseif ( 'icon' === $type ) :
+
+				$this->render_icon_control( (string) $value, $name, $id );
 
 			elseif ( in_array( $type, [ 'image', 'file' ], true ) ) :
 
@@ -1605,6 +1754,12 @@ class Octave_Addons_Custom_Post_Fields {
 
 		}
 
+		if ( 'icon' === $type ) {
+
+			return Octave_Addons_Breakdance_Icons::sanitize( is_string( $value ) ? $value : '' );
+
+		}
+
 		if ( 'checkbox' === $type ) {
 
 			return ! empty( $value ) ? '1' : '0';
@@ -1798,6 +1953,7 @@ class Octave_Addons_Custom_Post_Fields {
 				'removeImage'          => __( 'Remove image', 'octave-addons' ),
 				'galleryItemLabel'     => __( 'Image %d', 'octave-addons' ),
 				'itemLabel'            => __( 'Item %d', 'octave-addons' ),
+				'icons'                => self::icon_settings(),
 			]
 		);
 

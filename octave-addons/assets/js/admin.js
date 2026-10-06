@@ -3000,7 +3000,7 @@ ADMIN INTERACTIONS
 				var isContainer = [ 'group', 'repeater' ].indexOf( typeInput.value ) !== -1;
 				var isHtml = 'html' === typeInput.value;
 				var isTab = 'tab' === typeInput.value;
-				var hidesDefault = isContainer || isTab || [ 'gallery', 'cpt_select' ].indexOf( typeInput.value ) !== -1;
+				var hidesDefault = isContainer || isTab || [ 'gallery', 'cpt_select', 'icon' ].indexOf( typeInput.value ) !== -1;
 				var hidesRequired = isHtml || isTab;
 
 				if ( nameField ) {
@@ -3172,7 +3172,7 @@ ADMIN INTERACTIONS
 
 						if ( defaultField ) {
 
-							defaultField.classList.toggle( 'oa-hidden', 'gallery' === typeSelect.value );
+							defaultField.classList.toggle( 'oa-hidden', 'gallery' === typeSelect.value || 'icon' === typeSelect.value );
 
 						}
 

@@ -592,6 +592,250 @@ POST FIELDS EDITOR
 
 	}
 
+	/*
+	ICON PICKER
+	-- Breakdance icon fields, wired once through the document so pickers in
+	-- repeater rows added later work too. The panel searches Breakdance's
+	-- icon library a page at a time; choosing an icon stores its SVG, which
+	-- the server has already cleaned, in the field's hidden input
+	---------------------------------------------------------- */
+
+	var iconSettings = ( window.octavePostFields && octavePostFields.icons ) || {};
+	var iconStrings  = iconSettings.strings || {};
+	var searchTimer  = null;
+
+	function iconField( element ) {
+
+		return element.closest( '[data-oa-icon-field]' );
+
+	}
+
+	function setIconStatus( field, text ) {
+
+		field.querySelector( '.oa-icon-status' ).textContent = text || '';
+
+	}
+
+	function loadIcons( field, append ) {
+
+		var grid    = field.querySelector( '.oa-icon-grid' );
+		var more    = field.querySelector( '.oa-icon-more' );
+		var offset  = append ? grid.children.length : 0;
+		var request = ( Number( field.dataset.iconRequest || 0 ) + 1 );
+		var body    = new FormData();
+
+		field.dataset.iconRequest = String( request );
+
+		body.append( 'action', iconSettings.action );
+		body.append( 'nonce', iconSettings.nonce );
+		body.append( 'search', field.querySelector( '.oa-icon-search input' ).value );
+		body.append( 'set', field.querySelector( '.oa-icon-set select' ).value );
+		body.append( 'offset', String( offset ) );
+
+		if ( ! append ) {
+
+			grid.replaceChildren();
+
+		}
+
+		more.hidden = true;
+		setIconStatus( field, iconStrings.loading );
+
+		fetch( iconSettings.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } ).then( function ( response ) {
+
+			return response.json();
+
+		} ).then( function ( result ) {
+
+			// A newer search has started since this one; its answer wins.
+			if ( String( request ) !== field.dataset.iconRequest ) {
+
+				return;
+
+			}
+
+			if ( ! result || ! result.success ) {
+
+				setIconStatus( field, result && result.data && result.data.message ? result.data.message : iconStrings.failed );
+
+				return;
+
+			}
+
+			var current = field.querySelector( 'input[type="hidden"]' ).value;
+
+			result.data.icons.forEach( function ( icon ) {
+
+				var button  = document.createElement( 'button' );
+				var graphic = document.createElement( 'span' );
+				var label   = document.createElement( 'span' );
+
+				button.type      = 'button';
+				button.className = 'oa-icon-option' + ( icon.value === current ? ' is-selected' : '' );
+				button.title     = icon.name;
+				button.setAttribute( 'role', 'option' );
+				button.setAttribute( 'aria-selected', icon.value === current ? 'true' : 'false' );
+				button.oaIcon = icon;
+
+				// Cleaned on the server from an allowlist of SVG tags and attributes.
+				graphic.className = 'oa-icon-option-graphic';
+				graphic.innerHTML = icon.value;
+				label.textContent = icon.name;
+
+				button.append( graphic, label );
+				grid.appendChild( button );
+
+			} );
+
+			setIconStatus( field, grid.children.length ? '' : iconStrings.empty );
+			more.hidden = ! result.data.more;
+
+		} ).catch( function () {
+
+			setIconStatus( field, iconStrings.failed );
+
+		} );
+
+	}
+
+	function chooseIcon( field, icon ) {
+
+		var input   = field.querySelector( 'input[type="hidden"]' );
+		var preview = field.querySelector( '.oa-icon-preview' );
+
+		input.value = icon ? icon.value : '';
+		preview.classList.toggle( 'has-value', !! icon );
+		preview.innerHTML = icon ? icon.value : '<span class="dashicons dashicons-star-empty"></span>';
+
+		field.querySelector( '.oa-icon-selection strong' ).textContent = icon ? icon.name : iconStrings.none;
+		field.querySelector( '.oa-icon-selection code' ).textContent = icon ? icon.set : iconStrings.library;
+		field.querySelector( '.oa-icon-remove' ).classList.toggle( 'hidden', ! icon );
+
+		field.querySelectorAll( '.oa-icon-option' ).forEach( function ( option ) {
+
+			var selected = !! icon && option.oaIcon && option.oaIcon.value === icon.value;
+
+			option.classList.toggle( 'is-selected', selected );
+			option.setAttribute( 'aria-selected', selected ? 'true' : 'false' );
+
+		} );
+
+		input.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+
+	}
+
+	function toggleIcons( field, open ) {
+
+		var toggle  = field.querySelector( '.oa-icon-toggle' );
+		var options = field.querySelector( '.oa-icon-options' );
+
+		toggle.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+		options.hidden = ! open;
+
+		if ( open && ! field.dataset.iconLoaded ) {
+
+			field.dataset.iconLoaded = 'true';
+			loadIcons( field, false );
+
+		}
+
+		if ( open ) {
+
+			field.querySelector( '.oa-icon-search input' ).focus();
+
+		}
+
+	}
+
+	document.addEventListener( 'click', function ( event ) {
+
+		var target = event.target.closest( '.oa-icon-toggle, .oa-icon-remove, .oa-icon-more, .oa-icon-option' );
+		var field  = target ? iconField( target ) : null;
+
+		if ( ! field ) {
+
+			return;
+
+		}
+
+		if ( target.classList.contains( 'oa-icon-toggle' ) ) {
+
+			toggleIcons( field, 'true' !== target.getAttribute( 'aria-expanded' ) );
+
+		} else if ( target.classList.contains( 'oa-icon-remove' ) ) {
+
+			chooseIcon( field, null );
+
+		} else if ( target.classList.contains( 'oa-icon-more' ) ) {
+
+			loadIcons( field, true );
+
+		} else {
+
+			chooseIcon( field, target.oaIcon );
+			toggleIcons( field, false );
+			field.querySelector( '.oa-icon-toggle' ).focus();
+
+		}
+
+	} );
+
+	document.addEventListener( 'input', function ( event ) {
+
+		var field = event.target.matches( '.oa-icon-search input' ) ? iconField( event.target ) : null;
+
+		if ( ! field ) {
+
+			return;
+
+		}
+
+		window.clearTimeout( searchTimer );
+
+		searchTimer = window.setTimeout( function () {
+
+			loadIcons( field, false );
+
+		}, 250 );
+
+	} );
+
+	document.addEventListener( 'change', function ( event ) {
+
+		var field = event.target.matches( '.oa-icon-set select' ) ? iconField( event.target ) : null;
+
+		if ( field ) {
+
+			loadIcons( field, false );
+
+		}
+
+	} );
+
+	// Enter in the search box would submit the post form.
+	document.addEventListener( 'keydown', function ( event ) {
+
+		if ( 'Enter' === event.key && event.target.matches( '.oa-icon-search input' ) ) {
+
+			event.preventDefault();
+
+		}
+
+		if ( 'Escape' === event.key && iconField( event.target ) ) {
+
+			var field = iconField( event.target );
+
+			if ( ! field.querySelector( '.oa-icon-options' ).hidden ) {
+
+				toggleIcons( field, false );
+				field.querySelector( '.oa-icon-toggle' ).focus();
+
+			}
+
+		}
+
+	} );
+
 	document.querySelectorAll( '[data-oa-field-tabs]' ).forEach( wireFieldTabs );
 	document.querySelectorAll( '.oa-post-field-media' ).forEach( wireMediaField );
 	document.querySelectorAll( '.oa-post-field-gallery' ).forEach( wireGalleryField );

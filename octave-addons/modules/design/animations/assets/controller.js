@@ -112,111 +112,28 @@ SCROLL ANIMATION CONTROLLER
 	-- Wraps each word of a heading's text nodes in a mask, walking into
 	-- links, spans and inline styling instead of flattening them. Line
 	-- breaks, icons, SVGs and images are left exactly where they were.
-	-- A plain styling span that only holds text, such as
-	-- <span class="text-gradient">, is not nested around the words: its
-	-- class and style move onto each word's mask instead, giving
-	-- <span class="oa-w text-gradient"><span class="oa-wi">word</span></span>
 	---------------------------------------------------------- */
 
 	var skipTags = /^(BR|SVG|IMG|I|SCRIPT|STYLE|TEXTAREA|SELECT|CANVAS|VIDEO|IFRAME|PICTURE)$/;
 
-	/*
-	IS STYLING SPAN
-	-- A span with nothing but a class and inline style, holding only text
-	---------------------------------------------------------- */
-
-	function isStylingSpan( element ) {
-
-		if ( 'SPAN' !== element.tagName.toUpperCase() || ! element.childNodes.length ) {
-
-			return false;
-
-		}
-
-		var attributes = Array.prototype.every.call( element.attributes, function ( attribute ) {
-
-			return 'class' === attribute.name || 'style' === attribute.name;
-
-		} );
-
-		return attributes && Array.prototype.every.call( element.childNodes, function ( child ) {
-
-			return 3 === child.nodeType;
-
-		} );
-
-	}
-
-	/*
-	SPLIT TEXT
-	-- One text into masked words, each mask carrying any class and style
-	-- taken from the styling span it replaces
-	---------------------------------------------------------- */
-
-	function splitText( text, words, className, style ) {
-
-		var fragment = document.createDocumentFragment();
-
-		text.split( /(\s+)/ ).forEach( function ( part ) {
-
-			if ( ! part ) {
-
-				return;
-
-			}
-
-			if ( ! part.trim() ) {
-
-				fragment.appendChild( document.createTextNode( part ) );
-
-				return;
-
-			}
-
-			var outer = document.createElement( 'span' );
-			var inner = document.createElement( 'span' );
-
-			outer.className = className ? 'oa-w ' + className : 'oa-w';
-			inner.className = 'oa-wi';
-			inner.textContent = part;
-
-			if ( style ) {
-
-				outer.setAttribute( 'style', style );
-
-			}
-
-			outer.appendChild( inner );
-			fragment.appendChild( outer );
-			words.push( outer );
-
-		} );
-
-		return fragment;
-
-	}
-
-	function splitNode( node, words ) {
+	function splitNode( node, words, gradients ) {
 
 		Array.prototype.slice.call( node.childNodes ).forEach( function ( child ) {
 
 			if ( 1 === child.nodeType ) {
 
-				if ( skipTags.test( child.tagName.toUpperCase() ) ) {
+				if ( ! skipTags.test( child.tagName.toUpperCase() ) ) {
 
-					return;
+					if ( isGradientText( child ) ) {
+
+						child.setAttribute( 'data-oa-gradient', '' );
+						gradients.push( child );
+
+					}
+
+					splitNode( child, words, gradients );
 
 				}
-
-				if ( isStylingSpan( child ) && child.textContent.trim() ) {
-
-					node.replaceChild( splitText( child.textContent, words, ( child.getAttribute( 'class' ) || '' ).trim(), child.getAttribute( 'style' ) ), child );
-
-					return;
-
-				}
-
-				splitNode( child, words );
 
 				return;
 
@@ -228,9 +145,132 @@ SCROLL ANIMATION CONTROLLER
 
 			}
 
-			node.replaceChild( splitText( child.textContent, words, '', null ), child );
+			var fragment = document.createDocumentFragment();
+
+			child.textContent.split( /(\s+)/ ).forEach( function ( part ) {
+
+				if ( ! part ) {
+
+					return;
+
+				}
+
+				if ( ! part.trim() ) {
+
+					fragment.appendChild( document.createTextNode( part ) );
+
+					return;
+
+				}
+
+				var outer = document.createElement( 'span' );
+				var inner = document.createElement( 'span' );
+
+				outer.className = 'oa-w';
+				inner.className = 'oa-wi';
+				inner.textContent = part;
+				outer.appendChild( inner );
+				fragment.appendChild( outer );
+				words.push( outer );
+
+			} );
+
+			node.replaceChild( fragment, child );
 
 		} );
+
+	}
+
+	/*
+	GRADIENT TEXT
+	-- An element such as <span class="text-gradient"> clips a background to
+	-- its text. Clipped that way around words that move, the browser has to
+	-- repaint the whole mask every frame, which is what made the reveal
+	-- stutter. So each word paints its own slice of the same gradient
+	-- instead (see base.css), and these offsets line the slices up into one
+	-- continuous gradient, carried across line breaks as the original was
+	---------------------------------------------------------- */
+
+	function isGradientText( element ) {
+
+		if ( 'function' !== typeof window.getComputedStyle ) {
+
+			return false;
+
+		}
+
+		var style = window.getComputedStyle( element );
+		var clip  = style.webkitBackgroundClip || style.backgroundClip || '';
+
+		return -1 !== clip.indexOf( 'text' ) && 'none' !== ( style.backgroundImage || 'none' );
+
+	}
+
+	function alignGradient( element ) {
+
+		var masks = element.querySelectorAll( '.oa-w' );
+		var base  = 0;
+		var start = null;
+		var right = 0;
+		var top   = null;
+
+		Array.prototype.forEach.call( masks, function ( mask ) {
+
+			var box = mask.getBoundingClientRect();
+
+			// A word on a new line continues the gradient where the last line ended.
+			if ( null === top || Math.abs( box.top - top ) > 4 ) {
+
+				base += null === start ? 0 : right - start;
+				start = box.left;
+				top   = box.top;
+
+			}
+
+			right = box.right;
+			mask.style.setProperty( '--oa-gx', -Math.round( base + box.left - start ) + 'px' );
+
+		} );
+
+		element.style.setProperty( '--oa-gw', Math.round( base + ( null === start ? 0 : right - start ) ) + 'px' );
+
+	}
+
+	var gradientTexts = [];
+	var realignTimer  = 0;
+
+	function realignGradients() {
+
+		gradientTexts.forEach( alignGradient );
+
+	}
+
+	/*
+	WATCH GRADIENTS
+	-- Word widths change when web fonts arrive and when the window resizes,
+	-- so the slices are lined up again then. Set up once, on first use
+	---------------------------------------------------------- */
+
+	function watchGradients() {
+
+		if ( gradientTexts.length ) {
+
+			return;
+
+		}
+
+		window.addEventListener( 'resize', function () {
+
+			window.clearTimeout( realignTimer );
+			realignTimer = window.setTimeout( realignGradients, 150 );
+
+		} );
+
+		if ( document.fonts && document.fonts.ready ) {
+
+			document.fonts.ready.then( realignGradients );
+
+		}
 
 	}
 
@@ -250,10 +290,19 @@ SCROLL ANIMATION CONTROLLER
 
 		}
 
-		var words = [];
+		var words     = [];
+		var gradients = [];
 
-		splitNode( heading, words );
+		splitNode( heading, words, gradients );
 		heading.setAttribute( 'data-oa-split', mode || 'words' );
+
+		if ( gradients.length ) {
+
+			watchGradients();
+			gradients.forEach( alignGradient );
+			gradientTexts = gradientTexts.concat( gradients );
+
+		}
 
 		var line = 0;
 		var lastTop = null;

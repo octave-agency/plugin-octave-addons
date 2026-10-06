@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 }
 
+require_once __DIR__ . '/class-breakdance-icons.php';
 require_once __DIR__ . '/class-post-fields.php';
 
 class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
@@ -2480,7 +2481,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 		$is_container   = in_array( $type, [ 'group', 'repeater' ], true );
 		$is_html        = 'html' === $type;
 		$is_tab         = 'tab' === $type;
-		$hides_default     = $is_container || $is_tab || in_array( $type, [ 'gallery', 'cpt_select' ], true );
+		$hides_default     = $is_container || $is_tab || in_array( $type, [ 'gallery', 'cpt_select', 'icon' ], true );
 		$hides_required    = $is_html || $is_tab;
 		$reference_sources = $this->reference_source_options();
 		$scope_label      = 'specific' === $scope
@@ -2671,7 +2672,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 					<label class="oa-cpt-field"><span><?php esc_html_e( 'Label', 'octave-addons' ); ?></span><input type="text" data-sub-role="title" name="<?= esc_attr( $this->sub_field_name( $field_index, $sub_index, 'label' ) ); ?>" value="<?= esc_attr( $label ); ?>" placeholder="Heading" required></label>
 					<label class="oa-cpt-field"><span><?php esc_html_e( 'Field name', 'octave-addons' ); ?></span><input type="text" data-sub-role="key" name="<?= esc_attr( $this->sub_field_name( $field_index, $sub_index, 'name' ) ); ?>" value="<?= esc_attr( $name ); ?>" maxlength="40" pattern="[a-z0-9_]+" required<?= $saved ? ' readonly' : ''; ?>></label>
 					<label class="oa-cpt-field"><span><?php esc_html_e( 'Field type', 'octave-addons' ); ?></span><select data-sub-field-type name="<?= esc_attr( $this->sub_field_name( $field_index, $sub_index, 'type' ) ); ?>"><?php foreach ( $types as $type_key => $type_label ) : ?><option value="<?= esc_attr( $type_key ); ?>"<?= selected( $type, $type_key, false ); ?>><?= esc_html( $type_label ); ?></option><?php endforeach; ?></select></label>
-					<label class="oa-cpt-field oa-sub-field-default<?= 'gallery' === $type ? ' oa-hidden' : ''; ?>"><span><?php esc_html_e( 'Default value', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->sub_field_name( $field_index, $sub_index, 'default_value' ) ); ?>" value="<?= esc_attr( is_scalar( $field['default_value'] ?? '' ) ? (string) $field['default_value'] : '' ); ?>"></label>
+					<label class="oa-cpt-field oa-sub-field-default<?= in_array( $type, [ 'gallery', 'icon' ], true ) ? ' oa-hidden' : ''; ?>"><span><?php esc_html_e( 'Default value', 'octave-addons' ); ?></span><input type="text" name="<?= esc_attr( $this->sub_field_name( $field_index, $sub_index, 'default_value' ) ); ?>" value="<?= esc_attr( is_scalar( $field['default_value'] ?? '' ) ? (string) $field['default_value'] : '' ); ?>"></label>
 					<label class="oa-cpt-field oa-cpt-field--full oa-sub-field-choices<?= in_array( $type, [ 'select', 'multiselect', 'radio' ], true ) ? '' : ' oa-hidden'; ?>"><span><?php esc_html_e( 'Choices', 'octave-addons' ); ?></span><textarea name="<?= esc_attr( $this->sub_field_name( $field_index, $sub_index, 'choices' ) ); ?>" rows="4" placeholder="value : Label"><?= esc_textarea( (string) ( $field['choices'] ?? '' ) ); ?></textarea></label>
 					<label class="oa-cpt-field oa-cpt-field--full"><span><?php esc_html_e( 'Instructions for editors', 'octave-addons' ); ?></span><textarea name="<?= esc_attr( $this->sub_field_name( $field_index, $sub_index, 'description' ) ); ?>" rows="2"><?= esc_textarea( (string) ( $field['description'] ?? '' ) ); ?></textarea></label>
 					<div class="oa-cpt-field oa-cpt-switch-field"><span><?php esc_html_e( 'Required', 'octave-addons' ); ?></span><label class="oa-switch"><input type="checkbox" name="<?= esc_attr( $this->sub_field_name( $field_index, $sub_index, 'required' ) ); ?>" value="1"<?= checked( ! empty( $field['required'] ), true, false ); ?>><span class="oa-switch-slider"></span></label></div>
@@ -4217,7 +4218,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 				$default_value = wp_kses_post( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) );
 
-			} elseif ( 'cpt_select' !== $type ) {
+			} elseif ( ! in_array( $type, [ 'cpt_select', 'icon' ], true ) ) {
 
 				$default_value = sanitize_text_field( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) );
 
@@ -4296,9 +4297,11 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 				'type'          => $type,
 				'default_value' => 'gallery' === $type
 					? []
+					: ( 'icon' === $type
+					? ''
 					: ( 'wysiwyg' === $type
 					? wp_kses_post( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) )
-					: sanitize_text_field( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) ) ),
+					: sanitize_text_field( wp_unslash( (string) ( $field['default_value'] ?? '' ) ) ) ) ),
 				'choices'       => sanitize_textarea_field( wp_unslash( (string) ( $field['choices'] ?? '' ) ) ),
 				'description'   => sanitize_textarea_field( wp_unslash( (string) ( $field['description'] ?? '' ) ) ),
 				'required'      => ! empty( $field['required'] ),
@@ -4433,6 +4436,7 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 			'multiselect' => __( 'Multi-select', 'octave-addons' ),
 			'cpt_select'  => __( 'CPT select', 'octave-addons' ),
 			'image'       => __( 'Image', 'octave-addons' ),
+			'icon'        => __( 'Breakdance icon', 'octave-addons' ),
 			'gallery'     => __( 'Gallery', 'octave-addons' ),
 			'file'        => __( 'File', 'octave-addons' ),
 		];

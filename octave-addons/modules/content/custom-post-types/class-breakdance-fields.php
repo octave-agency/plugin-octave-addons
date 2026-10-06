@@ -3,7 +3,7 @@
 /*
 BREAKDANCE CUSTOM POST FIELDS
 -- Implements scalar, image, gallery, group-child, and repeater Dynamic Data
--- fields.
+-- fields. Breakdance icon fields are scalar: they return the icon's SVG.
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {

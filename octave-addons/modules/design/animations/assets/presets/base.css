@@ -132,6 +132,34 @@ HEADING MASKS
     overflow: visible;
 }
 
+/*
+Gradient text
+-- A text-clipped gradient around moving words makes the browser repaint
+-- the whole mask every frame. Each word paints its own slice of the same
+-- gradient instead, sized to the whole phrase and shifted by the offsets
+-- the controller measures, so it still reads as one gradient
+---------------------------------------------------------- */
+
+[data-oa-gradient] {
+    background-size: 0 0 !important;
+}
+
+[data-oa-gradient] .oa-w {
+    background-image: inherit;
+    background-size: 0 0;
+}
+
+[data-oa-gradient] .oa-wi {
+    color: transparent;
+    background-image: inherit;
+    background-position: var(--oa-gx, 0) 0;
+    background-repeat: no-repeat;
+    background-size: var(--oa-gw, 100%) 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 .oa-anim-ready [data-oa-anim="heading"]:not(.visible) .oa-wi {
     opacity: var(--oa-word-start, 1);
     transform: var(--oa-word-from, translate3d(0, 105%, 0));

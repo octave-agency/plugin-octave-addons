@@ -166,6 +166,10 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.36.0 =
+* Added a Breakdance icon field type for custom post fields. Editors choose an icon from Breakdance's icon library (its stock FontAwesome and IcoMoon sets and any uploaded sets) with a picker styled like the post type icon picker, searchable and filterable by set, in the classic meta box, the structured content editor, groups and repeaters. The icon is stored as cleaned SVG, so it also works through Breakdance Dynamic Data and keeps rendering if the set is later removed.
+* Gradient text in animated headings (such as `<span class="text-gradient">`) stays one span again, so the gradient runs across the whole phrase. The reveal is now smooth: each word paints its own aligned slice of the same gradient, rather than the browser repainting one text-clipped gradient around moving words every frame. Slices are realigned when fonts load and on resize, and continue across line breaks.
+
 = 3.35.1 =
 * The admin theme loads its stylesheets as separate files from the plugin again instead of one combined file in uploads, which broke relative image paths such as the select chevrons. Stylesheets for integrations are still only loaded while that plugin is active.
 

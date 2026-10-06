@@ -43,7 +43,7 @@ STRUCTURED CONTENT EDITOR
 
 	// Controls that need the whole row width, so their label sits above them
 	// instead of in the left hand column.
-	var STACKED_TYPES = [ 'textarea', 'wysiwyg', 'group', 'repeater', 'multiselect', 'gallery' ];
+	var STACKED_TYPES = [ 'textarea', 'wysiwyg', 'group', 'repeater', 'multiselect', 'gallery', 'icon' ];
 
 	// Types that only shape the screen and hold no post meta of their own.
 	var PRESENTATIONAL_TYPES = [ 'html', 'tab' ];
@@ -316,6 +316,244 @@ STRUCTURED CONTENT EDITOR
 						: null
 				)
 			)
+		);
+
+	}
+
+	/*
+	ICON CONTROL
+	-- Picks an icon from Breakdance's icon library, searched a page at a
+	-- time through the same endpoint as the classic meta box. Stores the
+	-- icon's SVG, cleaned on the server, with its name and set kept as data
+	-- attributes for the label
+	---------------------------------------------------------- */
+
+	var icons       = settings.icons || {};
+	var iconStrings = icons.strings || {};
+
+	function iconData( value, attribute ) {
+
+		if ( ! value || ! window.DOMParser ) {
+
+			return '';
+
+		}
+
+		var svg = new window.DOMParser().parseFromString( value, 'text/html' ).querySelector( 'svg' );
+
+		return svg ? ( svg.getAttribute( attribute ) || '' ) : '';
+
+	}
+
+	function IconControl( props ) {
+
+		var value     = String( props.value || '' );
+		var openState = wp.element.useState( false );
+		var termState = wp.element.useState( '' );
+		var setState  = wp.element.useState( '' );
+		var listState = wp.element.useState( { icons: [], more: false, status: '' } );
+		var request   = wp.element.useRef( 0 );
+		var open      = openState[0];
+		var list      = listState[0];
+
+		function load( append ) {
+
+			var body   = new window.FormData();
+			var offset = append ? list.icons.length : 0;
+			var ticket = ++request.current;
+
+			body.append( 'action', icons.action );
+			body.append( 'nonce', icons.nonce );
+			body.append( 'search', termState[0] );
+			body.append( 'set', setState[0] );
+			body.append( 'offset', String( offset ) );
+
+			listState[1]( { icons: append ? list.icons : [], more: false, status: iconStrings.loading } );
+
+			window.fetch( icons.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } ).then( function ( response ) {
+
+				return response.json();
+
+			} ).then( function ( result ) {
+
+				// A newer search has started since this one; its answer wins.
+				if ( ticket !== request.current ) {
+
+					return;
+
+				}
+
+				if ( ! result || ! result.success ) {
+
+					listState[1]( { icons: [], more: false, status: result && result.data && result.data.message ? result.data.message : iconStrings.failed } );
+
+					return;
+
+				}
+
+				var next = ( append ? list.icons : [] ).concat( result.data.icons );
+
+				listState[1]( { icons: next, more: !! result.data.more, status: next.length ? '' : iconStrings.empty } );
+
+			} ).catch( function () {
+
+				listState[1]( { icons: [], more: false, status: iconStrings.failed } );
+
+			} );
+
+		}
+
+		// Searching waits for a pause in typing.
+		wp.element.useEffect( function () {
+
+			if ( ! open ) {
+
+				return;
+
+			}
+
+			var timer = window.setTimeout( function () {
+
+				load( false );
+
+			}, 250 );
+
+			return function () {
+
+				window.clearTimeout( timer );
+
+			};
+
+		}, [ open, termState[0], setState[0] ] );
+
+		var name = iconData( value, 'data-oa-icon-name' );
+		var set  = iconData( value, 'data-oa-icon-set' );
+
+		var selection = createElement(
+			'div',
+			{ className: 'oa-icon-selection' },
+			value
+				? createElement( 'span', { className: 'oa-icon-preview has-value', 'aria-hidden': 'true', dangerouslySetInnerHTML: { __html: value } } )
+				: createElement( 'span', { className: 'oa-icon-preview', 'aria-hidden': 'true' }, createElement( 'span', { className: 'dashicons dashicons-star-empty' } ) ),
+			createElement(
+				'div',
+				null,
+				createElement( 'strong', null, value ? ( name || iconStrings.none ) : iconStrings.none ),
+				createElement( 'code', null, set || iconStrings.library )
+			),
+			icons.available
+				? createElement(
+					'div',
+					{ className: 'oa-icon-actions' },
+					value
+						? createElement( components.Button, {
+							isDestructive: true,
+							size: 'compact',
+							variant: 'tertiary',
+							onClick: function () {
+
+								props.onChange( '' );
+
+							}
+						}, iconStrings.remove )
+						: null,
+					createElement( components.Button, {
+						'aria-expanded': open ? 'true' : 'false',
+						className: 'oa-icon-toggle',
+						size: 'compact',
+						variant: 'secondary',
+						onClick: function () {
+
+							openState[1]( ! open );
+
+						}
+					}, iconStrings.choose )
+				)
+				: null
+		);
+
+		if ( ! icons.available ) {
+
+			return createElement( 'div', { className: 'oa-icon-picker' }, selection, createElement( 'p', { className: 'oa-icon-status' }, iconStrings.unavailable ) );
+
+		}
+
+		var setOptions = [ { label: iconStrings.allSets, value: '' } ].concat( Object.keys( icons.sets || {} ).map( function ( slug ) {
+
+			return { label: icons.sets[ slug ], value: slug };
+
+		} ) );
+
+		return createElement(
+			'div',
+			{ className: 'oa-icon-picker' },
+			selection,
+			open
+				? createElement(
+					'div',
+					{ className: 'oa-icon-options' },
+					createElement(
+						'div',
+						{ className: 'oa-icon-filters' },
+						createElement( components.SearchControl, {
+							__nextHasNoMarginBottom: true,
+							label: iconStrings.search,
+							onChange: termState[1],
+							placeholder: iconStrings.search,
+							value: termState[0]
+						} ),
+						createElement( components.SelectControl, {
+							__nextHasNoMarginBottom: true,
+							hideLabelFromVision: true,
+							label: iconStrings.allSets,
+							onChange: setState[1],
+							options: setOptions,
+							value: setState[0]
+						} )
+					),
+					createElement(
+						'div',
+						{ className: 'oa-icon-grid', role: 'listbox', 'aria-label': iconStrings.library },
+						list.icons.map( function ( icon ) {
+
+							var selected = icon.value === value;
+
+							return createElement(
+								'button',
+								{
+									'aria-selected': selected ? 'true' : 'false',
+									className: 'oa-icon-option' + ( selected ? ' is-selected' : '' ),
+									key: icon.set + '/' + icon.name + '/' + icon.value.length,
+									onClick: function () {
+
+										props.onChange( icon.value );
+										openState[1]( false );
+
+									},
+									role: 'option',
+									title: icon.name,
+									type: 'button'
+								},
+								createElement( 'span', { className: 'oa-icon-option-graphic', dangerouslySetInnerHTML: { __html: icon.value } } ),
+								createElement( 'span', null, icon.name )
+							);
+
+						} )
+					),
+					createElement( 'p', { className: 'oa-icon-status', 'aria-live': 'polite' }, list.status ),
+					list.more
+						? createElement( components.Button, {
+							size: 'compact',
+							variant: 'secondary',
+							onClick: function () {
+
+								load( true );
+
+							}
+						}, iconStrings.more )
+						: null
+				)
+				: null
 		);
 
 	}
@@ -902,6 +1140,10 @@ STRUCTURED CONTENT EDITOR
 		} else if ( 'gallery' === field.type ) {
 
 			control = createElement( GalleryControl, props );
+
+		} else if ( 'icon' === field.type ) {
+
+			control = createElement( IconControl, props );
 
 		} else if ( 'image' === field.type || 'file' === field.type ) {
 

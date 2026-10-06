@@ -535,7 +535,15 @@ function splitEnvironment( markup ) {
 			tagName: tag.toUpperCase(),
 			attributes: Object.keys( attributes || {} ).map( ( name ) => ( { name: name, value: attributes[ name ] } ) ),
 			childNodes: [],
-			style: { setProperty() {} },
+			style: { setProperty( name, value ) {
+
+				if ( 0 === name.indexOf( '--oa-g' ) ) {
+
+					node.setAttribute( 'style', ( node.getAttribute( 'style' ) || '' ) + name + ':' + value + ';' );
+
+				}
+
+			} },
 			classList: { add() {}, remove() {}, contains: () => false },
 			getAttribute( name ) {
 
@@ -593,10 +601,47 @@ function splitEnvironment( markup ) {
 				this.childNodes.splice( index, 1, ...( replacement.isFragment ? replacement.childNodes : [ replacement ] ) );
 
 			},
-			getBoundingClientRect: () => ( { top: 2400 } ),
+			getBoundingClientRect() {
+
+				return { top: 2400, left: this.x || 0, right: ( this.x || 0 ) + 50 };
+
+			},
 			getClientRects: () => [ 1 ],
 			closest: () => null,
+			querySelectorAll( selector ) {
+
+				const found = [];
+				const walk = ( item ) => item.childNodes.forEach( ( child ) => {
+
+					if ( 1 !== child.nodeType ) {
+
+						return;
+
+					}
+
+					if ( '.oa-w' === selector && 'oa-w' === child.getAttribute( 'class' ) ) {
+
+						found.push( child );
+
+					}
+
+					walk( child );
+
+				} );
+
+				walk( this );
+
+				return found;
+
+			},
 		};
+
+		// Each created span sits 60px right of the last, so word masks (outer and inner spans) are 120px apart on one line.
+		if ( 'span' === tag && ! attributes ) {
+
+			node.x = 60 * ( element.created = ( element.created || 0 ) + 1 );
+
+		}
 
 		( children || [] ).forEach( ( child ) => node.appendChild( 'string' === typeof child ? text( child ) : child ) );
 
@@ -646,6 +691,9 @@ function splitEnvironment( markup ) {
 	const window = {
 		innerHeight: 900,
 		document: document,
+		getComputedStyle: ( node ) => ( / text-gradient /.test( ' ' + ( node.getAttribute( 'class' ) || '' ) + ' ' )
+			? { backgroundClip: 'text', backgroundImage: 'linear-gradient(90deg, red, blue)' }
+			: { backgroundClip: 'border-box', backgroundImage: 'none' } ),
 		matchMedia: () => ( { matches: false } ),
 		setTimeout: () => 0,
 		clearTimeout: () => {},
@@ -667,31 +715,31 @@ function splitEnvironment( markup ) {
 
 }
 
-test( 'styling spans give their class to each word instead of nesting', () => {
+test( 'gradient text stays one span and its words share one continuous gradient', () => {
 
 	const output = splitEnvironment( ( element ) => element( 'h2', { class: 'bde-heading' }, [
 		'Explore our ',
-		element( 'span', { class: 'text-gradient' }, [ 'virtual office & business address' ] ),
+		element( 'span', { class: 'text-gradient' }, [ 'virtual office address' ] ),
 		' services',
 	] ) );
 
-	assert.ok( output.includes( '<span class="oa-w text-gradient"><span class="oa-wi">virtual</span></span> <span class="oa-w text-gradient"><span class="oa-wi">office</span></span>' ), output );
-	assert.ok( output.includes( '<span class="oa-w text-gradient"><span class="oa-wi">address</span></span> <span class="oa-w"><span class="oa-wi">services</span></span>' ), 'plain words keep plain masks' );
-	assert.ok( ! /class="text-gradient"><span class="oa-w/.test( output ), 'no span wrapping the masks' );
-	assert.strictEqual( ( output.match( /text-gradient/g ) || [] ).length, 5, 'every gradient word' );
+	assert.ok( /<span class="text-gradient" data-oa-gradient="" style="--oa-gw:290px;"><span class="oa-w" style="--oa-gx:0px;"><span class="oa-wi">virtual<\/span><\/span> <span class="oa-w" style="--oa-gx:-120px;"><span class="oa-wi">office<\/span><\/span> <span class="oa-w" style="--oa-gx:-240px;"><span class="oa-wi">address<\/span><\/span><\/span>/.test( output ), output );
+	assert.ok( output.includes( '<span class="oa-w"><span class="oa-wi">services</span></span>' ), 'words outside it are untouched' );
+	assert.strictEqual( ( output.match( /text-gradient/g ) || [] ).length, 1, 'one gradient span, never one per word' );
 
 } );
 
-test( 'spans with other attributes or markup inside are still walked into', () => {
+test( 'spans without gradient text are walked into as before', () => {
 
 	const output = splitEnvironment( ( element ) => element( 'h2', { class: 'bde-heading' }, [
-		element( 'span', { class: 'brand', 'data-x': '1' }, [ 'Octave Agency' ] ),
+		element( 'span', { class: 'brand' }, [ 'Octave Agency' ] ),
 		' and ',
 		element( 'a', { href: '/x' }, [ 'more' ] ),
 	] ) );
 
-	assert.ok( output.includes( '<span class="brand" data-x="1"><span class="oa-w"><span class="oa-wi">Octave</span></span>' ), 'kept as a wrapper' );
+	assert.ok( output.includes( '<span class="brand"><span class="oa-w"><span class="oa-wi">Octave</span></span>' ), output );
 	assert.ok( output.includes( '<a href="/x"><span class="oa-w"><span class="oa-wi">more</span></span></a>' ), 'links kept' );
+	assert.ok( ! output.includes( 'data-oa-gradient' ) );
 
 } );
 
