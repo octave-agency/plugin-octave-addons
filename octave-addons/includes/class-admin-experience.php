@@ -205,17 +205,15 @@ class Octave_Addons_Admin_Experience {
 	-- screen the refresh reaches needs these, so both enqueue points start here.
 	---------------------------------------------------------- */
 
-	public function enqueue_shared_assets( string $style_url = '', string $style_version = '' ): void {
+	public function enqueue_shared_assets(): void {
 
-		$settings      = $this->get_settings();
-		$style_url     = $style_url ?: OCTAVE_ADDONS_URL . 'assets/css/admin-experience/base.css';
-		$style_version = $style_version ?: $this->asset_version( 'assets/css/admin-experience/base.css' );
+		$settings = $this->get_settings();
 
 		wp_enqueue_style(
 			'octave-addons-admin-experience',
-			$style_url,
+			OCTAVE_ADDONS_URL . 'assets/css/admin-experience/base.css',
 			[],
-			$style_version
+			$this->asset_version( 'assets/css/admin-experience/base.css' )
 		);
 
 		$accent_css = $this->accent_css( $settings );
@@ -284,16 +282,6 @@ class Octave_Addons_Admin_Experience {
 		$settings = $this->get_settings();
 
 		if ( empty( $settings['enabled'] ) ) {
-
-			return;
-
-		}
-
-		$bundle = $this->admin_css_bundle( $hook );
-
-		if ( ! empty( $bundle ) ) {
-
-			$this->enqueue_shared_assets( $bundle['url'], $bundle['version'] );
 
 			return;
 
@@ -369,141 +357,6 @@ class Octave_Addons_Admin_Experience {
 			);
 
 		}
-
-	}
-
-	/*
-	ADMIN CSS FILES
-	-- Selects the normal-admin sources for the plugins that are active on the
-	-- current site. Customizer and editor-canvas styles use separate documents.
-	---------------------------------------------------------- */
-
-	public function admin_css_files( string $hook ): array {
-
-		$files = [
-			'assets/css/admin-experience/base.css',
-			'assets/css/admin-experience/integrations.css',
-		];
-
-		if ( 'toplevel_page_cookie-law-info' === $hook ) {
-
-			$files[] = 'assets/css/admin-experience/cookieyes.css';
-
-		}
-
-		if ( $this->is_woocommerce_active() ) {
-
-			$files[] = 'assets/css/admin-experience/woocommerce.css';
-
-		}
-
-		if ( $this->is_imagify_active() ) {
-
-			$files[] = 'assets/css/admin-experience/imagify.css';
-
-		}
-
-		if ( $this->is_rank_math_active() ) {
-
-			$files[] = 'assets/css/admin-experience/rank-math.css';
-
-		}
-
-		if ( $this->is_wp_activity_log_active() ) {
-
-			$files[] = 'assets/css/admin-experience/activity-log.css';
-
-		}
-
-		return $files;
-
-	}
-
-	/*
-	ADMIN CSS BUNDLE
-	-- Writes one immutable stylesheet per active-plugin combination. The content
-	-- hash changes whenever a source changes, so browsers can cache it forever.
-	-- A write failure returns an empty result and keeps the separate-file fallback.
-	---------------------------------------------------------- */
-
-	public function admin_css_bundle( string $hook ): array {
-
-		$files    = $this->admin_css_files( $hook );
-		$manifest = [ OCTAVE_ADDONS_VERSION ];
-
-		foreach ( $files as $relative ) {
-
-			$path = OCTAVE_ADDONS_DIR . $relative;
-
-			if ( ! is_readable( $path ) ) {
-
-				return [];
-
-			}
-
-			$manifest[] = $relative . ':' . (string) filemtime( $path ) . ':' . (string) filesize( $path );
-
-		}
-
-		$uploads = wp_upload_dir( null, false );
-
-		if ( ! empty( $uploads['error'] ) || empty( $uploads['basedir'] ) || empty( $uploads['baseurl'] ) ) {
-
-			return [];
-
-		}
-
-		$version   = substr( hash( 'sha256', implode( '|', $manifest ) ), 0, 16 );
-		$directory = trailingslashit( $uploads['basedir'] ) . 'octave-addons/admin-css';
-		$filename  = 'admin-' . $version . '.css';
-		$path      = trailingslashit( $directory ) . $filename;
-		$url       = trailingslashit( $uploads['baseurl'] ) . 'octave-addons/admin-css/' . $filename;
-
-		if ( ! file_exists( $path ) ) {
-
-			if ( ! wp_mkdir_p( $directory ) ) {
-
-				return [];
-
-			}
-
-			$css = "/* OCTAVE ADDONS ADMIN CSS -- Generated from active integrations. */\n";
-
-			foreach ( $files as $relative ) {
-
-				$content = file_get_contents( OCTAVE_ADDONS_DIR . $relative );
-
-				if ( false === $content ) {
-
-					return [];
-
-				}
-
-				$css .= "\n/* SOURCE: " . $relative . " */\n" . $content . "\n";
-
-			}
-
-			$temp = tempnam( $directory, 'oa-admin-' );
-
-			if ( false === $temp || false === file_put_contents( $temp, $css, LOCK_EX ) || ! rename( $temp, $path ) ) {
-
-				if ( false !== $temp && file_exists( $temp ) ) {
-
-					unlink( $temp );
-
-				}
-
-				return [];
-
-			}
-
-		}
-
-		return [
-			'url'     => $url,
-			'version' => $version,
-			'files'   => $files,
-		];
 
 	}
 

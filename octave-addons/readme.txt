@@ -166,6 +166,9 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.35.1 =
+* The admin theme loads its stylesheets as separate files from the plugin again instead of one combined file in uploads, which broke relative image paths such as the select chevrons. Stylesheets for integrations are still only loaded while that plugin is active.
+
 = 3.35.0 =
 * Performance toolbar simplified: "Performance" and a single "Clear cache" action that clears every active layer, shown only to administrators while at least one Performance feature is switched on. Per-layer results and specialist controls stay on the Performance page.
 * Saving published content now clears the pages it appears on (the page itself, the home and posts pages, its archive and public term archives) once the save request has finished, then refills them in the background. Unpublished, trashed and deleted posts clear their old addresses; term edits clear their archives; menu changes clear every page. Page-cache plugins now receive these clears too.

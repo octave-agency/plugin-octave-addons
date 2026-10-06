@@ -2,7 +2,8 @@
 
 /*
 ADMIN EXPERIENCE TESTS
--- Verifies active-plugin CSS selection and the generated normal-admin bundle.
+-- Every admin stylesheet loads as its own file from the plugin, and only
+-- for the integrations active on the site.
 ---------------------------------------------------------- */
 
 require_once dirname( __DIR__ ) . '/includes/class-admin-experience.php';
@@ -37,44 +38,53 @@ class OA_Test_Admin_Experience extends Octave_Addons_Admin_Experience {
 
 }
 
-function test_admin_css_files_only_include_active_integrations(): void {
+function wp_add_inline_style( $handle, $css ) {}
+
+function is_ssl() {
+
+	return true;
+
+}
+
+function oa_admin_styles( OA_Test_Admin_Experience $admin, string $hook ): array {
+
+	update_option( OCTAVE_ADDONS_OPTION_KEY, [ Octave_Addons_Admin_Experience::MODULE_ID => [ 'enabled' => true ] ] );
+
+	$admin->enqueue_assets( $hook );
+
+	return array_values( array_filter( $GLOBALS['oa_enqueued'], static function ( $handle ) {
+
+		return 0 === strpos( (string) $handle, 'octave-addons-admin-experience' );
+
+	} ) );
+
+}
+
+function test_admin_stylesheets_load_separately_for_active_integrations(): void {
 
 	$admin = new OA_Test_Admin_Experience();
 
 	oa_assert_same( [
-		'assets/css/admin-experience/base.css',
-		'assets/css/admin-experience/integrations.css',
-	], $admin->admin_css_files( 'index.php' ) );
+		'octave-addons-admin-experience',
+		'octave-addons-admin-experience',
+		'octave-addons-admin-experience-integrations',
+	], oa_admin_styles( $admin, 'index.php' ), 'base style and script, then integrations' );
+
+	oa_test_reset();
 
 	$admin->active = [ 'woocommerce', 'imagify', 'rank-math', 'activity-log' ];
 
 	oa_assert_same( [
-		'assets/css/admin-experience/base.css',
-		'assets/css/admin-experience/integrations.css',
-		'assets/css/admin-experience/cookieyes.css',
-		'assets/css/admin-experience/woocommerce.css',
-		'assets/css/admin-experience/imagify.css',
-		'assets/css/admin-experience/rank-math.css',
-		'assets/css/admin-experience/activity-log.css',
-	], $admin->admin_css_files( 'toplevel_page_cookie-law-info' ) );
+		'octave-addons-admin-experience',
+		'octave-addons-admin-experience',
+		'octave-addons-admin-experience-integrations',
+		'octave-addons-admin-experience-cookieyes',
+		'octave-addons-admin-experience-woocommerce',
+		'octave-addons-admin-experience-imagify',
+		'octave-addons-admin-experience-rank-math',
+		'octave-addons-admin-experience-activity-log',
+	], oa_admin_styles( $admin, 'toplevel_page_cookie-law-info' ) );
 
-}
-
-function test_admin_css_bundle_combines_selected_sources_once(): void {
-
-	$admin         = new OA_Test_Admin_Experience();
-	$admin->active = [ 'imagify' ];
-	$bundle        = $admin->admin_css_bundle( 'upload.php' );
-	$path          = trailingslashit( WP_CONTENT_DIR ) . 'uploads/octave-addons/admin-css/admin-' . $bundle['version'] . '.css';
-
-	oa_assert( is_file( $path ), 'bundle was written' );
-
-	$css = file_get_contents( $path );
-
-	oa_assert_contains( 'assets/css/admin-experience/base.css', $css, 'base included' );
-	oa_assert_contains( 'assets/css/admin-experience/integrations.css', $css, 'integrations included' );
-	oa_assert_contains( 'assets/css/admin-experience/imagify.css', $css, 'active plugin included' );
-	oa_assert_not_contains( 'assets/css/admin-experience/woocommerce.css', $css, 'inactive plugin excluded' );
-	oa_assert_same( $bundle, $admin->admin_css_bundle( 'upload.php' ), 'existing immutable bundle reused' );
+	oa_assert( ! is_dir( WP_CONTENT_DIR . '/uploads/octave-addons/admin-css' ), 'no combined file is written' );
 
 }
