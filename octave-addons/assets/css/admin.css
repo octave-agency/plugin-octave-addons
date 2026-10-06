@@ -81,26 +81,26 @@ TEXT LINKS
 -- Overrides WordPress admin blue while leaving navigation and cards alone.
 ---------------------------------------------------------- */
 
-.oa-app a:not(.oa-nav-item):not(.oa-module-card),
-.oa-app a:not(.oa-nav-item):not(.oa-module-card):visited {
+.oa-app a:not(.oa-nav-item):not(.oa-nav-subitem):not(.oa-module-card),
+.oa-app a:not(.oa-nav-item):not(.oa-nav-subitem):not(.oa-module-card):visited {
     color: var(--oa-accent);
     text-decoration-color: rgba(43, 255, 134, 0.48);
     text-underline-offset: 2px;
 }
 
-.oa-app a:not(.oa-nav-item):not(.oa-module-card):hover,
-.oa-app a:not(.oa-nav-item):not(.oa-module-card):active {
+.oa-app a:not(.oa-nav-item):not(.oa-nav-subitem):not(.oa-module-card):hover,
+.oa-app a:not(.oa-nav-item):not(.oa-nav-subitem):not(.oa-module-card):active {
     color: #8CFFC0;
     text-decoration-color: currentColor;
 }
 
-.oa-app a:not(.oa-nav-item):not(.oa-module-card):focus {
+.oa-app a:not(.oa-nav-item):not(.oa-nav-subitem):not(.oa-module-card):focus {
     color: var(--oa-accent);
     outline: none;
     box-shadow: none;
 }
 
-.oa-app a:not(.oa-nav-item):not(.oa-module-card):focus-visible {
+.oa-app a:not(.oa-nav-item):not(.oa-nav-subitem):not(.oa-module-card):focus-visible {
     outline: 2px solid var(--oa-accent);
     outline-offset: 2px;
     border-radius: 2px;
@@ -184,7 +184,7 @@ FOCUS STATES
     align-items: center;
     gap: 12px;
     /* Matches .oa-nav so the brand mark and the nav pills share a left edge */
-    padding: 22px 12px;
+    padding: 22px 24px;
     border-bottom: 1px solid var(--oa-border-light);
 }
 
@@ -313,6 +313,62 @@ FOCUS STATES
     flex-shrink: 0;
     width: 16px;
     height: 16px;
+}
+
+/* --- Nav groups (accordion) ------------------------------ */
+
+.oa-nav-group > summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.oa-nav-group > summary::-webkit-details-marker {
+    display: none;
+}
+
+.oa-nav-chevron {
+    flex-shrink: 0;
+    margin-left: auto;
+    opacity: 0.6;
+    transition: transform 0.18s ease;
+}
+
+.oa-nav-group[open] .oa-nav-chevron {
+    transform: rotate(180deg);
+}
+
+.oa-nav-sub {
+    margin: 0 0 8px 15px;
+    padding-left: 10px;
+    border-left: 1px solid var(--oa-border);
+}
+
+.oa-nav-subitem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    color: var(--oa-text-muted);
+    text-decoration: none;
+    font-size: 12.5px;
+    border-radius: 8px;
+    line-height: 1.4;
+}
+
+.octave-addons-wrap .oa-app .oa-nav-subitem:hover,
+.octave-addons-wrap .oa-app .oa-nav-subitem:focus-visible {
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--oa-text);
+}
+
+.octave-addons-wrap .oa-app .oa-nav-subitem:focus-visible {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: -2px;
+}
+
+.oa-nav-subitem .oa-dot {
+    width: 5px;
+    height: 5px;
 }
 
 .oa-sidebar-footer {
@@ -812,6 +868,8 @@ Navigation entry
 
 .oa-panel {
     position: relative;
+    /* Sidebar links jump to a panel, so clear the WordPress admin bar */
+    scroll-margin-top: 48px;
     /* Visible so custom-select dropdowns can extend past the card edge */
     overflow: visible;
     background: linear-gradient(145deg, rgba(23, 27, 28, 0.94), rgba(15, 18, 19, 0.94));
@@ -2098,6 +2156,8 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
 .octave-addons-wrap .oa-app--themed .oa-brand-name,
 .octave-addons-wrap .oa-app--themed .oa-nav-item,
 .octave-addons-wrap .oa-app--themed .oa-nav-item:visited,
+.octave-addons-wrap .oa-app--themed .oa-nav-subitem,
+.octave-addons-wrap .oa-app--themed .oa-nav-subitem:visited,
 .octave-addons-wrap .oa-app--themed .oa-sidebar-footer strong {
     color: var(--oa-text);
 }
@@ -2108,7 +2168,8 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
     color: var(--oa-text-dim);
 }
 
-.oa-app--themed .oa-nav-item:hover {
+.oa-app--themed .oa-nav-item:hover,
+.oa-app--themed .oa-nav-subitem:hover {
     color: var(--oa-text) !important;
     background: var(--oa-surface-3) !important;
 }
@@ -2355,6 +2416,7 @@ html[data-oa-admin-theme="light"] .oa-app--themed .oa-brand-mark {
     }
 
     .oa-nav-item,
+    .oa-nav-chevron,
     .oa-module-card,
     .oa-save-bar .button-primary {
         transition: none;

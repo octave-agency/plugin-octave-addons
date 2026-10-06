@@ -4,7 +4,7 @@
  * Plugin Name:       Octave Addons
  * Plugin URI:        https://www.octaveagency.com/
  * Description:       A modular collection of Octave site add-ons.
- * Version:           3.23.4
+ * Version:           3.25.0
  * Author:            Octave Agency
  * Author URI:        https://octaveagency.com
  * License:           GPL-2.0+
@@ -93,5 +93,12 @@ register_deactivation_hook( __FILE__, function () {
 	delete_site_transient( 'octave_addons_github_release' );
 
 	Octave_Addons_Site_Status::remove_status_drop_ins();
+
+	// Performance background jobs are booked again when their modules next run.
+	foreach ( [ 'octave_addons_perf_fonts_refresh', 'octave_addons_perf_fonts_fetch', 'octave_addons_perf_cf_flush', 'octave_addons_perf_db_cleanup', 'octave_addons_perf_db_cleanup_continue' ] as $hook ) {
+
+		wp_clear_scheduled_hook( $hook );
+
+	}
 
 } );

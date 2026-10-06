@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.23.4
+Stable tag:        3.25.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -49,8 +49,10 @@ Octave Addons ships with a growing collection of focused modules:
     shared spacing tokens, replacing the hand-written spacing stylesheet
     a site would otherwise need.
 *   **Breakdance Lazy Load** – always on and hidden from the admin. Keeps
-    every Breakdance Lazy Load toggle off so images and backgrounds are left
-    to the site's third-party performance plugin, while videos load lazily:
+    every Breakdance Lazy Load toggle off and removes it from the builder, so
+    Octave alone decides what is lazy loaded; images and iframes get
+    native lazy loading from Performance > Media Lazy Loading when it is on,
+    or are left to a third-party performance plugin. Videos load lazily:
     Breakdance YouTube and Vimeo videos default to their lightweight players,
     HTML5 and background videos start with `preload="none"` and load as
     they near the viewport, and video iframes receive `loading="lazy"`.
@@ -95,14 +97,32 @@ Octave Addons ships with a growing collection of focused modules:
     hear what they do. Content Toggle checkboxes are named by the visible
     label for their on state and exposed as switches, including toggles added
     later by popups or AJAX. Controls that already have a name are untouched.
+*   **Performance** – one page of compatibility-first speed tools, each
+    switched on independently and all off by default: Media Lazy Loading
+    (native image and iframe lazy loading, video lazy loading and optional
+    YouTube/Vimeo facades), Third-Party Script Delay (allowlist only),
+    File Optimization (per-file CSS and JavaScript minification and selected
+    deferral, never combined), Link Preloading, Fonts (selected preloads and
+    self-hosted Google Fonts), WordPress Bloat (emoji, embed, jQuery Migrate
+    and block style removal), Heartbeat Control, Cloudflare cache purging and
+    Database Cleanup. A single Clear Performance Cache action reports each
+    cache layer separately, Safe Mode applies a conservative preset, and
+    `?oa_no_optimize=1` shows any page unoptimised to an administrator.
+    Breakdance, WordPress core, jQuery, consent, payment, form and CAPTCHA
+    scripts are never delayed or rewritten, logged-in users and WooCommerce
+    cart, checkout and account pages are left alone, and anything that cannot
+    be processed safely is served exactly as it was. Octave does not create
+    WebP or AVIF files; it preserves the picture and srcset markup that
+    delivers them.
 *   **Post Types** – can display Posts as Blogs and provides separate managers for
     post types, reusable taxonomies, and typed post fields. Fields use registered
     WordPress post meta and are available in Breakdance Dynamic Data.
 
 Each add-on has its own tab under *Octave Addons* in the WordPress
 admin, and closely related add-ons share one page — the Breakdance
-modules sit together on a single Breakdance screen, and the agent-facing
-modules on a single AI Agents screen. Modules are filed on disk in matching
+modules sit together on a single Breakdance screen, the agent-facing
+modules on a single AI Agents screen, and the speed tools on a single
+Performance screen. Modules are filed on disk in matching
 area folders (`/modules/ai-agents/`, `/modules/breakdance/`), which
 discovery reads one level into. Adding a new add-on
 later is a drop-in operation — create a folder under `/modules/`
@@ -143,6 +163,30 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.25.0 =
+* Modules are now organised into six groups (AI Agents, Breakdance, Content, Design, Engagement and Performance). The admin sidebar shows each group as an accordion, only one open at a time, with a link and status dot for every module inside it that jumps straight to its settings. Old links to individual module pages still land on the right group.
+* The module folders mirror the groups, and a module now joins the group named by its folder without declaring it. Settings are stored by module id, so nothing saved on existing sites changes. Breakdance custom elements are unaffected and are still backed up and restored across updates.
+* Active and available counts now count individual modules rather than groups.
+* Post-reference fields only list unpublished posts the current user can read, and only save a reference to one when the user can read it, so draft and private titles are not exposed to lower roles. A reference already saved on a post is kept, shown as "Restricted item", so a re-save never clears it, and imports and WP-CLI are unaffected.
+
+= 3.24.2 =
+* Applied the block editor dark theme to Rank Math's shared editor block structure, including item cards, editable text and action controls.
+
+= 3.24.1 =
+* Completed the Modern WordPress Admin dark-mode pass for Gutenberg FAQ and toolbar controls, the Media Library, theme previews, core file editors, WordPress Connectors, CookieYes, Rank Math, Object Cache Pro, Imagify, WP Rocket, Breakdance and Header Footer Code Manager.
+
+= 3.24.0 =
+* Added a Performance page with ten independently switchable modules, all off by default except the always-on Cache & Safety coordinator. Media Lazy Loading adds native `loading="lazy"` and `decoding="async"` to images and iframes after the first few images (likely logo and hero), honours eager, `fetchpriority="high"`, `data-no-lazy`, `data-skip-lazy` and `data-oa-no-lazy`, takes class, attribute and URL exclusions, gives the first eager image at least 400px wide `fetchpriority="high"` when the page has no high-priority image yet, and can show click-to-play YouTube and Vimeo facades that keep the real player for no-JavaScript visitors. It works through the existing video lazy loader rather than beside it, which keeps its behaviour and now honours the same exclusions.
+* Third-Party Script Delay holds back only the services an administrator selects (analytics, marketing pixels, chat, review, social and video widgets, plus contextual map and CAPTCHA loading) until the first scroll, tap, click or key press, with an optional timeout. Scripts keep their order and attributes, inline configuration travels with its service, a script never loads twice, and Breakdance, Octave, WordPress core, jQuery, consent, payment, form and CAPTCHA scripts are never delayed. An administrator diagnostics scan lists what was delayed and why.
+* File Optimization offers separate switches for per-file local CSS minification, conservative JavaScript minification (comments and indentation only, line breaks kept) and deferring selected local scripts through WordPress's own loading strategy. Files are never combined; Breakdance, core and already-minified files are excluded, and any file that cannot be minified safely is served unchanged and logged.
+* Link Preloading prefetches same-origin pages after a 100ms hover or a touch, once per URL and throttled, skipping admin, login, logout, cart, checkout, add-to-cart, download, file and nonce links and visitors with Save-Data or very slow connections. WordPress core speculative loading is switched off while it runs so pages are not requested twice.
+* Fonts preloads only the WOFF2/WOFF files an administrator selects, through WordPress's de-duplicating preload API, and warns past three. Self-hosted Google Fonts downloads stylesheets and font files from Google's font hosts only, validates every response, writes atomically, keeps the last good copy when a refresh fails and falls back to Google when nothing is cached.
+* WordPress Bloat removes the emoji script and styles and the oEmbed host script by default when switched on, and can optionally drop jQuery Migrate and, on single posts and pages without block content, the block library and global styles. Frontend only; the builder and `?oa_no_optimize` are untouched.
+* Breakdance Lazy Load toggles are now removed from the builder panels as well as forced off, so Breakdance's lazy load script never loads and Octave owns image lazy loading.
+* Heartbeat Control sets the frontend, admin and editor intervals separately; the editor can be slowed but never disabled. Cloudflare purges changed pages in queued batches through a scoped API token stored outside the autoloaded settings (or wp-config constants), with Test connection, Purge URLs and Purge everything. Database Cleanup previews counts and removes revisions, auto-drafts, trash, spam and transients in batches after an explicit confirmation, with an optional weekly or monthly schedule.
+* Clear Performance Cache reports Octave's files and every connected layer separately, with an optional admin bar shortcut. Octave never calls `wp_cache_flush()` and never touches other caches, options or transients; hosting integrations can join through documented `octave_addons_perf_*` filters and actions. Safe Mode applies a conservative preset without changing other modules, and `?oa_no_optimize=1` (administrators) or the site key shown on the page bypasses every optimisation for troubleshooting.
+* Added an automated test suite (`php tests/run.php`, `node tests/js/run.js`), excluded from the release package.
 
 = 3.23.4 =
 * Internal page transitions now have their own Transition duration setting (default 600ms, 300 to 1500ms), working like the Loader duration. Every preset's cover, reveal, staggers and the wait before navigating scale from it, so a higher value slows the whole transition evenly. The default plays exactly as before. Replay Loader keeps following the Loader duration, and custom transition CSS can use `--oa-transition-duration` to follow the setting.

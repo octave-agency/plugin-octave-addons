@@ -1100,6 +1100,39 @@ html[data-oa-admin-theme="dark"] body.wp-admin div.mce-panel .mce-btn.mce-active
     background: var(--oa-admin-surface-hover);
 }
 
+html[data-oa-admin-theme="dark"] body.wp-admin .af-be-fe-be-dec-y5tfa3 {
+    border-color: var(--oa-admin-border-strong) !important;
+}
+
+/*
+CORE FILE EDITORS
+-- Keeps the theme and plugin editors legible while preserving CodeMirror's
+-- syntax colours and the native two-column layout.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body:is(.theme-editor-php, .plugin-editor-php) :is(.fileedit-sub, #templateside, .CodeMirror, .CodeMirror-gutters) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.theme-editor-php, .plugin-editor-php) :is(#templateside li, #templateside a, .CodeMirror-linenumber) {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.theme-editor-php, .plugin-editor-php) #templateside :is(.highlight, li:hover, li:focus-within) {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.theme-editor-php, .plugin-editor-php) .CodeMirror-cursor {
+    border-left-color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.theme-editor-php, .plugin-editor-php) :is(.CodeMirror-selected, .CodeMirror-focused .CodeMirror-selected) {
+    background: var(--oa-admin-surface-selected);
+}
+
 body.wp-admin .interface-interface-skeleton,
 body.wp-admin .edit-post-layout,
 body.wp-admin .edit-site-layout {
@@ -1320,9 +1353,16 @@ body.wp-admin.block-editor-page .block-editor-block-toolbar .components-button.i
 body.wp-admin.block-editor-page .block-editor-block-toolbar .components-button.is-active,
 body.wp-admin.block-editor-page .block-editor-block-toolbar .components-button[aria-pressed="true"] {
     color: var(--oa-admin-accent-dark);
-    background: var(--oa-admin-accent-soft);
+    background: var(--oa-admin-accent-soft) !important;
     border-color: var(--oa-admin-accent);
     box-shadow: inset 0 0 0 1px var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-block-toolbar .components-button.is-pressed,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-block-toolbar .components-button.is-active,
+html[data-oa-admin-theme="dark"] body.wp-admin.block-editor-page .block-editor-block-toolbar .components-button[aria-pressed="true"] {
+    color: var(--oa-admin-accent-dark) !important;
+    background-color: var(--oa-admin-accent-soft) !important;
 }
 
 body.wp-admin.block-editor-page .editor-header__toolbar .components-button:disabled,
@@ -1548,11 +1588,14 @@ body.wp-admin .media-modal {
 }
 
 body.wp-admin .media-modal-content,
-body.wp-admin .media-frame-content,
 body.wp-admin .media-frame-router,
 body.wp-admin .media-frame-title,
 body.wp-admin .media-frame-toolbar {
     background: var(--oa-admin-surface);
+}
+
+body.wp-admin .media-frame-content {
+    background: transparent;
 }
 
 body.wp-admin .media-frame-menu {
@@ -2102,7 +2145,6 @@ html[data-oa-admin-theme="dark"] body.wp-admin .upgrade .plugins th {
 
 html[data-oa-admin-theme="dark"] body.wp-admin .attachments-browser .media-toolbar,
 html[data-oa-admin-theme="dark"] body.wp-admin .media-frame-toolbar .media-toolbar,
-html[data-oa-admin-theme="dark"] body.wp-admin .media-frame-content,
 html[data-oa-admin-theme="dark"] body.wp-admin .media-modal-content {
     color: var(--oa-admin-text);
     background: var(--oa-admin-surface);
@@ -2400,6 +2442,10 @@ html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme .theme-actions 
     border-color: var(--oa-admin-border-strong);
 }
 
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-backdrop {
+    background: rgba(5, 10, 15, 0.82);
+}
+
 html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay,
 html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-wrap,
 html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-header,
@@ -2408,6 +2454,10 @@ html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-
     color: var(--oa-admin-text);
     background: var(--oa-admin-surface);
     border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-actions {
+    background: var(--oa-admin-surface-soft);
 }
 
 html[data-oa-admin-theme="dark"] body.wp-admin.themes-php .theme-overlay .theme-name,

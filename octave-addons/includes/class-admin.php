@@ -213,7 +213,7 @@ class Octave_Addons_Admin {
 		);
 
 		wp_localize_script( 'octave-addons-admin', 'oaAdmin', [
-			'enabledElsewhere'    => $this->enabled_entries_outside_current_tab(),
+			'enabledElsewhere'    => $this->enabled_modules_outside_current_tab(),
 			'ajaxUrl'             => admin_url( 'admin-ajax.php' ),
 			'nonce'               => wp_create_nonce( 'oa_icon_picker' ),
 			'breakdanceActive'    => function_exists( 'Breakdance\Icons\find_icons' ),
@@ -276,12 +276,12 @@ class Octave_Addons_Admin {
 	}
 
 	/*
-	ENABLED ENTRIES OUTSIDE CURRENT TAB
-	-- Counts the active entries the open page does not render, so the browser
+	ENABLED MODULES OUTSIDE CURRENT TAB
+	-- Counts the active modules the open page does not render, so the browser
 	-- can keep the totals right while only holding one entry's toggles.
 	---------------------------------------------------------- */
 
-	protected function enabled_entries_outside_current_tab(): int {
+	protected function enabled_modules_outside_current_tab(): int {
 
 		$active_tab = $this->current_tab();
 		$count      = 0;
@@ -294,17 +294,15 @@ class Octave_Addons_Admin {
 
 			}
 
-			$settings = [];
-
 			foreach ( $entry['modules'] as $module_id => $module ) {
 
-				$settings[ $module_id ] = $this->modules->settings_for( $module_id );
+				$settings = $this->modules->settings_for( $module_id );
 
-			}
+				if ( $module->is_always_enabled() || ! empty( $settings['enabled'] ) ) {
 
-			if ( $this->entry_is_enabled( $entry, $settings ) ) {
+					$count++;
 
-				$count++;
+				}
 
 			}
 
@@ -601,15 +599,30 @@ class Octave_Addons_Admin {
 				'description' => __( 'What an AI agent gets when it asks the site for a page. These add-ons hand agents clean, structured text instead of leaving them to scrape a dense builder layout, while every browser carries on receiving the normal HTML.', 'octave-addons' ),
 				'requires'    => '',
 			],
-			'branding' => [
-				'title'       => __( 'Branding & Design', 'octave-addons' ),
-				'description' => __( 'How the site and the WordPress admin look — the admin refresh and its brand colour, and the colours a visitor sees when they select text.', 'octave-addons' ),
-				'requires'    => '',
-			],
 			'breakdance' => [
 				'title'       => __( 'Breakdance', 'octave-addons' ),
 				'description' => __( 'Everything that plugs into the Breakdance builder — AJAX filtering for post loops, default element spacing, and the custom element library.', 'octave-addons' ),
 				'requires'    => 'breakdance',
+			],
+			'content' => [
+				'title'       => __( 'Content', 'octave-addons' ),
+				'description' => __( 'How content is structured and managed — custom post types and fields, comments, and spotting empty links.', 'octave-addons' ),
+				'requires'    => '',
+			],
+			'design' => [
+				'title'       => __( 'Design', 'octave-addons' ),
+				'description' => __( 'How the site and the WordPress admin look — the admin refresh, the login screen, page loading and scroll animations, and the colours a visitor sees when they select text.', 'octave-addons' ),
+				'requires'    => '',
+			],
+			'engagement' => [
+				'title'       => __( 'Engagement', 'octave-addons' ),
+				'description' => __( 'Ways to reach visitors on the page — a notifications bar across the site and a contact popup on mobile.', 'octave-addons' ),
+				'requires'    => '',
+			],
+			'performance' => [
+				'title'       => __( 'Performance', 'octave-addons' ),
+				'description' => __( 'Compatibility-first speed tools. Every feature switches on independently, Breakdance and WordPress core assets are never delayed or rewritten, and anything that cannot be processed safely is served exactly as it was.', 'octave-addons' ),
+				'requires'    => '',
 			],
 		];
 
@@ -694,19 +707,22 @@ class Octave_Addons_Admin {
 			'animations'                 => 'sparkles',
 			'api-catalog'                => 'blocks',
 			'auth-discovery'             => 'lock',
-			'branding'                   => 'palette',
 			'breakdance'                 => 'layout',
 			'breakdance-ajax-filtering'  => 'filter',
 			'breakdance-custom-elements' => 'blocks',
 			'breakdance-lazy-load'       => 'zap',
 			'custom-login'               => 'lock',
+			'content'                    => 'file-text',
 			'custom-post-types'          => 'layers',
+			'design'                     => 'palette',
 			'disable-comments'           => 'message-off',
 			'empty-link-highlighter'     => 'unlink',
+			'engagement'                 => 'megaphone',
 			'markdown-negotiation'       => 'file-text',
 			'mobile-contact-popup'       => 'smartphone',
 			'notifications-bar'          => 'megaphone',
 			'page-loader'                => 'page-loader',
+			'performance'                => 'gauge',
 		];
 
 		return $icons[ $id ] ?? 'sliders';
@@ -736,14 +752,12 @@ class Octave_Addons_Admin {
 
 		}
 
-		// Counts follow navigation entries, so a grouped page reads as one item
-		// rather than as the modules hidden inside it.
-		$entry_count   = count( $entries );
+		$module_count  = count( $all );
 		$enabled_count = 0;
 
-		foreach ( $entries as $entry ) {
+		foreach ( $all as $id => $module ) {
 
-			if ( $this->entry_is_enabled( $entry, $module_settings ) ) {
+			if ( $module->is_always_enabled() || ! empty( $module_settings[ $id ]['enabled'] ) ) {
 
 				$enabled_count++;
 
@@ -800,10 +814,14 @@ class Octave_Addons_Admin {
 						<?php
 
 						foreach ( $entries as $entry_id => $entry ) :
+
 							$meta      = $this->entry_meta( $entry );
 							$enabled   = $this->entry_is_enabled( $entry, $module_settings );
 							$url       = self::entry_url( $entry_id );
 							$is_active = ( $entry_id === $active_tab );
+
+							if ( '' === $entry['group'] ) :
+
 						?>
 
 							<a href="<?= esc_url( $url ); ?>"
@@ -812,7 +830,52 @@ class Octave_Addons_Admin {
 								<span class="oa-dot <?= $enabled ? 'is-on' : 'is-off'; ?>" aria-hidden="true"></span>
 								<span class="oa-nav-label"><?= esc_html( $meta['title'] ); ?></span>
 							</a>
+
 						<?php
+
+							else :
+
+							// A shared name makes the browser keep only one group open at a time.
+
+						?>
+
+							<details class="oa-nav-group" name="oa-nav-group"<?= $is_active ? ' open' : ''; ?>>
+								<summary class="oa-nav-item<?= $is_active ? ' is-active' : ''; ?>"
+								         data-entry="<?= esc_attr( $entry_id ); ?>">
+									<span class="oa-dot <?= $enabled ? 'is-on' : 'is-off'; ?>" aria-hidden="true"></span>
+									<span class="oa-nav-label"><?= esc_html( $meta['title'] ); ?></span>
+									<?php Octave_Addons_Icons::render( 'chevron-down', 14, 'oa-nav-chevron' ); ?>
+								</summary>
+
+								<div class="oa-nav-sub">
+
+									<?php
+
+									foreach ( $entry['modules'] as $module_id => $module ) :
+
+										$module_on = $module->is_always_enabled() || ! empty( $module_settings[ $module_id ]['enabled'] );
+
+									?>
+
+									<a href="<?= esc_url( $url . '#oa-panel-' . $module_id ); ?>"
+									   class="oa-nav-subitem"
+									   data-module="<?= esc_attr( $module_id ); ?>">
+										<span class="oa-dot <?= $module_on ? 'is-on' : 'is-off'; ?>" aria-hidden="true"></span>
+										<span class="oa-nav-label"><?= esc_html( $module->get_title() ); ?></span>
+									</a>
+
+									<?php
+
+									endforeach;
+
+									?>
+
+								</div>
+							</details>
+
+						<?php
+
+							endif;
 
 						endforeach;
 
@@ -852,7 +915,7 @@ class Octave_Addons_Admin {
 							printf(
 								/* translators: %d: total number of modules. */
 								esc_html__( 'of %d modules active', 'octave-addons' ),
-								$entry_count
+								$module_count
 							);
 
 							?>
@@ -877,7 +940,7 @@ class Octave_Addons_Admin {
 						<div class="oa-hero-visual" aria-hidden="true">
 							<span class="oa-orbit oa-orbit-one"></span>
 							<span class="oa-orbit oa-orbit-two"></span>
-							<span class="oa-hero-core"><?= esc_html( (string) $entry_count ); ?></span>
+							<span class="oa-hero-core"><?= esc_html( (string) $module_count ); ?></span>
 						</div>
 						<div class="oa-hero-stats">
 							<div class="oa-stat">
@@ -885,7 +948,7 @@ class Octave_Addons_Admin {
 								<span><?php esc_html_e( 'Active modules', 'octave-addons' ); ?></span>
 							</div>
 							<div class="oa-stat">
-								<strong><?= esc_html( (string) $entry_count ); ?></strong>
+								<strong><?= esc_html( (string) $module_count ); ?></strong>
 								<span><?php esc_html_e( 'Available tools', 'octave-addons' ); ?></span>
 							</div>
 							<div class="oa-stat oa-stat-status">
@@ -1013,6 +1076,15 @@ class Octave_Addons_Admin {
 							<?php
 
 							endif;
+
+							/**
+							 * Fires above an entry's module panels, inside the settings form.
+							 * Anything printed here must not use named inputs, or they are saved.
+							 *
+							 * @param string $entry_id Navigation entry id.
+							 * @param array  $entry    Entry with its modules.
+							 */
+							do_action( 'octave_addons_render_entry_intro', $entry_id, $entry );
 
 							if ( $meta['locked'] ) :
 

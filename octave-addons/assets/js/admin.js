@@ -44,6 +44,22 @@ ADMIN INTERACTIONS
 
 		});
 
+		document.querySelectorAll('.oa-nav-subitem[data-module]').forEach(function (subItem) {
+
+			var dot = subItem.querySelector('.oa-dot');
+			var toggle = document.querySelector('.oa-enable-toggle[data-module="' + subItem.dataset.module + '"]');
+
+			if (!dot || !toggle) {
+
+				return;
+
+			}
+
+			dot.classList.toggle('is-on', toggle.checked);
+			dot.classList.toggle('is-off', !toggle.checked);
+
+		});
+
 	}
 
 	/* Enable toggle → show/hide settings body + update sidebar dot */
@@ -437,26 +453,11 @@ ADMIN INTERACTIONS
 
 	function syncEnabledCounts() {
 
-		// Counted per navigation entry so a grouped page adds one, not one per
-		// module hidden inside it. Entries absent from this page are already
-		// totalled by the server, so their count is the starting point.
-		var counted = {};
+		// Modules absent from this page are already totalled by the server, so
+		// their count is the starting point.
 		var enabledCount = window.oaAdmin && oaAdmin.enabledElsewhere ? parseInt( oaAdmin.enabledElsewhere, 10 ) : 0;
 
-		document.querySelectorAll( '.oa-enable-toggle:checked' ).forEach( function ( toggle ) {
-
-			var key = toggle.dataset.entry || toggle.dataset.module;
-
-			if ( ! key || counted[ key ] ) {
-
-				return;
-
-			}
-
-			counted[ key ] = true;
-			enabledCount++;
-
-		} );
+		enabledCount += document.querySelectorAll( '.oa-enable-toggle:checked' ).length;
 
 		document.querySelectorAll( '.oa-enabled-count' ).forEach( function ( count ) {
 

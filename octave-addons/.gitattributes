@@ -1,3 +1,4 @@
 .gitattributes export-ignore
 .DS_Store export-ignore
 **/.DS_Store export-ignore
+tests export-ignore

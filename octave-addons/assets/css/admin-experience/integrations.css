@@ -88,6 +88,23 @@ html[data-oa-admin-theme="dark"] body.wp-admin :is(.wpr-wrap, .imagify-settings,
     background: var(--oa-plugin-surface);
 }
 
+html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(.wpr-Page, .wpr-Content, .wpr-Sidebar, .wpr-fieldsContainer, .wpr-fieldsContainer-fieldset, .wpr-list, .wpr-list-header, .wpr-list-body, .wpr-Popin-content, .wpr-plugins--box, .wpr-imagify-plugin-tile) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(.wpr-menuItem, .wpr-subMenuItem, .wpr-addonSubMenuItem, .wpr-Header-footer) {
+    color: var(--oa-plugin-text-soft);
+    border-color: var(--oa-plugin-border);
+    background: var(--oa-plugin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(.wpr-menuItem:hover, .wpr-menuItem.isActive, .wpr-subMenuItem:hover, .wpr-subMenuItem.isActive, .wpr-addonSubMenuItem:hover, .wpr-addonSubMenuItem.isActive) {
+    color: var(--oa-plugin-text);
+    background: var(--oa-plugin-surface-hover);
+}
+
 html[data-oa-admin-theme="dark"] body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(h1, h2, h3, h4, label, legend, .wpr-title, .wpr-optionHeader) {
     color: var(--oa-plugin-text);
 }
@@ -143,4 +160,213 @@ html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings #bd-el
 html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings #bd-elements-list input[type="checkbox"] {
     background: var(--oa-admin-surface-soft);
     border-color: var(--oa-admin-border-strong);
+}
+
+/*
+COOKIEYES
+-- Covers both the current React dashboard and the legacy Cookie Law Info
+-- settings markup retained on upgraded installations.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_cookie-law-info :is(#cookie-law-info-app, #cookie-law-info-settings, .cookie-law-info-wrap, .cky-admin-wrapper, .cky-app) {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.cky-app-admin #cky-app.cky-app-wrap {
+    --cky-text-primary: var(--oa-admin-text);
+    --cky-border: var(--oa-admin-border);
+    --cky-font-color-link: var(--oa-admin-accent-dark);
+    --background: var(--oa-admin-canvas);
+    --foreground: var(--oa-admin-text);
+    --card: var(--oa-admin-surface);
+    --card-foreground: var(--oa-admin-text);
+    --popover: var(--oa-admin-surface);
+    --popover-foreground: var(--oa-admin-text);
+    --secondary: var(--oa-admin-surface-soft);
+    --secondary-foreground: var(--oa-admin-text);
+    --muted: var(--oa-admin-surface-soft);
+    --muted-foreground: var(--oa-admin-text-soft);
+    --accent: var(--oa-admin-surface-hover);
+    --accent-foreground: var(--oa-admin-text);
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.cky-app-admin #cky-app.cky-app-wrap :is(.cky-card, .cky-info-widget, .cky-section, .cky-app-modal, [data-slot="dialog-content"], [data-slot="popover-content"], [data-slot="select-content"], [class~="cky:bg-white"], [class~="cky:bg-gray-50"], [class~="cky:bg-gray-100"]) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.cky-app-admin #cky-app.cky-app-wrap :is(.cky-card-header, .cky-card-footer, .cky-section-header, [class~="cky:border-gray-200"], [class~="cky:border-gray-300"]) {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.cky-app-admin #cky-app.cky-app-wrap :is(.cky-info-widget-title, [class~="cky:text-gray-500"], [class~="cky:text-gray-600"], [class~="cky:text-gray-700"]) {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_cookie-law-info :is(#cookie-law-info-app, #cookie-law-info-settings, .cookie-law-info-wrap, .cky-admin-wrapper, .cky-app) :is(.card, [class*="card"], [class*="panel"], [class*="sidebar"], [class*="header"], [class*="modal"], [class*="drawer"], table, thead, tbody, tr, th, td) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_cookie-law-info :is(#cookie-law-info-app, #cookie-law-info-settings, .cookie-law-info-wrap, .cky-admin-wrapper, .cky-app) :is(h1, h2, h3, h4, h5, label, strong, [class*="title"]) {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_cookie-law-info :is(#cookie-law-info-app, #cookie-law-info-settings, .cookie-law-info-wrap, .cky-admin-wrapper, .cky-app) :is(p, small, [class*="description"], [class*="subtitle"], [class*="help"]) {
+    color: var(--oa-admin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.toplevel_page_cookie-law-info :is(#cookie-law-info-app, #cookie-law-info-settings, .cookie-law-info-wrap, .cky-admin-wrapper, .cky-app) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border-strong);
+    background-color: var(--oa-admin-surface-soft);
+}
+
+/*
+WORDPRESS CONNECTORS
+-- Core mounts this screen into a full-height React application and injects a
+-- white body rule inline, so the app root and its surfaces need explicit dark
+-- theme ownership.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.options-connectors-php,
+html[data-oa-admin-theme="dark"] body.options-connectors-php.js,
+html[data-oa-admin-theme="dark"] body.options-connectors-php #options-connectors-wp-admin-app {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.options-connectors-php #options-connectors-wp-admin-app :is(.components-card, .components-panel, [class*="card"], [class*="panel"], [class*="sidebar"], [class*="content"]) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.options-connectors-php #options-connectors-wp-admin-app :is(h1, h2, h3, h4, label, legend, .components-heading, .components-text) {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.options-connectors-php #options-connectors-wp-admin-app :is(p, .description, .components-base-control__help) {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+OBJECT CACHE PRO
+-- Normalises the dashboard shell, metric cards, logs and diagnostics tables.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.settings_page_objectcache :is(.object-cache-pro, .objectcache, .redis-cache-pro, [class*="object-cache"]) {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_objectcache :is(.card, [class*="card"], [class*="panel"], [class*="metric"], [class*="widget"], table, thead, tbody, tr, th, td, pre, code) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background-color: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_objectcache :is(p, small, .description, [class*="muted"]) {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+WP ROCKET AND IMAGIFY DETAILS
+-- Their outer wrappers were already themed above; these rules cover the
+-- navigation, notices, fixed footers and form controls nested outside cards.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(.wpr-header, .wpr-menu, .wpr-nav, .wpr-footer, .wpr-notice, .wpr-option, .wpr-fieldsContainer),
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-header, .imagify-sidebar, .imagify-settings-footer, .imagify-notice, .imagify-options-line) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+    background-color: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-admin-border-strong);
+    background-color: var(--oa-plugin-surface-soft);
+}
+
+/*
+BREAKDANCE DASHBOARD
+-- The main page uses toplevel_page_breakdance while secondary screens keep
+-- the older breakdance_page_* body classes.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body:is(.toplevel_page_breakdance, [class*="breakdance_page_"]) :is(.breakdance-admin, .breakdance-admin__content, .breakdance-admin__sidebar, .breakdance-admin__header) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-canvas);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.toplevel_page_breakdance, [class*="breakdance_page_"]) :is(.breakdance-admin__card, .breakdance-admin__panel, .breakdance-admin .card, .breakdance-admin table, .breakdance-admin th, .breakdance-admin td) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.toplevel_page_breakdance, [class*="breakdance_page_"]) :is(p, small, .description) {
+    color: var(--oa-admin-text-soft);
+}
+
+/*
+HEADER FOOTER CODE MANAGER
+-- Styles the excluded-pages Selectize control, its legacy Select2 fallback,
+-- and CodeMirror without overriding syntax token colours.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] :is(.select2-container--default .select2-selection, .select2-dropdown, .select2-results, .select2-search__field) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border-strong);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] :is(.selectize-input, .selectize-input.input-active, .selectize-dropdown, .selectize-dropdown-content, .selectize-dropdown .optgroup-header) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border-strong);
+    background: var(--oa-admin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] .selectize-input > input {
+    color: var(--oa-admin-text);
+    background: transparent;
+}
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] .selectize-control.multi .selectize-input > div {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] .selectize-dropdown :is([data-selectable], .option).active {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-selected);
+}
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] :is(.select2-selection__rendered, .select2-results__option) {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] .select2-results__option--highlighted,
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] .select2-results__option[aria-selected="true"] {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] :is(.CodeMirror, .CodeMirror-scroll, .CodeMirror-gutters) {
+    color: var(--oa-admin-text);
+    border-color: var(--oa-admin-border);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body[class*="hfcm"] .CodeMirror-linenumber {
+    color: var(--oa-admin-text-dim);
 }

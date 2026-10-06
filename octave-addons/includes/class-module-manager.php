@@ -4,10 +4,10 @@
 MODULE MANAGER
 -- Auto-discovers every module in /modules/<slug>/class-module.php, and in
 -- /modules/<area>/<slug>/class-module.php one level deeper.
--- A folder holding no class-module.php of its own is treated as an area:
--- somewhere to keep related modules together as the plugin grows. An area is
--- filing only — what collapses modules onto one admin page is still the group
--- id each module returns from get_group(), so the two can be changed apart.
+-- A folder holding no class-module.php of its own is treated as an area, and
+-- its folder name is the admin group every module inside it joins: one
+-- sidebar accordion and one shared page. A module overrides that by
+-- returning its own id from get_group().
 -- Each class-module.php file must `return new Your_Module_Class();`.
 -- Adding a new module in the future is therefore a purely additive
 -- operation: drop a folder in, reload the admin, and a new tab
@@ -28,6 +28,9 @@ class Octave_Addons_Module_Manager {
 
 	/** @var Octave_Addons_Module[] Keyed by module id. */
 	protected array $modules = [];
+
+	/** @var array<string, string> Area folder name keyed by module id. */
+	protected array $areas = [];
 
 	public function __construct() {
 
@@ -77,7 +80,7 @@ class Octave_Addons_Module_Manager {
 
 			foreach ( $nested as $child ) {
 
-				$this->load_module( $child );
+				$this->load_module( $child, basename( $dir ) );
 
 			}
 
@@ -98,7 +101,7 @@ class Octave_Addons_Module_Manager {
 	-- Registers the module a folder holds, and reports whether it had one.
 	---------------------------------------------------------- */
 
-	protected function load_module( string $dir ): bool {
+	protected function load_module( string $dir, string $area = '' ): bool {
 
 		$file = trailingslashit( $dir ) . 'class-module.php';
 
@@ -113,6 +116,7 @@ class Octave_Addons_Module_Manager {
 		if ( $module instanceof Octave_Addons_Module ) {
 
 			$this->modules[ $module->get_id() ] = $module;
+			$this->areas[ $module->get_id() ]   = $area;
 
 		}
 
@@ -142,9 +146,9 @@ class Octave_Addons_Module_Manager {
 
 	/*
 	ADMIN ENTRIES
-	-- One entry per navigation item. Modules that declare the same group id
-	-- collapse into a single entry and share one page, while ungrouped modules
-	-- stay one entry each. Discovery order is preserved, so a group takes the
+	-- One entry per navigation item. Modules in the same group collapse into a
+	-- single entry and share one page, while ungrouped modules stay one entry
+	-- each. Discovery order is preserved, so a group takes the
 	-- position of its first module.
 	--
 	-- @return array<string, array{id: string, group: string, modules: Octave_Addons_Module[]}>
@@ -156,7 +160,7 @@ class Octave_Addons_Module_Manager {
 
 		foreach ( $this->visible_in_admin() as $id => $module ) {
 
-			$group = $module->get_group();
+			$group = $this->group_for( $id );
 			$key   = '' !== $group ? $group : $id;
 
 			if ( ! isset( $entries[ $key ] ) ) {
@@ -228,6 +232,19 @@ class Octave_Addons_Module_Manager {
 		}
 
 		return '';
+
+	}
+
+	/*
+	GROUP FOR
+	-- A module's own get_group() wins, otherwise it joins its area's group.
+	---------------------------------------------------------- */
+
+	public function group_for( string $id ): string {
+
+		$group = isset( $this->modules[ $id ] ) ? $this->modules[ $id ]->get_group() : '';
+
+		return '' !== $group ? $group : ( $this->areas[ $id ] ?? '' );
 
 	}
 

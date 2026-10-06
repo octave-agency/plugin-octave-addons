@@ -20,7 +20,8 @@ html[data-oa-admin-theme] body.wp-admin #rank_math_dashboard_widget,
 html[data-oa-admin-theme] body.wp-admin .rank-math-seo-score,
 html[data-oa-admin-theme] body.wp-admin .rank-math-modal,
 html[data-oa-admin-theme] body.wp-admin .rank-math-sidebar-panel,
-html[data-oa-admin-theme] body.wp-admin .rank-math-variables-dropdown {
+html[data-oa-admin-theme] body.wp-admin .rank-math-variables-dropdown,
+html[data-oa-admin-theme] .rank-math-block {
     --oa-rm-accent: var(--oa-admin-accent);
     --oa-rm-accent-strong: var(--oa-admin-accent-dark);
     --oa-rm-accent-soft: var(--oa-admin-accent-soft);
@@ -342,6 +343,11 @@ html[data-oa-admin-theme] body.rank-math-page .components-tab-panel__tab-content
     background: transparent;
 }
 
+html[data-oa-admin-theme="dark"] body.rank-math-page .rank-math-tab-panel > .components-tab-panel__tabs[aria-orientation="horizontal"] + .components-tab-panel__tab-content {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-surface);
+}
+
 html[data-oa-admin-theme] body.rank-math-page .rank-math-tab-panel .components-tab-panel__tab-content .field-wrap,
 html[data-oa-admin-theme] body.rank-math-page .rank-math-tab-panel .components-tab-panel__tab-content .form-footer {
     border-color: var(--oa-rm-border);
@@ -418,6 +424,13 @@ html[data-oa-admin-theme] body.rank-math-page textarea,
 html[data-oa-admin-theme] body.rank-math-page .cmb2-wrap .cmb-type-textarea textarea,
 html[data-oa-admin-theme] body.rank-math-page .cmb2-wrap .cmb-type-textarea-small textarea {
     color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.rank-math-page :is(.rank-math-console-form, .rank-math-instant-indexing, .rank-math-url-submission) textarea {
+    color: var(--oa-rm-text);
+    caret-color: var(--oa-rm-text);
     border-color: var(--oa-rm-border);
     background: var(--oa-rm-surface-soft);
 }
@@ -1224,6 +1237,77 @@ html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-seo-score.ok-fk {
 html[data-oa-admin-theme="dark"] body.wp-admin .rank-math-seo-score.bad-fk {
     color: var(--oa-rm-danger);
     background: var(--oa-rm-surface-soft);
+}
+
+/*
+EDITOR BLOCKS
+-- Rank Math's block stylesheet hardcodes light backgrounds and shadows on
+-- the shared block wrapper, item cards, text areas and action controls.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] .rank-math-block {
+    color: var(--oa-rm-text);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block ul li,
+html[data-oa-admin-theme="dark"] .rank-math-block :is(.rank-math-howto-description, .rank-math-howto-duration, .rank-math-howto-estimated-cost, .rank-math-block-textarea) {
+    color: var(--oa-rm-text);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface) !important;
+    box-shadow: var(--oa-admin-shadow) !important;
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block :is(.rank-math-item-header, .rank-math-item-content, .rank-math-question-wrapper) {
+    color: inherit;
+    border-color: var(--oa-rm-border);
+    background: transparent;
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block :is(.rank-math-block-title, .rank-math-faq-question) {
+    color: var(--oa-rm-text);
+    background: transparent;
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-faq-answer {
+    color: var(--oa-rm-text-soft);
+    background: transparent;
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-block-actions .components-button.has-icon {
+    color: var(--oa-rm-text-soft);
+    border-color: var(--oa-rm-border);
+    background: var(--oa-rm-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-block-actions .components-button.has-icon:hover,
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-block-actions .components-button.has-icon:focus,
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-block-actions .components-button.has-icon:active {
+    color: var(--oa-rm-accent-strong);
+    background: var(--oa-rm-surface-hover);
+    box-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-block-actions .components-button.has-icon.rank-math-item-visbility {
+    color: var(--oa-rm-success);
+    background: color-mix(in srgb, var(--oa-rm-success) 16%, var(--oa-rm-surface));
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-block-actions .components-button.has-icon.rank-math-item-delete {
+    color: var(--oa-rm-danger);
+    background: color-mix(in srgb, var(--oa-rm-danger) 16%, var(--oa-rm-surface));
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-block-actions .components-button.has-icon.rank-math-item-disabled,
+html[data-oa-admin-theme="dark"] .rank-math-block .rank-math-block-actions .components-button.has-icon:disabled {
+    color: var(--oa-rm-text-dim);
+    background: var(--oa-rm-surface-soft);
+    opacity: 0.65;
+}
+
+html[data-oa-admin-theme="dark"] .rank-math-block a.rank-math-block-info {
+    color: var(--oa-rm-accent-strong);
+    background: var(--oa-rm-surface-hover);
 }
 
 /* Generate Alt button in the attachment details panel. */

@@ -13,28 +13,25 @@ modules/
 
 ## Areas
 
-A folder with no `class-module.php` of its own is an area: a place to keep
-related modules together as the plugin grows. Discovery looks one level
-inside it.
+A folder with no `class-module.php` of its own is an area. Discovery looks
+one level inside it, and the area's folder name is the admin group every
+module in it joins: one accordion in the sidebar, one shared settings page.
 
 ```
 modules/
-├── ai-agents/
-│   └── markdown-negotiation/
-│       └── class-module.php
-├── breakdance/
-│   ├── ajax-filtering/
-│   ├── custom-elements/
-│   └── spacing/
-└── animations/
-    └── class-module.php
+├── ai-agents/          ← AI Agents
+├── breakdance/         ← Breakdance
+├── content/            ← Content
+├── design/             ← Design
+├── engagement/         ← Engagement
+└── performance/        ← Performance
 ```
 
-An area is filing only. It has no effect on the admin — what collapses
-modules onto one page is still the group id each module returns from
-`get_group()`, so a module can be filed in one place and presented in
-another, and either can change without the other. Nesting is optional:
-a module folder at the top level keeps working exactly as before.
+So to add a module to a group, drop its folder into that area — no
+`get_group()` needed. A module can still return its own id from
+`get_group()` to sit in a different group than its folder. A new area gets
+its title from the folder name; give it a description and icon in
+`group_config()` and `module_icon()` in `includes/class-admin.php`.
 
 Inside an area, drop the area's name from the folder: the path already
 carries it, so `breakdance/spacing/` rather than
@@ -110,3 +107,22 @@ add_filter( 'octave_addons_register_modules', function ( array $modules ) {
     return $modules;
 } );
 ```
+
+## Tests
+
+`tests/` holds a dependency-free suite, excluded from the release package:
+
+```
+tests/fetch-wp-core.sh   # once: downloads WordPress's HTML API into tests/.wp-core
+php tests/run.php        # PHP tests; pass a name fragment to filter
+node tests/js/run.js     # frontend script tests
+```
+
+## Performance services
+
+Modules under `performance/` share the services in `performance/services/`
+(that folder has no `class-module.php`, so discovery skips it). A module that
+rewrites page markup registers a transformer with
+`Octave_Addons_Perf_Html::register()` instead of starting its own output
+buffer, and checks `Octave_Addons_Perf_Context::can_optimize()` for anything
+it does outside that pipeline.

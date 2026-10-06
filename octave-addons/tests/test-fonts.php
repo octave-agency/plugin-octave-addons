@@ -1,0 +1,269 @@
+<?php
+
+/*
+FONT TESTS
+-- Preload output, Google Fonts host validation, CSS rewriting, refresh
+-- failure handling and the frontend rewrite
+---------------------------------------------------------- */
+
+const OA_GOOGLE_CSS = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap';
+
+function oa_fonts( array $values = [] ): Octave_Addons_Module_Performance_Fonts {
+
+	$module = oa_module( 'performance-fonts' );
+
+	$module->run( oa_set_settings( 'performance-fonts', array_merge( [ 'enabled' => true ], $values ) ) );
+
+	return $module;
+
+}
+
+/*
+GOOGLE HTTP
+-- A fake Google: one stylesheet with two WOFF2 files
+---------------------------------------------------------- */
+
+function oa_fake_google( bool $up = true ): void {
+
+	$GLOBALS['oa_http'] = static function ( string $url ) use ( $up ) {
+
+		if ( ! $up ) {
+
+			return new WP_Error( 'down', 'Google is unavailable' );
+
+		}
+
+		if ( 0 === strpos( $url, 'https://fonts.googleapis.com/' ) ) {
+
+			return oa_http_response( 200, "@font-face {\n  font-family: 'Inter';\n  font-style: normal;\n  font-weight: 400;\n  src: url(https://fonts.gstatic.com/s/inter/v1/a.woff2) format('woff2');\n  unicode-range: U+0000-00FF;\n}\n@font-face {\n  font-family: 'Inter';\n  font-weight: 700;\n  font-display: optional;\n  src: url(https://fonts.gstatic.com/s/inter/v1/b.woff2) format('woff2');\n}\n", 'text/css; charset=utf-8' );
+
+		}
+
+		if ( 0 === strpos( $url, 'https://fonts.gstatic.com/' ) ) {
+
+			return oa_http_response( 200, 'wOF2' . str_repeat( 'x', 64 ), 'font/woff2' );
+
+		}
+
+		return oa_http_response( 404, '' );
+
+	};
+
+}
+
+/*
+PRELOAD
+---------------------------------------------------------- */
+
+function test_font_preloads_are_deduplicated_with_correct_attributes(): void {
+
+	$module = oa_fonts( [ 'preload' => "/wp-content/fonts/body.woff2\nhttps://example.com/fonts/head.woff?v=3" ] );
+
+	add_filter( 'octave_addons_perf_preload_fonts', static function ( $urls ) {
+
+		$urls[] = '/wp-content/fonts/body.woff2';
+		$urls[] = '/wp-content/fonts/legacy.ttf';
+
+		return $urls;
+
+	} );
+
+	$resources = $module->filter_preload_resources( [ [ 'href' => 'https://example.com/fonts/head.woff?v=3', 'as' => 'font' ] ] );
+
+	oa_assert_same( 2, count( $resources ), 'no duplicates, no TTF' );
+	oa_assert_same( [
+		'href'        => '/wp-content/fonts/body.woff2',
+		'as'          => 'font',
+		'type'        => 'font/woff2',
+		'crossorigin' => 'anonymous',
+	], $resources[1] );
+
+	ob_start();
+	$module->print_preload_tags();
+	$tags = (string) ob_get_clean();
+
+	oa_assert_same( 1, substr_count( $tags, 'body.woff2' ), 'fallback output deduplicated' );
+	oa_assert_contains( 'href="https://example.com/fonts/head.woff?v=3" as="font" type="font/woff" crossorigin="anonymous"', $tags, 'query string kept' );
+
+}
+
+function test_nothing_is_preloaded_unless_selected(): void {
+
+	oa_fonts();
+
+	oa_assert( ! has_filter( 'wp_preload_resources' ) && ! has_filter( 'wp_head' ) );
+
+}
+
+/*
+HOST VALIDATION
+---------------------------------------------------------- */
+
+function test_only_google_font_hosts_are_accepted(): void {
+
+	$valid = [ OA_GOOGLE_CSS, '//fonts.googleapis.com/css?family=Roboto', 'http://fonts.googleapis.com/css?family=Roboto', 'https://fonts.googleapis.com/icon?family=Material+Icons' ];
+
+	foreach ( $valid as $url ) {
+
+		oa_assert( Octave_Addons_Perf_Google_Fonts::is_stylesheet_url( $url ), $url );
+
+	}
+
+	$invalid = [
+		'https://fonts.googleapis.com.evil.test/css2?family=Inter',
+		'https://fonts.googleapis.com@evil.test/css2?family=Inter',
+		'https://evil.test/css2?family=fonts.googleapis.com',
+		'https://fonts.googleapis.com/../admin',
+		'https://use.typekit.net/abc.css',
+		'file:///etc/passwd',
+	];
+
+	foreach ( $invalid as $url ) {
+
+		oa_assert( ! Octave_Addons_Perf_Google_Fonts::is_stylesheet_url( $url ), $url );
+
+	}
+
+	oa_assert( Octave_Addons_Perf_Google_Fonts::is_font_file_url( 'https://fonts.gstatic.com/s/inter/v1/a.woff2' ) );
+	oa_assert( ! Octave_Addons_Perf_Google_Fonts::is_font_file_url( 'https://fonts.gstatic.com:8443/s/a.woff2' ), 'port' );
+	oa_assert( ! Octave_Addons_Perf_Google_Fonts::is_font_file_url( 'https://user@fonts.gstatic.com/s/a.woff2' ), 'userinfo' );
+	oa_assert( ! Octave_Addons_Perf_Google_Fonts::is_font_file_url( 'http://fonts.gstatic.com/s/a.woff2' ), 'plain http' );
+	oa_assert( ! Octave_Addons_Perf_Google_Fonts::is_font_file_url( 'https://fonts.gstatic.com/s/a.php' ), 'extension' );
+
+}
+
+/*
+REWRITING AND CACHING
+---------------------------------------------------------- */
+
+function test_google_css_is_rewritten_with_font_display(): void {
+
+	$css = "@font-face{font-family:'Inter';src:url(https://fonts.gstatic.com/a.woff2) format('woff2');unicode-range:U+0000-00FF}@font-face{font-family:'Inter';font-display:block;src:url(https://fonts.gstatic.com/b.woff2)}";
+	$out = Octave_Addons_Perf_Google_Fonts::rewrite_css( $css, [ 'https://fonts.gstatic.com/a.woff2' => 'a1.woff2', 'https://fonts.gstatic.com/b.woff2' => 'b1.woff2' ], 'swap' );
+
+	oa_assert_contains( 'src:url(a1.woff2) format(\'woff2\');unicode-range:U+0000-00FF', $out );
+	oa_assert_contains( 'font-display: swap;', $out );
+	oa_assert_same( 1, substr_count( $out, 'font-display: swap' ), 'existing value kept' );
+	oa_assert_contains( 'font-display:block', $out );
+	oa_assert_same( [ 'Inter' ], Octave_Addons_Perf_Google_Fonts::families( $css ) );
+
+}
+
+function test_fetch_caches_fonts_and_requests_only_google_over_https(): void {
+
+	oa_fonts( [ 'self_host' => true ] );
+	oa_fake_google();
+
+	$result = Octave_Addons_Perf_Google_Fonts::fetch( OA_GOOGLE_CSS );
+
+	oa_assert( $result['ok'], $result['message'] );
+
+	foreach ( $GLOBALS['oa_http_log'] as $request ) {
+
+		oa_assert( preg_match( '#^https://fonts\.(googleapis|gstatic)\.com/#', $request['url'] ) === 1, $request['url'] );
+		oa_assert_same( 0, $request['args']['redirection'], 'no redirects' );
+
+	}
+
+	$local = Octave_Addons_Perf_Google_Fonts::local_url( OA_GOOGLE_CSS );
+	$path  = str_replace( 'https://example.com/wp-content', WP_CONTENT_DIR, strtok( $local, '?' ) );
+	$css   = (string) file_get_contents( $path );
+
+	oa_assert_contains( '/cache/octave-addons/fonts/', $local );
+	oa_assert_not_contains( 'gstatic', $css, 'no remote font URLs left' );
+	oa_assert_contains( 'unicode-range: U+0000-00FF', $css );
+	oa_assert_contains( 'font-display: optional', $css, 'source value kept' );
+	oa_assert_same( 2, count( Octave_Addons_Perf_Google_Fonts::cached_files() ) );
+
+}
+
+function test_failed_refresh_keeps_previous_cache(): void {
+
+	oa_fonts( [ 'self_host' => true ] );
+	oa_fake_google();
+	Octave_Addons_Perf_Google_Fonts::fetch( OA_GOOGLE_CSS );
+
+	$before = Octave_Addons_Perf_Google_Fonts::local_url( OA_GOOGLE_CSS );
+
+	oa_fake_google( false );
+
+	$results = Octave_Addons_Perf_Google_Fonts::refresh();
+
+	oa_assert( ! $results[ Octave_Addons_Perf_Google_Fonts::normalize( OA_GOOGLE_CSS ) ]['ok'] );
+	oa_assert_same( $before, Octave_Addons_Perf_Google_Fonts::local_url( OA_GOOGLE_CSS ), 'previous copy still served' );
+	oa_assert( file_exists( str_replace( 'https://example.com/wp-content', WP_CONTENT_DIR, strtok( $before, '?' ) ) ) );
+	oa_assert_same( 2, Octave_Addons_Perf_Store::size( 'fonts' )['files'] - 1, 'both font files still present' );
+
+}
+
+function test_font_file_urls_stay_stable_across_refreshes(): void {
+
+	oa_fonts( [ 'self_host' => true ] );
+	oa_fake_google();
+	Octave_Addons_Perf_Google_Fonts::fetch( OA_GOOGLE_CSS );
+
+	$before = array_column( Octave_Addons_Perf_Google_Fonts::cached_files(), 'url' );
+
+	Octave_Addons_Perf_Google_Fonts::refresh();
+
+	oa_assert_same( $before, array_column( Octave_Addons_Perf_Google_Fonts::cached_files(), 'url' ), 'preload URLs survive a refresh' );
+	oa_assert_same( 3, Octave_Addons_Perf_Store::size( 'fonts' )['files'], 'two fonts and one stylesheet, no leftovers' );
+
+}
+
+function test_invalid_downloads_are_rejected_without_partial_cache(): void {
+
+	oa_fonts( [ 'self_host' => true ] );
+
+	$GLOBALS['oa_http'] = static function ( string $url ) {
+
+		if ( false !== strpos( $url, 'googleapis' ) ) {
+
+			return oa_http_response( 200, '@font-face{src:url(https://fonts.gstatic.com/a.woff2)}', 'text/css' );
+
+		}
+
+		return oa_http_response( 200, '<?php evil();', 'font/woff2' );
+
+	};
+
+	$result = Octave_Addons_Perf_Google_Fonts::fetch( OA_GOOGLE_CSS );
+
+	oa_assert( ! $result['ok'], 'bad signature rejected' );
+	oa_assert_same( 0, Octave_Addons_Perf_Store::size( 'fonts' )['files'], 'nothing left behind' );
+
+	$GLOBALS['oa_http'] = static function () {
+
+		return oa_http_response( 200, '@font-face{src:url(https://evil.test/a.woff2)}', 'text/css' );
+
+	};
+
+	oa_assert( ! Octave_Addons_Perf_Google_Fonts::fetch( OA_GOOGLE_CSS )['ok'], 'foreign font host rejected' );
+
+}
+
+/*
+FRONTEND
+---------------------------------------------------------- */
+
+function test_frontend_uses_local_copy_and_drops_google_hints(): void {
+
+	$module = oa_fonts( [ 'self_host' => true ] );
+	$page   = oa_page( '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="' . esc_attr( OA_GOOGLE_CSS ) . '">' );
+
+	oa_fake_google( false );
+
+	oa_assert_same( $page, $module->transform( $page ), 'uncached: Google kept' );
+	oa_assert( in_array( Octave_Addons_Perf_Google_Fonts::normalize( OA_GOOGLE_CSS ), get_option( Octave_Addons_Perf_Google_Fonts::QUEUE_OPTION ), true ), 'queued for cron' );
+	oa_assert_same( [], $GLOBALS['oa_http_log'], 'no download during the page request' );
+
+	oa_fake_google();
+	Octave_Addons_Perf_Google_Fonts::process_queue();
+
+	$html = $module->transform( $page );
+
+	oa_assert_not_contains( 'fonts.googleapis.com', preg_replace( '/data-oa-removed-href="[^"]*"/', '', $html ) );
+	oa_assert_not_contains( ' href="https://fonts.gstatic.com"', $html, 'preconnect disabled' );
+	oa_assert_contains( '/cache/octave-addons/fonts/', $html );
+
+}

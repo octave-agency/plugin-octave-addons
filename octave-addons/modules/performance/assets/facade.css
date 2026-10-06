@@ -1,0 +1,95 @@
+/*
+VIDEO FACADE
+-- Click-to-play placeholder for YouTube and Vimeo embeds. The aspect ratio is
+-- set inline from the embed's own dimensions, so nothing shifts on load
+---------------------------------------------------------- */
+
+.oa-video-facade {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	background: #000;
+}
+
+.oa-video-facade-button,
+.oa-video-facade iframe {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.oa-video-facade-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	background: #000;
+	color: #fff;
+}
+
+.oa-video-facade-button img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.oa-video-facade-button:focus-visible {
+	outline: 3px solid #fff;
+	outline-offset: -6px;
+}
+
+/*
+Play icon
+---------------------------------------------------------- */
+
+.oa-video-facade-play {
+	position: relative;
+	width: 68px;
+	height: 48px;
+	border-radius: 12px;
+	background: rgba(0, 0, 0, 0.75);
+	transition: background-color 0.15s ease;
+}
+
+.oa-video-facade-play::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-40%, -50%);
+	border-style: solid;
+	border-width: 10px 0 10px 17px;
+	border-color: transparent transparent transparent #fff;
+}
+
+.oa-video-facade--youtube .oa-video-facade-button:hover .oa-video-facade-play,
+.oa-video-facade--youtube .oa-video-facade-button:focus-visible .oa-video-facade-play {
+	background: #f00;
+}
+
+.oa-video-facade--vimeo .oa-video-facade-button:hover .oa-video-facade-play,
+.oa-video-facade--vimeo .oa-video-facade-button:focus-visible .oa-video-facade-play {
+	background: #00adef;
+}
+
+.oa-video-facade-title {
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	right: 16px;
+	font: 600 16px/1.3 system-ui, sans-serif;
+	text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.oa-video-facade-play {
+		transition: none;
+	}
+
+}

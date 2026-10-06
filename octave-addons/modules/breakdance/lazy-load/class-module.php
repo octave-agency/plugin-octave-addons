@@ -2,16 +2,22 @@
 
 /*
 BREAKDANCE LAZY LOAD
--- Image and background lazy loading stays delegated to the site's
--- third-party performance plugin, so every Breakdance "Lazy Load" toggle is
--- still forced off in both the builder defaults and the rendered output
+-- Breakdance's own "Lazy Load" toggles are removed from the builder and
+-- forced off in the defaults and the rendered output, so Breakdance's lazy
+-- load script and markup never reach the page. Breakdance lazy loads by
+-- toggle with no knowledge of what starts in the viewport; Octave owns lazy
+-- loading instead
+-- Images and iframes get native lazy loading from the Performance > Media
+-- Lazy Loading module when it is on, or are left to a third-party plugin
 -- Videos are the exception and are lazy loaded by default: Breakdance Video
 -- elements use their lightweight YouTube/Vimeo players, HTML5 and section
 -- background videos start with preload="none" and are loaded by a small
 -- viewport observer, and provider iframes receive loading="lazy"
 -- Rewrites run only on known video markup through WP_HTML_Tag_Processor,
 -- never on the whole page
--- Always on and hidden from the admin — there is nothing to configure
+-- Always on and hidden from the admin. The Media Lazy Loading module can
+-- switch video handling off (octave_addons_lazy_videos) and its exclusions
+-- apply here too (octave_addons_perf_skip_lazy)
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -71,7 +77,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Keeps every Breakdance Lazy Load toggle off so images and backgrounds are left to the site\'s third-party performance plugin, while videos load lazily as they approach the viewport.', 'octave-addons' );
+		return __( 'Removes and disables every Breakdance Lazy Load toggle, so images are lazy loaded natively by Performance > Media Lazy Loading or a third-party plugin, while videos load lazily as they approach the viewport.', 'octave-addons' );
 
 	}
 
@@ -104,6 +110,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 	public function run( array $s ): void {
 
+		add_filter( 'breakdance_element_controls', [ __CLASS__, 'filter_controls' ] );
 		add_filter( 'breakdance_element_default_properties', [ __CLASS__, 'filter_default_properties' ] );
 		add_filter( 'breakdance_before_render_node', [ __CLASS__, 'filter_render_node' ] );
 
@@ -114,6 +121,52 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 		add_filter( 'embed_oembed_html', [ __CLASS__, 'filter_video_markup' ] );
 
 		add_action( 'wp_footer', [ __CLASS__, 'print_late_script' ], 100 );
+
+	}
+
+	/*
+	FILTER CONTROLS
+	-- Removes every Lazy Load toggle from the builder panels, so editors are
+	-- not offered a switch that would be overridden at render anyway
+	---------------------------------------------------------- */
+
+	public static function filter_controls( $controls ) {
+
+		return is_array( $controls ) ? self::remove_lazy_toggles( $controls ) : $controls;
+
+	}
+
+	/*
+	REMOVE LAZY TOGGLES
+	-- Only toggles named lazy_load go. The Video element's Lazy Load section
+	-- styles its play button, so sections of that name are kept
+	---------------------------------------------------------- */
+
+	protected static function remove_lazy_toggles( array $controls ): array {
+
+		$is_list = array_keys( $controls ) === range( 0, count( $controls ) - 1 );
+
+		foreach ( $controls as $key => $control ) {
+
+			if ( ! is_array( $control ) ) {
+
+				continue;
+
+			}
+
+			if ( self::LAZY_KEY === ( $control['slug'] ?? '' ) && 'toggle' === ( $control['options']['type'] ?? '' ) ) {
+
+				unset( $controls[ $key ] );
+
+				continue;
+
+			}
+
+			$controls[ $key ] = self::remove_lazy_toggles( $control );
+
+		}
+
+		return $is_list ? array_values( $controls ) : $controls;
 
 	}
 
@@ -305,7 +358,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 			}
 
-			if ( 'IFRAME' === $tag && null === $tags->get_attribute( 'loading' ) && null !== $tags->get_attribute( 'src' ) ) {
+			if ( 'IFRAME' === $tag && null === $tags->get_attribute( 'loading' ) && null !== $tags->get_attribute( 'src' ) && ! self::is_opted_out( $tags ) ) {
 
 				$tags->set_attribute( 'loading', 'lazy' );
 
@@ -324,7 +377,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 	-- until the viewport loader activates it. src, poster, controls, tracks,
 	-- loop, muted and playsinline are untouched, so without JavaScript the
 	-- video keeps its poster and dimensions and still plays from its controls.
-	-- Videos opted out of lazy loading by a performance plugin are skipped
+	-- Videos opted out of lazy loading, or excluded in Media Lazy Loading, are skipped
 	---------------------------------------------------------- */
 
 	protected static function defer_video( WP_HTML_Tag_Processor $tags ): void {
@@ -335,7 +388,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
-		if ( null !== $tags->get_attribute( 'data-no-lazy' ) || null !== $tags->get_attribute( 'data-skip-lazy' ) ) {
+		if ( self::is_opted_out( $tags ) ) {
 
 			return;
 
@@ -384,7 +437,40 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
-		return true;
+		if ( class_exists( 'Octave_Addons_Perf_Context' ) && Octave_Addons_Perf_Context::bypass_requested() ) {
+
+			return false;
+
+		}
+
+		/**
+		 * Filters whether videos and their embeds are lazy loaded.
+		 *
+		 * @param bool $enabled Defaults to true.
+		 */
+		return (bool) apply_filters( 'octave_addons_lazy_videos', true );
+
+	}
+
+	/*
+	IS OPTED OUT
+	-- Media opted out of lazy loading by an attribute, by another performance
+	-- plugin, or by the Media Lazy Loading module's exclusions
+	---------------------------------------------------------- */
+
+	protected static function is_opted_out( WP_HTML_Tag_Processor $tags ): bool {
+
+		foreach ( [ 'data-no-lazy', 'data-skip-lazy', 'data-oa-no-lazy' ] as $attribute ) {
+
+			if ( null !== $tags->get_attribute( $attribute ) ) {
+
+				return true;
+
+			}
+
+		}
+
+		return (bool) apply_filters( 'octave_addons_perf_skip_lazy', false, $tags );
 
 	}
 

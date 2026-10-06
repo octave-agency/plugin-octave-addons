@@ -1,0 +1,389 @@
+<?php
+
+/*
+CORE TESTS
+-- Discovery, settings, request bypasses, the HTML pipeline, purge endpoints
+-- and Safe Mode
+---------------------------------------------------------- */
+
+const OA_PERF_MODULES = [
+	'performance-cache',
+	'performance-media',
+	'performance-delay',
+	'performance-files',
+	'performance-preload',
+	'performance-fonts',
+	'performance-bloat',
+	'performance-heartbeat',
+	'performance-cloudflare',
+	'performance-database',
+];
+
+/*
+DISCOVERY AND GROUPING
+---------------------------------------------------------- */
+
+function test_performance_modules_share_one_admin_entry_in_order(): void {
+
+	$entries = $GLOBALS['oa_manager']->admin_entries();
+
+	oa_assert( isset( $entries['performance'] ), 'performance entry exists' );
+	oa_assert_same( OA_PERF_MODULES, array_keys( $entries['performance']['modules'] ), 'grouped modules in order' );
+	oa_assert_same( 'performance', $GLOBALS['oa_manager']->entry_id_for( 'performance-fonts' ) );
+
+}
+
+function test_existing_lazy_load_module_is_still_discovered_and_hidden(): void {
+
+	$module = oa_module( 'breakdance-lazy-load' );
+
+	oa_assert( $module->is_always_enabled() && ! $module->show_in_admin(), 'video lazy loading unchanged' );
+
+}
+
+function test_every_performance_feature_ships_off_except_cache(): void {
+
+	foreach ( OA_PERF_MODULES as $id ) {
+
+		$defaults = oa_module( $id )->get_defaults();
+
+		oa_assert_same( 'performance-cache' === $id, (bool) $defaults['enabled'], $id . ' default' );
+
+	}
+
+}
+
+/*
+SETTINGS SANITATION
+---------------------------------------------------------- */
+
+function test_sanitize_rejects_unknown_and_hostile_values(): void {
+
+	$delay = oa_module( 'performance-delay' )->sanitize( [
+		'enabled'  => '1',
+		'services' => [ 'google-analytics', 'evil<script>', 'not-a-service' ],
+		'include'  => "<b>tag</b>\n\n analytics.example ",
+		'timeout'  => '9999',
+	] );
+
+	oa_assert_same( [ 'google-analytics' ], $delay['services'] );
+	oa_assert_same( "tag\nanalytics.example", $delay['include'] );
+	oa_assert_same( 60, $delay['timeout'] );
+
+	$heartbeat = oa_module( 'performance-heartbeat' )->sanitize( [ 'editor' => 'disable', 'admin' => '45', 'frontend' => 'disable' ] );
+
+	oa_assert_same( '120', $heartbeat['editor'], 'editor cannot be disabled' );
+	oa_assert_same( '120', $heartbeat['admin'], 'unknown interval falls back' );
+
+	$fonts = oa_module( 'performance-fonts' )->sanitize( [ 'preload' => "/a.woff2\njavascript:alert(1)\n/b.ttf\n/a.woff2\nhttps://cdn.example/c.woff?v=2", 'font_display' => 'bogus', 'refresh_days' => '0' ] );
+
+	oa_assert_same( "/a.woff2\nhttps://cdn.example/c.woff?v=2", $fonts['preload'], 'only woff2/woff, deduplicated, query kept' );
+	oa_assert_same( 'swap', $fonts['font_display'] );
+	oa_assert_same( 1, $fonts['refresh_days'] );
+
+	$cloudflare = oa_module( 'performance-cloudflare' )->sanitize( [ 'zone_id' => 'not-a-zone', 'api_token' => 'secret-token' ] );
+
+	oa_assert_same( '', $cloudflare['zone_id'] );
+	oa_assert( ! isset( $cloudflare['api_token'] ), 'token never stored with settings' );
+	oa_assert_same( 'secret-token', get_option( Octave_Addons_Perf_Cloudflare::TOKEN_OPTION ) );
+	oa_assert_same( false, $GLOBALS['oa_autoload'][ Octave_Addons_Perf_Cloudflare::TOKEN_OPTION ], 'token not autoloaded' );
+
+	$database = oa_module( 'performance-database' )->sanitize( [ 'schedule' => 'hourly', 'scheduled_items' => [ 'revisions', 'all_transients' ] ] );
+
+	oa_assert_same( 'manual', $database['schedule'] );
+	oa_assert_same( [ 'revisions' ], $database['scheduled_items'], 'all transients never scheduled' );
+
+}
+
+function test_cache_module_is_always_enabled(): void {
+
+	oa_assert( oa_module( 'performance-cache' )->sanitize( [] )['enabled'] );
+
+}
+
+/*
+REQUEST BYPASSES
+---------------------------------------------------------- */
+
+function test_bypass_reasons_by_context(): void {
+
+	oa_assert_same( '', Octave_Addons_Perf_Context::bypass_reason( 'media' ), 'plain frontend request' );
+
+	$cases = [
+		'admin'     => static function () { $GLOBALS['oa_flags']['admin'] = true; },
+		'ajax'      => static function () { $GLOBALS['oa_flags']['ajax'] = true; },
+		'rest'      => static function () { $GLOBALS['oa_flags']['rest'] = true; },
+		'cron'      => static function () { $GLOBALS['oa_flags']['cron'] = true; },
+		'builder'   => static function () { $_GET['breakdance'] = 'builder'; },
+		'login'     => static function () { $GLOBALS['pagenow'] = 'wp-login.php'; },
+		'method'    => static function () { $_SERVER['REQUEST_METHOD'] = 'POST'; },
+		'logged-in' => static function () { $GLOBALS['oa_flags']['logged_in'] = true; },
+	];
+
+	foreach ( $cases as $expected => $setup ) {
+
+		oa_test_reset();
+		$setup();
+
+		oa_assert_same( $expected, Octave_Addons_Perf_Context::bypass_reason( 'media' ), $expected );
+
+	}
+
+	oa_test_reset();
+	do_action( 'parse_query' );
+	$GLOBALS['oa_flags']['feed'] = true;
+
+	oa_assert_same( 'feed', Octave_Addons_Perf_Context::bypass_reason( 'media' ) );
+
+	$GLOBALS['oa_flags']['feed'] = false;
+	$GLOBALS['oa_flags']['cart'] = true;
+
+	oa_assert_same( 'woocommerce', Octave_Addons_Perf_Context::bypass_reason( 'media' ) );
+
+}
+
+function test_logged_in_users_can_be_optimised_when_enabled(): void {
+
+	$GLOBALS['oa_flags']['logged_in'] = true;
+	oa_set_settings( 'performance-cache', [ 'optimize_logged_in' => true ] );
+
+	oa_assert( Octave_Addons_Perf_Context::can_optimize( 'media' ) );
+
+}
+
+function test_no_optimize_argument_needs_admin_or_site_key(): void {
+
+	$_GET['oa_no_optimize'] = '1';
+
+	oa_assert( Octave_Addons_Perf_Context::can_optimize( 'media' ), 'anonymous ?oa_no_optimize=1 is ignored' );
+
+	$GLOBALS['oa_flags']['logged_in'] = true;
+	$GLOBALS['oa_caps']               = [ 'manage_options' ];
+	oa_set_settings( 'performance-cache', [ 'optimize_logged_in' => true ] );
+
+	oa_assert_same( 'query-arg', Octave_Addons_Perf_Context::bypass_reason( 'media' ), 'administrator bypass' );
+
+	oa_test_reset();
+	$_GET['oa_no_optimize'] = Octave_Addons_Perf_Context::bypass_key();
+
+	oa_assert_same( 'query-arg', Octave_Addons_Perf_Context::bypass_reason( 'media' ), 'site key bypass' );
+
+}
+
+function test_bypass_filter_can_override(): void {
+
+	add_filter( 'octave_addons_perf_bypass_reason', static function ( $reason, $feature ) {
+
+		return 'delay' === $feature ? 'custom' : $reason;
+
+	}, 10, 2 );
+
+	oa_assert_same( 'custom', Octave_Addons_Perf_Context::bypass_reason( 'delay' ) );
+	oa_assert_same( '', Octave_Addons_Perf_Context::bypass_reason( 'media' ) );
+
+}
+
+/*
+HTML PIPELINE
+---------------------------------------------------------- */
+
+function test_failed_transformations_return_original_html(): void {
+
+	$html = '<!doctype html><html><body><p>Original</p></body></html>';
+
+	Octave_Addons_Perf_Html::register( 'media', static function ( string $html ): string {
+
+		throw new RuntimeException( 'parser exploded' );
+
+	} );
+
+	Octave_Addons_Perf_Html::register( 'delay', static function ( string $html ): string {
+
+		return '';
+
+	} );
+
+	oa_assert_same( $html, Octave_Addons_Perf_Html::process( $html ) );
+	oa_assert_same( 2, count( Octave_Addons_Perf_Log::entries() ), 'both failures logged' );
+
+}
+
+function test_pipeline_ignores_non_html_and_keeps_successful_work(): void {
+
+	Octave_Addons_Perf_Html::register( 'media', static function ( string $html ): string {
+
+		return str_replace( 'Original', 'Changed', $html );
+
+	} );
+
+	oa_assert_same( '{"a":"Original"}', Octave_Addons_Perf_Html::process( '{"a":"Original"}' ) );
+	oa_assert_contains( 'Changed', Octave_Addons_Perf_Html::process( '<html><body>Original</body></html>' ) );
+
+}
+
+function test_pipeline_buffers_flushed_chunks_until_final(): void {
+
+	Octave_Addons_Perf_Html::register( 'media', static function ( string $html ): string {
+
+		return strtoupper( $html );
+
+	} );
+
+	oa_assert_same( '', Octave_Addons_Perf_Html::buffer( '<html><body>a', PHP_OUTPUT_HANDLER_FLUSH ) );
+	oa_assert_same( '<HTML><BODY>AB</BODY></HTML>', Octave_Addons_Perf_Html::buffer( 'b</body></html>', PHP_OUTPUT_HANDLER_FINAL ) );
+
+}
+
+function test_disabling_every_module_leaves_output_untouched(): void {
+
+	foreach ( OA_PERF_MODULES as $id ) {
+
+		$module = oa_module( $id );
+
+		if ( ! $module->is_always_enabled() ) {
+
+			$module->run_disabled( $module->get_defaults() );
+
+		}
+
+	}
+
+	oa_module( 'performance-cache' )->run( oa_module( 'performance-cache' )->get_defaults() );
+
+	$transformers = new ReflectionProperty( 'Octave_Addons_Perf_Html', 'transformers' );
+
+	oa_assert_same( [], $transformers->getValue(), 'no page transformations, so no output buffer starts' );
+	oa_assert( ! has_filter( 'style_loader_tag' ) && ! has_filter( 'script_loader_tag' ) && ! has_filter( 'wp_preload_resources' ), 'no asset filters' );
+
+}
+
+/*
+PURGES
+---------------------------------------------------------- */
+
+function test_purge_endpoint_requires_nonce_and_capability(): void {
+
+	$_POST = [ 'scope' => 'all', 'nonce' => 'forged' ];
+	$GLOBALS['oa_caps'] = [ 'manage_options' ];
+
+	$response = oa_json_call( [ 'Octave_Addons_Perf_Admin', 'ajax_purge' ] );
+
+	oa_assert( ! $response->success && 403 === $response->status, 'bad nonce rejected' );
+
+	$_POST['nonce']     = wp_create_nonce( Octave_Addons_Perf_Admin::NONCE );
+	$GLOBALS['oa_caps'] = [];
+
+	$response = oa_json_call( [ 'Octave_Addons_Perf_Admin', 'ajax_purge' ] );
+
+	oa_assert( ! $response->success && 403 === $response->status, 'missing capability rejected' );
+
+	$GLOBALS['oa_caps'] = [ 'manage_options' ];
+
+	$response = oa_json_call( [ 'Octave_Addons_Perf_Admin', 'ajax_purge' ] );
+
+	oa_assert( $response->success, 'administrator can purge' );
+	oa_assert_same( 'success', $response->data['layers'][0]['status'] );
+
+}
+
+function test_purge_all_clears_only_octave_min_folder_and_reports_layers(): void {
+
+	$min     = Octave_Addons_Perf_Store::dir( 'min' );
+	$fonts   = Octave_Addons_Perf_Store::dir( 'fonts/abc' );
+	$foreign = WP_CONTENT_DIR . '/cache/other-plugin/page.html';
+
+	Octave_Addons_Perf_Store::write( $min . 'a.min.css', 'a{}' );
+	Octave_Addons_Perf_Store::write( $fonts . 'f.woff2', 'wOF2' );
+	@mkdir( dirname( $foreign ), 0777, true );
+	file_put_contents( $foreign, 'keep' );
+
+	$generation = Octave_Addons_Perf_Cache::generation();
+
+	add_filter( 'octave_addons_perf_purge_all_layers', static function ( $report ) {
+
+		$report['host'] = [ 'label' => 'Host', 'status' => 'error', 'message' => 'Down' ];
+
+		return $report;
+
+	} );
+
+	$report = Octave_Addons_Perf_Cache::purge_all( 'all', 'manual' );
+
+	oa_assert( ! file_exists( $min . 'a.min.css' ), 'minified file removed' );
+	oa_assert( file_exists( $fonts . 'f.woff2' ), 'self-hosted fonts kept' );
+	oa_assert( file_exists( $foreign ), 'other caches untouched' );
+	oa_assert_same( $generation + 1, Octave_Addons_Perf_Cache::generation() );
+	oa_assert_same( [ 'octave', 'host' ], array_keys( $report ) );
+	oa_assert_same( 'Full purge', Octave_Addons_Perf_Cache::last_purge()['label'] );
+
+}
+
+function test_store_refuses_paths_outside_cache(): void {
+
+	oa_assert( ! Octave_Addons_Perf_Store::write( WP_CONTENT_DIR . '/evil.php', 'x' ) );
+	oa_assert( ! Octave_Addons_Perf_Store::write( Octave_Addons_Perf_Store::dir( 'min' ) . '../../../evil.php', 'x' ) );
+
+}
+
+function test_settings_change_purges_only_for_performance_modules(): void {
+
+	Octave_Addons_Perf_Cache::register_invalidation();
+
+	$generation = Octave_Addons_Perf_Cache::generation();
+
+	update_option( OCTAVE_ADDONS_OPTION_KEY, [ 'animations' => [ 'enabled' => true ] ] );
+
+	oa_assert_same( $generation, Octave_Addons_Perf_Cache::generation(), 'unrelated module' );
+
+	update_option( OCTAVE_ADDONS_OPTION_KEY, [ 'animations' => [ 'enabled' => true ], 'performance-media' => [ 'enabled' => true ] ] );
+
+	oa_assert_same( $generation + 1, Octave_Addons_Perf_Cache::generation(), 'performance module' );
+
+}
+
+function test_url_purge_targets_same_origin_urls_only(): void {
+
+	$seen = [];
+
+	add_filter( 'octave_addons_perf_purge_url_layers', static function ( $report, $urls ) use ( &$seen ) {
+
+		$seen = $urls;
+
+		return $report;
+
+	}, 10, 2 );
+
+	Octave_Addons_Perf_Cache::purge_urls( [ 'https://example.com/a/#top', 'https://evil.test/b', 'https://example.com/a/' ], 'content' );
+
+	oa_assert_same( [ 'https://example.com/a/' ], $seen );
+
+}
+
+/*
+SAFE MODE
+---------------------------------------------------------- */
+
+function test_safe_mode_changes_only_performance_modules(): void {
+
+	$GLOBALS['oa_caps'] = [ 'manage_options' ];
+	$_POST['nonce']     = wp_create_nonce( Octave_Addons_Perf_Admin::NONCE );
+
+	oa_set_settings( 'performance-delay', [ 'services' => [ 'hotjar' ] ] );
+	oa_set_settings( 'performance-files', [ 'enabled' => true, 'minify_js' => true ] );
+
+	$all                  = get_option( OCTAVE_ADDONS_OPTION_KEY );
+	$all['custom-thing']  = [ 'enabled' => true, 'secret' => 'untouched' ];
+	$GLOBALS['oa_options'][ OCTAVE_ADDONS_OPTION_KEY ] = $all;
+
+	$response = oa_json_call( [ 'Octave_Addons_Perf_Admin', 'ajax_safe_mode' ] );
+	$saved    = get_option( OCTAVE_ADDONS_OPTION_KEY );
+
+	oa_assert( $response->success );
+	oa_assert_same( [ 'enabled' => true, 'secret' => 'untouched' ], $saved['custom-thing'], 'other module preserved' );
+	oa_assert_same( [ 'hotjar' ], $saved['performance-delay']['services'], 'selected services kept' );
+	oa_assert( true === $saved['performance-delay']['enabled'] && true === $saved['performance-media']['enabled'] && true === $saved['performance-preload']['enabled'] );
+	oa_assert( false === $saved['performance-files']['enabled'] && false === $saved['performance-files']['minify_js'], 'minification off' );
+	oa_assert_same( false, $saved['performance-media']['facades'] );
+	oa_assert( false === strpos( $saved[ Octave_Addons_Module_Manager::SUBMITTED_FIELD ], 'custom-thing' ), 'only performance modules submitted' );
+
+}

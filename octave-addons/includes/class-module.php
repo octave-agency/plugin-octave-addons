@@ -46,7 +46,8 @@ abstract class Octave_Addons_Module {
 	}
 
 	/**
-	 * Group id this module belongs to, or '' for a standalone tab.
+	 * Group id this module belongs to. Defaults to '', which joins the group
+	 * named by the area folder it sits in (or a standalone tab at the top level).
 	 *
 	 * Modules sharing a group id are collapsed into one navigation entry and
 	 * rendered on the same page, each keeping its own settings key, its own

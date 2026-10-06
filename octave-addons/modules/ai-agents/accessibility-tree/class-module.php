@@ -36,12 +36,6 @@ class Octave_Addons_Module_Accessibility_Tree extends Octave_Addons_Module {
 
 	}
 
-	public function get_group(): string {
-
-		return 'ai-agents';
-
-	}
-
 	public function get_order(): int {
 
 		return 40;

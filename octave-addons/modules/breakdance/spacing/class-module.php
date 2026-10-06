@@ -51,17 +51,6 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 	}
 
 	/*
-	GET GROUP
-	-- Shares the Breakdance page with the other builder-facing modules
-	---------------------------------------------------------- */
-
-	public function get_group(): string {
-
-		return 'breakdance';
-
-	}
-
-	/*
 	GET TITLE
 	-- Returns the admin navigation label
 	---------------------------------------------------------- */

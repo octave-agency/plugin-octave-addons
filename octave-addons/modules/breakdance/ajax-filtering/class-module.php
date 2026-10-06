@@ -37,17 +37,6 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 	}
 
 	/*
-	GET GROUP
-	-- Shares the Breakdance page with the other builder-facing modules.
-	---------------------------------------------------------- */
-
-	public function get_group(): string {
-
-		return 'breakdance';
-
-	}
-
-	/*
 	GET TITLE
 	-- Returns the admin navigation label
 	---------------------------------------------------------- */

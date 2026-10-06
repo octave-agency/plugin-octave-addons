@@ -38,8 +38,8 @@ class Octave_Addons_Admin_Experience {
 
 	/*
 	ENQUEUE BLOCK EDITOR ASSETS
-	-- Loads the canvas-only theme rules through WordPress's block asset path so
-	-- they reach Gutenberg's iframe as well as the parent editor document.
+	-- Loads canvas and editor integration rules through WordPress's block asset
+	-- path so they reach Gutenberg's iframe as well as the parent document.
 	---------------------------------------------------------- */
 
 	public function enqueue_block_editor_assets(): void {
@@ -58,6 +58,19 @@ class Octave_Addons_Admin_Experience {
 			[],
 			file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION
 		);
+
+		if ( $this->is_rank_math_active() ) {
+
+			$rank_math_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/rank-math.css';
+
+			wp_enqueue_style(
+				'octave-addons-admin-experience-rank-math',
+				OCTAVE_ADDONS_URL . 'assets/css/admin-experience/rank-math.css',
+				[],
+				file_exists( $rank_math_path ) ? (string) filemtime( $rank_math_path ) : OCTAVE_ADDONS_VERSION
+			);
+
+		}
 
 	}
 

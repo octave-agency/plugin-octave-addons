@@ -111,17 +111,6 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 
 	}
 
-	/*
-	GET GROUP
-	-- Shares the Breakdance page with the other builder-facing modules.
-	---------------------------------------------------------- */
-
-	public function get_group(): string {
-
-		return 'breakdance';
-
-	}
-
 	public function get_title(): string {
 
 		return __( 'Breakdance Elements', 'octave-addons' );
