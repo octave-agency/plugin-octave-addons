@@ -220,22 +220,6 @@ function test_missing_dimensions_come_from_the_file(): void {
 
 }
 
-function test_video_posters_use_a_smaller_generated_size(): void {
-
-	$poster = oa_upload( 'clip-poster.jpg', 1280, 720 );
-
-	oa_upload( 'clip-poster-768x432.jpg', 768, 432 );
-	oa_upload( 'clip-poster-1024x576.jpg', 1024, 576 );
-	oa_upload( 'clip-poster-150x150.jpg', 150, 150 );
-
-	$page = oa_page( '<video poster="' . $poster . '" src="/clip.mp4"></video>' );
-
-	oa_assert_contains( 'poster="https://example.com/wp-content/uploads/2026/10/clip-poster-768x432.jpg"', oa_media()->transform( $page ) );
-	oa_assert_contains( 'clip-poster-1024x576.jpg"', oa_media( [ 'poster_width' => 1024 ] )->transform( $page ) );
-	oa_assert_same( $page, oa_media( [ 'poster_width' => 0, 'images' => false, 'iframes' => false, 'dimensions' => false, 'header_eager' => false ] )->transform( $page ), 'off' );
-
-}
-
 function test_posters_below_the_hero_wait_for_the_viewport(): void {
 
 	$poster = oa_upload( 'later-poster-640x360.jpg', 640, 360 );
@@ -261,5 +245,111 @@ function test_posters_below_the_hero_wait_for_the_viewport(): void {
 	oa_assert_contains( 'data-oa-poster="/first.jpg"', $hero, 'a hero image before it means the first video is below' );
 	oa_assert_not_contains( 'data-oa-poster=', oa_media( [ 'lazy_posters' => false ] )->transform( $page ), 'off' );
 	oa_assert_not_contains( 'data-oa-poster=', oa_media( [ 'videos' => false ] )->transform( $page ), 'needs lazy videos' );
+
+}
+
+/*
+LARGEST CONTENTFUL PAINT
+-- Reports from browsers, and what the page pass does with them
+---------------------------------------------------------- */
+
+function oa_lcp_report( string $path, string $device, string $kind, string $url ): OA_Test_Json_Response {
+
+	$_POST = [ 'path' => $path, 'device' => $device, 'kind' => $kind, 'url' => $url ];
+
+	return oa_json_call( [ 'Octave_Addons_Perf_Lcp', 'ajax_report' ] );
+
+}
+
+function test_lcp_reports_are_validated_and_only_fill_stale_records(): void {
+
+	$purged = [];
+
+	add_filter( 'octave_addons_perf_purge_url_layers', static function ( $report, $urls ) use ( &$purged ) {
+
+		$purged = array_merge( $purged, $urls );
+
+		return $report;
+
+	}, 10, 2 );
+
+	oa_assert_same( false, oa_lcp_report( '/a/', 'x', 'img', 'https://example.com/a.jpg' )->success, 'bad device' );
+	oa_assert_same( false, oa_lcp_report( 'a', 'm', 'img', 'https://example.com/a.jpg' )->success, 'bad path' );
+
+	oa_lcp_report( '/a', 'm', 'bg', 'https://example.com/hero.jpg' );
+	oa_lcp_report( '/a/', 'm', 'bg', 'https://example.com/other.jpg' );
+	oa_lcp_report( '/a/', 'd', 'bg', 'javascript:alert(1)' );
+
+	$entry = Octave_Addons_Perf_Lcp::entry( '/a/' );
+
+	oa_assert_same( 'https://example.com/hero.jpg', $entry['m']['url'], 'a fresh record is kept' );
+	oa_assert_same( 'none', $entry['d']['kind'], 'an unusable URL counts as no image' );
+	oa_assert_same( [ 'https://example.com/a/' ], array_values( array_unique( $purged ) ) );
+	oa_assert_same( false, Octave_Addons_Perf_Lcp::needs_report( $entry ) );
+
+}
+
+function test_reported_lcp_is_fetched_first(): void {
+
+	$_SERVER['REQUEST_URI'] = '/page/?utm=1';
+
+	update_option( Octave_Addons_Perf_Lcp::OPTION, [ '/page/' => [
+		'm' => [ 'kind' => 'bg', 'url' => 'https://example.com/wp-content/uploads/hero-m.jpg', 'time' => time() ],
+		'd' => [ 'kind' => 'img', 'url' => 'https://cdn.example.net/wp-content/uploads/photo-1024x576.jpg?v=2', 'time' => time() ],
+	] ] );
+
+	$page = '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/a.css"></head><body>'
+		. '<img src="/logo.png" width="900"><img src="/wp-content/uploads/photo.jpg" srcset="/wp-content/uploads/photo-1024x576.jpg 1024w" loading="lazy"></body></html>';
+	$html = oa_media()->transform( $page );
+
+	oa_assert_contains( '<meta charset="utf-8">' . "\n" . '<link rel="preload" as="image" href="https://example.com/wp-content/uploads/hero-m.jpg" fetchpriority="high" media="(max-width: 767px)">', $html, 'background preloaded for phones, before the CSS' );
+	oa_assert_contains( '<img fetchpriority="high" src="/wp-content/uploads/photo.jpg"', $html, 'reported image first' );
+	oa_assert_not_contains( 'loading="lazy" src="/wp-content/uploads/photo.jpg"', $html );
+	oa_assert_same( 1, substr_count( $html, 'fetchpriority="high"' ) - 1, 'the guess is not also applied' );
+	oa_assert_not_contains( 'oa_perf_lcp_report', $html, 'no reporter once both sizes are known' );
+
+	update_option( Octave_Addons_Perf_Lcp::OPTION, [ '/page/' => [
+		'm' => [ 'kind' => 'bg', 'url' => 'https://evil.test/x.jpg', 'time' => time() ],
+		'd' => [ 'kind' => 'poster', 'url' => 'https://example.com/p.jpg', 'time' => time() ],
+	] ] );
+
+	$html = oa_media()->transform( $page );
+
+	oa_assert_not_contains( 'evil.test', $html, 'a host the page never uses is not preloaded' );
+	oa_assert_contains( 'href="https://example.com/p.jpg" fetchpriority="high" media="(min-width: 768px)"', $html );
+
+	update_option( Octave_Addons_Perf_Lcp::OPTION, [] );
+
+	$html = oa_media()->transform( $page );
+
+	oa_assert_contains( 'oa_perf_lcp_report', $html, 'unknown page reports' );
+	oa_assert_contains( '"path":"\/page\/"', $html );
+	oa_assert_contains( '"devices":["m","d"]', $html );
+
+	update_option( Octave_Addons_Perf_Lcp::OPTION, [ '/page/' => [ 'm' => [ 'kind' => 'none', 'url' => '', 'time' => time() ] ] ] );
+
+	oa_assert_contains( '"devices":["d"]', oa_media()->transform( $page ), 'only the screen size still unknown reports' );
+	oa_assert_contains( '<img fetchpriority="high" src="/logo.png"', $html, 'falls back to the guess' );
+	oa_assert_not_contains( 'oa_perf_lcp_report', oa_media( [ 'lcp' => false ] )->transform( $page ), 'off' );
+
+}
+
+function test_late_found_origins_are_preconnected(): void {
+
+	$_POST = [ 'path' => '/b/', 'device' => 'm', 'kind' => 'none', 'url' => '', 'origins' => [ 'https://img.example.net', 'https://fonts.example.org crossorigin', 'http://plain.test', 'https://x.test/path', 'https://third.test' ] ];
+
+	oa_json_call( [ 'Octave_Addons_Perf_Lcp', 'ajax_report' ] );
+
+	$entry = Octave_Addons_Perf_Lcp::entry( '/b/' );
+
+	oa_assert_same( [ 'https://img.example.net', 'https://fonts.example.org crossorigin' ], $entry['m']['origins'], 'only clean origins, at most two' );
+
+	$html = '<!doctype html><html><head><link rel="stylesheet" href="https://fonts.example.org/a.css"></head><body><img src="https://img.example.net/a.jpg"></body></html>';
+	$out  = Octave_Addons_Perf_Lcp::preload_markup( $entry, $html );
+
+	oa_assert_contains( '<link rel="preconnect" href="https://img.example.net">', $out );
+	oa_assert_contains( '<link rel="preconnect" href="https://fonts.example.org" crossorigin>', $out );
+	oa_assert_same( '', Octave_Addons_Perf_Lcp::preload_markup( $entry, '<html><head></head><body></body></html>' ), 'hosts the page never names are ignored' );
+	oa_assert_not_contains( 'img.example.net', Octave_Addons_Perf_Lcp::preload_markup( $entry, $html . '<link rel="preconnect" href="https://img.example.net">' ), 'already preconnected' );
 
 }

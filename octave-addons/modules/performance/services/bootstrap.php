@@ -24,6 +24,7 @@ require_once __DIR__ . '/class-cloudflare.php';
 require_once __DIR__ . '/class-cleanup.php';
 require_once __DIR__ . '/class-minifier.php';
 require_once __DIR__ . '/class-google-fonts.php';
+require_once __DIR__ . '/class-lcp.php';
 require_once __DIR__ . '/class-admin.php';
 
 class Octave_Addons_Perf {

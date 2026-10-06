@@ -10,11 +10,13 @@ PERFORMANCE: MEDIA LAZY LOADING
 -- sources, CDN rewrites and responsive images keep working as delivered
 -- The likely hero image is kept eager with high priority. Every other image
 -- is left to the browser, which loads lazy images already in view straight away
--- Three optional fixes for what page builders print: images in the site
+-- Two optional fixes for what page builders print: images in the site
 -- header always load eagerly, images without dimensions get width and height
--- from the file, so the space is held before they arrive, and video posters
--- point at a smaller size WordPress has already generated
+-- from the file, so the space is held before they arrive
 -- Posters of lazy videos below the hero wait until they near the viewport
+-- Each page's real Largest Contentful Paint image, as browsers report it,
+-- replaces the hero guess: an <img> is fetched first, and a CSS background
+-- or video poster is preloaded for the screen sizes that reported it
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -42,12 +44,6 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 	/** Only this many images from the top of the page can become the hero image. */
 	protected const PRIORITY_WINDOW = 3;
-
-	/** Poster widths offered; 0 leaves posters as they are. */
-	public const POSTER_WIDTHS = [ 0, 768, 1024 ];
-
-	/** A generated size narrower than this is a thumbnail, never a poster. */
-	protected const POSTER_MIN_WIDTH = 400;
 
 	protected array $settings = [];
 
@@ -84,8 +80,8 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 			'videos'             => true,
 			'header_eager'       => true,
 			'dimensions'         => true,
-			'poster_width'       => 768,
 			'lazy_posters'       => true,
+			'lcp'                => true,
 			'exclude_classes'    => '',
 			'exclude_attributes' => '',
 			'exclude_urls'       => '',
@@ -97,14 +93,11 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		$clean = parent::sanitize( $input );
 
-		foreach ( [ 'images', 'iframes', 'videos', 'header_eager', 'dimensions', 'lazy_posters' ] as $key ) {
+		foreach ( [ 'images', 'iframes', 'videos', 'header_eager', 'dimensions', 'lazy_posters', 'lcp' ] as $key ) {
 
 			$clean[ $key ] = ! empty( $input[ $key ] );
 
 		}
-
-		$width                 = absint( $input['poster_width'] ?? 0 );
-		$clean['poster_width'] = in_array( $width, self::POSTER_WIDTHS, true ) ? $width : 0;
 
 		foreach ( [ 'exclude_classes', 'exclude_attributes', 'exclude_urls' ] as $key ) {
 
@@ -132,7 +125,13 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		add_filter( 'octave_addons_perf_skip_lazy', [ $this, 'filter_user_exclusions' ], 10, 2 );
 
-		if ( ! empty( $s['images'] ) || ! empty( $s['iframes'] ) || ! empty( $s['header_eager'] ) || ! empty( $s['dimensions'] ) || ! empty( $s['poster_width'] ) || ! empty( $s['lazy_posters'] ) ) {
+		if ( ! empty( $s['lcp'] ) ) {
+
+			Octave_Addons_Perf_Lcp::boot();
+
+		}
+
+		if ( ! empty( $s['images'] ) || ! empty( $s['iframes'] ) || ! empty( $s['header_eager'] ) || ! empty( $s['dimensions'] ) || ! empty( $s['lazy_posters'] ) || ! empty( $s['lcp'] ) ) {
 
 			Octave_Addons_Perf_Html::register( 'media', [ $this, 'transform' ], 20 );
 
@@ -160,10 +159,36 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		$image_index = 0;
 		$notes       = 0;
 		$prioritise  = $do_images && ! preg_match( '/fetchpriority\s*=\s*["\']?high/i', $html );
-		$poster      = (int) ( $s['poster_width'] ?? 0 );
 		$lazy_poster = ! empty( $s['lazy_posters'] ) && ! empty( $s['videos'] );
 		$hero_seen   = false;
 		$videos      = 0;
+		$lcp_path    = ! empty( $s['lcp'] ) ? Octave_Addons_Perf_Lcp::request_path() : '';
+		$lcp         = '' !== $lcp_path ? Octave_Addons_Perf_Lcp::entry( $lcp_path ) : [];
+		$lcp_images  = [];
+		$lcp_posters = [];
+
+		foreach ( Octave_Addons_Perf_Lcp::DEVICES as $device ) {
+
+			$kind = (string) ( $lcp[ $device ]['kind'] ?? '' );
+
+			if ( 'img' === $kind ) {
+
+				$lcp_images[] = (string) $lcp[ $device ]['url'];
+
+			} elseif ( 'poster' === $kind ) {
+
+				$lcp_posters[] = (string) $lcp[ $device ]['url'];
+
+			}
+
+		}
+
+		// A reported image replaces the guess.
+		if ( ! empty( $lcp_images ) ) {
+
+			$prioritise = false;
+
+		}
 
 		// Only the first <header> is the site header; later ones belong to articles.
 		$header_depth = 0;
@@ -198,13 +223,13 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 			if ( 'VIDEO' === $tag ) {
 
-				if ( $poster > 0 ) {
+				// The reported LCP poster, or else the first video unless an image is the hero, keeps its poster.
+				if ( self::matches_any_file( (string) $tags->get_attribute( 'poster' ), $lcp_posters ) ) {
 
-					self::resize_poster( $tags, $poster );
+					continue;
 
 				}
 
-				// The first video is the hero unless an image already is, so it keeps its poster.
 				if ( $lazy_poster && null !== $tags->get_attribute( 'data-oa-lazy-video' ) && $header_depth <= 0 && ( $hero_seen || ++$videos > 1 ) ) {
 
 					self::defer_poster( $tags );
@@ -228,6 +253,18 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 				if ( $header_depth <= 0 && 'high' === strtolower( (string) $tags->get_attribute( 'fetchpriority' ) ) ) {
 
 					$hero_seen = true;
+
+				}
+
+				if ( ! empty( $lcp_images ) && self::is_lcp_image( $tags, $lcp_images ) ) {
+
+					$tags->set_attribute( 'fetchpriority', 'high' );
+					$tags->remove_attribute( 'loading' );
+					$hero_seen = true;
+
+					Octave_Addons_Perf_Log::note( 'media', [ 'tag' => 'img', 'src' => (string) $tags->get_attribute( 'src' ), 'action' => 'skipped', 'reason' => 'reported-lcp' ] );
+
+					continue;
 
 				}
 
@@ -293,7 +330,106 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		}
 
-		return $tags->get_updated_html();
+		$html = $tags->get_updated_html();
+
+		if ( '' === $lcp_path ) {
+
+			return $html;
+
+		}
+
+		$head = Octave_Addons_Perf_Lcp::preload_markup( $lcp, $html );
+
+		if ( '' !== $head ) {
+
+			$html = self::inject_in_head( $html, $head );
+
+		}
+
+		$stale = Octave_Addons_Perf_Lcp::stale_devices( $lcp );
+
+		if ( ! empty( $stale ) ) {
+
+			$html = Octave_Addons_Perf_Html::inject_before_body_end( $html, Octave_Addons_Perf_Lcp::reporter( $lcp_path, $stale ) );
+
+		}
+
+		return $html;
+
+	}
+
+	/*
+	LCP HELPERS
+	-- Matching against reported URLs ignores host and query, so a CDN
+	-- rewrite or cache-busting version still matches
+	---------------------------------------------------------- */
+
+	protected static function matches_any_file( string $url, array $urls ): bool {
+
+		foreach ( $urls as $candidate ) {
+
+			if ( Octave_Addons_Perf_Lcp::same_file( $url, $candidate ) ) {
+
+				return true;
+
+			}
+
+		}
+
+		return false;
+
+	}
+
+	protected static function is_lcp_image( WP_HTML_Tag_Processor $tags, array $urls ): bool {
+
+		$src    = (string) $tags->get_attribute( 'src' );
+		$srcset = (string) $tags->get_attribute( 'srcset' );
+
+		foreach ( $urls as $url ) {
+
+			if ( Octave_Addons_Perf_Lcp::same_file( $src, $url ) || ( '' !== $srcset && Octave_Addons_Perf_Lcp::in_srcset( $srcset, $url ) ) ) {
+
+				return true;
+
+			}
+
+		}
+
+		return false;
+
+	}
+
+	/*
+	INJECT IN HEAD
+	-- Straight after the charset declaration (or the <head> tag), so the
+	-- preload is found before any stylesheet is requested
+	---------------------------------------------------------- */
+
+	public static function inject_in_head( string $html, string $markup ): string {
+
+		$end = stripos( $html, '</head>' );
+
+		if ( false === $end ) {
+
+			return $html;
+
+		}
+
+		if ( preg_match( '#<meta\b[^>]*charset[^>]*>#i', substr( $html, 0, $end ), $match, PREG_OFFSET_CAPTURE ) ) {
+
+			$at = $match[0][1] + strlen( $match[0][0] );
+
+		} elseif ( preg_match( '#<head\b[^>]*>#i', $html, $match, PREG_OFFSET_CAPTURE ) && $match[0][1] < $end ) {
+
+			$at = $match[0][1] + strlen( $match[0][0] );
+
+		} else {
+
+			$at = $end;
+
+		}
+
+		return substr( $html, 0, $at ) . "\n" . $markup . substr( $html, $at );
 
 	}
 
@@ -411,33 +547,6 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 	}
 
 	/*
-	RESIZE POSTER
-	-- Swaps a full-size video poster for the widest size WordPress generated
-	-- from the same upload that is no wider than $max and keeps its shape.
-	-- Found on disk beside the original, so it needs no database lookup
-	---------------------------------------------------------- */
-
-	public static function resize_poster( WP_HTML_Tag_Processor $tags, int $max ): void {
-
-		$poster = trim( (string) $tags->get_attribute( 'poster' ) );
-
-		if ( '' === $poster || null !== $tags->get_attribute( 'data-oa-no-lazy' ) ) {
-
-			return;
-
-		}
-
-		$smaller = self::smaller_image( $poster, $max );
-
-		if ( '' !== $smaller ) {
-
-			$tags->set_attribute( 'poster', $smaller );
-
-		}
-
-	}
-
-	/*
 	DEFER POSTER
 	-- Parks the poster in data-oa-poster for the lazy video loader to restore
 	-- as the video nears the viewport. A video without width and height takes
@@ -472,75 +581,6 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 			$tags->set_attribute( 'style', ( '' === $style ? '' : rtrim( $style, ';' ) . '; ' ) . 'aspect-ratio: ' . $size[0] . ' / ' . $size[1] . ';' );
 
 		}
-
-	}
-
-	public static function smaller_image( string $url, int $max ): string {
-
-		static $found = [];
-
-		$key = $max . '|' . $url;
-
-		if ( isset( $found[ $key ] ) ) {
-
-			return $found[ $key ];
-
-		}
-
-		$found[ $key ] = '';
-		$path          = (string) wp_parse_url( $url, PHP_URL_PATH );
-
-		// Already a generated size, or not an image this can work with.
-		if ( preg_match( '/-\d{2,5}x\d{2,5}\.[a-z0-9]+$/i', $path ) || ! preg_match( '/\.(jpe?g|png|webp)$/i', $path, $extension ) ) {
-
-			return '';
-
-		}
-
-		$file     = Octave_Addons_Perf_Admin::local_path( $url );
-		$original = '' !== $file ? @getimagesize( $file ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unreadable images are skipped.
-
-		if ( ! is_array( $original ) || $original[0] <= $max || $original[1] <= 0 ) {
-
-			return '';
-
-		}
-
-		// Generated sizes are named after the original upload, before -scaled or -rotated.
-		$stem  = preg_replace( '/-(?:scaled|rotated)$/', '', pathinfo( $file, PATHINFO_FILENAME ) );
-		$ratio = $original[0] / $original[1];
-		$best  = 0;
-		$name  = '';
-
-		foreach ( (array) glob( dirname( $file ) . '/' . addcslashes( $stem, '*?[]\\' ) . '-*x*.' . $extension[1] ) as $candidate ) {
-
-			if ( ! preg_match( '/^' . preg_quote( $stem, '/' ) . '-(\d+)x(\d+)\.' . preg_quote( $extension[1], '/' ) . '$/i', basename( (string) $candidate ), $size ) ) {
-
-				continue;
-
-			}
-
-			$width  = (int) $size[1];
-			$height = max( 1, (int) $size[2] );
-
-			if ( $width > $max || $width < self::POSTER_MIN_WIDTH || $width <= $best || abs( $width / $height - $ratio ) > 0.02 * $ratio ) {
-
-				continue;
-
-			}
-
-			$best = $width;
-			$name = basename( (string) $candidate );
-
-		}
-
-		if ( '' !== $name ) {
-
-			$found[ $key ] = substr( $url, 0, (int) strrpos( $url, '/' ) + 1 ) . $name;
-
-		}
-
-		return $found[ $key ];
 
 	}
 
@@ -735,12 +775,8 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 			$this->switch_row( 'header_eager', __( 'Load header images straight away', 'octave-addons' ), __( 'Safe. The logo and other images in the site header are in view on every page, so a loading="lazy" a builder adds to them is removed.', 'octave-addons' ), $s );
 			$this->switch_row( 'dimensions', __( 'Add missing image dimensions', 'octave-addons' ), __( 'Adds width and height from the file to images that have neither, so their space is held while they load and the page does not jump. Check images still keep their shape after turning this on.', 'octave-addons' ), $s );
 
-			$this->select_row( 'poster_width', __( 'Video poster size', 'octave-addons' ), [
-				768  => __( 'Up to 768px wide (recommended)', 'octave-addons' ),
-				1024 => __( 'Up to 1024px wide', 'octave-addons' ),
-				0    => __( 'Full size, as uploaded', 'octave-addons' ),
-			], __( 'Video posters use a smaller size WordPress has already made from the same upload, instead of the full-size image. Posters that are not media library uploads are left alone.', 'octave-addons' ), $s );
 
+			$this->switch_row( 'lcp', __( 'Fetch each page\'s largest image first', 'octave-addons' ), __( 'Safe. Browsers report the image each page shows largest while loading (its Largest Contentful Paint), once for phones and once for larger screens, refreshed weekly. Later visits fetch it first: an image gets fetchpriority="high", and a CSS background or video poster is preloaded. Until a page has reported, the hero image is guessed as before.', 'octave-addons' ), $s );
 			$this->switch_row( 'lazy_posters', __( 'Load video posters as they near the viewport', 'octave-addons' ), __( 'Needs Videos above. The first video keeps its poster, unless a hero image comes before it, as do videos in the site header. Every other poster waits until its video is close to view. Add data-oa-no-lazy to a video to keep its poster.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Exclusions', 'octave-addons' ) ] );

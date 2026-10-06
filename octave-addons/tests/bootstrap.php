@@ -28,6 +28,7 @@ define( 'WP_CONTENT_DIR', $oa_root . '/wp-content' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
+define( 'WEEK_IN_SECONDS', 604800 );
 define( 'KB_IN_BYTES', 1024 );
 define( 'MB_IN_BYTES', 1048576 );
 define( 'OCTAVE_ADDONS_VERSION', 'test' );

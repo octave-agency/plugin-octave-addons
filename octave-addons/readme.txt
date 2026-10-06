@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.31.0
+Stable tag:        3.32.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -99,8 +99,8 @@ Octave Addons ships with a growing collection of focused modules:
     later by popups or AJAX. Controls that already have a name are untouched.
 *   **Performance** – one page of compatibility-first speed tools, each
     switched on independently and all off by default: Media Lazy Loading
-    (native image, iframe and video lazy loading with the hero image fetched
-    first), Third-Party Script Delay (allowlist only), File Optimization
+    (native image, iframe and video lazy loading, with each page's largest
+    image, as browsers report it, fetched first), Third-Party Script Delay (allowlist only), File Optimization
     (per-file CSS and JavaScript minification and selected deferral, never
     combined), Link Preloading, Fonts (automatically detected preloads and
     self-hosted Google Fonts), Heartbeat Control, Cloudflare cache purging
@@ -162,6 +162,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.32.0 =
+* Media Lazy Loading now learns each page's real largest image (its Largest Contentful Paint) from the browsers that load it, once for phones and once for larger screens, refreshed weekly and whenever the page is saved. Later visits fetch it first, whatever it is: an image gets fetchpriority="high", and a CSS background or video poster, which browsers otherwise find late, is preloaded in the head for the screen size that reported it. Until a page has reported, the hero image is guessed as before. A new report clears that page from the cache. On by default; turn off with "Fetch each page's largest image first".
+* The same report finds up to two other sites a page only reaches after its HTML has arrived but before its largest image shows, and adds a preconnect hint for them, so the connection is open by the time it is needed. Only hosts the page already names are used.
+* Removed the Video poster size setting. Posters are served as uploaded.
 
 = 3.31.0 =
 * Media Lazy Loading: video posters below the hero now load as their video nears the viewport instead of with the page. The first video keeps its poster (unless a hero image comes before it), as do videos in the site header. Videos without width and height take the poster's shape so the page does not jump. On by default; turn off with "Load video posters as they near the viewport".
