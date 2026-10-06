@@ -168,8 +168,14 @@ FOCUS STATES
 /* --- Sidebar --------------------------------------------- */
 
 .oa-sidebar {
+    position: sticky;
+    top: calc(var(--wp-admin--admin-bar--height, 32px) + 16px);
     width: 254px;
+    height: calc(100vh - var(--wp-admin--admin-bar--height, 32px) - 32px);
+    max-height: calc(100vh - var(--wp-admin--admin-bar--height, 32px) - 32px);
+    align-self: flex-start;
     flex-shrink: 0;
+    overflow: hidden;
     background: rgba(12, 15, 16, 0.82);
     /* Rounds its own corners now the shell no longer clips them */
     border-radius: calc(var(--oa-app-radius) - 1px) 0 0 calc(var(--oa-app-radius) - 1px);
@@ -183,6 +189,7 @@ FOCUS STATES
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-shrink: 0;
     /* Matches .oa-nav so the brand mark and the nav pills share a left edge */
     padding: 22px 24px;
     border-bottom: 1px solid var(--oa-border-light);
@@ -252,6 +259,8 @@ FOCUS STATES
 .oa-nav {
     padding: 20px 12px;
     flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .oa-nav-heading {
@@ -381,6 +390,7 @@ FOCUS STATES
     display: flex;
     align-items: center;
     gap: 9px;
+    flex-shrink: 0;
     margin: 12px;
     padding: 13px 14px;
     color: var(--oa-text-muted);
@@ -1887,9 +1897,13 @@ CUSTOM SELECTS
 
     .oa-sidebar {
         width: 100%;
+        height: auto;
+        max-height: none;
+        align-self: stretch;
         flex-direction: row;
         flex-wrap: wrap;
         align-items: center;
+        overflow: visible;
         border-radius: calc(var(--oa-app-radius) - 1px) calc(var(--oa-app-radius) - 1px) 0 0;
         border-right: none;
         border-bottom: 1px solid var(--oa-border);

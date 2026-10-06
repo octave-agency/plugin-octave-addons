@@ -152,20 +152,23 @@ class Octave_Addons_Admin {
 
 	/*
 	IS SPLIT ENTRY
-	-- Grouped modules each get their own page, except Performance, whose
-	-- modules stay together on one page as anchored panels.
+	-- Content, Design and Engagement modules each get their own page. AI Agents,
+	-- Breakdance and Performance describe site-wide areas, so their modules stay
+	-- together on one page as anchored panels.
 	---------------------------------------------------------- */
 
 	protected function is_split_entry( array $entry ): bool {
 
-		return '' !== $entry['group'] && 'performance' !== $entry['group'];
+		$shared_groups = [ 'ai-agents', 'breakdance', 'performance' ];
+
+		return '' !== $entry['group'] && ! in_array( $entry['group'], $shared_groups, true );
 
 	}
 
 	/*
 	CURRENT MODULES
 	-- The modules the open page renders: the requested module of a split
-	-- group, falling back to its first, otherwise every module in the entry.
+	-- group, no modules on its overview, or every module in a shared entry.
 	---------------------------------------------------------- */
 
 	protected function current_modules( array $entry ): array {
@@ -177,7 +180,14 @@ class Octave_Addons_Admin {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only module switch.
-		$requested = isset( $_GET['module'] ) ? sanitize_key( wp_unslash( $_GET['module'] ) ) : '';
+		if ( ! isset( $_GET['module'] ) ) {
+
+			return [];
+
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only module switch.
+		$requested = sanitize_key( wp_unslash( $_GET['module'] ) );
 
 		if ( ! isset( $entry['modules'][ $requested ] ) ) {
 
@@ -788,6 +798,67 @@ class Octave_Addons_Admin {
 
 	}
 
+	/*
+	RENDER GROUP OVERVIEW
+	-- Shows the modules in a split group as dashboard-style quick-access cards.
+	---------------------------------------------------------- */
+
+	protected function render_group_overview( string $entry_id, array $entry, array $module_settings ): void {
+
+		$meta = $this->entry_meta( $entry );
+
+	?>
+
+	<div class="oa-entry" id="oa-entry-<?= esc_attr( $entry_id ); ?>">
+		<div class="oa-entry-head">
+			<span class="oa-panel-kicker"><?php esc_html_e( 'Module group', 'octave-addons' ); ?></span>
+			<h2 class="oa-entry-title"><?= esc_html( $meta['title'] ); ?></h2>
+			<p class="oa-entry-desc"><?= esc_html( $meta['description'] ); ?></p>
+		</div>
+
+		<div class="oa-module-grid">
+
+			<?php
+
+			foreach ( $entry['modules'] as $module_id => $module ) :
+
+				$enabled = $module->is_always_enabled() || ! empty( $module_settings[ $module_id ]['enabled'] );
+
+			?>
+
+			<a href="<?= esc_url( self::module_url( $entry_id, $module_id ) ); ?>" class="oa-module-card">
+				<span class="oa-module-card-icon" aria-hidden="true">
+					<?php Octave_Addons_Icons::render( $this->module_icon( $module_id ), 20 ); ?>
+				</span>
+				<span class="oa-module-card-copy">
+					<strong><?= esc_html( $module->get_title() ); ?></strong>
+					<span><?= esc_html( $module->get_description() ); ?></span>
+				</span>
+				<span class="oa-module-card-footer">
+					<span class="oa-module-card-status <?= $enabled ? 'is-on' : 'is-off'; ?>">
+						<span class="oa-dot <?= $enabled ? 'is-on' : 'is-off'; ?>" aria-hidden="true"></span>
+						<?= $enabled ? esc_html__( 'Enabled', 'octave-addons' ) : esc_html__( 'Disabled', 'octave-addons' ); ?>
+					</span>
+					<span class="oa-module-card-link">
+						<?php esc_html_e( 'Open settings', 'octave-addons' ); ?>
+						<?php Octave_Addons_Icons::render( 'arrow-right', 14 ); ?>
+					</span>
+				</span>
+			</a>
+
+			<?php
+
+			endforeach;
+
+			?>
+
+		</div>
+	</div>
+
+	<?php
+
+	}
+
 	public function render_page(): void {
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -796,13 +867,15 @@ class Octave_Addons_Admin {
 
 		}
 
-		$all           = $this->modules->visible_in_admin();
-		$entries       = $this->modules->admin_entries();
-		$active_tab    = $this->current_tab();
-		$rendered      = isset( $entries[ $active_tab ] ) ? $this->current_modules( $entries[ $active_tab ] ) : [];
-		$icon_url      = OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png';
-		$dashboard_url = self::entry_url();
-		$is_themed     = $this->admin_experience->is_enabled();
+		$all             = $this->modules->visible_in_admin();
+		$entries         = $this->modules->admin_entries();
+		$active_tab      = $this->current_tab();
+		$active_entry    = $entries[ $active_tab ] ?? [];
+		$rendered        = ! empty( $active_entry ) ? $this->current_modules( $active_entry ) : [];
+		$group_overview  = ! empty( $active_entry ) && $this->is_split_entry( $active_entry ) && empty( $rendered );
+		$icon_url        = OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png';
+		$dashboard_url   = self::entry_url();
+		$is_themed       = $this->admin_experience->is_enabled();
 
 		$module_settings = [];
 
@@ -880,7 +953,7 @@ class Octave_Addons_Admin {
 							$url       = self::entry_url( $entry_id );
 							$is_active = ( $entry_id === $active_tab );
 
-							if ( '' === $entry['group'] ) :
+							if ( ! $this->is_split_entry( $entry ) ) :
 
 						?>
 
@@ -966,6 +1039,14 @@ class Octave_Addons_Admin {
 						<?php
 
 							else :
+
+						?>
+
+							<option value="<?= esc_url( $url ); ?>"<?php selected( $is_active && empty( $rendered ) ); ?>>
+								<?= esc_html( $meta['title'] ); ?>
+							</option>
+
+						<?php
 
 							foreach ( $entry['modules'] as $module_id => $module ) :
 						?>
@@ -1117,6 +1198,12 @@ class Octave_Addons_Admin {
 
 					else :
 
+						if ( $group_overview ) :
+
+							$this->render_group_overview( $active_tab, $active_entry, $module_settings );
+
+						else :
+
 					?>
 
 					<form method="post" action="options.php" class="oa-form">
@@ -1249,6 +1336,8 @@ class Octave_Addons_Admin {
 					</form>
 
 					<?php
+
+						endif;
 
 					endif;
 

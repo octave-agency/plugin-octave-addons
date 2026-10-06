@@ -32,7 +32,7 @@ function test_performance_modules_share_one_admin_entry_in_order(): void {
 
 }
 
-function test_grouped_modules_get_their_own_admin_page_except_performance(): void {
+function test_area_wide_groups_share_a_page_while_feature_groups_split(): void {
 
 	require_once OCTAVE_ADDONS_DIR . 'includes/class-admin.php';
 
@@ -40,11 +40,15 @@ function test_grouped_modules_get_their_own_admin_page_except_performance(): voi
 	$current = new ReflectionMethod( $admin, 'current_modules' );
 
 	$performance = [ 'group' => 'performance', 'modules' => [ 'a' => 1, 'b' => 2 ] ];
+	$ai_agents   = [ 'group' => 'ai-agents', 'modules' => [ 'a' => 1, 'b' => 2 ] ];
+	$breakdance  = [ 'group' => 'breakdance', 'modules' => [ 'a' => 1, 'b' => 2 ] ];
 	$design      = [ 'group' => 'design', 'modules' => [ 'a' => 1, 'b' => 2 ] ];
 
 	unset( $_GET['module'] );
 	oa_assert_same( [ 'a', 'b' ], array_keys( $current->invoke( $admin, $performance ) ), 'performance keeps every panel' );
-	oa_assert_same( [ 'a' ], array_keys( $current->invoke( $admin, $design ) ), 'split group defaults to its first module' );
+	oa_assert_same( [ 'a', 'b' ], array_keys( $current->invoke( $admin, $ai_agents ) ), 'AI Agents keeps every panel' );
+	oa_assert_same( [ 'a', 'b' ], array_keys( $current->invoke( $admin, $breakdance ) ), 'Breakdance keeps every panel' );
+	oa_assert_same( [], $current->invoke( $admin, $design ), 'split group defaults to its card overview' );
 
 	$_GET['module'] = 'b';
 	oa_assert_same( [ 'b' ], array_keys( $current->invoke( $admin, $design ) ), 'split group renders the requested module' );

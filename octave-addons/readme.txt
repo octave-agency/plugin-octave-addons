@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.26.0
+Stable tag:        3.27.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -162,6 +162,11 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.27.0 =
+* AI Agents and Breakdance now open as complete module-group pages, matching Performance, instead of expanding into individual module links in the plugin navigation.
+* Dashboard quick-access cards for Content, Design and Engagement now open a group overview with matching cards for each module, while their left navigation dropdowns continue to link directly to individual settings pages.
+* The desktop module navigation now stays visible while scrolling and scrolls internally when it is taller than the viewport.
 
 = 3.26.0 =
 * Every module inside a group now has its own admin page and URL, such as Design > Scroll Animations or Design > Modern WordPress Admin, instead of a link that scrolled down a shared page. Saving a module page only saves that module. Performance keeps all of its modules on one page. The mobile menu lists each module, and old links still land on the right module.
