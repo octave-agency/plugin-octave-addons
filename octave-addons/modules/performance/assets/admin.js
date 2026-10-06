@@ -490,11 +490,14 @@ PERFORMANCE ADMIN
 
 		if ( target.hasAttribute( 'data-oa-perf-select-all' ) ) {
 
+			// Read once: each box's own change event re-syncs this master mid-loop.
+			var checked = target.checked;
+
 			groupBoxes( target ).forEach( function ( box ) {
 
-				if ( box.checked !== target.checked ) {
+				if ( box.checked !== checked ) {
 
-					box.checked = target.checked;
+					box.checked = checked;
 					box.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 
 				}

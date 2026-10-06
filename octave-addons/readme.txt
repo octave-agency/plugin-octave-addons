@@ -166,6 +166,11 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.37.0 =
+* Added Octave URL rewriting as an Imagify delivery option, for servers such as Cloudways where Nginx serves images itself and never reads Imagify's .htaccess rules, and for layouts picture tags would break. Imagify keeps creating the WebP or AVIF copies but stops delivering them; Octave points image src and srcset, video posters, inline style backgrounds and image preloads at each copy that exists (preloads also name the format, so other browsers skip them), and serves Breakdance stylesheets as copies in which each background image gains an image-set() offering the copy with the original as fallback. Page markup is the same for every visitor, so page caches and Varnish keep working. The delivery test checks the copy itself in this mode.
+* Heading word animations now treat any span with a class the same way, not only gradient text: it stays one span, and what it paints behind or through its text is handed to each word as an aligned slice (`data-oa-span`, `--oa-span-x`, `--oa-span-w`, replacing `data-oa-gradient`, `--oa-gx` and `--oa-gw`).
+* Fixed Select all on the Performance page (Script Delay services and Database cleanup) ticking only the first checkbox in its group.
+
 = 3.36.0 =
 * Added a Breakdance icon field type for custom post fields. Editors choose an icon from Breakdance's icon library (its stock FontAwesome and IcoMoon sets and any uploaded sets) with a picker styled like the post type icon picker, searchable and filterable by set, in the classic meta box, the structured content editor, groups and repeaters. The icon is stored as cleaned SVG, so it also works through Breakdance Dynamic Data and keeps rendering if the set is later removed.
 * Gradient text in animated headings (such as `<span class="text-gradient">`) stays one span again, so the gradient runs across the whole phrase. The reveal is now smooth: each word paints its own aligned slice of the same gradient, rather than the browser repainting one text-clipped gradient around moving words every frame. Slices are realigned when fonts load and on resize, and continue across line breaks.

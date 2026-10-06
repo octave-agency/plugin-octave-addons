@@ -17,17 +17,27 @@ body.wp-admin :is(.imagify-settings, .imagify-main-content) {
     text-shadow: none !important;
 }
 
-html[data-oa-admin-theme="dark"] body.wp-admin :is(.imagify-settings, .imagify-main-content) :is(.imagify-card, .imagify-settings-section, .imagify-options) {
+/*
+SETTINGS
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings-main-content {
     color: var(--oa-plugin-text);
     border-color: var(--oa-plugin-border);
     background: var(--oa-plugin-surface);
 }
 
-html[data-oa-admin-theme="dark"] body.wp-admin :is(.imagify-settings, .imagify-main-content) :is(h1, h2, h3, h4, label, legend) {
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-settings-section, .imagify-card, .imagify-options) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-settings, .imagify-main-content) :is(h1, h2, h3, h4, label, legend, .imagify-h3-like, .imagify-h4-like) {
     color: var(--oa-plugin-text);
 }
 
-html[data-oa-admin-theme="dark"] body.wp-admin :is(.imagify-settings, .imagify-main-content) :is(p, .description, .imagify-help) {
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-settings, .imagify-main-content) :is(p, .description, .imagify-help, .imagify-default-settings) {
     color: var(--oa-plugin-text-soft);
 }
 
@@ -38,16 +48,146 @@ body.wp-admin :is(.imagify-settings, .imagify-main-content) :is(.button-primary,
     text-shadow: none;
 }
 
-html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-header, .imagify-sidebar, .imagify-settings-footer, .imagify-notice, .imagify-options-line) {
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-options-subtitle, .imagify-setting-line, .imagify-kindof-title, .imagify-divider) {
+    border-color: var(--oa-plugin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-options-subtitle {
+    color: var(--oa-plugin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-divider {
+    background: var(--oa-plugin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-pipe {
+    background: var(--oa-admin-border-strong);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-options-line, .imagify-check-group.imagify-is-scrollable, .imagify-fts-content, .imagify-folders-information, .imagify-analytics-section) {
     color: var(--oa-plugin-text);
     border-color: var(--oa-plugin-border);
-    background-color: var(--oa-plugin-surface);
+    background: var(--oa-plugin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings div.submit.submit {
+    border-color: var(--oa-plugin-border);
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings :is([type="checkbox"], .imagify-checkbox):not(:disabled) + label::before {
+    border-color: var(--oa-admin-border-strong);
+    background: var(--oa-plugin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings :is([type="checkbox"], .imagify-checkbox):not(:disabled) + label::after {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings :is([type="checkbox"], .imagify-checkbox):disabled + label::before {
+    border-color: var(--oa-plugin-border);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings :is(label[for="imagify_admin_bar_menu"], label[for="imagify_partner_links"]) {
+    color: var(--oa-plugin-text-soft) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings .imagify-check-group label {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings .imagify-info {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings :is(.imagify-options-subtitle a, .imagify-info a, .imagify-documentation-link-box a, .imagify-link-like.imagify-select-all) {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings :is(.imagify-options-subtitle a, .imagify-info a, .imagify-documentation-link-box a, .imagify-link-like.imagify-select-all):is(:hover, :focus) {
+    color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings .imagify-select-all.imagify-is-inactive {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings .button.imagify-button-clean:is(:hover, :focus, :active, [disabled]) {
+    color: var(--oa-plugin-text);
 }
 
 html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
     color: var(--oa-plugin-text);
     border-color: var(--oa-admin-border-strong);
     background-color: var(--oa-plugin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings ::placeholder {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-settings-main-content .code {
+    color: var(--oa-plugin-text);
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-custom-folder-line {
+    color: var(--oa-plugin-text-soft);
+    border-color: var(--oa-plugin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-custom-folders-remove {
+    color: var(--oa-admin-text-dim);
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-custom-folders-remove:is(:hover, :focus) {
+    color: var(--oa-admin-accent-dark);
+    background: var(--oa-admin-surface-selected);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-analytics-label, .imagify-analytics-thankyou-notice, .imagify-analytics-thankyou-notice p) {
+    color: var(--oa-plugin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-analytics-description {
+    color: var(--oa-plugin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-analytics-data-table {
+    border-color: var(--oa-plugin-accent);
+    background: var(--oa-admin-accent-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-analytics-data-table td {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-modal-content {
+    color: var(--oa-plugin-text);
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-modal-content :is(label, p) {
+    color: var(--oa-plugin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-modal-content .h2 {
+    color: var(--oa-plugin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-modal-content .h3 {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-modal-content :is(.imagify-folders-tree label:hover, .imagify-folders-tree input:focus + label, .imagify-add-ed-folder) {
+    background: var(--oa-admin-surface-hover);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify .imagify-folders-sub-tree li:last-child::after {
+    background: var(--oa-plugin-surface);
 }
 
 /*

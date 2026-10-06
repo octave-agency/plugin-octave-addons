@@ -2,9 +2,10 @@
 
 /*
 PERFORMANCE: IMAGIFY NEXT-GENERATION IMAGES
--- Chooses Imagify's next-generation format (WebP or AVIF) and how Imagify
--- delivers it (rewrite rules or picture tags) from the Performance page,
--- and shows whether that delivery actually works on this server
+-- Chooses Imagify's next-generation format (WebP or AVIF) and how it is
+-- delivered (Imagify's rewrite rules or picture tags, or Octave's own URL
+-- rewriting) from the Performance page, and shows whether that delivery
+-- actually works on this server
 -- Imagify stays the owner of everything it does: it generates the files,
 -- stores the settings and writes its own rewrite rules. Changes go through
 -- the Octave_Addons_Perf_Imagify adapter, which runs Imagify's own settings
@@ -30,7 +31,7 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 	use Octave_Addons_Perf_Field_Rows;
 
 	protected const FORMATS    = [ 'keep', 'off', 'webp', 'avif' ];
-	protected const DELIVERIES = [ 'keep', 'auto', 'rewrite', 'picture' ];
+	protected const DELIVERIES = [ 'keep', 'auto', 'rewrite', 'picture', 'octave' ];
 
 	public function get_id(): string {
 
@@ -94,6 +95,7 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 	public function run( array $s ): void {
 
 		self::listen();
+		Octave_Addons_Perf_Nextgen::boot();
 
 	}
 
@@ -214,7 +216,8 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 				'auto'    => __( 'Automatic (recommended)', 'octave-addons' ),
 				'rewrite' => __( 'Rewrite rules', 'octave-addons' ),
 				'picture' => __( 'Picture tags', 'octave-addons' ),
-			], __( 'Rewrite rules keep image URLs unchanged and need Apache or LiteSpeed with a writable .htaccess and no CDN in front of images. Picture tags work on every server. Automatic picks rewrite rules only when all of that holds.', 'octave-addons' ), $s );
+				'octave'  => __( 'Octave URL rewriting (no server rules or picture tags)', 'octave-addons' ),
+			], __( 'Rewrite rules keep image URLs unchanged and need Apache or LiteSpeed with a writable .htaccess and no CDN in front of images. Picture tags work on every server but wrap each image. Automatic picks rewrite rules only when all of that holds. Octave URL rewriting suits servers like Cloudways, where Nginx serves images itself: Imagify keeps making the files, and Octave points images, posters, preloads and inline styles at them directly, and adds the format to Breakdance background images with the original as fallback. Every current browser supports WebP and AVIF; browsers older than that (Safari before 16.4 for AVIF) cannot show images placed with an img tag.', 'octave-addons' ), $s );
 
 			?>
 		</table>
@@ -257,7 +260,7 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 			__( 'Imagify', 'octave-addons' )                 => sprintf( /* translators: %s: version. */ __( 'Active, version %s', 'octave-addons' ), Octave_Addons_Perf_Imagify::version() ),
 			__( 'Output format', 'octave-addons' )           => 'off' === $format ? __( 'Off', 'octave-addons' ) : strtoupper( $format ),
 			__( 'Automatic optimisation', 'octave-addons' )  => ! empty( $config['auto_optimize'] ) ? $yes : $no,
-			__( 'Delivery', 'octave-addons' )                => $display ? ( 'rewrite' === $method ? __( 'Rewrite rules', 'octave-addons' ) : __( 'Picture tags', 'octave-addons' ) ) : __( 'Not displayed', 'octave-addons' ),
+			__( 'Delivery', 'octave-addons' )                => Octave_Addons_Perf_Imagify::octave_delivery() ? __( 'Octave URL rewriting', 'octave-addons' ) : ( $display ? ( 'rewrite' === $method ? __( 'Rewrite rules', 'octave-addons' ) : __( 'Picture tags', 'octave-addons' ) ) : __( 'Not displayed', 'octave-addons' ) ),
 			__( 'Web server', 'octave-addons' )              => ucfirst( $server ),
 			__( '.htaccess', 'octave-addons' )               => Octave_Addons_Perf_Imagify::reads_htaccess() ? ( $htaccess['exists'] ? ( $htaccess['writable'] ? __( 'Exists, writable', 'octave-addons' ) : __( 'Exists, not writable', 'octave-addons' ) ) : ( $htaccess['writable'] ? __( 'Missing, can be created', 'octave-addons' ) : __( 'Missing, cannot be created', 'octave-addons' ) ) ) : __( 'Not read by this server', 'octave-addons' ),
 			__( 'Imagify rule markers', 'octave-addons' )    => empty( $expected ) ? implode( ', ', $markers ) . ' ' . __( '(not needed for the current delivery)', 'octave-addons' ) : implode( ', ', $markers ),

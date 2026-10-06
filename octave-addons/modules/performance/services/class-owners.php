@@ -117,7 +117,8 @@ class Octave_Addons_Perf_Owners {
 	/*
 	OCTAVE STATE
 	-- Whether Octave itself is switched on for a feature. Next-generation
-	-- delivery is never Octave's: the Imagify module only configures Imagify
+	-- delivery is Octave's only when the Imagify module hands it to Octave's
+	-- URL rewriting; otherwise that module only configures Imagify
 	---------------------------------------------------------- */
 
 	public static function octave_enabled( string $feature ): bool {
@@ -131,6 +132,12 @@ class Octave_Addons_Perf_Owners {
 			'google_fonts' => [ 'performance-fonts', 'self_host' ],
 			'page_cache'   => [ 'performance-page-cache', 'enabled' ],
 		];
+
+		if ( 'nextgen_images' === $feature ) {
+
+			return Octave_Addons_Perf_Imagify::octave_delivery();
+
+		}
 
 		if ( ! isset( $map[ $feature ] ) ) {
 

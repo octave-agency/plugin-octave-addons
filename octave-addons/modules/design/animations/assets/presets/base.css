@@ -133,31 +133,33 @@ HEADING MASKS
 }
 
 /*
-Gradient text
--- A text-clipped gradient around moving words makes the browser repaint
--- the whole mask every frame. Each word paints its own slice of the same
--- gradient instead, sized to the whole phrase and shifted by the offsets
--- the controller measures, so it still reads as one gradient
+Styled spans
+-- A span with a class inside a heading keeps wrapping its words, but what
+-- it paints behind or through its text, such as a gradient clipped to the
+-- text, moves onto each word: painted once around words that move, it
+-- would be repainted every frame. Each word shows its slice, sized to the
+-- whole span and shifted by the offsets the controller measures, so the
+-- span still reads as one. Colour, fill and type are simply inherited
 ---------------------------------------------------------- */
 
-[data-oa-gradient] {
+[data-oa-span] {
     background-size: 0 0 !important;
 }
 
-[data-oa-gradient] .oa-w {
+[data-oa-span] .oa-w {
     background-image: inherit;
     background-size: 0 0;
+    -webkit-background-clip: inherit;
+    background-clip: inherit;
 }
 
-[data-oa-gradient] .oa-wi {
-    color: transparent;
+[data-oa-span] .oa-wi {
     background-image: inherit;
-    background-position: var(--oa-gx, 0) 0;
+    background-position: var(--oa-span-x, 0) 0;
     background-repeat: no-repeat;
-    background-size: var(--oa-gw, 100%) 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    background-size: var(--oa-span-w, 100%) 100%;
+    -webkit-background-clip: inherit;
+    background-clip: inherit;
 }
 
 .oa-anim-ready [data-oa-anim="heading"]:not(.visible) .oa-wi {

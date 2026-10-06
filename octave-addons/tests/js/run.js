@@ -537,7 +537,7 @@ function splitEnvironment( markup ) {
 			childNodes: [],
 			style: { setProperty( name, value ) {
 
-				if ( 0 === name.indexOf( '--oa-g' ) ) {
+				if ( 0 === name.indexOf( '--oa-span' ) ) {
 
 					node.setAttribute( 'style', ( node.getAttribute( 'style' ) || '' ) + name + ':' + value + ';' );
 
@@ -691,9 +691,6 @@ function splitEnvironment( markup ) {
 	const window = {
 		innerHeight: 900,
 		document: document,
-		getComputedStyle: ( node ) => ( / text-gradient /.test( ' ' + ( node.getAttribute( 'class' ) || '' ) + ' ' )
-			? { backgroundClip: 'text', backgroundImage: 'linear-gradient(90deg, red, blue)' }
-			: { backgroundClip: 'border-box', backgroundImage: 'none' } ),
 		matchMedia: () => ( { matches: false } ),
 		setTimeout: () => 0,
 		clearTimeout: () => {},
@@ -715,7 +712,7 @@ function splitEnvironment( markup ) {
 
 }
 
-test( 'gradient text stays one span and its words share one continuous gradient', () => {
+test( 'a classed span stays one wrapper and its words share one continuous paint', () => {
 
 	const output = splitEnvironment( ( element ) => element( 'h2', { class: 'bde-heading' }, [
 		'Explore our ',
@@ -723,23 +720,118 @@ test( 'gradient text stays one span and its words share one continuous gradient'
 		' services',
 	] ) );
 
-	assert.ok( /<span class="text-gradient" data-oa-gradient="" style="--oa-gw:290px;"><span class="oa-w" style="--oa-gx:0px;"><span class="oa-wi">virtual<\/span><\/span> <span class="oa-w" style="--oa-gx:-120px;"><span class="oa-wi">office<\/span><\/span> <span class="oa-w" style="--oa-gx:-240px;"><span class="oa-wi">address<\/span><\/span><\/span>/.test( output ), output );
+	assert.ok( /<span class="text-gradient" data-oa-span="" style="--oa-span-w:290px;"><span class="oa-w" style="--oa-span-x:0px;"><span class="oa-wi">virtual<\/span><\/span> <span class="oa-w" style="--oa-span-x:-120px;"><span class="oa-wi">office<\/span><\/span> <span class="oa-w" style="--oa-span-x:-240px;"><span class="oa-wi">address<\/span><\/span><\/span>/.test( output ), output );
 	assert.ok( output.includes( '<span class="oa-w"><span class="oa-wi">services</span></span>' ), 'words outside it are untouched' );
-	assert.strictEqual( ( output.match( /text-gradient/g ) || [] ).length, 1, 'one gradient span, never one per word' );
+	assert.strictEqual( ( output.match( /text-gradient/g ) || [] ).length, 1, 'one span, never one per word' );
 
 } );
 
-test( 'spans without gradient text are walked into as before', () => {
+test( 'any class counts, while unclassed spans and links are only walked into', () => {
 
 	const output = splitEnvironment( ( element ) => element( 'h2', { class: 'bde-heading' }, [
-		element( 'span', { class: 'brand' }, [ 'Octave Agency' ] ),
-		' and ',
+		element( 'span', { class: 'brand' }, [ 'Octave' ] ),
+		' ',
+		element( 'span', {}, [ 'plain' ] ),
+		' ',
 		element( 'a', { href: '/x' }, [ 'more' ] ),
 	] ) );
 
-	assert.ok( output.includes( '<span class="brand"><span class="oa-w"><span class="oa-wi">Octave</span></span>' ), output );
+	assert.ok( /<span class="brand" data-oa-span="" style="--oa-span-w:\d+px;"><span class="oa-w" style="--oa-span-x:0px;"><span class="oa-wi">Octave/.test( output ), output );
+	assert.ok( output.includes( '<span><span class="oa-w"><span class="oa-wi">plain</span></span></span>' ), 'no class, no marker' );
 	assert.ok( output.includes( '<a href="/x"><span class="oa-w"><span class="oa-wi">more</span></span></a>' ), 'links kept' );
-	assert.ok( ! output.includes( 'data-oa-gradient' ) );
+
+} );
+
+/*
+PERFORMANCE SELECT ALL
+-- The real Performance admin script against one checkbox group, with
+-- change events bubbling to the page container as a browser would
+---------------------------------------------------------- */
+
+function selectAllEnvironment( ticked ) {
+
+	const listeners = {};
+	const group = { tag: 'group' };
+
+	function checkbox( master, checked ) {
+
+		return {
+			type: 'checkbox',
+			name: master ? '' : 'services[]',
+			checked: !! checked,
+			indeterminate: false,
+			disabled: false,
+			master: master,
+			hasAttribute: ( name ) => master && 'data-oa-perf-select-all' === name,
+			closest: ( selector ) => ( '[data-oa-perf-select-group]' === selector ? group : null ),
+			dispatchEvent( event ) {
+
+				event.target = this;
+				( listeners[ event.type ] || [] ).forEach( ( callback ) => callback( event ) );
+
+			},
+		};
+
+	}
+
+	const master = checkbox( true, false );
+	const boxes = ticked.map( ( value ) => checkbox( false, value ) );
+
+	group.querySelectorAll = () => [ master ].concat( boxes );
+
+	const entry = {
+		addEventListener: ( type, callback ) => ( listeners[ type ] = listeners[ type ] || [] ).push( callback ),
+		querySelectorAll: ( selector ) => ( '[data-oa-perf-select-all]' === selector ? [ master ] : [] ),
+		querySelector: () => null,
+	};
+
+	function FakeChange( type ) {
+
+		this.type = type;
+		this.stopPropagation = () => {};
+
+	}
+
+	vm.runInNewContext( fs.readFileSync( path.join( assets, 'admin.js' ), 'utf8' ), {
+		window: { oaPerf: { ajaxUrl: '/wp-admin/admin-ajax.php', i18n: {} } },
+		document: { getElementById: ( id ) => ( 'oa-entry-performance' === id ? entry : null ) },
+		Event: FakeChange,
+	} );
+
+	return { master, boxes, change: ( box ) => box.dispatchEvent( new FakeChange( 'change' ) ) };
+
+}
+
+test( 'select all ticks and clears every checkbox in its group', () => {
+
+	const env = selectAllEnvironment( [ false, false, false, false ] );
+
+	env.master.checked = true;
+	env.change( env.master );
+
+	assert.deepStrictEqual( env.boxes.map( ( box ) => box.checked ), [ true, true, true, true ], 'every box ticked' );
+	assert.strictEqual( env.master.checked, true );
+	assert.strictEqual( env.master.indeterminate, false );
+
+	env.master.checked = false;
+	env.change( env.master );
+
+	assert.deepStrictEqual( env.boxes.map( ( box ) => box.checked ), [ false, false, false, false ], 'every box cleared' );
+
+} );
+
+test( 'select all shows partly ticked while only some boxes are', () => {
+
+	const env = selectAllEnvironment( [ true, false, false ] );
+
+	assert.strictEqual( env.master.indeterminate, true, 'on load' );
+
+	env.boxes[1].checked = true;
+	env.boxes[2].checked = true;
+	env.change( env.boxes[2] );
+
+	assert.strictEqual( env.master.checked, true, 'all ticked by hand' );
+	assert.strictEqual( env.master.indeterminate, false );
 
 } );
 

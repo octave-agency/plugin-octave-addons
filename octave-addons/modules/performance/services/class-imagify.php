@@ -348,9 +348,25 @@ class Octave_Addons_Perf_Imagify {
 	}
 
 	/*
+	OCTAVE DELIVERY
+	-- Whether the Imagify module hands delivery to Octave's URL rewriting
+	-- (class-nextgen.php) instead of Imagify's rewrite rules or picture tags
+	---------------------------------------------------------- */
+
+	public static function octave_delivery(): bool {
+
+		$s = Octave_Addons_Perf::settings( 'performance-imagify' );
+
+		return ! empty( $s['enabled'] ) && 'octave' === ( $s['delivery'] ?? '' ) && self::available();
+
+	}
+
+	/*
 	DESIRED
 	-- The Imagify values the module's settings ask for. Keep leaves a
-	-- setting to Imagify, so turning the module on changes nothing by itself
+	-- setting to Imagify, so turning the module on changes nothing by itself.
+	-- Octave delivery keeps Imagify making the files but stops it delivering
+	-- them, so the two never rewrite the same image
 	---------------------------------------------------------- */
 
 	public static function desired( array $s ): array {
@@ -382,6 +398,12 @@ class Octave_Addons_Perf_Imagify {
 		if ( in_array( $delivery, [ 'rewrite', 'picture' ], true ) ) {
 
 			$values['display_nextgen_method'] = $delivery;
+
+		}
+
+		if ( 'octave' === $delivery ) {
+
+			$values['display_nextgen'] = 0;
 
 		}
 
@@ -769,9 +791,9 @@ class Octave_Addons_Perf_Imagify {
 
 		$config = self::config();
 		$format = (string) ( $config['optimization_format'] ?? 'off' );
-		$method = (string) ( $config['display_nextgen_method'] ?? 'picture' );
+		$method = self::octave_delivery() ? 'octave' : (string) ( $config['display_nextgen_method'] ?? 'picture' );
 
-		if ( 'off' === $format || empty( $config['display_nextgen'] ) ) {
+		if ( 'off' === $format || ( empty( $config['display_nextgen'] ) && 'octave' !== $method ) ) {
 
 			return self::record( 'test', self::result( false, false, __( 'Imagify is not set to display WebP or AVIF images, so there is nothing to test.', 'octave-addons' ), 'test' ) );
 
@@ -824,6 +846,18 @@ class Octave_Addons_Perf_Imagify {
 			/* translators: 1: received MIME type, 2: expected MIME type. */
 			$lines[] = sprintf( __( 'Delivered as %1$s instead of %2$s.', 'octave-addons' ), '' !== $type ? $type : '?', $expected );
 			$lines[] = $rewrite ? __( 'Check Imagify\'s rewrite rules are in place and reach this folder.', 'octave-addons' ) : __( 'The server does not send the right MIME type for this format.', 'octave-addons' );
+
+		}
+
+		if ( 'octave' === $method && $ok ) {
+
+			$lines[] = __( 'Octave points pages at this copy directly, so no server rules or picture tags are needed.', 'octave-addons' );
+
+		}
+
+		if ( 'octave' === $method && $ok ) {
+
+			$lines[] = __( 'Octave points pages at this copy directly, so no server rules or picture tags are needed.', 'octave-addons' );
 
 		}
 

@@ -102,6 +102,7 @@ function oa_test_reset(): void {
 
 		Octave_Addons_Perf_Cache::reset();
 		Octave_Addons_Perf_Disk_Cache::reset();
+		Octave_Addons_Perf_Nextgen::reset();
 
 	}
 
