@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.34.0
+Stable tag:        3.34.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -57,8 +57,9 @@ Octave Addons ships with a growing collection of focused modules:
     HTML5 and background videos start with `preload="none"` and load as
     they near the viewport, and video iframes receive `loading="lazy"`.
 *   **Breakdance Heading Tags** – always on and hidden from the admin. Adds
-    `p` and `div` choices to the native Heading element so its typography can
-    be used without adding a heading to the document outline.
+    `p` and `span` choices to the native Heading element. Both keep the global
+    heading font, colour and All Headings typography while staying out of the
+    document outline.
 *   **Breakdance Launcher Styles** – always on and hidden from the admin.
     Declares Breakdance's launcher stylesheet as a block editor style so it
     reaches the block editor canvas iframe, which an admin stylesheet cannot.
@@ -165,6 +166,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.34.2 =
+* Replaced the Breakdance Heading element's added `div` tag option with `span`. Paragraph and span headings both retain the global heading typography.
+
+= 3.34.1 =
+* Breakdance Heading elements rendered as `p` or `div` now retain the global heading font, colour and responsive All Headings typography, including font weight, line height and letter spacing.
 
 = 3.34.0 =
 * Breakdance Heading elements can now render as `p` or `div`, retaining the Heading element's typography controls without adding a heading to the document outline.

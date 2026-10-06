@@ -2,8 +2,10 @@
 
 /*
 BREAKDANCE HEADING TAGS
--- Adds paragraph and div choices to the native Breakdance Heading element
+-- Adds paragraph and span choices to the native Breakdance Heading element
 -- without replacing the element or editing Breakdance's plugin files
+-- Paragraph and span headings retain Breakdance's global heading font, colour
+-- and responsive All Headings typography before element styles are applied
 -- Always on and hidden from the admin because it only extends an existing
 -- builder control
 ---------------------------------------------------------- */
@@ -20,7 +22,10 @@ class Octave_Addons_Module_Breakdance_Heading_Tags extends Octave_Addons_Module 
 	protected const HEADING_TYPE = 'EssentialElements\\Heading';
 
 	/** Additional root tags offered by the Heading element. */
-	protected const ADDITIONAL_TAGS = [ 'p', 'div' ];
+	protected const ADDITIONAL_TAGS = [ 'p', 'span' ];
+
+	/** Marker that keeps the appended Twig block idempotent. */
+	protected const TYPOGRAPHY_MARKER = 'OCTAVE BREAKDANCE NON-SEMANTIC HEADINGS';
 
 	/*
 	GET ID
@@ -51,7 +56,7 @@ class Octave_Addons_Module_Breakdance_Heading_Tags extends Octave_Addons_Module 
 
 	public function get_description(): string {
 
-		return __( 'Adds paragraph and div choices to the native Breakdance Heading element while keeping its heading typography controls.', 'octave-addons' );
+		return __( 'Adds paragraph and span choices to the native Breakdance Heading element while retaining global heading typography.', 'octave-addons' );
 
 	}
 
@@ -79,12 +84,13 @@ class Octave_Addons_Module_Breakdance_Heading_Tags extends Octave_Addons_Module 
 
 	/*
 	RUN
-	-- Extends the Heading control definition sent to the Breakdance builder
+	-- Extends the Heading control and Breakdance's global typography template
 	---------------------------------------------------------- */
 
 	public function run( array $s ): void {
 
 		add_filter( 'breakdance_element_controls', [ __CLASS__, 'filter_controls' ], 10, 2 );
+		add_filter( 'breakdance_global_settings_css_twig_template_append', [ __CLASS__, 'append_global_typography' ] );
 
 	}
 
@@ -102,6 +108,37 @@ class Octave_Addons_Module_Breakdance_Heading_Tags extends Octave_Addons_Module 
 		}
 
 		return self::add_heading_tags( $controls );
+
+	}
+
+	/*
+	APPEND GLOBAL TYPOGRAPHY
+	-- Gives p and span Heading elements the same global family, colour and
+	-- responsive All Headings settings Breakdance gives semantic headings
+	-- Per-element CSS prints later and therefore remains the final override
+	---------------------------------------------------------- */
+
+	public static function append_global_typography( $template ): string {
+
+		$template = (string) $template;
+
+		if ( false !== strpos( $template, self::TYPOGRAPHY_MARKER ) ) {
+
+			return $template;
+
+		}
+
+		$typography = <<<'TWIG'
+{# OCTAVE BREAKDANCE NON-SEMANTIC HEADINGS #}
+{{ builderPrefix }} p.bde-heading,
+{{ builderPrefix }} span.bde-heading {
+    font-family: var(--bde-heading-font-family);
+    color: var(--bde-headings-color);
+    {{ macros.typography(settings.typography.advanced.headings.all_headings, settings) }}
+}
+TWIG;
+
+		return rtrim( $template ) . "\n" . $typography . "\n";
 
 	}
 
