@@ -354,6 +354,7 @@ SCROLL ANIMATION CONTROLLER
 	-- it, then marks the document scanned so later AJAX content is untouched
 	-- Targets without layout (closed tabs, hidden templates) are not tagged
 	-- and simply stay visible
+	-- Anything inside or carrying .oa-no-anim is opted out and left alone
 	---------------------------------------------------------- */
 
 	function scan() {
@@ -364,7 +365,7 @@ SCROLL ANIMATION CONTROLLER
 
 			document.querySelectorAll( group.selector ).forEach( function ( element ) {
 
-				if ( element.hasAttribute( 'data-oa-anim' ) || ! element.getClientRects().length ) {
+				if ( element.hasAttribute( 'data-oa-anim' ) || element.closest( '.oa-no-anim' ) || ! element.getClientRects().length ) {
 
 					return;
 

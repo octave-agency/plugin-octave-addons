@@ -221,7 +221,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						'rows'        => 12,
 						'spellcheck'  => false,
 						'placeholder' => '.oa-anim-ready [data-oa-anim="media"] { --oa-media-dur: 1200ms; }',
-						'help'        => __( 'Printed after the selected preset. Targets carry data-oa-anim (heading, media, text or item) and gain .visible when revealed.', 'octave-addons' ),
+						'help'        => __( 'Printed after the selected preset. Targets carry data-oa-anim (heading, media, text or item) and gain .visible when revealed. Add .oa-no-anim to an element to skip it and everything inside it.', 'octave-addons' ),
 					] );
 
 				},
