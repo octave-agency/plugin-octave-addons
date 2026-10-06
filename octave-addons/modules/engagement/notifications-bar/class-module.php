@@ -58,7 +58,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 			'position'             => 'top',
 			'sticky'               => false,
 			'animate'              => true,
-			'animation'            => 'slide-down',
+			'animation'            => 'fade',
 			'cookie_days'          => 7,
 			'bg'                   => self::background_defaults(),
 			'text_color'           => '#ffffff',
@@ -132,7 +132,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 			? $input['position'] : 'top';
 
 		$clean['animation'] = in_array( $input['animation'] ?? '', [ 'slide-down', 'fade', 'slide-fade' ], true )
-			? $input['animation'] : 'slide-down';
+			? $input['animation'] : 'fade';
 
 		$clean['cookie_days'] = max( 0, min( 365, (int) ( $input['cookie_days'] ?? 7 ) ) );
 
@@ -469,8 +469,8 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 				'field' => function () use ( $s ) {
 
 					$animations = [
+						'fade'       => __( 'Fade (recommended)', 'octave-addons' ),
 						'slide-down' => __( 'Slide down', 'octave-addons' ),
-						'fade'       => __( 'Fade', 'octave-addons' ),
 						'slide-fade' => __( 'Slide down and fade', 'octave-addons' ),
 					];
 
@@ -494,7 +494,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						?>
 
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'Sliding opens the bar from nothing, so the page is pushed down as it grows. Fading takes the space straight away and brings the banners up over it. A bottom bar slides up from the foot of the screen rather than down.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( 'Fading takes the space straight away and brings the banners up over it, so nothing on the page moves. Sliding opens the bar from nothing and pushes the page down as it grows, which PageSpeed counts as layout shift (CLS). A bottom bar slides up from the foot of the screen rather than down.', 'octave-addons' ); ?></span>
 					<?php
 
 				},
@@ -1292,7 +1292,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 		}
 
 		$animation = in_array( $s['animation'] ?? '', [ 'slide-down', 'fade', 'slide-fade' ], true )
-			? $s['animation'] : 'slide-down';
+			? $s['animation'] : 'fade';
 
 		// Harmless on its own: nothing reads it until the inline script adds
 		// the class that collapses the bar.

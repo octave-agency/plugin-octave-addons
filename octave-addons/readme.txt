@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.28.0
+Stable tag:        3.29.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -162,6 +162,13 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.29.0 =
+* File Optimization can now inline small local stylesheets (up to 8 KB by default), including Breakdance's per-page CSS and the self-hosted Google Fonts stylesheet. The page no longer waits on a separate request for each one before its first paint. Order, ids and media are kept, and large files stay as links. On by default whenever File Optimization is enabled.
+* HTML5 videos, including autoplaying hero videos, now wait until the page has finished loading before they download, so a large video no longer competes with the page's styles, fonts and images. The poster shows until then.
+* Media Lazy Loading adds three builder fixes, each on by default: images in the site header always load straight away, images with no width and height get them from the file so the page does not jump, and video posters use a smaller size WordPress has already generated (up to 768px wide by default).
+* Self-hosted Google Fonts now preloads the Latin font files straight away when no fonts have been reported by a visitor yet.
+* The Notifications Bar now defaults to the Fade animation, which does not move the page. Slide animations push the page down and count as layout shift in PageSpeed; the setting explains this.
 
 = 3.28.0 =
 * Fixed diagnostics reporting "The page answered but no report was recorded" on every scan. The admin request read back its own in-memory copy of the pending scan instead of the report the scanned page saved, and on sites with a persistent object cache the scan token also failed to match once lowercased. Scans now also record a report when no page transformation is switched on.

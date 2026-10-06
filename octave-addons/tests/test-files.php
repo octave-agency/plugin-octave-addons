@@ -177,3 +177,44 @@ function test_minify_switches_are_independent(): void {
 	oa_assert( ! has_filter( 'style_loader_tag' ) && has_filter( 'script_loader_tag' ) );
 
 }
+
+/*
+INLINE SMALL STYLESHEETS
+---------------------------------------------------------- */
+
+function test_small_stylesheets_are_inlined_in_place(): void {
+
+	$small = oa_theme_file( 'small.css', "@charset \"UTF-8\";\n.a{background:url(img/a.png)}" );
+	$large = oa_theme_file( 'large.css', '.b{color:red}' . str_repeat( ' ', 9 * 1024 ) );
+	$page  = oa_page(
+		'<link rel="stylesheet" id="small-css" href="' . $small . '?v=abc" media="screen">'
+		. '<link rel="stylesheet" href="' . $large . '">'
+		. '<noscript><link rel="stylesheet" href="' . $small . '"></noscript>'
+		. '<link rel="stylesheet" href="' . $small . '" integrity="sha384-x">'
+		. '<link rel="preload" as="style" href="' . $small . '">'
+		. '<link rel="stylesheet" href="https://cdn.example.org/x.css">'
+	);
+
+	$html = oa_files( [ 'minify_css' => false, 'minify_js' => false ] )->inline_styles( $page );
+
+	oa_assert_contains( '<style id="small-css" media="screen" data-oa-inlined="' . $small . '?v=abc">.a{background:url(https://example.com/wp-content/themes/site/img/a.png)}</style>', $html );
+	oa_assert_not_contains( '@charset', $html );
+	oa_assert_contains( '<link rel="stylesheet" href="' . $large . '">', $html, 'over the limit' );
+	oa_assert_contains( '<noscript><link rel="stylesheet" href="' . $small . '"></noscript>', $html, 'noscript kept' );
+	oa_assert_contains( 'integrity="sha384-x"', $html );
+	oa_assert_contains( '<link rel="preload" as="style"', $html );
+	oa_assert_contains( 'https://cdn.example.org/x.css', $html, 'remote kept' );
+
+}
+
+function test_inlining_respects_exclusions_and_imports(): void {
+
+	$plain  = oa_theme_file( 'plain.css', '.a{color:red}' );
+	$import = oa_theme_file( 'import.css', '@import url(other.css);.a{color:red}' );
+	$page   = oa_page( '<link rel="stylesheet" href="' . $plain . '"><link rel="stylesheet" href="' . $import . '">' );
+
+	$html = oa_files( [ 'exclude' => 'plain.css' ] )->inline_styles( $page );
+
+	oa_assert_same( $page, $html, 'excluded and @import files stay as links' );
+
+}

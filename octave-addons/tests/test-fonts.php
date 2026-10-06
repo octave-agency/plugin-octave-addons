@@ -379,3 +379,33 @@ function test_manual_refresh_discovers_fonts_on_the_home_page(): void {
 	oa_assert_contains( Octave_Addons_Perf_Context::BYPASS_ARG . '=', $GLOBALS['oa_http_log'][0]['url'], 'home page fetched unoptimised' );
 
 }
+
+/*
+PRELOAD FALLBACK
+---------------------------------------------------------- */
+
+function test_unicode_ranges_are_checked_for_latin(): void {
+
+	oa_assert( Octave_Addons_Perf_Google_Fonts::covers_latin( 'U+0000-00FF, U+0131' ) );
+	oa_assert( ! Octave_Addons_Perf_Google_Fonts::covers_latin( 'U+0460-052F, U+1C80-1C8A' ), 'cyrillic' );
+	oa_assert( ! Octave_Addons_Perf_Google_Fonts::covers_latin( 'U+0100-02BA' ), 'latin-ext' );
+
+}
+
+function test_self_hosted_latin_fonts_are_preloaded_until_detection_reports(): void {
+
+	oa_fake_google();
+	Octave_Addons_Perf_Google_Fonts::fetch( OA_GOOGLE_CSS );
+	oa_detected_fonts( [] );
+
+	$urls = oa_fonts( [ 'self_host' => true ] )->preload_list();
+
+	oa_assert_same( 2, count( $urls ), 'both Latin files' );
+	oa_assert_contains( '/cache/octave-addons/fonts/', $urls[0] );
+	oa_assert_same( [], oa_fonts()->preload_list(), 'not without self-hosting' );
+
+	oa_detected_fonts( [ '/wp-content/fonts/own.woff2' ] );
+
+	oa_assert_same( [ '/wp-content/fonts/own.woff2' ], oa_fonts( [ 'self_host' => true ] )->preload_list(), 'detection wins' );
+
+}
