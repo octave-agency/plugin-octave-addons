@@ -675,6 +675,13 @@ Hero
     border-left-color: #ff6b6b;
 }
 
+/* Inline notices sit on a dark surface in dark mode, so their copy is light. */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .oa-inline-notice,
+html[data-oa-admin-theme="dark"] body.wp-admin .oa-inline-notice p {
+    color: var(--oa-admin-text);
+}
+
 /*
 Notices above the interface
 -- Holds the plugin's own Settings API notices plus any admin notice WordPress

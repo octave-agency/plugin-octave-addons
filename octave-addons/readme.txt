@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.30.0
+Stable tag:        3.30.1
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -162,6 +162,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.30.1 =
+* Fixed inline notices (such as the Database cleanup result) showing dark text in the dark admin theme. Their text is now light.
 
 = 3.30.0 =
 * Scroll Animations: add the `oa-no-anim` class to any element to opt it out. The element and everything inside it are never hidden or animated.
