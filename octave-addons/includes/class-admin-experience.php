@@ -288,6 +288,7 @@ class Octave_Addons_Admin_Experience {
 		}
 
 		$integrations_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/integrations.css';
+		$cookieyes_path    = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/cookieyes.css';
 		$woo_path          = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/woocommerce.css';
 		$rank_math_path    = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/rank-math.css';
 		$activity_log_path = OCTAVE_ADDONS_DIR . 'assets/css/admin-experience/activity-log.css';
@@ -300,6 +301,17 @@ class Octave_Addons_Admin_Experience {
 			[ 'octave-addons-admin-experience' ],
 			file_exists( $integrations_path ) ? (string) filemtime( $integrations_path ) : OCTAVE_ADDONS_VERSION
 		);
+
+		if ( 'toplevel_page_cookie-law-info' === $hook ) {
+
+			wp_enqueue_style(
+				'octave-addons-admin-experience-cookieyes',
+				OCTAVE_ADDONS_URL . 'assets/css/admin-experience/cookieyes.css',
+				[ 'octave-addons-admin-experience' ],
+				file_exists( $cookieyes_path ) ? (string) filemtime( $cookieyes_path ) : OCTAVE_ADDONS_VERSION
+			);
+
+		}
 
 		if ( $this->is_woocommerce_active() ) {
 

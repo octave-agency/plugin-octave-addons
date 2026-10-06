@@ -142,7 +142,7 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 			'analytics'  => __( 'Analytics', 'octave-addons' ),
 			'marketing'  => __( 'Marketing pixels', 'octave-addons' ),
 			'widgets'    => __( 'Widgets and embeds', 'octave-addons' ),
-			'contextual' => __( 'Contextual (advanced)', 'octave-addons' ),
+			'contextual' => __( 'Contextual', 'octave-addons' ),
 		];
 		$services   = Octave_Addons_Perf_Script_Delayer::services();
 

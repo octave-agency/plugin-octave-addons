@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.27.0
+Stable tag:        3.27.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -162,6 +162,12 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.27.2 =
+* Updated Modern WordPress Admin styling for Rank Math's React toggle controls, Links report cards and upgrade prompts.
+
+= 3.27.1 =
+* Corrected CookieYes dark-mode alert text and Google Consent Mode table headers, and moved the page-specific overrides into a dedicated stylesheet.
 
 = 3.27.0 =
 * AI Agents and Breakdance now open as complete module-group pages, matching Performance, instead of expanding into individual module links in the plugin navigation.
