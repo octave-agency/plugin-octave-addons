@@ -2,8 +2,8 @@
 
 /*
 CORE TESTS
--- Discovery, settings, request bypasses, the HTML pipeline, purge endpoints
--- and Safe Mode
+-- Discovery, settings, request bypasses, the HTML pipeline and purge
+-- endpoints
 ---------------------------------------------------------- */
 
 const OA_PERF_MODULES = [
@@ -13,7 +13,6 @@ const OA_PERF_MODULES = [
 	'performance-files',
 	'performance-preload',
 	'performance-fonts',
-	'performance-bloat',
 	'performance-heartbeat',
 	'performance-cloudflare',
 	'performance-database',
@@ -30,6 +29,30 @@ function test_performance_modules_share_one_admin_entry_in_order(): void {
 	oa_assert( isset( $entries['performance'] ), 'performance entry exists' );
 	oa_assert_same( OA_PERF_MODULES, array_keys( $entries['performance']['modules'] ), 'grouped modules in order' );
 	oa_assert_same( 'performance', $GLOBALS['oa_manager']->entry_id_for( 'performance-fonts' ) );
+
+}
+
+function test_grouped_modules_get_their_own_admin_page_except_performance(): void {
+
+	require_once OCTAVE_ADDONS_DIR . 'includes/class-admin.php';
+
+	$admin   = ( new ReflectionClass( 'Octave_Addons_Admin' ) )->newInstanceWithoutConstructor();
+	$current = new ReflectionMethod( $admin, 'current_modules' );
+
+	$performance = [ 'group' => 'performance', 'modules' => [ 'a' => 1, 'b' => 2 ] ];
+	$design      = [ 'group' => 'design', 'modules' => [ 'a' => 1, 'b' => 2 ] ];
+
+	unset( $_GET['module'] );
+	oa_assert_same( [ 'a', 'b' ], array_keys( $current->invoke( $admin, $performance ) ), 'performance keeps every panel' );
+	oa_assert_same( [ 'a' ], array_keys( $current->invoke( $admin, $design ) ), 'split group defaults to its first module' );
+
+	$_GET['module'] = 'b';
+	oa_assert_same( [ 'b' ], array_keys( $current->invoke( $admin, $design ) ), 'split group renders the requested module' );
+
+	$_GET['module'] = 'missing';
+	oa_assert_same( [ 'a' ], array_keys( $current->invoke( $admin, $design ) ), 'unknown module falls back to the first' );
+
+	unset( $_GET['module'] );
 
 }
 
@@ -63,21 +86,18 @@ function test_sanitize_rejects_unknown_and_hostile_values(): void {
 		'enabled'  => '1',
 		'services' => [ 'google-analytics', 'evil<script>', 'not-a-service' ],
 		'include'  => "<b>tag</b>\n\n analytics.example ",
-		'timeout'  => '9999',
 	] );
 
 	oa_assert_same( [ 'google-analytics' ], $delay['services'] );
 	oa_assert_same( "tag\nanalytics.example", $delay['include'] );
-	oa_assert_same( 60, $delay['timeout'] );
 
 	$heartbeat = oa_module( 'performance-heartbeat' )->sanitize( [ 'editor' => 'disable', 'admin' => '45', 'frontend' => 'disable' ] );
 
 	oa_assert_same( '120', $heartbeat['editor'], 'editor cannot be disabled' );
 	oa_assert_same( '120', $heartbeat['admin'], 'unknown interval falls back' );
 
-	$fonts = oa_module( 'performance-fonts' )->sanitize( [ 'preload' => "/a.woff2\njavascript:alert(1)\n/b.ttf\n/a.woff2\nhttps://cdn.example/c.woff?v=2", 'font_display' => 'bogus', 'refresh_days' => '0' ] );
+	$fonts = oa_module( 'performance-fonts' )->sanitize( [ 'font_display' => 'bogus', 'refresh_days' => '0' ] );
 
-	oa_assert_same( "/a.woff2\nhttps://cdn.example/c.woff?v=2", $fonts['preload'], 'only woff2/woff, deduplicated, query kept' );
 	oa_assert_same( 'swap', $fonts['font_display'] );
 	oa_assert_same( 1, $fonts['refresh_days'] );
 
@@ -286,7 +306,7 @@ function test_purge_endpoint_requires_nonce_and_capability(): void {
 
 }
 
-function test_purge_all_clears_only_octave_min_folder_and_reports_layers(): void {
+function test_purge_all_clears_only_min_folder_and_reports_layers(): void {
 
 	$min     = Octave_Addons_Perf_Store::dir( 'min' );
 	$fonts   = Octave_Addons_Perf_Store::dir( 'fonts/abc' );
@@ -313,8 +333,9 @@ function test_purge_all_clears_only_octave_min_folder_and_reports_layers(): void
 	oa_assert( file_exists( $fonts . 'f.woff2' ), 'self-hosted fonts kept' );
 	oa_assert( file_exists( $foreign ), 'other caches untouched' );
 	oa_assert_same( $generation + 1, Octave_Addons_Perf_Cache::generation() );
-	oa_assert_same( [ 'octave', 'host' ], array_keys( $report ) );
+	oa_assert_same( [ 'files', 'host' ], array_keys( $report ) );
 	oa_assert_same( 'Full purge', Octave_Addons_Perf_Cache::last_purge()['label'] );
+	oa_assert_same( [ 'files' ], array_keys( Octave_Addons_Perf_Cache::purge_all( 'files', 'manual' ) ), 'files scope skips other layers' );
 
 }
 
@@ -356,34 +377,5 @@ function test_url_purge_targets_same_origin_urls_only(): void {
 	Octave_Addons_Perf_Cache::purge_urls( [ 'https://example.com/a/#top', 'https://evil.test/b', 'https://example.com/a/' ], 'content' );
 
 	oa_assert_same( [ 'https://example.com/a/' ], $seen );
-
-}
-
-/*
-SAFE MODE
----------------------------------------------------------- */
-
-function test_safe_mode_changes_only_performance_modules(): void {
-
-	$GLOBALS['oa_caps'] = [ 'manage_options' ];
-	$_POST['nonce']     = wp_create_nonce( Octave_Addons_Perf_Admin::NONCE );
-
-	oa_set_settings( 'performance-delay', [ 'services' => [ 'hotjar' ] ] );
-	oa_set_settings( 'performance-files', [ 'enabled' => true, 'minify_js' => true ] );
-
-	$all                  = get_option( OCTAVE_ADDONS_OPTION_KEY );
-	$all['custom-thing']  = [ 'enabled' => true, 'secret' => 'untouched' ];
-	$GLOBALS['oa_options'][ OCTAVE_ADDONS_OPTION_KEY ] = $all;
-
-	$response = oa_json_call( [ 'Octave_Addons_Perf_Admin', 'ajax_safe_mode' ] );
-	$saved    = get_option( OCTAVE_ADDONS_OPTION_KEY );
-
-	oa_assert( $response->success );
-	oa_assert_same( [ 'enabled' => true, 'secret' => 'untouched' ], $saved['custom-thing'], 'other module preserved' );
-	oa_assert_same( [ 'hotjar' ], $saved['performance-delay']['services'], 'selected services kept' );
-	oa_assert( true === $saved['performance-delay']['enabled'] && true === $saved['performance-media']['enabled'] && true === $saved['performance-preload']['enabled'] );
-	oa_assert( false === $saved['performance-files']['enabled'] && false === $saved['performance-files']['minify_js'], 'minification off' );
-	oa_assert_same( false, $saved['performance-media']['facades'] );
-	oa_assert( false === strpos( $saved[ Octave_Addons_Module_Manager::SUBMITTED_FIELD ], 'custom-thing' ), 'only performance modules submitted' );
 
 }

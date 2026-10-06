@@ -3,7 +3,7 @@
 /*
 PERFORMANCE: CACHE & SAFETY
 -- Headline module of the Performance page. Always on, because it only
--- manages Octave's own cache directory and the purge coordination other
+-- manages the plugin's own cache directory and the purge coordination other
 -- layers hook into, and it holds the settings every Performance feature
 -- shares: whether logged-in visitors are optimised, and the admin bar shortcut
 ---------------------------------------------------------- */
@@ -32,7 +32,7 @@ class Octave_Addons_Module_Performance_Cache extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Coordinates cache purges across Octave and any connected layers, and sets who receives optimised pages.', 'octave-addons' );
+		return __( 'Coordinates cache purges across the minified files and any connected layers, and sets who receives optimised pages.', 'octave-addons' );
 
 	}
 

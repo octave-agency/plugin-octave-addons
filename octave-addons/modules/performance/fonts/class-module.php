@@ -3,9 +3,10 @@
 /*
 PERFORMANCE: FONTS
 -- Two independent tools:
--- Preload — outputs <link rel="preload" as="font"> for the font files an
--- administrator lists, and only those. Nothing is preloaded just because it
--- exists, since every preload competes with the page's other resources
+-- Preload — outputs <link rel="preload" as="font"> for the font files the
+-- front end reports it downloaded while loading the page, at most three, so
+-- preloads never compete with the page's other resources. The list is
+-- refreshed daily by the first visitor after it goes stale
 -- Self-host Google Fonts — serves cached local copies of Google Fonts
 -- stylesheets and their font files, so visitors never contact Google. Until
 -- a stylesheet has been cached successfully, Google's URL is kept
@@ -24,8 +25,11 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	use Octave_Addons_Perf_Field_Rows;
 
-	/** More selected preloads than this shows a warning. */
-	public const PRELOAD_ADVICE = 3;
+	/** Most fonts preloaded; extra preloads compete with images and scripts. */
+	public const PRELOAD_MAX = 3;
+
+	public const DETECTED_OPTION = 'octave_addons_perf_fonts_detected';
+	public const DETECT_ACTION   = 'oa_perf_fonts_detect';
 
 	protected const MIME = [
 		'woff2' => 'font/woff2',
@@ -48,7 +52,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Preloads the font files you choose and can serve Google Fonts from this site instead of Google.', 'octave-addons' );
+		return __( 'Preloads the fonts each page needs first and can serve Google Fonts from this site instead of Google.', 'octave-addons' );
 
 	}
 
@@ -62,7 +66,6 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		return [
 			'enabled'      => false,
-			'preload'      => '',
 			'self_host'    => false,
 			'font_display' => 'swap',
 			'refresh_days' => 30,
@@ -70,32 +73,11 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	}
 
-	/*
-	SANITIZE
-	-- Preload entries must be http(s) or root-relative WOFF2/WOFF URLs. Query
-	-- strings are kept, since they can be part of the real file URL
-	---------------------------------------------------------- */
-
 	public function sanitize( $input ): array {
 
-		$clean = parent::sanitize( $input );
-		$urls  = [];
-
-		foreach ( Octave_Addons_Perf::lines( wp_unslash( $input['preload'] ?? '' ) ) as $url ) {
-
-			$url = self::clean_font_url( $url );
-
-			if ( '' !== $url ) {
-
-				$urls[ $url ] = true;
-
-			}
-
-		}
-
+		$clean   = parent::sanitize( $input );
 		$display = sanitize_key( $input['font_display'] ?? 'swap' );
 
-		$clean['preload']      = implode( "\n", array_keys( $urls ) );
 		$clean['self_host']    = ! empty( $input['self_host'] );
 		$clean['font_display'] = in_array( $display, [ 'swap', 'optional', 'fallback', 'block', 'auto', 'keep' ], true ) ? $display : 'swap';
 		$clean['refresh_days'] = max( 1, min( 365, absint( $input['refresh_days'] ?? 30 ) ) );
@@ -106,7 +88,8 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	/*
 	CLEAN FONT URL
-	-- A storable preload URL, or '' when it is not a WOFF2 or WOFF file
+	-- A storable preload URL, or '' when it is not a WOFF2 or WOFF file. Query
+	-- strings are kept, since they can be part of the real file URL
 	---------------------------------------------------------- */
 
 	public static function clean_font_url( string $url ): string {
@@ -139,19 +122,19 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		$this->settings = $s;
 
-		if ( '' !== trim( (string) $s['preload'] ) || has_filter( 'octave_addons_perf_preload_fonts' ) ) {
+		if ( function_exists( 'wp_preload_resources' ) ) {
 
-			if ( function_exists( 'wp_preload_resources' ) ) {
+			add_filter( 'wp_preload_resources', [ $this, 'filter_preload_resources' ] );
 
-				add_filter( 'wp_preload_resources', [ $this, 'filter_preload_resources' ] );
+		} else {
 
-			} else {
-
-				add_action( 'wp_head', [ $this, 'print_preload_tags' ], 2 );
-
-			}
+			add_action( 'wp_head', [ $this, 'print_preload_tags' ], 2 );
 
 		}
+
+		add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_detector' ] );
+		add_action( 'wp_ajax_' . self::DETECT_ACTION, [ __CLASS__, 'ajax_detect' ] );
+		add_action( 'wp_ajax_nopriv_' . self::DETECT_ACTION, [ __CLASS__, 'ajax_detect' ] );
 
 		if ( ! empty( $s['self_host'] ) ) {
 
@@ -191,7 +174,88 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	public static function on_fonts_changed(): void {
 
-		Octave_Addons_Perf_Cache::purge_all( 'octave', 'fonts' );
+		Octave_Addons_Perf_Cache::purge_all( 'files', 'fonts' );
+
+	}
+
+	/*
+	DETECTED / NEEDS DETECTION
+	-- The stored list is refreshed once it is a day old
+	---------------------------------------------------------- */
+
+	public static function detected(): array {
+
+		$detected = get_option( self::DETECTED_OPTION, [] );
+
+		return is_array( $detected ) ? $detected : [];
+
+	}
+
+	public static function needs_detection(): bool {
+
+		return (int) ( self::detected()['time'] ?? 0 ) < time() - DAY_IN_SECONDS;
+
+	}
+
+	/*
+	ENQUEUE DETECTOR
+	-- Only while the list is stale. That page view skips the preloads, so the
+	-- report reflects the fonts the page really uses rather than old preloads
+	---------------------------------------------------------- */
+
+	public static function enqueue_detector(): void {
+
+		if ( ! self::needs_detection() || ! Octave_Addons_Perf_Context::can_optimize( 'fonts' ) ) {
+
+			return;
+
+		}
+
+		wp_enqueue_script( 'octave-addons-font-detect', Octave_Addons_Perf::asset_url( 'font-detect.js' ), [], Octave_Addons_Perf::asset_version( 'font-detect.js' ), true );
+
+		wp_localize_script( 'octave-addons-font-detect', 'oaFontDetect', [
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'action'  => self::DETECT_ACTION,
+			'max'     => self::PRELOAD_MAX,
+		] );
+
+	}
+
+	/*
+	AJAX DETECT
+	-- Public, since visitors report it. No nonce, as cached pages outlive
+	-- them; instead only a stale list is ever replaced, and only with
+	-- same-origin WOFF2/WOFF URLs, so the worst a forged report can do is
+	-- preload one of the site's own font files for a day
+	---------------------------------------------------------- */
+
+	public static function ajax_detect(): void {
+
+		if ( ! self::needs_detection() ) {
+
+			wp_send_json_success();
+
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- public report, validated below.
+		$raw  = isset( $_POST['urls'] ) && is_array( $_POST['urls'] ) ? wp_unslash( $_POST['urls'] ) : [];
+		$urls = [];
+
+		foreach ( $raw as $url ) {
+
+			$url = self::clean_font_url( (string) $url );
+
+			if ( '' !== $url && Octave_Addons_Perf::is_same_origin( $url ) ) {
+
+				$urls[ $url ] = true;
+
+			}
+
+		}
+
+		update_option( self::DETECTED_OPTION, [ 'urls' => array_slice( array_keys( $urls ), 0, self::PRELOAD_MAX ), 'time' => time() ], false );
+
+		wp_send_json_success();
 
 	}
 
@@ -202,12 +266,14 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	public function preload_list(): array {
 
+		$urls = self::needs_detection() ? [] : (array) ( self::detected()['urls'] ?? [] );
+
 		/**
 		 * Filters the font URLs preloaded on the frontend.
 		 *
 		 * @param string[] $urls Font file URLs, WOFF2 or WOFF.
 		 */
-		$urls  = (array) apply_filters( 'octave_addons_perf_preload_fonts', Octave_Addons_Perf::lines( $this->settings['preload'] ?? '' ) );
+		$urls  = (array) apply_filters( 'octave_addons_perf_preload_fonts', $urls );
 		$clean = [];
 
 		foreach ( $urls as $url ) {
@@ -376,8 +442,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	public function render_settings( array $s ): void {
 
-		$selected = Octave_Addons_Perf::lines( $s['preload'] );
-		$cached   = Octave_Addons_Perf_Google_Fonts::cached_files();
+		$preloads = (array) ( self::detected()['urls'] ?? [] );
 		$manifest = Octave_Addons_Perf_Google_Fonts::manifest();
 
 		?>
@@ -388,57 +453,34 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 			Octave_Addons_Fields::section( [ 'label' => __( 'Font preloading', 'octave-addons' ), 'first' => true ] );
 
 			Octave_Addons_Fields::row( [
-				'label' => __( 'Fonts to preload', 'octave-addons' ),
-				'for'   => $this->field_id( 'preload' ),
-				'field' => function () use ( $s, $selected ) {
+				'label' => __( 'Preloaded fonts', 'octave-addons' ),
+				'field' => function () use ( $preloads ) {
 
-					Octave_Addons_Fields::textarea( [
-						'name'       => $this->field_name( 'preload' ),
-						'id'         => $this->field_id( 'preload' ),
-						'value'      => $s['preload'],
-						'rows'       => 4,
-						'class'      => 'large-text code',
-						'spellcheck' => false,
-						'help'       => __( 'One WOFF2 (preferred) or WOFF URL per line. Choose only the two or three files used for text visible before scrolling, usually the body and heading weights.', 'octave-addons' ),
-					] );
+					if ( empty( $preloads ) ) {
+
+						echo '<p class="oa-help">' . esc_html__( 'Detected automatically. The fonts a page downloads while loading are reported by the next visitor and preloaded from then on, refreshed daily.', 'octave-addons' ) . '</p>';
+
+						return;
+
+					}
 
 					?>
 
-					<p class="oa-perf-warning<?= count( $selected ) > self::PRELOAD_ADVICE ? '' : ' oa-hidden'; ?>" data-oa-perf-font-warning role="status"><?php esc_html_e( 'More than three fonts are selected. Extra preloads compete with images and scripts and can slow the page down.', 'octave-addons' ); ?></p>
+					<ul class="oa-perf-font-list">
+						<?php
 
-					<?php
+						foreach ( $preloads as $url ) :
 
-				},
-			] );
+						?>
 
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Available fonts', 'octave-addons' ),
-				'field' => function () use ( $cached ) {
+						<li><code><?= esc_html( (string) $url ); ?></code></li>
 
-					?>
+						<?php
 
-					<div class="oa-perf-font-picker" data-oa-perf-font-picker data-target="<?= esc_attr( $this->field_id( 'preload' ) ); ?>">
-						<ul class="oa-perf-font-list" data-oa-perf-font-list>
-							<?php
+						endforeach;
 
-							foreach ( $cached as $file ) :
-
-							?>
-
-							<li>
-								<code><?= esc_html( basename( $file['url'] ) ); ?></code>
-								<span><?= esc_html( $file['families'] . ' · ' . strtoupper( $file['format'] ) . ' · ' . size_format( $file['size'] ) ); ?></span>
-								<button type="button" class="button button-small" data-oa-perf-add-font="<?= esc_attr( $file['url'] ); ?>"><?php esc_html_e( 'Add to preload list', 'octave-addons' ); ?></button>
-							</li>
-
-							<?php
-
-							endforeach;
-
-							?>
-						</ul>
-						<span class="oa-help"><?php esc_html_e( 'Self-hosted Google Fonts files appear here. Run diagnostics at the top of the page to also list local fonts found in the stylesheets of a scanned page.', 'octave-addons' ); ?></span>
-					</div>
+						?>
+					</ul>
 
 					<?php
 

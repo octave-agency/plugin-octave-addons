@@ -75,24 +75,29 @@ class Octave_Addons_Perf_Cloudflare {
 	/*
 	TEST CONNECTION
 	-- Verifies the token. A Cache Purge-only token cannot read zone details,
-	-- so the zone is checked for format rather than fetched
+	-- so the zone is checked for format rather than fetched. Unsaved values
+	-- can be passed in; only a test of the saved ones updates the status card
 	---------------------------------------------------------- */
 
-	public static function test(): array {
+	public static function test( ?string $zone_id = null, ?string $token = null ): array {
 
-		if ( ! self::is_valid_zone_id( self::zone_id() ) ) {
+		$saved   = null === $zone_id && null === $token;
+		$zone_id = $zone_id ?? self::zone_id();
+		$token   = $token ?? self::token();
+
+		if ( ! self::is_valid_zone_id( $zone_id ) ) {
 
 			return self::result( false, __( 'The Zone ID should be the 32-character ID shown on the zone\'s Overview page.', 'octave-addons' ) );
 
 		}
 
-		if ( '' === self::token() ) {
+		if ( '' === $token ) {
 
-			return self::result( false, __( 'No API token is saved.', 'octave-addons' ) );
+			return self::result( false, __( 'Enter an API token.', 'octave-addons' ) );
 
 		}
 
-		$result = self::request( 'GET', 'user/tokens/verify' );
+		$result = self::request( 'GET', 'user/tokens/verify', null, $token );
 
 		if ( $result['ok'] && 'active' !== ( $result['data']['result']['status'] ?? '' ) ) {
 
@@ -106,7 +111,11 @@ class Octave_Addons_Perf_Cloudflare {
 
 		}
 
-		update_option( self::STATUS_OPTION, [ 'time' => time(), 'ok' => $result['ok'], 'message' => $result['message'] ], false );
+		if ( $saved ) {
+
+			update_option( self::STATUS_OPTION, [ 'time' => time(), 'ok' => $result['ok'], 'message' => $result['message'] ], false );
+
+		}
 
 		return $result;
 
@@ -234,14 +243,14 @@ class Octave_Addons_Perf_Cloudflare {
 	-- own success flag, and turns any failure into a readable message
 	---------------------------------------------------------- */
 
-	protected static function request( string $method, string $path, ?array $body = null ): array {
+	protected static function request( string $method, string $path, ?array $body = null, ?string $token = null ): array {
 
 		$args = [
 			'method'      => $method,
 			'timeout'     => 8,
 			'redirection' => 0,
 			'headers'     => [
-				'Authorization' => 'Bearer ' . self::token(),
+				'Authorization' => 'Bearer ' . ( $token ?? self::token() ),
 				'Content-Type'  => 'application/json',
 			],
 		];

@@ -2,11 +2,11 @@
 
 /*
 PERFORMANCE CACHE MANAGER
--- Owns Octave's generated files and the cache generation number, and
+-- Owns the generated minified files and the cache generation number, and
 -- coordinates purges across every connected cache layer. Each purge returns
 -- a report with one entry per layer, so the admin can show exactly what
 -- succeeded and what did not
--- Octave never calls wp_cache_flush() and never deletes anything outside its
+-- It never calls wp_cache_flush() and never deletes anything outside its
 -- own directory. Other layers join through filters:
 --   octave_addons_perf_purge_all_layers  (array $report, string $reason)
 --   octave_addons_perf_purge_url_layers  (array $report, array $urls, string $reason)
@@ -53,14 +53,14 @@ class Octave_Addons_Perf_Cache {
 
 	/*
 	PURGE ALL
-	-- $scope 'octave' clears Octave's files only. 'all' also asks every
+	-- $scope 'files' clears the minified files only. 'all' also asks every
 	-- connected layer. $reason tells layers why, so Cloudflare can keep a
 	-- purge-everything for explicit administrator requests
 	---------------------------------------------------------- */
 
 	public static function purge_all( string $scope = 'all', string $reason = 'manual' ): array {
 
-		$report = [ 'octave' => self::clear_octave_files() ];
+		$report = [ 'files' => self::clear_files() ];
 
 		if ( 'all' === $scope ) {
 
@@ -80,7 +80,7 @@ class Octave_Addons_Perf_Cache {
 
 		if ( 'manual' === $reason ) {
 
-			self::record( 'all' === $scope ? __( 'Full purge', 'octave-addons' ) : __( 'Octave cache', 'octave-addons' ), $report );
+			self::record( 'all' === $scope ? __( 'Full purge', 'octave-addons' ) : __( 'Minified files', 'octave-addons' ), $report );
 
 		}
 
@@ -90,7 +90,7 @@ class Octave_Addons_Perf_Cache {
 
 	/*
 	PURGE URLS
-	-- Targeted invalidation. Octave keeps no per-page HTML, so its own layer
+	-- Targeted invalidation. No per-page HTML is kept, so the files layer
 	-- has nothing URL-specific to clear; the URLs go to the other layers
 	---------------------------------------------------------- */
 
@@ -111,10 +111,10 @@ class Octave_Addons_Perf_Cache {
 		}
 
 		$report = [
-			'octave' => [
-				'label'   => __( 'Octave files', 'octave-addons' ),
+			'files' => [
+				'label'   => __( 'Minified files', 'octave-addons' ),
 				'status'  => 'skipped',
-				'message' => __( 'Octave stores no per-page HTML, so there is nothing URL-specific to clear.', 'octave-addons' ),
+				'message' => __( 'Minified files are shared across pages, so there is nothing URL-specific to clear.', 'octave-addons' ),
 			],
 		];
 
@@ -140,20 +140,20 @@ class Octave_Addons_Perf_Cache {
 	}
 
 	/*
-	CLEAR OCTAVE FILES
+	CLEAR FILES
 	-- Removes generated minified files and moves the generation on. Self-hosted
 	-- fonts are kept: they have their own refresh, and dropping them would send
 	-- visitors back to Google until the next download
 	---------------------------------------------------------- */
 
-	protected static function clear_octave_files(): array {
+	protected static function clear_files(): array {
 
 		$deleted = Octave_Addons_Perf_Store::delete( self::MIN_DIR );
 
 		self::bump_generation();
 
 		return [
-			'label'   => __( 'Octave optimised files', 'octave-addons' ),
+			'label'   => __( 'Minified files', 'octave-addons' ),
 			'status'  => 'success',
 			'message' => sprintf(
 				/* translators: 1: number of files, 2: human readable size. */
@@ -220,7 +220,7 @@ class Octave_Addons_Perf_Cache {
 	/*
 	REGISTER INVALIDATION
 	-- Content edits purge their own URLs. Theme and plugin switches clear
-	-- Octave's files, since they change which assets a page loads. Settings
+	-- the minified files, since they change which assets a page loads. Settings
 	-- changes are handled where the option is saved
 	---------------------------------------------------------- */
 
@@ -274,13 +274,13 @@ class Octave_Addons_Perf_Cache {
 
 	public static function on_environment_change(): void {
 
-		self::purge_all( 'octave', 'environment' );
+		self::purge_all( 'files', 'environment' );
 
 	}
 
 	/*
 	ON SETTINGS UPDATE
-	-- Clears Octave's files when any Performance module's settings changed
+	-- Clears the minified files when any Performance module's settings changed
 	---------------------------------------------------------- */
 
 	public static function on_settings_update( $old, $new ): void {
@@ -292,7 +292,7 @@ class Octave_Addons_Perf_Cache {
 
 			if ( 0 === strpos( (string) $id, 'performance-' ) && ( $old[ $id ] ?? null ) !== $settings ) {
 
-				self::purge_all( 'octave', 'settings' );
+				self::purge_all( 'files', 'settings' );
 
 				return;
 

@@ -140,6 +140,56 @@ class Octave_Addons_Admin {
 	}
 
 	/*
+	MODULE URL
+	-- The admin URL for one module inside a split group.
+	---------------------------------------------------------- */
+
+	public static function module_url( string $entry_id, string $module_id ): string {
+
+		return add_query_arg( [ 'module' => $module_id ], self::entry_url( $entry_id ) );
+
+	}
+
+	/*
+	IS SPLIT ENTRY
+	-- Grouped modules each get their own page, except Performance, whose
+	-- modules stay together on one page as anchored panels.
+	---------------------------------------------------------- */
+
+	protected function is_split_entry( array $entry ): bool {
+
+		return '' !== $entry['group'] && 'performance' !== $entry['group'];
+
+	}
+
+	/*
+	CURRENT MODULES
+	-- The modules the open page renders: the requested module of a split
+	-- group, falling back to its first, otherwise every module in the entry.
+	---------------------------------------------------------- */
+
+	protected function current_modules( array $entry ): array {
+
+		if ( ! $this->is_split_entry( $entry ) ) {
+
+			return $entry['modules'];
+
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only module switch.
+		$requested = isset( $_GET['module'] ) ? sanitize_key( wp_unslash( $_GET['module'] ) ) : '';
+
+		if ( ! isset( $entry['modules'][ $requested ] ) ) {
+
+			$requested = array_key_first( $entry['modules'] );
+
+		}
+
+		return [ $requested => $entry['modules'][ $requested ] ];
+
+	}
+
+	/*
 	REDIRECT LEGACY TAB
 	-- Sends ?page=octave-addons&tab={id} links to the entry's own submenu page,
 	-- keeping any other query arguments, so old links and bookmarks still land
@@ -163,6 +213,13 @@ class Octave_Addons_Admin {
 		$args = urlencode_deep( wp_unslash( $_GET ) );
 
 		unset( $args['page'], $args['tab'] );
+
+		// A module that joined a group keeps landing on its own panel.
+		if ( $requested !== $entry_id ) {
+
+			$args['module'] = $requested;
+
+		}
 
 		wp_safe_redirect( add_query_arg( $args, self::entry_url( $entry_id ) ) );
 
@@ -278,23 +335,25 @@ class Octave_Addons_Admin {
 	/*
 	ENABLED MODULES OUTSIDE CURRENT TAB
 	-- Counts the active modules the open page does not render, so the browser
-	-- can keep the totals right while only holding one entry's toggles.
+	-- can keep the totals right while only holding the open page's toggles.
 	---------------------------------------------------------- */
 
 	protected function enabled_modules_outside_current_tab(): int {
 
+		$entries    = $this->modules->admin_entries();
 		$active_tab = $this->current_tab();
+		$rendered   = isset( $entries[ $active_tab ] ) ? $this->current_modules( $entries[ $active_tab ] ) : [];
 		$count      = 0;
 
-		foreach ( $this->modules->admin_entries() as $entry_id => $entry ) {
-
-			if ( $entry_id === $active_tab ) {
-
-				continue;
-
-			}
+		foreach ( $entries as $entry ) {
 
 			foreach ( $entry['modules'] as $module_id => $module ) {
+
+				if ( isset( $rendered[ $module_id ] ) ) {
+
+					continue;
+
+				}
 
 				$settings = $this->modules->settings_for( $module_id );
 
@@ -740,6 +799,7 @@ class Octave_Addons_Admin {
 		$all           = $this->modules->visible_in_admin();
 		$entries       = $this->modules->admin_entries();
 		$active_tab    = $this->current_tab();
+		$rendered      = isset( $entries[ $active_tab ] ) ? $this->current_modules( $entries[ $active_tab ] ) : [];
 		$icon_url      = OCTAVE_ADDONS_URL . 'assets/images/admin-icon.png';
 		$dashboard_url = self::entry_url();
 		$is_themed     = $this->admin_experience->is_enabled();
@@ -853,12 +913,15 @@ class Octave_Addons_Admin {
 
 									foreach ( $entry['modules'] as $module_id => $module ) :
 
-										$module_on = $module->is_always_enabled() || ! empty( $module_settings[ $module_id ]['enabled'] );
+										$module_on   = $module->is_always_enabled() || ! empty( $module_settings[ $module_id ]['enabled'] );
+										$is_split    = $this->is_split_entry( $entry );
+										$module_href = $is_split ? self::module_url( $entry_id, $module_id ) : $url . '#oa-panel-' . $module_id;
+										$is_current  = $is_split && $is_active && isset( $rendered[ $module_id ] );
 
 									?>
 
-									<a href="<?= esc_url( $url . '#oa-panel-' . $module_id ); ?>"
-									   class="oa-nav-subitem"
+									<a href="<?= esc_url( $module_href ); ?>"
+									   class="oa-nav-subitem<?= $is_current ? ' is-active' : ''; ?>"<?= $is_current ? ' aria-current="page"' : ''; ?>
 									   data-module="<?= esc_attr( $module_id ); ?>">
 										<span class="oa-dot <?= $module_on ? 'is-on' : 'is-off'; ?>" aria-hidden="true"></span>
 										<span class="oa-nav-label"><?= esc_html( $module->get_title() ); ?></span>
@@ -893,12 +956,28 @@ class Octave_Addons_Admin {
 							$meta      = $this->entry_meta( $entry );
 							$url       = self::entry_url( $entry_id );
 							$is_active = ( $entry_id === $active_tab );
+
+							if ( ! $this->is_split_entry( $entry ) ) :
 						?>
 
 							<option value="<?= esc_url( $url ); ?>"<?php selected( $is_active ); ?>>
 								<?= esc_html( $meta['title'] ); ?>
 							</option>
 						<?php
+
+							else :
+
+							foreach ( $entry['modules'] as $module_id => $module ) :
+						?>
+
+							<option value="<?= esc_url( self::module_url( $entry_id, $module_id ) ); ?>"<?php selected( $is_active && isset( $rendered[ $module_id ] ) ); ?>>
+								<?= esc_html( $meta['title'] . ' — ' . $module->get_title() ); ?>
+							</option>
+						<?php
+
+							endforeach;
+
+							endif;
 
 						endforeach;
 
@@ -1042,7 +1121,7 @@ class Octave_Addons_Admin {
 
 					<form method="post" action="options.php" class="oa-form">
 						<?php settings_fields( 'octave_addons_settings_group' ); ?>
-						<input type="hidden" name="<?= esc_attr( OCTAVE_ADDONS_OPTION_KEY . '[' . Octave_Addons_Module_Manager::SUBMITTED_FIELD . ']' ); ?>" value="<?= esc_attr( implode( ',', array_keys( $entries[ $active_tab ]['modules'] ?? [] ) ) ); ?>">
+						<input type="hidden" name="<?= esc_attr( OCTAVE_ADDONS_OPTION_KEY . '[' . Octave_Addons_Module_Manager::SUBMITTED_FIELD . ']' ); ?>" value="<?= esc_attr( implode( ',', array_keys( $rendered ) ) ); ?>">
 						<?php
 
 						foreach ( $entries as $entry_id => $entry ) :
@@ -1099,7 +1178,7 @@ class Octave_Addons_Admin {
 
 							endif;
 
-							foreach ( $entry['modules'] as $id => $module ) :
+							foreach ( $rendered as $id => $module ) :
 
 								$settings      = $module_settings[ $id ];
 								$always        = $module->is_always_enabled();

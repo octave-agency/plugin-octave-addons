@@ -3,7 +3,7 @@
 /*
 GOOGLE FONTS SELF-HOSTING
 -- Downloads a Google Fonts stylesheet and the font files it references,
--- stores them in the Octave cache and rewrites the stylesheet to point at the
+-- stores them in the plugin cache and rewrites the stylesheet to point at the
 -- local copies. Only fonts.googleapis.com (stylesheets) and fonts.gstatic.com
 -- (font files) are ever contacted, over HTTPS, with redirects refused, so this
 -- can never be used to fetch anything else

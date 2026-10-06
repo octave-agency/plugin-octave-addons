@@ -3,7 +3,7 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.25.0
+Stable tag:        3.26.0
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -99,15 +99,14 @@ Octave Addons ships with a growing collection of focused modules:
     later by popups or AJAX. Controls that already have a name are untouched.
 *   **Performance** – one page of compatibility-first speed tools, each
     switched on independently and all off by default: Media Lazy Loading
-    (native image and iframe lazy loading, video lazy loading and optional
-    YouTube/Vimeo facades), Third-Party Script Delay (allowlist only),
-    File Optimization (per-file CSS and JavaScript minification and selected
-    deferral, never combined), Link Preloading, Fonts (selected preloads and
-    self-hosted Google Fonts), WordPress Bloat (emoji, embed, jQuery Migrate
-    and block style removal), Heartbeat Control, Cloudflare cache purging and
-    Database Cleanup. A single Clear Performance Cache action reports each
-    cache layer separately, Safe Mode applies a conservative preset, and
-    `?oa_no_optimize=1` shows any page unoptimised to an administrator.
+    (native image, iframe and video lazy loading with the hero image fetched
+    first), Third-Party Script Delay (allowlist only), File Optimization
+    (per-file CSS and JavaScript minification and selected deferral, never
+    combined), Link Preloading, Fonts (automatically detected preloads and
+    self-hosted Google Fonts), Heartbeat Control, Cloudflare cache purging
+    and Database Cleanup. Each enabled cache has its own clear action that
+    reports its result, and `?oa_no_optimize=1` shows any page unoptimised to
+    an administrator.
     Breakdance, WordPress core, jQuery, consent, payment, form and CAPTCHA
     scripts are never delayed or rewritten, logged-in users and WooCommerce
     cart, checkout and account pages are left alone, and anything that cannot
@@ -163,6 +162,15 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.26.0 =
+* Every module inside a group now has its own admin page and URL, such as Design > Scroll Animations or Design > Modern WordPress Admin, instead of a link that scrolled down a shared page. Saving a module page only saves that module. Performance keeps all of its modules on one page. The mobile menu lists each module, and old links still land on the right module.
+* Performance: the header banner is gone. Each cache now has its own clear button on its status card, shown only when that cache is in use: Clear minified files when File Optimization is on, and Purge Cloudflare (with a confirmation) and Purge one URL when Cloudflare is set up. The admin bar follows the same rules.
+* Performance: cache labels now describe what they clear ("Minified files") rather than naming the plugin.
+* Performance: font preloads are detected automatically from the fonts each page downloads while loading, refreshed daily, replacing the hand-picked list.
+* Performance: the hero image is always fetched first, replacing the separate "Prioritise the main image", "Asynchronous decoding" and "Always load the first" settings.
+* Performance: YouTube and Vimeo facades, the WordPress Bloat module, Safe Mode and the script delay timeout have been removed.
+* Performance: Cloudflare's Test connection checks the values on screen, saved or not.
 
 = 3.25.0 =
 * Modules are now organised into six groups (AI Agents, Breakdance, Content, Design, Engagement and Performance). The admin sidebar shows each group as an accordion, only one open at a time, with a link and status dot for every module inside it that jumps straight to its settings. Old links to individual module pages still land on the right group.

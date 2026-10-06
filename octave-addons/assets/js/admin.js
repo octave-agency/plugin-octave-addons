@@ -14,6 +14,22 @@ ADMIN INTERACTIONS
 
 	function syncNavDots() {
 
+		document.querySelectorAll('.oa-nav-subitem[data-module]').forEach(function (subItem) {
+
+			var dot = subItem.querySelector('.oa-dot');
+			var toggle = document.querySelector('.oa-enable-toggle[data-module="' + subItem.dataset.module + '"]');
+
+			if (!dot || !toggle) {
+
+				return;
+
+			}
+
+			dot.classList.toggle('is-on', toggle.checked);
+			dot.classList.toggle('is-off', !toggle.checked);
+
+		});
+
 		document.querySelectorAll('.oa-nav-item[data-entry]').forEach(function (navItem) {
 
 			var dot = navItem.querySelector('.oa-dot');
@@ -33,7 +49,10 @@ ADMIN INTERACTIONS
 
 			}
 
-			var on = Array.prototype.some.call(toggles, function (toggle) {
+			var group = navItem.closest('.oa-nav-group');
+
+			// A group page may hold only one of its modules, so its sub-item dots carry the rest.
+			var on = group ? !!group.querySelector('.oa-nav-subitem .oa-dot.is-on') : Array.prototype.some.call(toggles, function (toggle) {
 
 				return toggle.checked;
 
@@ -41,22 +60,6 @@ ADMIN INTERACTIONS
 
 			dot.classList.toggle('is-on', on);
 			dot.classList.toggle('is-off', !on);
-
-		});
-
-		document.querySelectorAll('.oa-nav-subitem[data-module]').forEach(function (subItem) {
-
-			var dot = subItem.querySelector('.oa-dot');
-			var toggle = document.querySelector('.oa-enable-toggle[data-module="' + subItem.dataset.module + '"]');
-
-			if (!dot || !toggle) {
-
-				return;
-
-			}
-
-			dot.classList.toggle('is-on', toggle.checked);
-			dot.classList.toggle('is-off', !toggle.checked);
 
 		});
 

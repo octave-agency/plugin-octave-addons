@@ -1,7 +1,7 @@
 /*
 PERFORMANCE ADMIN
--- Async actions on the Performance page: cache purges, Safe Mode, Cloudflare,
--- font refresh, diagnostics and database cleanup. Every result is written
+-- Async actions on the Performance page: cache purges, Cloudflare, font
+-- refresh, diagnostics and database cleanup. Every result is written
 -- with textContent into a live region, so screen readers hear the outcome
 -- and nothing returned by the server is ever parsed as HTML
 ---------------------------------------------------------- */
@@ -221,12 +221,6 @@ PERFORMANCE ADMIN
 
 		}
 
-		var fontUrls = fonts.filter( function ( item ) {
-
-			return item.url;
-
-		} );
-
 		var stylesheets = fonts.filter( function ( item ) {
 
 			return item.stylesheet;
@@ -253,38 +247,31 @@ PERFORMANCE ADMIN
 
 		}
 
-		if ( fontUrls.length ) {
-
-			var fontList = document.querySelector( '[data-oa-perf-font-list]' );
-
-			fontUrls.forEach( function ( item ) {
-
-				if ( ! fontList || fontList.querySelector( '[data-oa-perf-add-font="' + CSS.escape( item.url ) + '"]' ) ) {
-
-					return;
-
-				}
-
-				var row = element( 'li' );
-				var button = element( 'button', 'button button-small', i18n.add );
-
-				button.type = 'button';
-				button.setAttribute( 'data-oa-perf-add-font', item.url );
-				row.appendChild( element( 'code', '', item.url ) );
-				row.appendChild( button );
-				fontList.appendChild( row );
-
-			} );
-
-		}
-
 	}
 
 	/*
 	ACTION BUTTONS
 	-- data-oa-perf-action names the AJAX action; data-scope, data-input and
-	-- data-confirm add a scope, a field value and a confirmation step
+	-- data-confirm add a scope, a field value and a confirmation step.
+	-- data-fields ("param:field-id ...") sends current, unsaved field values
+	-- and reruns the action whenever one of those fields changes
 	---------------------------------------------------------- */
+
+	function fieldsFor( button ) {
+
+		return ( button.getAttribute( 'data-fields' ) || '' ).split( ' ' ).filter( Boolean ).map( function ( pair ) {
+
+			var parts = pair.split( ':' );
+
+			return { param: parts[0], input: document.getElementById( parts[1] ) };
+
+		} ).filter( function ( field ) {
+
+			return field.input;
+
+		} );
+
+	}
 
 	function confirmFor( key ) {
 
@@ -298,7 +285,7 @@ PERFORMANCE ADMIN
 			title: i18n[ key + 'Title' ],
 			message: i18n[ key + 'Text' ],
 			confirmText: i18n[ key + 'Action' ],
-			destructive: 'safe' !== key
+			destructive: true
 		} );
 
 	}
@@ -321,6 +308,12 @@ PERFORMANCE ADMIN
 			params.value = input.value;
 
 		}
+
+		fieldsFor( button ).forEach( function ( field ) {
+
+			params[ field.param ] = field.input.value;
+
+		} );
 
 		button.disabled = true;
 		button.setAttribute( 'aria-busy', 'true' );
@@ -363,16 +356,6 @@ PERFORMANCE ADMIN
 
 			}
 
-			if ( data.reload ) {
-
-				window.setTimeout( function () {
-
-					window.location.reload();
-
-				}, 800 );
-
-			}
-
 		} ).catch( function () {
 
 			if ( region ) {
@@ -389,6 +372,26 @@ PERFORMANCE ADMIN
 		} );
 
 	}
+
+	entry.addEventListener( 'change', function ( event ) {
+
+		entry.querySelectorAll( '[data-oa-perf-action][data-fields]' ).forEach( function ( button ) {
+
+			var watched = fieldsFor( button ).some( function ( field ) {
+
+				return field.input === event.target;
+
+			} );
+
+			if ( watched && ! button.disabled ) {
+
+				runAction( button );
+
+			}
+
+		} );
+
+	} );
 
 	entry.addEventListener( 'click', function ( event ) {
 
@@ -411,71 +414,6 @@ PERFORMANCE ADMIN
 			}
 
 		} );
-
-	} );
-
-	/*
-	FONT PRELOAD PICKER
-	-- Adds a font URL to the preload list once, and warns past three
-	---------------------------------------------------------- */
-
-	var preloadField = document.getElementById( 'oa-performance-fonts-preload' );
-	var fontWarning = document.querySelector( '[data-oa-perf-font-warning]' );
-
-	function preloadLines() {
-
-		return preloadField ? preloadField.value.split( /\r?\n/ ).map( function ( line ) {
-
-			return line.trim();
-
-		} ).filter( Boolean ) : [];
-
-	}
-
-	function syncFontWarning() {
-
-		if ( fontWarning ) {
-
-			fontWarning.classList.toggle( 'oa-hidden', preloadLines().length <= 3 );
-
-		}
-
-	}
-
-	if ( preloadField ) {
-
-		preloadField.addEventListener( 'input', syncFontWarning );
-
-	}
-
-	entry.addEventListener( 'click', function ( event ) {
-
-		var button = event.target.closest( '[data-oa-perf-add-font]' );
-
-		if ( ! button || ! preloadField ) {
-
-			return;
-
-		}
-
-		var url = button.getAttribute( 'data-oa-perf-add-font' );
-		var lines = preloadLines();
-
-		if ( -1 === lines.indexOf( url ) ) {
-
-			lines.push( url );
-			preloadField.value = lines.join( '\n' );
-			preloadField.dispatchEvent( new Event( 'input', { bubbles: true } ) );
-
-		}
-
-		syncFontWarning();
-
-		if ( 'function' === typeof window.oaNotify ) {
-
-			window.oaNotify( lines.length > 3 ? i18n.fontTooMany : i18n.fontAdded, lines.length > 3 ? 'error' : 'success' );
-
-		}
 
 	} );
 

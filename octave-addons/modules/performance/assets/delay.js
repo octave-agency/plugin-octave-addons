@@ -1,8 +1,7 @@
 /*
 DELAYED SCRIPT LOADER
 -- Runs the scripts the server marked with data-oa-delay, in their original
--- document order, once the visitor first interacts (or after the optional
--- timeout). Scripts tied to a page element, such as maps and CAPTCHA, can be
+-- document order, once the visitor first interacts. Scripts tied to a page element, such as maps and CAPTCHA, can be
 -- released earlier when that element nears the viewport or gains focus;
 -- everything before them in the page runs first, so order is never broken
 -- Each script is recreated with its original attributes, so async, defer,
@@ -22,8 +21,6 @@ DELAYED SCRIPT LOADER
 
 	}
 
-	var loader = document.getElementById( 'oa-delay-loader' );
-	var timeout = loader ? parseInt( loader.getAttribute( 'data-timeout' ), 10 ) || 0 : 0;
 	var interactionEvents = [ 'pointerdown', 'mousemove', 'touchstart', 'keydown', 'wheel', 'scroll' ];
 	var supportsModules = 'noModule' in document.createElement( 'script' );
 	var loadedSources = {};
@@ -298,30 +295,5 @@ DELAYED SCRIPT LOADER
 		} );
 
 	} );
-
-	/*
-	TIMEOUT
-	-- Counts from the window load event, so a slow page is not cut short
-	---------------------------------------------------------- */
-
-	if ( timeout > 0 ) {
-
-		var startTimer = function () {
-
-			window.setTimeout( releaseAll, timeout * 1000 );
-
-		};
-
-		if ( 'complete' === document.readyState ) {
-
-			startTimer();
-
-		} else {
-
-			window.addEventListener( 'load', startTimer );
-
-		}
-
-	}
 
 } )();

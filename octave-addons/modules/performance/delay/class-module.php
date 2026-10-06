@@ -59,7 +59,6 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 			'services' => [],
 			'include'  => '',
 			'exclude'  => '',
-			'timeout'  => 0,
 		];
 
 	}
@@ -72,7 +71,6 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 		$clean['services'] = array_values( array_intersect( $services, array_keys( Octave_Addons_Perf_Script_Delayer::services() ) ) );
 		$clean['include']  = Octave_Addons_Perf::sanitize_lines( $input['include'] ?? '' );
 		$clean['exclude']  = Octave_Addons_Perf::sanitize_lines( $input['exclude'] ?? '' );
-		$clean['timeout']  = min( 60, absint( $input['timeout'] ?? 0 ) );
 
 		return $clean;
 
@@ -125,9 +123,8 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 		}
 
 		$loader = sprintf(
-			'<script src="%s" defer data-oa-no-delay data-timeout="%d" id="oa-delay-loader"></script>',
-			esc_url( add_query_arg( 'ver', Octave_Addons_Perf::asset_version( 'delay.js' ), Octave_Addons_Perf::asset_url( 'delay.js' ) ) ),
-			(int) $this->settings['timeout']
+			'<script src="%s" defer data-oa-no-delay id="oa-delay-loader"></script>',
+			esc_url( add_query_arg( 'ver', Octave_Addons_Perf::asset_version( 'delay.js' ), Octave_Addons_Perf::asset_url( 'delay.js' ) ) )
 		);
 
 		return Octave_Addons_Perf_Html::inject_before_body_end( $result['html'], $loader );
@@ -173,7 +170,7 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 		?>
 
-		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Delayed tools start after the visitor first scrolls, taps, clicks or presses a key. Analytics may record fewer visits from people who leave without interacting; set a timeout below if that matters more than load speed.', 'octave-addons' ); ?></p>
+		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Delayed tools start after the visitor first scrolls, taps, clicks or presses a key. Analytics may record fewer visits from people who leave without interacting.', 'octave-addons' ); ?></p>
 
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
@@ -234,24 +231,6 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 			$this->textarea_row( 'include', __( 'Also delay', 'octave-addons' ), __( 'Advanced. One pattern per line, matched against script URLs, ids and inline code. This is the only way a script from your own domain is delayed. Protected scripts are never delayed.', 'octave-addons' ), $s );
 			$this->textarea_row( 'exclude', __( 'Never delay', 'octave-addons' ), __( 'One pattern per line. A script can also opt out with the data-oa-no-delay attribute.', 'octave-addons' ), $s );
-
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Load anyway after', 'octave-addons' ),
-				'for'   => $this->field_id( 'timeout' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::number( [
-						'name'   => $this->field_name( 'timeout' ),
-						'id'     => $this->field_id( 'timeout' ),
-						'value'  => $s['timeout'],
-						'min'    => 0,
-						'max'    => 60,
-						'suffix' => __( 'seconds', 'octave-addons' ),
-						'help'   => __( '0 waits for interaction only. A value such as 8 loads delayed scripts that long after the page finishes loading, even without interaction.', 'octave-addons' ),
-					] );
-
-				},
-			] );
 
 			?>
 		</table>

@@ -117,12 +117,11 @@ function test_module_adds_loader_once_and_fails_open(): void {
 
 	$module = oa_module( 'performance-delay' );
 
-	$module->run( oa_set_settings( 'performance-delay', [ 'enabled' => true, 'services' => [ 'meta-pixel' ], 'timeout' => 8 ] ) );
+	$module->run( oa_set_settings( 'performance-delay', [ 'enabled' => true, 'services' => [ 'meta-pixel' ] ] ) );
 
 	$html = $module->transform( oa_page( '<script src="https://connect.facebook.net/en_US/fbevents.js"></script>' ) );
 
 	oa_assert_same( 1, substr_count( $html, 'id="oa-delay-loader"' ) );
-	oa_assert_contains( 'data-timeout="8"', $html );
 	oa_assert_contains( '</script></body>', $html, 'loader before </body>' );
 
 	$plain = oa_page( '<script src="/app.js"></script>' );

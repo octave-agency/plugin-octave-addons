@@ -371,6 +371,12 @@ FOCUS STATES
     height: 5px;
 }
 
+.octave-addons-wrap .oa-app .oa-nav-subitem.is-active {
+    background: var(--oa-accent-bg, rgba(43, 255, 134, 0.12));
+    color: var(--oa-text);
+    font-weight: 600;
+}
+
 .oa-sidebar-footer {
     display: flex;
     align-items: center;

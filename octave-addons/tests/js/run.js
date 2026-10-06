@@ -274,7 +274,7 @@ test( 'delayed scripts wait for interaction and keep their order', () => {
 	env.addScript( { type: 'text/oa-delayed', 'data-oa-delay': 'd', 'data-oa-src': 'https://d.test/d.js', 'data-oa-type': 'module' } );
 	env.addScript( { type: 'text/oa-delayed', 'data-oa-delay': 'd' }, 'E' );
 	env.addScript( { type: 'text/oa-delayed', 'data-oa-delay': 'a', 'data-oa-src': 'https://a.test/a.js' } );
-	env.addScript( { id: 'oa-delay-loader', 'data-timeout': '0' } );
+	env.addScript( { id: 'oa-delay-loader' } );
 
 	env.run( 'delay.js' );
 
@@ -311,19 +311,16 @@ test( 'delayed scripts wait for interaction and keep their order', () => {
 
 } );
 
-test( 'timeout releases scripts without interaction', () => {
+test( 'scripts wait for interaction, not a timer', () => {
 
 	const env = makeEnvironment( {} );
 
 	env.addScript( { type: 'text/oa-delayed', 'data-oa-delay': 'x' }, 'X' );
-	env.addScript( { id: 'oa-delay-loader', 'data-timeout': '5' } );
+	env.addScript( { id: 'oa-delay-loader' } );
 	env.run( 'delay.js' );
-
-	assert.deepStrictEqual( env.log, [] );
-
 	env.runTimers();
 
-	assert.strictEqual( env.log[ 0 ], 'inline:X' );
+	assert.deepStrictEqual( env.log, [] );
 
 } );
 

@@ -2,7 +2,7 @@
 
 /*
 FONT TESTS
--- Preload output, Google Fonts host validation, CSS rewriting, refresh
+-- Detected preloads, Google Fonts host validation, CSS rewriting, refresh
 -- failure handling and the frontend rewrite
 ---------------------------------------------------------- */
 
@@ -55,9 +55,17 @@ function oa_fake_google( bool $up = true ): void {
 PRELOAD
 ---------------------------------------------------------- */
 
+function oa_detected_fonts( array $urls, int $age = 0 ): void {
+
+	update_option( Octave_Addons_Module_Performance_Fonts::DETECTED_OPTION, [ 'urls' => $urls, 'time' => time() - $age ] );
+
+}
+
 function test_font_preloads_are_deduplicated_with_correct_attributes(): void {
 
-	$module = oa_fonts( [ 'preload' => "/wp-content/fonts/body.woff2\nhttps://example.com/fonts/head.woff?v=3" ] );
+	oa_detected_fonts( [ '/wp-content/fonts/body.woff2', 'https://example.com/fonts/head.woff?v=3' ] );
+
+	$module = oa_fonts();
 
 	add_filter( 'octave_addons_perf_preload_fonts', static function ( $urls ) {
 
@@ -87,11 +95,49 @@ function test_font_preloads_are_deduplicated_with_correct_attributes(): void {
 
 }
 
-function test_nothing_is_preloaded_unless_selected(): void {
+function test_stale_detection_skips_preloads_and_loads_the_detector(): void {
 
-	oa_fonts();
+	oa_detected_fonts( [ '/wp-content/fonts/body.woff2' ], 2 * DAY_IN_SECONDS );
 
-	oa_assert( ! has_filter( 'wp_preload_resources' ) && ! has_filter( 'wp_head' ) );
+	$module = oa_fonts();
+
+	oa_assert_same( [], $module->preload_list(), 'stale list not preloaded' );
+
+	Octave_Addons_Module_Performance_Fonts::enqueue_detector();
+
+	oa_assert( in_array( 'octave-addons-font-detect', $GLOBALS['oa_enqueued'] ?? [], true ), 'detector enqueued' );
+
+	oa_detected_fonts( [ '/wp-content/fonts/body.woff2' ] );
+	$GLOBALS['oa_enqueued'] = [];
+
+	Octave_Addons_Module_Performance_Fonts::enqueue_detector();
+
+	oa_assert_same( [], $GLOBALS['oa_enqueued'], 'fresh list, no detector' );
+
+}
+
+function test_detection_report_keeps_three_same_origin_font_files(): void {
+
+	$_POST = [ 'urls' => [
+		'https://example.com/wp-content/fonts/a.woff2',
+		'https://evil.test/x.woff2',
+		'/wp-content/fonts/b.woff',
+		'/wp-content/fonts/b.woff',
+		'/wp-content/fonts/c.ttf',
+		'javascript:alert(1)',
+		'/wp-content/fonts/d.woff2',
+		'/wp-content/fonts/e.woff2',
+	] ];
+
+	oa_json_call( [ 'Octave_Addons_Module_Performance_Fonts', 'ajax_detect' ] );
+
+	oa_assert_same( [ 'https://example.com/wp-content/fonts/a.woff2', '/wp-content/fonts/b.woff', '/wp-content/fonts/d.woff2' ], Octave_Addons_Module_Performance_Fonts::detected()['urls'] );
+
+	$_POST = [ 'urls' => [ '/wp-content/fonts/other.woff2' ] ];
+
+	oa_json_call( [ 'Octave_Addons_Module_Performance_Fonts', 'ajax_detect' ] );
+
+	oa_assert_same( 3, count( Octave_Addons_Module_Performance_Fonts::detected()['urls'] ), 'fresh list is not replaced' );
 
 }
 

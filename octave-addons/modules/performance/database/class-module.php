@@ -238,23 +238,20 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 				<button type="button" class="button" data-oa-perf-db-counts><?php esc_html_e( 'Refresh counts', 'octave-addons' ); ?></button>
 				<button type="button" class="button button-primary" data-oa-perf-db-run><?php esc_html_e( 'Clean up selected', 'octave-addons' ); ?></button>
 			</p>
-			<div class="oa-perf-result" data-oa-perf-db-result role="status" aria-live="polite">
-				<?php
+			<?php
 
-				if ( ! empty( $last['time'] ) ) {
+			// No whitespace inside the region, so :empty hides it until there is something to say.
+			$last_text = empty( $last['time'] ) ? '' : sprintf(
+				/* translators: 1: manual or scheduled, 2: relative time, 3: number removed. */
+				__( 'Last %1$s cleanup %2$s removed %3$d entries.', 'octave-addons' ),
+				'scheduled' === ( $last['source'] ?? '' ) ? __( 'scheduled', 'octave-addons' ) : __( 'manual', 'octave-addons' ),
+				Octave_Addons_Perf_Admin::time_ago( (int) $last['time'] ),
+				(int) array_sum( (array) ( $last['totals'] ?? [] ) )
+			);
 
-					printf(
-						/* translators: 1: manual or scheduled, 2: relative time, 3: number removed. */
-						esc_html__( 'Last %1$s cleanup %2$s removed %3$d entries.', 'octave-addons' ),
-						'scheduled' === ( $last['source'] ?? '' ) ? esc_html__( 'scheduled', 'octave-addons' ) : esc_html__( 'manual', 'octave-addons' ),
-						esc_html( Octave_Addons_Perf_Admin::time_ago( (int) $last['time'] ) ),
-						(int) array_sum( (array) ( $last['totals'] ?? [] ) )
-					);
+			?>
 
-				}
-
-				?>
-			</div>
+			<div class="oa-perf-result" data-oa-perf-db-result role="status" aria-live="polite"><?= esc_html( $last_text ); ?></div>
 		</div>
 
 		<table class="form-table oa-form-table" role="presentation">

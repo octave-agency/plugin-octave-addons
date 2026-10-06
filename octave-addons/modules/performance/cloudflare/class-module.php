@@ -127,7 +127,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 		if ( 'manual' !== $reason || empty( $s['purge_on_full'] ) ) {
 
-			$report['cloudflare'] = [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'Not purged. Turn on "Purge Cloudflare during a full purge" to include it, or use Purge everything in the Cloudflare section.', 'octave-addons' ) ];
+			$report['cloudflare'] = [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'Not purged. Turn on "Purge Cloudflare during a full purge" to include it.', 'octave-addons' ) ];
 
 			return $report;
 
@@ -265,10 +265,12 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 				'label' => __( 'Test', 'octave-addons' ),
 				'field' => function () {
 
+					$fields = 'zone_id:' . $this->field_id( 'zone_id' ) . ' token:' . $this->field_id( 'api_token' );
+
 					?>
 
-					<button type="button" class="button" data-oa-perf-action="oa_perf_cf_test" data-result="oa-perf-cf-result"><?php esc_html_e( 'Test connection', 'octave-addons' ); ?></button>
-					<span class="oa-help"><?php esc_html_e( 'Uses the saved credentials. Save settings first after changing them.', 'octave-addons' ); ?></span>
+					<button type="button" class="button" data-oa-perf-action="oa_perf_cf_test" data-fields="<?= esc_attr( $fields ); ?>" data-result="oa-perf-cf-result"><?php esc_html_e( 'Test connection', 'octave-addons' ); ?></button>
+					<span class="oa-help"><?php esc_html_e( 'Tests the values above, saved or not, and runs again when they change.', 'octave-addons' ); ?></span>
 					<div class="oa-perf-result" id="oa-perf-cf-result" role="status" aria-live="polite"></div>
 
 					<?php
@@ -279,28 +281,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 			Octave_Addons_Fields::section( [ 'label' => __( 'Automatic purging', 'octave-addons' ) ] );
 
 			$this->switch_row( 'auto_purge', __( 'Purge changed pages', 'octave-addons' ), __( 'Recommended. When content is published, updated or removed, its URL, the home page and related archives are purged in a batch shortly after.', 'octave-addons' ), $s );
-			$this->switch_row( 'purge_on_full', __( 'Purge Cloudflare during a full purge', 'octave-addons' ), __( 'When an administrator uses Clear Performance Cache, also purge everything in the zone. Settings saves never purge everything.', 'octave-addons' ), $s );
-
-			Octave_Addons_Fields::section( [ 'label' => __( 'Manual purge', 'octave-addons' ) ] );
-
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Purge URLs', 'octave-addons' ),
-				'for'   => 'oa-perf-cf-urls',
-				'field' => function () {
-
-					?>
-
-					<textarea id="oa-perf-cf-urls" class="large-text code" rows="3" spellcheck="false" placeholder="<?= esc_attr( home_url( '/' ) ); ?>"></textarea>
-					<p>
-						<button type="button" class="button" data-oa-perf-action="oa_perf_cf_purge" data-scope="urls" data-input="oa-perf-cf-urls" data-result="oa-perf-cf-purge-result"><?php esc_html_e( 'Purge these URLs', 'octave-addons' ); ?></button>
-						<button type="button" class="button" data-oa-perf-action="oa_perf_cf_purge" data-scope="everything" data-confirm="cfEverything" data-result="oa-perf-cf-purge-result"><?php esc_html_e( 'Purge everything', 'octave-addons' ); ?></button>
-					</p>
-					<div class="oa-perf-result" id="oa-perf-cf-purge-result" role="status" aria-live="polite"></div>
-
-					<?php
-
-				},
-			] );
+			$this->switch_row( 'purge_on_full', __( 'Purge Cloudflare during a full purge', 'octave-addons' ), __( 'When an administrator uses Clear Performance Cache or the admin bar, also purge everything in the zone. Settings saves never purge everything.', 'octave-addons' ), $s );
 
 			?>
 		</table>

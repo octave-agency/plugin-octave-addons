@@ -3,7 +3,7 @@
 /*
 PERFORMANCE ADMIN
 -- Everything the Performance page adds around the module panels: the status
--- header with the main Clear Performance Cache action, Safe Mode, diagnostics,
+-- cards with a clear action for each enabled cache, diagnostics,
 -- the admin bar shortcut, and the AJAX endpoints behind every async button
 -- Every endpoint checks the oa_perf_admin nonce and manage_options before
 -- doing anything, and answers with plain data the browser renders as text
@@ -24,11 +24,9 @@ class Octave_Addons_Perf_Admin {
 	/** AJAX action => handler method. */
 	protected const ENDPOINTS = [
 		'oa_perf_purge'          => 'ajax_purge',
-		'oa_perf_safe_mode'      => 'ajax_safe_mode',
 		'oa_perf_scan'           => 'ajax_scan',
 		'oa_perf_log_clear'      => 'ajax_log_clear',
 		'oa_perf_cf_test'        => 'ajax_cf_test',
-		'oa_perf_cf_purge'       => 'ajax_cf_purge',
 		'oa_perf_fonts_refresh'  => 'ajax_fonts_refresh',
 		'oa_perf_db_counts'      => 'ajax_db_counts',
 		'oa_perf_db_run'         => 'ajax_db_run',
@@ -49,13 +47,6 @@ class Octave_Addons_Perf_Admin {
 		foreach ( self::ENDPOINTS as $action => $method ) {
 
 			add_action( 'wp_ajax_' . $action, [ __CLASS__, $method ] );
-
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- token checked by the log service.
-		if ( isset( $_GET[ Octave_Addons_Perf_Log::SCAN_ARG ] ) ) {
-
-			Octave_Addons_Perf_Html::register( 'html', [ __CLASS__, 'collect_scan_details' ], 1 );
 
 		}
 
@@ -125,22 +116,16 @@ class Octave_Addons_Perf_Admin {
 			'i18n'    => [
 				'working'          => __( 'Working…', 'octave-addons' ),
 				'failed'           => __( 'The request failed. Check your connection and try again.', 'octave-addons' ),
-				'safeTitle'        => __( 'Apply Safe Mode?', 'octave-addons' ),
-				'safeText'         => __( 'This switches on native lazy loading, video lazy loading, link preloading, selected third-party delay and selected font preloads, and switches off file minification. Other modules are not changed.', 'octave-addons' ),
-				'safeAction'       => __( 'Apply Safe Mode', 'octave-addons' ),
-				'cfEverythingTitle' => __( 'Purge everything from Cloudflare?', 'octave-addons' ),
-				'cfEverythingText' => __( 'Every cached file in the zone is dropped, so the next visitors are served from the origin while Cloudflare refills its cache.', 'octave-addons' ),
-				'cfEverythingAction' => __( 'Purge everything', 'octave-addons' ),
 				'dbTitle'          => __( 'Run database cleanup?', 'octave-addons' ),
 				'dbText'           => __( 'The selected data is permanently deleted and cannot be restored. Take a database backup first if you may need any of it.', 'octave-addons' ),
 				'dbAction'         => __( 'Delete permanently', 'octave-addons' ),
+				'cfEverythingTitle'  => __( 'Purge everything from Cloudflare?', 'octave-addons' ),
+				'cfEverythingText'   => __( 'Every cached file in the zone is dropped, so the next visitors are served from the origin while Cloudflare refills its cache.', 'octave-addons' ),
+				'cfEverythingAction' => __( 'Purge everything', 'octave-addons' ),
 				'dbNothing'        => __( 'Select at least one item to clean up.', 'octave-addons' ),
 				/* translators: 1: item label, 2: number removed so far. */
 				'dbProgress'       => __( '%1$s: %2$d removed so far…', 'octave-addons' ),
 				'dbDone'           => __( 'Cleanup finished.', 'octave-addons' ),
-				'fontAdded'        => __( 'Font added to the preload list. Save settings to apply it.', 'octave-addons' ),
-				'fontTooMany'      => __( 'More than three fonts are selected for preloading. Preload only the two or three files used above the fold, or preloads will compete with more important resources.', 'octave-addons' ),
-				'add'              => __( 'Add to preload list', 'octave-addons' ),
 				'scanEmpty'        => __( 'Nothing was delayed, lazy loaded or rewritten on that page.', 'octave-addons' ),
 				'scanBypass'       => __( 'The scanned request was not optimised. Reason:', 'octave-addons' ),
 				'scanScripts'      => __( 'Scripts', 'octave-addons' ),
@@ -169,6 +154,7 @@ class Octave_Addons_Perf_Admin {
 		$last_purge = Octave_Addons_Perf_Cache::last_purge();
 		$cf_status  = Octave_Addons_Perf_Cloudflare::status();
 		$cf_enabled = ! empty( Octave_Addons_Perf::settings( 'performance-cloudflare' )['enabled'] );
+		$files_on   = ! empty( Octave_Addons_Perf::settings( 'performance-files' )['enabled'] );
 		$fonts      = Octave_Addons_Perf_Google_Fonts::manifest();
 		$db_last    = Octave_Addons_Perf_Cleanup::last();
 		$errors     = array_slice( Octave_Addons_Perf_Log::entries(), 0, 10 );
@@ -202,33 +188,10 @@ class Octave_Addons_Perf_Admin {
 
 			?>
 
-			<section class="oa-perf-hero">
-				<div class="oa-perf-hero-copy">
-					<h3><?php esc_html_e( 'Clear Performance Cache', 'octave-addons' ); ?></h3>
-					<p><?php esc_html_e( 'Removes Octave\'s generated files and asks every connected cache layer to purge. Each layer reports its own result below.', 'octave-addons' ); ?></p>
-				</div>
-				<div class="oa-perf-actions">
-					<button type="button" class="button button-primary" data-oa-perf-action="oa_perf_purge" data-scope="all" data-result="oa-perf-purge-result">
-						<?php esc_html_e( 'Clear Performance Cache', 'octave-addons' ); ?>
-					</button>
-					<button type="button" class="button" data-oa-perf-action="oa_perf_purge" data-scope="octave" data-result="oa-perf-purge-result">
-						<?php esc_html_e( 'Clear Octave cache only', 'octave-addons' ); ?>
-					</button>
-				</div>
-				<div class="oa-perf-inline-form">
-					<label for="oa-perf-purge-url"><?php esc_html_e( 'Purge one URL', 'octave-addons' ); ?></label>
-					<input type="url" id="oa-perf-purge-url" class="regular-text" placeholder="<?= esc_attr( home_url( '/' ) ); ?>">
-					<button type="button" class="button" data-oa-perf-action="oa_perf_purge" data-scope="url" data-input="oa-perf-purge-url" data-result="oa-perf-purge-result">
-						<?php esc_html_e( 'Purge URL', 'octave-addons' ); ?>
-					</button>
-				</div>
-				<div class="oa-perf-result" id="oa-perf-purge-result" role="status" aria-live="polite"></div>
-			</section>
-
 			<div class="oa-perf-status-grid">
 
 				<div class="oa-perf-card">
-					<span class="oa-panel-kicker"><?php esc_html_e( 'Octave cache', 'octave-addons' ); ?></span>
+					<span class="oa-panel-kicker"><?php esc_html_e( 'Minified files', 'octave-addons' ); ?></span>
 					<strong><?= esc_html( size_format( $size['bytes'] ) ?: '0 B' ); ?></strong>
 					<span>
 						<?php
@@ -242,7 +205,25 @@ class Octave_Addons_Perf_Admin {
 
 						?>
 					</span>
-					<?php self::render_last_purge( $last_purge ); ?>
+					<?php
+
+					self::render_last_purge( $last_purge );
+
+					if ( $files_on ) :
+
+					?>
+
+					<div class="oa-perf-actions">
+						<button type="button" class="button" data-oa-perf-action="oa_perf_purge" data-scope="files" data-result="oa-perf-purge-result">
+							<?php esc_html_e( 'Clear minified files', 'octave-addons' ); ?>
+						</button>
+					</div>
+
+					<?php
+
+					endif;
+
+					?>
 				</div>
 
 				<div class="oa-perf-card">
@@ -271,6 +252,18 @@ class Octave_Addons_Perf_Admin {
 
 					<strong><?= ! empty( $cf_status['ok'] ) ? esc_html__( 'Connected', 'octave-addons' ) : esc_html__( 'Configured', 'octave-addons' ); ?></strong>
 					<span><?= esc_html( (string) ( $cf_status['message'] ?? __( 'Not tested yet.', 'octave-addons' ) ) ); ?></span>
+					<div class="oa-perf-actions">
+						<button type="button" class="button" data-oa-perf-action="oa_perf_purge" data-scope="cloudflare" data-confirm="cfEverything" data-result="oa-perf-purge-result">
+							<?php esc_html_e( 'Purge Cloudflare', 'octave-addons' ); ?>
+						</button>
+					</div>
+					<div class="oa-perf-inline-form">
+						<label for="oa-perf-purge-url"><?php esc_html_e( 'Purge one URL', 'octave-addons' ); ?></label>
+						<input type="url" id="oa-perf-purge-url" class="regular-text" placeholder="<?= esc_attr( home_url( '/' ) ); ?>">
+						<button type="button" class="button" data-oa-perf-action="oa_perf_purge" data-scope="url" data-input="oa-perf-purge-url" data-result="oa-perf-purge-result">
+							<?php esc_html_e( 'Purge URL', 'octave-addons' ); ?>
+						</button>
+					</div>
 
 					<?php
 
@@ -343,16 +336,7 @@ class Octave_Addons_Perf_Admin {
 
 			</div>
 
-			<section class="oa-perf-section">
-				<div class="oa-perf-section-copy">
-					<h3><?php esc_html_e( 'Safe Mode', 'octave-addons' ); ?> <span class="oa-perf-badge is-safe"><?php esc_html_e( 'Recommended', 'octave-addons' ); ?></span></h3>
-					<p><?php esc_html_e( 'A compatibility-first preset: native image and iframe lazy loading, video lazy loading, link preloading, third-party delay for the services you have selected only, font preloads for the files you have chosen, and removal of the emoji and embed scripts. File minification, jQuery Migrate and block style removal stay off. Breakdance, WordPress core, jQuery and WooCommerce-sensitive pages are always left alone.', 'octave-addons' ); ?></p>
-				</div>
-				<button type="button" class="button" data-oa-perf-action="oa_perf_safe_mode" data-confirm="safe" data-result="oa-perf-safe-result">
-					<?php esc_html_e( 'Apply Safe Mode', 'octave-addons' ); ?>
-				</button>
-				<div class="oa-perf-result" id="oa-perf-safe-result" role="status" aria-live="polite"></div>
-			</section>
+			<div class="oa-perf-result" id="oa-perf-purge-result" role="status" aria-live="polite"></div>
 
 			<section class="oa-perf-section">
 				<div class="oa-perf-section-copy">
@@ -362,7 +346,7 @@ class Octave_Addons_Perf_Admin {
 
 						printf(
 							/* translators: %s: query argument. */
-							esc_html__( 'Add %s to any page while logged in as an administrator to see it without Octave\'s optimisations. To compare in a logged-out browser, use the site link below.', 'octave-addons' ),
+							esc_html__( 'Add %s to any page while logged in as an administrator to see it without performance optimisations. To compare in a logged-out browser, use the site link below.', 'octave-addons' ),
 							'<code>?' . esc_html( Octave_Addons_Perf_Context::BYPASS_ARG ) . '=1</code>'
 						);
 
@@ -489,74 +473,49 @@ class Octave_Addons_Perf_Admin {
 		self::guard();
 
 		$scope = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : 'all';
+		$url   = isset( $_POST['value'] ) ? esc_url_raw( wp_unslash( $_POST['value'] ) ) : '';
+
+		if ( 'url' === $scope && empty( Octave_Addons_Perf_Cache::normalize_urls( [ $url ] ) ) ) {
+
+			wp_send_json_error( [ 'message' => __( 'Enter a full URL on this site.', 'octave-addons' ) ] );
+
+		}
+
+		wp_send_json_success( [ 'layers' => array_values( self::purge_scope( $scope, $url ) ) ] );
+
+	}
+
+	/*
+	PURGE SCOPE
+	-- One manual purge: a single URL, the minified files, Cloudflare alone, or
+	-- every layer. Shared by the Performance page and the admin bar
+	---------------------------------------------------------- */
+
+	protected static function purge_scope( string $scope, string $url = '' ): array {
 
 		if ( 'url' === $scope ) {
 
-			$url = isset( $_POST['value'] ) ? esc_url_raw( wp_unslash( $_POST['value'] ) ) : '';
+			return Octave_Addons_Perf_Cache::purge_urls( [ $url ], 'manual' );
 
-			if ( empty( Octave_Addons_Perf_Cache::normalize_urls( [ $url ] ) ) ) {
+		}
 
-				wp_send_json_error( [ 'message' => __( 'Enter a full URL on this site.', 'octave-addons' ) ] );
+		if ( 'cloudflare' === $scope ) {
+
+			$label = __( 'Cloudflare', 'octave-addons' );
+
+			if ( ! Octave_Addons_Perf_Cloudflare::is_configured() ) {
+
+				return [ 'cloudflare' => [ 'label' => $label, 'status' => 'error', 'message' => __( 'Not configured: add a Zone ID and API token.', 'octave-addons' ) ] ];
 
 			}
 
-			wp_send_json_success( [ 'layers' => array_values( Octave_Addons_Perf_Cache::purge_urls( [ $url ], 'manual' ) ) ] );
+			$result = Octave_Addons_Perf_Cloudflare::purge_everything();
+
+			return [ 'cloudflare' => [ 'label' => $label, 'status' => $result['ok'] ? 'success' : 'error', 'message' => $result['message'] ] ];
 
 		}
 
-		$report = Octave_Addons_Perf_Cache::purge_all( 'octave' === $scope ? 'octave' : 'all', 'manual' );
-
-		wp_send_json_success( [ 'layers' => array_values( $report ) ] );
-
-	}
-
-	/*
-	AJAX SAFE MODE
-	-- Writes the preset through the normal settings sanitiser, naming only the
-	-- Performance modules as submitted so every other module keeps its values
-	---------------------------------------------------------- */
-
-	public static function ajax_safe_mode(): void {
-
-		self::guard();
-
-		$stored = get_option( OCTAVE_ADDONS_OPTION_KEY, [] );
-		$stored = is_array( $stored ) ? $stored : [];
-		$preset = self::safe_mode_preset();
-		$input  = [ Octave_Addons_Module_Manager::SUBMITTED_FIELD => implode( ',', array_keys( $preset ) ) ];
-
-		foreach ( $preset as $id => $values ) {
-
-			$current      = Octave_Addons_Perf::settings( $id );
-			$input[ $id ] = array_merge( $current, $values );
-
-		}
-
-		$input = array_merge( $stored, $input );
-
-		update_option( OCTAVE_ADDONS_OPTION_KEY, $input );
-
-		wp_send_json_success( [ 'message' => __( 'Safe Mode applied. Reloading…', 'octave-addons' ), 'reload' => true ] );
-
-	}
-
-	/*
-	SAFE MODE PRESET
-	-- Only keys listed here change. The delay and font modules keep whatever
-	-- services and files the administrator has already selected
-	---------------------------------------------------------- */
-
-	public static function safe_mode_preset(): array {
-
-		return [
-			'performance-cache'   => [ 'optimize_logged_in' => false ],
-			'performance-media'   => [ 'enabled' => true, 'images' => true, 'iframes' => true, 'videos' => true, 'facades' => false ],
-			'performance-preload' => [ 'enabled' => true ],
-			'performance-delay'   => [ 'enabled' => true ],
-			'performance-fonts'   => [ 'enabled' => true ],
-			'performance-bloat'   => [ 'enabled' => true, 'emojis' => true, 'embeds' => true, 'jquery_migrate' => false, 'block_styles' => false ],
-			'performance-files'   => [ 'enabled' => false, 'minify_css' => false, 'minify_js' => false, 'defer_js' => false ],
-		];
+		return Octave_Addons_Perf_Cache::purge_all( 'files' === $scope ? 'files' : 'all', 'manual' );
 
 	}
 
@@ -604,65 +563,6 @@ class Octave_Addons_Perf_Admin {
 		}
 
 		wp_send_json_success( $scan );
-
-	}
-
-	/*
-	COLLECT SCAN DETAILS
-	-- Runs only on a scan request: records the local font files the page's
-	-- stylesheets reference, for the font preload picker
-	---------------------------------------------------------- */
-
-	public static function collect_scan_details( string $html ): string {
-
-		if ( ! Octave_Addons_Perf_Log::is_reporting() || ! Octave_Addons_Perf::has_html_api() ) {
-
-			return $html;
-
-		}
-
-		$tags  = new WP_HTML_Tag_Processor( $html );
-		$fonts = [];
-
-		while ( $tags->next_tag( 'LINK' ) ) {
-
-			$href = (string) $tags->get_attribute( 'href' );
-
-			if ( 'stylesheet' !== strtolower( (string) $tags->get_attribute( 'rel' ) ) || ! Octave_Addons_Perf::is_same_origin( $href ) ) {
-
-				continue;
-
-			}
-
-			$path = self::local_path( $href );
-
-			if ( '' === $path || filesize( $path ) > MB_IN_BYTES ) {
-
-				continue;
-
-			}
-
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local stylesheet.
-			$css = (string) file_get_contents( $path );
-
-			preg_match_all( '/url\(\s*[\'"]?([^\'")]+\.(?:woff2|woff)(?:\?[^\'")]*)?)[\'"]?\s*\)/i', $css, $matches );
-
-			foreach ( $matches[1] ?? [] as $font ) {
-
-				$absolute = Octave_Addons_Perf_Minifier::absolutize_css_urls( 'url(' . $font . ')', $href );
-				$fonts[]  = substr( $absolute, 4, -1 );
-
-			}
-
-		}
-
-		foreach ( array_unique( $fonts ) as $font ) {
-
-			Octave_Addons_Perf_Log::note( 'fonts', [ 'url' => $font ] );
-
-		}
-
-		return $html;
 
 	}
 
@@ -737,37 +637,10 @@ class Octave_Addons_Perf_Admin {
 
 		self::guard();
 
-		$result = Octave_Addons_Perf_Cloudflare::test();
-
-		self::send_result( $result['ok'], [ 'message' => $result['message'] ] );
-
-	}
-
-	public static function ajax_cf_purge(): void {
-
-		self::guard();
-
-		if ( ! Octave_Addons_Perf_Cloudflare::is_configured() ) {
-
-			wp_send_json_error( [ 'message' => __( 'Save a Zone ID and API token first.', 'octave-addons' ) ] );
-
-		}
-
-		$mode = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : '';
-
-		if ( 'everything' === $mode ) {
-
-			$result = Octave_Addons_Perf_Cloudflare::purge_everything();
-
-		} else {
-
-			$raw    = isset( $_POST['value'] ) ? sanitize_textarea_field( wp_unslash( $_POST['value'] ) ) : '';
-			$urls   = Octave_Addons_Perf_Cache::normalize_urls( Octave_Addons_Perf::lines( $raw ) );
-			$result = empty( $urls )
-				? [ 'ok' => false, 'message' => __( 'Enter one or more full URLs on this site, one per line.', 'octave-addons' ) ]
-				: Octave_Addons_Perf_Cloudflare::purge_files( $urls );
-
-		}
+		// Unsaved field values, so a connection can be tested before saving. A blank token falls back to the saved one.
+		$zone_id = isset( $_POST['zone_id'] ) ? strtolower( sanitize_text_field( wp_unslash( $_POST['zone_id'] ) ) ) : null;
+		$token   = isset( $_POST['token'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['token'] ) ) ) : '';
+		$result  = Octave_Addons_Perf_Cloudflare::test( $zone_id, '' === $token ? null : $token );
 
 		self::send_result( $result['ok'], [ 'message' => $result['message'] ] );
 
@@ -885,12 +758,27 @@ class Octave_Addons_Perf_Admin {
 			'href'   => add_query_arg( 'scope', 'all', $base ),
 		] );
 
-		$bar->add_node( [
-			'parent' => 'oa-performance',
-			'id'     => 'oa-performance-octave',
-			'title'  => esc_html__( 'Clear Octave cache only', 'octave-addons' ),
-			'href'   => add_query_arg( 'scope', 'octave', $base ),
-		] );
+		if ( ! empty( Octave_Addons_Perf::settings( 'performance-files' )['enabled'] ) ) {
+
+			$bar->add_node( [
+				'parent' => 'oa-performance',
+				'id'     => 'oa-performance-files',
+				'title'  => esc_html__( 'Clear minified files', 'octave-addons' ),
+				'href'   => add_query_arg( 'scope', 'files', $base ),
+			] );
+
+		}
+
+		if ( ! empty( Octave_Addons_Perf::settings( 'performance-cloudflare' )['enabled'] ) && Octave_Addons_Perf_Cloudflare::is_configured() ) {
+
+			$bar->add_node( [
+				'parent' => 'oa-performance',
+				'id'     => 'oa-performance-cloudflare',
+				'title'  => esc_html__( 'Purge Cloudflare', 'octave-addons' ),
+				'href'   => add_query_arg( 'scope', 'cloudflare', $base ),
+			] );
+
+		}
 
 		if ( ! is_admin() ) {
 
@@ -923,18 +811,9 @@ class Octave_Addons_Perf_Admin {
 
 		}
 
-		$scope = isset( $_GET['scope'] ) ? sanitize_key( wp_unslash( $_GET['scope'] ) ) : 'all';
-
-		if ( 'url' === $scope ) {
-
-			$url    = isset( $_GET['url'] ) ? esc_url_raw( wp_unslash( $_GET['url'] ) ) : '';
-			$report = Octave_Addons_Perf_Cache::purge_urls( [ $url ], 'manual' );
-
-		} else {
-
-			$report = Octave_Addons_Perf_Cache::purge_all( 'octave' === $scope ? 'octave' : 'all', 'manual' );
-
-		}
+		$scope  = isset( $_GET['scope'] ) ? sanitize_key( wp_unslash( $_GET['scope'] ) ) : 'all';
+		$url    = isset( $_GET['url'] ) ? esc_url_raw( wp_unslash( $_GET['url'] ) ) : '';
+		$report = self::purge_scope( $scope, $url );
 
 		set_transient( 'oa_perf_notice_' . get_current_user_id(), $report, MINUTE_IN_SECONDS );
 

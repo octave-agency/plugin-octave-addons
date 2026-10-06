@@ -370,27 +370,3 @@ function test_breakdance_lazy_toggles_are_removed_from_builder_controls(): void 
 	oa_assert_same( [ $section ], $controls['designSections'], 'Video play button section kept' );
 
 }
-
-/*
-WORDPRESS BLOAT
----------------------------------------------------------- */
-
-function test_jquery_migrate_is_dropped_but_jquery_kept(): void {
-
-	$scripts = (object) [ 'registered' => [ 'jquery' => (object) [ 'deps' => [ 'jquery-core', 'jquery-migrate' ] ] ] ];
-
-	oa_assert( Octave_Addons_Module_Performance_Bloat::drop_jquery_migrate( $scripts ) );
-	oa_assert_same( [ 'jquery-core' ], $scripts->registered['jquery']->deps );
-	oa_assert( ! Octave_Addons_Module_Performance_Bloat::drop_jquery_migrate( $scripts ), 'second call is a no-op' );
-	oa_assert( ! Octave_Addons_Module_Performance_Bloat::drop_jquery_migrate( (object) [ 'registered' => [] ] ), 'no jquery registered' );
-
-}
-
-function test_bloat_module_is_off_by_default_with_safe_options_preselected(): void {
-
-	$defaults = oa_module( 'performance-bloat' )->get_defaults();
-
-	oa_assert( ! $defaults['enabled'] && $defaults['emojis'] && $defaults['embeds'] );
-	oa_assert( ! $defaults['jquery_migrate'] && ! $defaults['block_styles'], 'risky options stay off' );
-
-}
