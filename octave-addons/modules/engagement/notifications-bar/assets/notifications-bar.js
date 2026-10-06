@@ -11,6 +11,10 @@ NOTIFICATIONS BAR
 -- honest while it does.
 -- The height is read from an inner track rather than the bar itself, so the
 -- measurement never depends on the height being animated.
+-- Layout is never read straight after a style change: the height comes
+-- from ResizeObserver, which measures once the browser has laid the page
+-- out anyway, or from an animation frame where it is not available, and
+-- the animation length is read inside the first animation frame.
 -- Banners already carrying a cookie are removed before paint by the inline
 -- script the module prints beside the markup, not here.
 ---------------------------------------------------------- */
@@ -35,7 +39,7 @@ NOTIFICATIONS BAR
 	var pushes   = ! bar.classList.contains( 'oa-nb--bottom' );
 	var sticky   = bar.classList.contains( 'oa-nb--sticky' );
 
-	var duration = animated ? motionDuration() : 0;
+	var duration = 0;
 	var height   = 0;
 
 	// A fade keeps its height throughout, so the space it needs is already
@@ -63,11 +67,11 @@ NOTIFICATIONS BAR
 
 	/*
 	PUBLISH
-	-- Writes the measured height to the root element, where both the bar's own
+	-- Writes a measured height to the root element, where both the bar's own
 	-- height rule and the fixed header offset read it from.
 	---------------------------------------------------------- */
 
-	function publish() {
+	function publish( measured ) {
 
 		if ( ! live ) {
 
@@ -75,11 +79,42 @@ NOTIFICATIONS BAR
 
 		}
 
-		height = track.offsetHeight;
+		height = measured;
 
 		root.style.setProperty( '--oa-nb-height', height + 'px' );
 
 		sync();
+
+	}
+
+	/*
+	ON RESIZE
+	-- The border-box height ResizeObserver already measured, rounded as
+	-- offsetHeight would be.
+	---------------------------------------------------------- */
+
+	function onResize( entries ) {
+
+		var entry = entries[ entries.length - 1 ];
+		var box   = entry.borderBoxSize && entry.borderBoxSize[ 0 ] ? entry.borderBoxSize[ 0 ] : entry.borderBoxSize;
+
+		publish( box && box.blockSize ? Math.round( box.blockSize ) : track.offsetHeight );
+
+	}
+
+	/*
+	MEASURE
+	-- Without ResizeObserver: reads the height at the start of a frame, when
+	-- the layout is already up to date, then writes it.
+	---------------------------------------------------------- */
+
+	function measure() {
+
+		window.requestAnimationFrame( function () {
+
+			publish( track.offsetHeight );
+
+		} );
 
 	}
 
@@ -145,6 +180,8 @@ NOTIFICATIONS BAR
 	function reveal() {
 
 		window.requestAnimationFrame( function () {
+
+			duration = motionDuration();
 
 			window.requestAnimationFrame( function () {
 
@@ -256,15 +293,18 @@ NOTIFICATIONS BAR
 
 	} );
 
+	// ResizeObserver reports the first size itself, after layout and before paint.
 	if ( window.ResizeObserver ) {
 
-		observer = new window.ResizeObserver( publish );
+		observer = new window.ResizeObserver( onResize );
 
 		observer.observe( track );
 
 	} else {
 
-		window.addEventListener( 'resize', publish );
+		window.addEventListener( 'resize', measure );
+
+		measure();
 
 	}
 
@@ -283,8 +323,6 @@ NOTIFICATIONS BAR
 		}, { passive: true } );
 
 	}
-
-	publish();
 
 	if ( animated ) {
 

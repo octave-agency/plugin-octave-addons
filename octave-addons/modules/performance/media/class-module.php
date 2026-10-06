@@ -14,9 +14,12 @@ PERFORMANCE: MEDIA LAZY LOADING
 -- header always load eagerly, images without dimensions get width and height
 -- from the file, so the space is held before they arrive
 -- Posters of lazy videos below the hero wait until they near the viewport
--- Each page's real Largest Contentful Paint image, as browsers report it,
--- replaces the hero guess: an <img> is fetched first, and a CSS background
--- or video poster is preloaded for the screen sizes that reported it
+-- On Breakdance pages the hero section's background is read from the
+-- page's own Breakdance CSS and preloaded per screen width from the first
+-- view (see class-hero.php). Each page's real Largest Contentful Paint
+-- image, as browsers report it, then corrects any guess: an <img> is
+-- fetched first, and a CSS background or video poster is preloaded for the
+-- screen sizes that reported it
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -55,7 +58,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 	public function get_title(): string {
 
-		return __( 'Media Lazy Loading', 'octave-addons' );
+		return __( 'Lazy Loading', 'octave-addons' );
 
 	}
 
@@ -183,7 +186,8 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		$tags        = new WP_HTML_Tag_Processor( $html );
 		$image_index = 0;
 		$notes       = 0;
-		$prioritise  = $do_images && ! preg_match( '/fetchpriority\s*=\s*["\']?high/i', $html );
+		// Only an image or a preload can use fetchpriority; on a <section> or <div> it does nothing.
+		$prioritise  = $do_images && ! preg_match( '#<(?:img|link)\b[^>]*\bfetchpriority\s*=\s*["\']?high#i', $html );
 		$lazy_poster = ! empty( $s['lazy_posters'] ) && ! empty( $s['videos'] );
 		$hero_seen   = false;
 		$videos      = 0;
@@ -208,12 +212,17 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		}
 
-		// A reported image replaces the guess.
-		if ( ! empty( $lcp_images ) ) {
+		$hero = ! empty( $s['lcp'] ) ? self::hero( $html, $lcp ) : [];
+
+		// A reported image, or a Breakdance hero background found in the page, replaces the guess.
+		if ( ! empty( $lcp_images ) || ! empty( $hero ) ) {
 
 			$prioritise = false;
 
 		}
+
+		// With the hero known to be a background, no video poster is the hero, so the first one may wait too.
+		$hero_seen = ! empty( $hero );
 
 		// Only the first <header> is the site header; later ones belong to articles.
 		$header_depth = 0;
@@ -366,6 +375,17 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		$html = $tags->get_updated_html();
 
+		// The page's own hero goes in first, so a learned preload for the same image is not repeated.
+		$hero_markup = ! empty( $hero ) ? Octave_Addons_Perf_Hero::markup( $hero, $html ) : '';
+
+		if ( '' !== $hero_markup ) {
+
+			$html = self::inject_in_head( $html, $hero_markup );
+
+			Octave_Addons_Perf_Log::summary( 'lcp_hero', $hero );
+
+		}
+
 		if ( '' === $lcp_path ) {
 
 			return $html;
@@ -389,6 +409,48 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		}
 
 		return $html;
+
+	}
+
+	/*
+	HERO
+	-- The Breakdance hero background found in the page itself, so the first
+	-- visitor is already served its preload. Browsers' reports stay in
+	-- charge: when a fresh report names a different image for either
+	-- screen size, the page's guess is set aside and the report is used
+	---------------------------------------------------------- */
+
+	protected static function hero( string $html, array $lcp ): array {
+
+		$hero = Octave_Addons_Perf_Hero::discover( $html );
+
+		if ( empty( $hero['preloads'] ) ) {
+
+			return [];
+
+		}
+
+		$urls = array_column( $hero['preloads'], 'url' );
+
+		foreach ( Octave_Addons_Perf_Lcp::DEVICES as $device ) {
+
+			$record = (array) ( $lcp[ $device ] ?? [] );
+
+			if ( Octave_Addons_Perf_Lcp::is_stale( $lcp, $device ) || ! in_array( $record['kind'] ?? '', [ 'img', 'bg', 'poster' ], true ) ) {
+
+				continue;
+
+			}
+
+			if ( ! self::matches_any_file( (string) ( $record['url'] ?? '' ), $urls ) ) {
+
+				return [];
+
+			}
+
+		}
+
+		return $hero;
 
 	}
 
@@ -802,7 +864,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 			$this->switch_row( 'images', __( 'Images', 'octave-addons' ), __( 'Safe. Adds loading="lazy" and decoding="async" to images. The hero image is fetched first with fetchpriority="high"; add data-oa-no-priority to an image to pass it over. Images marked eager, high priority or opted out are left alone.', 'octave-addons' ), $s );
 			$this->switch_row( 'iframes', __( 'Iframes', 'octave-addons' ), __( 'Safe. Maps, embeds and other iframes load as they approach the viewport.', 'octave-addons' ), $s );
-			$this->switch_row( 'videos', __( 'Videos', 'octave-addons' ), __( 'Safe. HTML5 and Breakdance background videos wait until the page has loaded and they near the viewport before downloading; autoplay resumes then.', 'octave-addons' ), $s );
+			$this->switch_row( 'videos', __( 'Videos', 'octave-addons' ), __( 'Safe. HTML5 and Breakdance background videos download nothing until the page has loaded and they are actually in view; autoplay resumes then. With Save-Data or a 2G connection they show their poster and load only when played. A copy inside noscript keeps them playable without JavaScript.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Builder fixes', 'octave-addons' ) ] );
 
@@ -810,7 +872,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 			$this->switch_row( 'dimensions', __( 'Add missing image dimensions', 'octave-addons' ), __( 'Adds width and height from the file to images that have neither, so their space is held while they load and the page does not jump. Check images still keep their shape after turning this on.', 'octave-addons' ), $s );
 
 
-			$this->switch_row( 'lcp', __( 'Fetch each page\'s largest image first', 'octave-addons' ), __( 'Safe. Browsers report the image each page shows largest while loading (its Largest Contentful Paint), once for phones and once for larger screens, refreshed weekly. Later visits fetch it first: an image gets fetchpriority="high", and a CSS background or video poster is preloaded. Until a page has reported, the hero image is guessed as before.', 'octave-addons' ), $s );
+			$this->switch_row( 'lcp', __( 'Fetch each page\'s largest image first', 'octave-addons' ), __( 'Safe. On Breakdance pages the first section\'s background image is read from the page\'s own Breakdance CSS and preloaded from the very first view, with the right image for each screen width. Browsers also report the image each page shows largest while loading (its Largest Contentful Paint), once for phones and once for larger screens, refreshed weekly, and those reports correct any guess: an image gets fetchpriority="high", and a CSS background or video poster is preloaded.', 'octave-addons' ), $s );
 			$this->switch_row( 'lazy_posters', __( 'Load video posters as they near the viewport', 'octave-addons' ), __( 'Needs Videos above. The first video keeps its poster, unless a hero image comes before it, as do videos in the site header. Every other poster waits until its video is close to view. Add data-oa-no-lazy to a video to keep its poster.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Exclusions', 'octave-addons' ) ] );

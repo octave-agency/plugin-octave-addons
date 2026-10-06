@@ -2,8 +2,9 @@
 
 /*
 PAGE CACHE TESTS
--- Purges reach the site's page cache only for changes it cannot see, and
--- warming refills it in small batches without touching private pages
+-- Every purge reaches the site's page cache, content and menu saves
+-- included, and warming refills it in small batches without touching
+-- private pages
 ---------------------------------------------------------- */
 
 function oa_fake_page_cache( bool $fail = false ): void {
@@ -49,23 +50,27 @@ function oa_fake_page_cache( bool $fail = false ): void {
 
 }
 
-function test_page_cache_is_purged_only_for_changes_it_cannot_see(): void {
+function test_content_and_menu_purges_reach_the_page_cache(): void {
 
 	oa_fake_page_cache();
 
 	Octave_Addons_Perf_Cache::purge_urls( [ 'https://example.com/a/' ], 'content' );
 	Octave_Addons_Perf_Cache::purge_all( 'files', 'settings' );
 
-	oa_assert_same( [], $GLOBALS['oa_cache_calls'], 'post edits and file purges are left to the cache plugin' );
+	oa_assert_same( [ [ 'https://example.com/a/' ] ], $GLOBALS['oa_cache_calls'], 'a post edit reaches the cache; clearing only the minified files does not' );
+
+	Octave_Addons_Perf_Cache::purge_all( 'all', 'menu' );
+
+	oa_assert_same( 'all', $GLOBALS['oa_cache_calls'][1], 'a menu change empties the cache' );
 
 	$report = Octave_Addons_Perf_Cache::purge_all( 'all', 'breakdance' );
 
-	oa_assert_same( [ 'all' ], $GLOBALS['oa_cache_calls'] );
+	oa_assert_same( 'all', $GLOBALS['oa_cache_calls'][2] );
 	oa_assert_same( 'success', $report['page-cache-fakecache']['status'] );
 
 	Octave_Addons_Perf_Cache::purge_urls( [ 'https://example.com/hero/' ], 'lcp' );
 
-	oa_assert_same( [ 'https://example.com/hero/' ], $GLOBALS['oa_cache_calls'][1], 'a page whose LCP changed' );
+	oa_assert_same( [ 'https://example.com/hero/' ], $GLOBALS['oa_cache_calls'][3], 'a page whose LCP changed' );
 
 }
 

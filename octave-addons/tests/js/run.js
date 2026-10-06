@@ -516,6 +516,561 @@ test( 'without performance mode existing motion is unchanged', () => {
 } );
 
 /*
+HEADING SPLIT
+-- Real DOM-like nodes, so the markup the controller builds can be read back
+---------------------------------------------------------- */
+
+function splitEnvironment( markup ) {
+
+	function text( value ) {
+
+		return { nodeType: 3, textContent: value, parentNode: null };
+
+	}
+
+	function element( tag, attributes, children ) {
+
+		const node = {
+			nodeType: 1,
+			tagName: tag.toUpperCase(),
+			attributes: Object.keys( attributes || {} ).map( ( name ) => ( { name: name, value: attributes[ name ] } ) ),
+			childNodes: [],
+			style: { setProperty() {} },
+			classList: { add() {}, remove() {}, contains: () => false },
+			getAttribute( name ) {
+
+				const found = this.attributes.find( ( item ) => item.name === name );
+
+				return found ? found.value : null;
+
+			},
+			setAttribute( name, value ) {
+
+				const found = this.attributes.find( ( item ) => item.name === name );
+
+				if ( found ) {
+
+					found.value = String( value );
+
+				} else {
+
+					this.attributes.push( { name: name, value: String( value ) } );
+
+				}
+
+			},
+			hasAttribute( name ) {
+
+				return null !== this.getAttribute( name );
+
+			},
+			set className( value ) {
+
+				this.setAttribute( 'class', value );
+
+			},
+			get textContent() {
+
+				return this.childNodes.map( ( child ) => child.textContent ).join( '' );
+
+			},
+			set textContent( value ) {
+
+				this.childNodes = [ text( value ) ];
+
+			},
+			appendChild( child ) {
+
+				( child.isFragment ? child.childNodes : [ child ] ).forEach( ( item ) => this.childNodes.push( item ) );
+
+				return child;
+
+			},
+			replaceChild( replacement, original ) {
+
+				const index = this.childNodes.indexOf( original );
+
+				this.childNodes.splice( index, 1, ...( replacement.isFragment ? replacement.childNodes : [ replacement ] ) );
+
+			},
+			getBoundingClientRect: () => ( { top: 2400 } ),
+			getClientRects: () => [ 1 ],
+			closest: () => null,
+		};
+
+		( children || [] ).forEach( ( child ) => node.appendChild( 'string' === typeof child ? text( child ) : child ) );
+
+		return node;
+
+	}
+
+	function html( node ) {
+
+		if ( 3 === node.nodeType ) {
+
+			return node.textContent;
+
+		}
+
+		const attributes = node.attributes.map( ( item ) => ' ' + item.name + '="' + item.value + '"' ).join( '' );
+
+		return '<' + node.tagName.toLowerCase() + attributes + '>' + node.childNodes.map( html ).join( '' ) + '</' + node.tagName.toLowerCase() + '>';
+
+	}
+
+	const heading = markup( element );
+	const listeners = {};
+
+	const document = {
+		readyState: 'loading',
+		documentElement: { classList: { add() {}, remove() {}, contains: () => false } },
+		createElement: ( tag ) => element( tag ),
+		createTextNode: text,
+		createDocumentFragment: () => {
+
+			const fragment = element( 'fragment' );
+
+			fragment.isFragment = true;
+
+			return fragment;
+
+		},
+		addEventListener: ( name, callback ) => {
+
+			listeners[ name ] = callback;
+
+		},
+		querySelectorAll: ( selector ) => ( /bde-heading/.test( selector ) ? [ heading ] : [] ),
+	};
+
+	const window = {
+		innerHeight: 900,
+		document: document,
+		matchMedia: () => ( { matches: false } ),
+		setTimeout: () => 0,
+		clearTimeout: () => {},
+		addEventListener: () => {},
+		IntersectionObserver: function () {
+
+			this.observe = () => {};
+			this.disconnect = () => {};
+
+		},
+	};
+
+	vm.runInNewContext( fs.readFileSync( path.join( __dirname, '..', '..', 'modules', 'design', 'animations', 'assets', 'controller.js' ), 'utf8' ), { window: window, document: document, IntersectionObserver: window.IntersectionObserver } );
+
+	window.OctaveAnimations.preset( { split: 'words' } );
+	listeners.DOMContentLoaded();
+
+	return html( heading );
+
+}
+
+test( 'styling spans give their class to each word instead of nesting', () => {
+
+	const output = splitEnvironment( ( element ) => element( 'h2', { class: 'bde-heading' }, [
+		'Explore our ',
+		element( 'span', { class: 'text-gradient' }, [ 'virtual office & business address' ] ),
+		' services',
+	] ) );
+
+	assert.ok( output.includes( '<span class="oa-w text-gradient"><span class="oa-wi">virtual</span></span> <span class="oa-w text-gradient"><span class="oa-wi">office</span></span>' ), output );
+	assert.ok( output.includes( '<span class="oa-w text-gradient"><span class="oa-wi">address</span></span> <span class="oa-w"><span class="oa-wi">services</span></span>' ), 'plain words keep plain masks' );
+	assert.ok( ! /class="text-gradient"><span class="oa-w/.test( output ), 'no span wrapping the masks' );
+	assert.strictEqual( ( output.match( /text-gradient/g ) || [] ).length, 5, 'every gradient word' );
+
+} );
+
+test( 'spans with other attributes or markup inside are still walked into', () => {
+
+	const output = splitEnvironment( ( element ) => element( 'h2', { class: 'bde-heading' }, [
+		element( 'span', { class: 'brand', 'data-x': '1' }, [ 'Octave Agency' ] ),
+		' and ',
+		element( 'a', { href: '/x' }, [ 'more' ] ),
+	] ) );
+
+	assert.ok( output.includes( '<span class="brand" data-x="1"><span class="oa-w"><span class="oa-wi">Octave</span></span>' ), 'kept as a wrapper' );
+	assert.ok( output.includes( '<a href="/x"><span class="oa-w"><span class="oa-wi">more</span></span></a>' ), 'links kept' );
+
+} );
+
+/*
+LAZY VIDEO
+-- The video loader against fake videos, observers and connections
+---------------------------------------------------------- */
+
+function videoEnvironment( options ) {
+
+	const opts = options || {};
+	const listeners = {};
+	const observers = [];
+	const mutations = [];
+	const idle = [];
+	const videos = [];
+
+	function element( attributes, children ) {
+
+		const attrs = Object.assign( {}, attributes );
+
+		return {
+			nodeType: 1,
+			attrs: attrs,
+			children: children || [],
+			plays: 0,
+			loads: 0,
+			preload: attrs.preload || '',
+			autoplay: false,
+			controls: false,
+			poster: '',
+			getAttribute: ( name ) => ( name in attrs ? attrs[ name ] : null ),
+			setAttribute: ( name, value ) => {
+
+				attrs[ name ] = String( value );
+
+			},
+			hasAttribute: ( name ) => name in attrs,
+			removeAttribute: ( name ) => {
+
+				delete attrs[ name ];
+
+			},
+			matches( selector ) {
+
+				return 'video[data-oa-lazy-video]' === selector && 'data-oa-lazy-video' in attrs;
+
+			},
+			querySelector( selector ) {
+
+				return this.querySelectorAll( selector )[ 0 ] || null;
+
+			},
+			querySelectorAll( selector ) {
+
+				if ( 'source[data-oa-src]' === selector ) {
+
+					return this.children.filter( ( child ) => child.hasAttribute( 'data-oa-src' ) );
+
+				}
+
+				return find( this.children, selector );
+
+			},
+			load() {
+
+				this.loads++;
+
+			},
+			play() {
+
+				this.plays++;
+
+				return Promise.resolve();
+
+			},
+		};
+
+	}
+
+	function find( list, selector ) {
+
+		if ( 'video[data-oa-lazy-video]' === selector ) {
+
+			return list.filter( ( item ) => item.hasAttribute && item.hasAttribute( 'data-oa-lazy-video' ) );
+
+		}
+
+		if ( 'video' === selector ) {
+
+			return list.filter( ( item ) => item.hasAttribute && item.hasAttribute( 'data-oa-lazy-video' ) );
+
+		}
+
+		if ( /data-oa-poster\]/.test( selector ) ) {
+
+			return list.filter( ( item ) => item.hasAttribute && item.hasAttribute( 'data-oa-poster' ) && ! item.hasAttribute( 'data-oa-poster-watched' ) );
+
+		}
+
+		return [];
+
+	}
+
+	function on( target, name, callback ) {
+
+		( listeners[ target + ':' + name ] = listeners[ target + ':' + name ] || [] ).push( callback );
+
+	}
+
+	const document = {
+		readyState: opts.readyState || 'complete',
+		body: {},
+		querySelectorAll: ( selector ) => find( videos, selector ),
+		addEventListener: ( name, callback ) => on( 'document', name, callback ),
+	};
+
+	function IntersectionObserver( callback, config ) {
+
+		this.callback = callback;
+		this.config = config;
+		this.observed = [];
+		this.observe = ( target ) => this.observed.push( target );
+		this.unobserve = ( target ) => {
+
+			this.observed = this.observed.filter( ( item ) => item !== target );
+
+		};
+		observers.push( this );
+
+	}
+
+	function MutationObserver( callback ) {
+
+		this.observe = () => mutations.push( callback );
+
+	}
+
+	const window = {
+		devicePixelRatio: opts.dpr || 1,
+		IntersectionObserver: IntersectionObserver,
+		MutationObserver: MutationObserver,
+		requestIdleCallback: ( callback ) => idle.push( callback ),
+		setTimeout: ( callback ) => idle.push( callback ),
+		addEventListener: ( name, callback ) => on( 'window', name, callback ),
+	};
+
+	function run() {
+
+		vm.runInNewContext( fs.readFileSync( path.join( __dirname, '..', '..', 'modules', 'breakdance', 'lazy-load', 'assets', 'lazy-video.js' ), 'utf8' ), {
+			window: window,
+			document: document,
+			navigator: { connection: opts.connection || {} },
+			Promise: Promise,
+		} );
+
+	}
+
+	function fire( target, name, event ) {
+
+		( listeners[ target + ':' + name ] || [] ).slice().forEach( ( callback ) => callback( event || {} ) );
+
+	}
+
+	function runIdle() {
+
+		idle.splice( 0 ).forEach( ( callback ) => callback() );
+
+	}
+
+	// The activation observer is the one with no margin.
+	function viewport() {
+
+		return observers.find( ( observer ) => '0px' === observer.config.rootMargin );
+
+	}
+
+	return { element, videos, run, fire, runIdle, viewport, observers, mutations };
+
+}
+
+function parkedVideo( env, extra ) {
+
+	const source = env.element( { 'data-oa-src': '/hero.mp4', type: 'video/mp4' } );
+	const video = env.element( Object.assign( { 'data-oa-lazy-video': '', 'data-oa-autoplay': '', 'data-oa-preload': 'metadata', preload: 'none' }, extra || {} ), [ source ] );
+
+	env.videos.push( video );
+
+	return { video, source };
+
+}
+
+test( 'parked videos load only once genuinely in the viewport', () => {
+
+	const env = videoEnvironment();
+	const { video, source } = parkedVideo( env );
+
+	env.run();
+	env.runIdle();
+
+	const observer = env.viewport();
+
+	assert.ok( observer, 'observed with no margin' );
+	assert.strictEqual( observer.config.threshold, 0.01 );
+	assert.strictEqual( source.getAttribute( 'src' ), null, 'still parked' );
+	assert.strictEqual( video.preload, 'none', 'never preload="auto" early' );
+
+	observer.callback( [ { target: video, isIntersecting: false, intersectionRatio: 0 } ] );
+
+	assert.strictEqual( source.getAttribute( 'src' ), null, 'near is not in view' );
+
+	observer.callback( [ { target: video, isIntersecting: true, intersectionRatio: 0.4 } ] );
+
+	assert.strictEqual( source.getAttribute( 'src' ), '/hero.mp4', 'restored' );
+	assert.strictEqual( video.preload, 'auto' );
+	assert.strictEqual( video.autoplay, true );
+	assert.strictEqual( video.loads, 1 );
+	assert.strictEqual( video.plays, 1 );
+
+	observer.callback( [ { target: video, isIntersecting: true, intersectionRatio: 1 } ] );
+
+	assert.strictEqual( video.loads, 1, 'activated once' );
+
+} );
+
+test( 'nothing activates before the page has loaded', () => {
+
+	const env = videoEnvironment( { readyState: 'interactive' } );
+
+	parkedVideo( env );
+	env.run();
+	env.runIdle();
+
+	assert.strictEqual( env.viewport(), undefined, 'waiting for load' );
+
+	env.fire( 'window', 'load' );
+	env.runIdle();
+
+	assert.ok( env.viewport(), 'starts after load and idle' );
+
+} );
+
+test( 'save-data and slow connections keep posters and wait for the viewer', () => {
+
+	[ { saveData: true }, { effectiveType: '2g' }, { effectiveType: 'slow-2g' } ].forEach( ( connection ) => {
+
+		const env = videoEnvironment( { connection: connection } );
+		const { video, source } = parkedVideo( env, { 'data-oa-poster': '/p.jpg' } );
+
+		env.run();
+		env.runIdle();
+
+		assert.strictEqual( env.viewport().observed.length, 0, JSON.stringify( connection ) + ' not observed' );
+		assert.strictEqual( video.controls, true, 'controls offered' );
+		assert.strictEqual( source.getAttribute( 'src' ), null, 'nothing downloads' );
+
+		env.fire( 'document', 'play', { target: video } );
+
+		assert.strictEqual( source.getAttribute( 'src' ), '/hero.mp4', 'deliberate playback loads it' );
+		assert.strictEqual( video.autoplay, false, 'no autoplay on a constrained connection' );
+		assert.strictEqual( video.plays, 1 );
+
+	} );
+
+} );
+
+test( 'videos added later are watched once each', () => {
+
+	const env = videoEnvironment();
+
+	env.run();
+	env.runIdle();
+
+	const { video } = parkedVideo( env );
+	const wrapper = env.element( {}, [ video ] );
+
+	env.mutations[ 0 ]( [ { addedNodes: [ wrapper ] } ] );
+	env.mutations[ 0 ]( [ { addedNodes: [ wrapper ] } ] );
+
+	assert.deepStrictEqual( env.viewport().observed, [ video ] );
+
+} );
+
+test( 'parked posters return at the size they are shown', () => {
+
+	const env = videoEnvironment( { dpr: 2 } );
+	const { video } = parkedVideo( env, { 'data-oa-poster': '/poster.jpg', 'data-oa-poster-srcset': '/poster-768x433.jpg 768w, /poster.jpg 1280w' } );
+
+	env.run();
+
+	const posters = env.observers.find( ( observer ) => '600px 0px' === observer.config.rootMargin );
+
+	posters.callback( [ { target: video, isIntersecting: true, boundingClientRect: { width: 360 } } ] );
+
+	assert.strictEqual( video.poster, '/poster-768x433.jpg', '360px at 2x needs 720px' );
+	assert.strictEqual( video.getAttribute( 'data-oa-poster' ), null );
+
+} );
+
+/*
+NOTIFICATIONS BAR
+-- Layout is only read where the browser has already laid out the page
+---------------------------------------------------------- */
+
+test( 'notifications bar never reads layout straight after writing styles', () => {
+
+	const styles = {};
+	const log = [];
+	const frames = [];
+	let resize = null;
+
+	const track = {};
+
+	Object.defineProperty( track, 'offsetHeight', { get: () => {
+
+		log.push( 'read' );
+
+		return 40;
+
+	} } );
+
+	const bar = {
+		classList: { contains: ( name ) => 'oa-nb--animated' === name, add: () => {}, remove: () => {} },
+		getAttribute: () => null,
+		querySelector: ( selector ) => ( '.oa-nb__track' === selector ? track : null ),
+		addEventListener: () => {},
+	};
+
+	const root = {
+		style: { setProperty: ( name, value ) => {
+
+			styles[ name ] = value;
+			log.push( 'write' );
+
+		}, removeProperty: () => {} },
+		classList: { add: () => {}, remove: () => {} },
+	};
+
+	const window = {
+		pageYOffset: 0,
+		location: { protocol: 'https:' },
+		ResizeObserver: function ( callback ) {
+
+			resize = callback;
+			this.observe = () => {};
+
+		},
+		getComputedStyle: () => {
+
+			log.push( 'style' );
+
+			return { getPropertyValue: () => '300ms' };
+
+		},
+		requestAnimationFrame: ( callback ) => frames.push( callback ),
+		setTimeout: () => 0,
+		clearTimeout: () => {},
+		addEventListener: () => {},
+	};
+
+	vm.runInNewContext( fs.readFileSync( path.join( __dirname, '..', '..', 'modules', 'engagement', 'notifications-bar', 'assets', 'notifications-bar.js' ), 'utf8' ), {
+		window: window,
+		document: { getElementById: () => bar, documentElement: root },
+	} );
+
+	assert.deepStrictEqual( log, [], 'nothing measured while the script runs' );
+
+	resize( [ { borderBoxSize: [ { blockSize: 40.4 } ] } ] );
+
+	assert.strictEqual( styles[ '--oa-nb-height' ], '40px', 'height from ResizeObserver' );
+	assert.ok( ! log.includes( 'read' ), 'no offsetHeight read' );
+
+	frames.shift()();
+
+	assert.ok( log.includes( 'style' ), 'animation length read inside a frame' );
+
+} );
+
+/*
 MINIFIED ASSETS
 -- Every frontend asset ships a minified copy built from its current source
 ---------------------------------------------------------- */

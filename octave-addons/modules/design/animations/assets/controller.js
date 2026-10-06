@@ -112,9 +112,89 @@ SCROLL ANIMATION CONTROLLER
 	-- Wraps each word of a heading's text nodes in a mask, walking into
 	-- links, spans and inline styling instead of flattening them. Line
 	-- breaks, icons, SVGs and images are left exactly where they were.
+	-- A plain styling span that only holds text, such as
+	-- <span class="text-gradient">, is not nested around the words: its
+	-- class and style move onto each word's mask instead, giving
+	-- <span class="oa-w text-gradient"><span class="oa-wi">word</span></span>
 	---------------------------------------------------------- */
 
 	var skipTags = /^(BR|SVG|IMG|I|SCRIPT|STYLE|TEXTAREA|SELECT|CANVAS|VIDEO|IFRAME|PICTURE)$/;
+
+	/*
+	IS STYLING SPAN
+	-- A span with nothing but a class and inline style, holding only text
+	---------------------------------------------------------- */
+
+	function isStylingSpan( element ) {
+
+		if ( 'SPAN' !== element.tagName.toUpperCase() || ! element.childNodes.length ) {
+
+			return false;
+
+		}
+
+		var attributes = Array.prototype.every.call( element.attributes, function ( attribute ) {
+
+			return 'class' === attribute.name || 'style' === attribute.name;
+
+		} );
+
+		return attributes && Array.prototype.every.call( element.childNodes, function ( child ) {
+
+			return 3 === child.nodeType;
+
+		} );
+
+	}
+
+	/*
+	SPLIT TEXT
+	-- One text into masked words, each mask carrying any class and style
+	-- taken from the styling span it replaces
+	---------------------------------------------------------- */
+
+	function splitText( text, words, className, style ) {
+
+		var fragment = document.createDocumentFragment();
+
+		text.split( /(\s+)/ ).forEach( function ( part ) {
+
+			if ( ! part ) {
+
+				return;
+
+			}
+
+			if ( ! part.trim() ) {
+
+				fragment.appendChild( document.createTextNode( part ) );
+
+				return;
+
+			}
+
+			var outer = document.createElement( 'span' );
+			var inner = document.createElement( 'span' );
+
+			outer.className = className ? 'oa-w ' + className : 'oa-w';
+			inner.className = 'oa-wi';
+			inner.textContent = part;
+
+			if ( style ) {
+
+				outer.setAttribute( 'style', style );
+
+			}
+
+			outer.appendChild( inner );
+			fragment.appendChild( outer );
+			words.push( outer );
+
+		} );
+
+		return fragment;
+
+	}
 
 	function splitNode( node, words ) {
 
@@ -122,11 +202,21 @@ SCROLL ANIMATION CONTROLLER
 
 			if ( 1 === child.nodeType ) {
 
-				if ( ! skipTags.test( child.tagName.toUpperCase() ) ) {
+				if ( skipTags.test( child.tagName.toUpperCase() ) ) {
 
-					splitNode( child, words );
+					return;
 
 				}
+
+				if ( isStylingSpan( child ) && child.textContent.trim() ) {
+
+					node.replaceChild( splitText( child.textContent, words, ( child.getAttribute( 'class' ) || '' ).trim(), child.getAttribute( 'style' ) ), child );
+
+					return;
+
+				}
+
+				splitNode( child, words );
 
 				return;
 
@@ -138,37 +228,7 @@ SCROLL ANIMATION CONTROLLER
 
 			}
 
-			var fragment = document.createDocumentFragment();
-
-			child.textContent.split( /(\s+)/ ).forEach( function ( part ) {
-
-				if ( ! part ) {
-
-					return;
-
-				}
-
-				if ( ! part.trim() ) {
-
-					fragment.appendChild( document.createTextNode( part ) );
-
-					return;
-
-				}
-
-				var outer = document.createElement( 'span' );
-				var inner = document.createElement( 'span' );
-
-				outer.className = 'oa-w';
-				inner.className = 'oa-wi';
-				inner.textContent = part;
-				outer.appendChild( inner );
-				fragment.appendChild( outer );
-				words.push( outer );
-
-			} );
-
-			node.replaceChild( fragment, child );
+			node.replaceChild( splitText( child.textContent, words, '', null ), child );
 
 		} );
 

@@ -283,7 +283,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 			Octave_Addons_Fields::section( [ 'label' => __( 'Automatic purging', 'octave-addons' ) ] );
 
 			$this->switch_row( 'auto_purge', __( 'Purge changed pages', 'octave-addons' ), __( 'Recommended. When content is published, updated or removed, its URL, the home page and related archives are purged in a batch shortly after.', 'octave-addons' ), $s );
-			$this->switch_row( 'purge_on_full', __( 'Purge Cloudflare during a full purge', 'octave-addons' ), __( 'When an administrator uses Clear Performance Cache or the admin bar, or a Breakdance header, footer, template, global block or global style changes, also purge everything in the zone. Settings saves never purge everything.', 'octave-addons' ), $s );
+			$this->switch_row( 'purge_on_full', __( 'Purge Cloudflare during a full purge', 'octave-addons' ), __( 'When an administrator uses Clear cache, or a Breakdance header, footer, template, global block or global style changes, also purge everything in the zone. Settings saves never purge everything.', 'octave-addons' ), $s );
 
 			?>
 		</table>

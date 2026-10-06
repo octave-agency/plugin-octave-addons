@@ -21,6 +21,11 @@ require_once __DIR__ . '/class-store.php';
 require_once __DIR__ . '/class-log.php';
 require_once __DIR__ . '/class-cache.php';
 require_once __DIR__ . '/class-page-cache.php';
+require_once __DIR__ . '/class-varnish.php';
+require_once __DIR__ . '/class-disk-cache.php';
+require_once __DIR__ . '/class-sessions.php';
+require_once __DIR__ . '/class-css.php';
+require_once __DIR__ . '/class-hero.php';
 require_once __DIR__ . '/class-html.php';
 require_once __DIR__ . '/class-cloudflare.php';
 require_once __DIR__ . '/class-cleanup.php';
@@ -35,6 +40,75 @@ class Octave_Addons_Perf {
 
 	/** Admin group id, named by the performance/ area folder. */
 	public const GROUP = 'performance';
+
+	/** @var Octave_Addons_Module_Manager|null Manager used instead of the plugin's own, by tests and tools. */
+	protected static ?Octave_Addons_Module_Manager $manager = null;
+
+	/*
+	USE MANAGER
+	-- Points is_enabled() at a module manager built outside the plugin's
+	-- normal boot, such as the test suite's
+	---------------------------------------------------------- */
+
+	public static function use_manager( ?Octave_Addons_Module_Manager $manager ): void {
+
+		self::$manager = $manager;
+
+	}
+
+	protected static function manager(): ?Octave_Addons_Module_Manager {
+
+		if ( null !== self::$manager ) {
+
+			return self::$manager;
+
+		}
+
+		return class_exists( 'Octave_Addons' ) ? Octave_Addons::instance()->modules : null;
+
+	}
+
+	/*
+	IS ENABLED
+	-- The one answer to "is Performance switched on?": true when at least
+	-- one module an administrator can switch on in the Performance group
+	-- is on. Read from the registered modules, so a new module counts
+	-- without a list to keep up to date. Hidden or always-enabled modules,
+	-- such as the cache coordinator and the Breakdance lazy-load policy,
+	-- never count: they run whatever the administrator chose
+	---------------------------------------------------------- */
+
+	public static function is_enabled(): bool {
+
+		$manager = self::manager();
+		$enabled = false;
+
+		foreach ( null !== $manager ? $manager->all() : [] as $id => $module ) {
+
+			if ( self::GROUP !== $manager->group_for( (string) $id ) || ! $module->show_in_admin() || $module->is_always_enabled() ) {
+
+				continue;
+
+			}
+
+			if ( ! empty( $manager->settings_for( (string) $id )['enabled'] ) ) {
+
+				$enabled = true;
+
+				break;
+
+			}
+
+		}
+
+		/**
+		 * Filters whether any Performance feature is switched on.
+		 *
+		 * @param bool $enabled Whether a user-facing Performance module is enabled.
+		 */
+		return (bool) apply_filters( 'octave_addons_perf_enabled', $enabled );
+
+	}
 
 	/*
 	SETTINGS

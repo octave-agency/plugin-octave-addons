@@ -27,10 +27,11 @@ class Octave_Addons_Perf_Html {
 
 	/** Transformer feature => what the timings call it. */
 	public const TIMING_NAMES = [
-		'media' => 'oa-media',
-		'delay' => 'oa-delay',
-		'fonts' => 'oa-fonts',
-		'files' => 'oa-css-inline',
+		'media'        => 'oa-media',
+		'delay'        => 'oa-delay',
+		'fonts'        => 'oa-fonts',
+		'files'        => 'oa-css-inline',
+		'files-bundle' => 'oa-css-bundle',
 	];
 
 	/** @var array<int, array{feature: string, callback: callable, priority: int, needed: ?callable}> */

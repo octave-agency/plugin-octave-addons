@@ -36,7 +36,7 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 	public function get_title(): string {
 
-		return __( 'Third-Party Script Delay', 'octave-addons' );
+		return __( 'Script Delay', 'octave-addons' );
 
 	}
 

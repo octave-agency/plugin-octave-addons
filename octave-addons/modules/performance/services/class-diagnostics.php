@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Octave_Addons_Perf_Diagnostics {
 
 	/** Response headers that report a cache hit or miss, in the order they are trusted. */
-	protected const CACHE_HEADERS = [ 'x-litespeed-cache', 'cf-cache-status', 'x-cache', 'x-proxy-cache', 'x-kinsta-cache', 'x-cache-status', 'x-sucuri-cache' ];
+	protected const CACHE_HEADERS = [ 'x-octave-cache', 'x-litespeed-cache', 'cf-cache-status', 'x-cache', 'x-proxy-cache', 'x-kinsta-cache', 'x-cache-status', 'x-sucuri-cache' ];
 
 	/*
 	NOTE ASSETS
@@ -125,11 +125,19 @@ class Octave_Addons_Perf_Diagnostics {
 			] ),
 		];
 
+		$blockers = is_wp_error( $plain ) ? [] : self::cache_blockers( $plain );
+
+		$details[] = [
+			'heading' => __( 'What stops the page being cached', 'octave-addons' ),
+			'rows'    => $blockers ?: [ __( 'Nothing: the response sets no cookies and allows caching.', 'octave-addons' ) ],
+		];
+
 		$names = [
 			'oa-media'      => __( 'Media processing', 'octave-addons' ),
 			'oa-delay'      => __( 'Third-party delay', 'octave-addons' ),
 			'oa-fonts'      => __( 'Font rewriting', 'octave-addons' ),
 			'oa-css-inline' => __( 'Stylesheet inlining', 'octave-addons' ),
+			'oa-css-bundle' => __( 'Breakdance CSS bundle', 'octave-addons' ),
 			'oa-total'      => __( 'Total HTML processing', 'octave-addons' ),
 		];
 		$rows  = [];
@@ -175,7 +183,9 @@ class Octave_Addons_Perf_Diagnostics {
 			],
 		];
 
-		$details[] = [ 'heading' => __( 'Largest Contentful Paint', 'octave-addons' ), 'rows' => self::lcp_rows( Octave_Addons_Perf_Lcp::entry( Octave_Addons_Perf_Lcp::path( $url ) ) ) ];
+		$details[] = [ 'heading' => __( 'Largest Contentful Paint', 'octave-addons' ), 'rows' => array_merge( self::hero_rows( (array) ( $summary['lcp_hero'] ?? [] ) ), self::lcp_rows( Octave_Addons_Perf_Lcp::entry( Octave_Addons_Perf_Lcp::path( $url ) ) ) ) ];
+		$details[] = [ 'heading' => __( 'Render-blocking CSS', 'octave-addons' ), 'rows' => self::bundle_rows( (array) ( $summary['css_bundle'] ?? [] ) ) ];
+		$details[] = [ 'heading' => __( 'Videos', 'octave-addons' ), 'rows' => self::video_rows( (array) ( $report['videos'] ?? [] ) ) ];
 
 		$imagify = [];
 
@@ -204,6 +214,102 @@ class Octave_Addons_Perf_Diagnostics {
 		$details[] = [ 'heading' => __( 'Duplicate optimisation', 'octave-addons' ), 'rows' => $conflicts ?: [ __( 'None: each feature has at most one owner.', 'octave-addons' ) ] ];
 
 		return $details;
+
+	}
+
+	/*
+	CACHE BLOCKERS
+	-- Cookies, a PHP session and Cache-Control in a visitor's response
+	---------------------------------------------------------- */
+
+	public static function cache_blockers( $response ): array {
+
+		$cookies = wp_remote_retrieve_header( $response, 'set-cookie' );
+
+		return Octave_Addons_Perf_Sessions::cache_blockers( is_array( $cookies ) ? $cookies : array_filter( [ (string) $cookies ] ), (string) wp_remote_retrieve_header( $response, 'cache-control' ) );
+
+	}
+
+	/*
+	HERO ROWS
+	-- The Breakdance hero background chosen from the page, per width range
+	---------------------------------------------------------- */
+
+	public static function hero_rows( array $hero ): array {
+
+		if ( empty( $hero['preloads'] ) ) {
+
+			return [ __( 'Found in the page: no Breakdance hero background.', 'octave-addons' ) ];
+
+		}
+
+		$rows = [];
+
+		foreach ( $hero['preloads'] as $preload ) {
+
+			/* translators: 1: media condition, 2: image URL. */
+			$rows[] = sprintf( __( 'Found in the page, preloaded for %1$s: %2$s', 'octave-addons' ), '' !== $preload['media'] ? $preload['media'] : __( 'every screen', 'octave-addons' ), $preload['url'] );
+
+		}
+
+		return $rows;
+
+	}
+
+	/*
+	BUNDLE ROWS
+	---------------------------------------------------------- */
+
+	public static function bundle_rows( array $bundle ): array {
+
+		if ( empty( $bundle ) ) {
+
+			return [ __( 'No Breakdance CSS bundle on this page.', 'octave-addons' ) ];
+
+		}
+
+		$modes = [
+			'inline' => __( 'placed in the page', 'octave-addons' ),
+			'file'   => __( 'served as one file', 'octave-addons' ),
+			'queued' => __( 'being prepared; original stylesheets served meanwhile', 'octave-addons' ),
+		];
+
+		return [
+			/* translators: 1: number of stylesheets, 2: size, 3: delivery mode. */
+			sprintf( __( 'Breakdance CSS bundle: %1$d stylesheets, %2$s, %3$s', 'octave-addons' ), count( (array) ( $bundle['files'] ?? [] ) ), size_format( (int) ( $bundle['bytes'] ?? 0 ) ) ?: '0 B', $modes[ $bundle['mode'] ?? '' ] ?? '' ),
+			/* translators: %s: stylesheet URLs. */
+			sprintf( __( 'Sources: %s', 'octave-addons' ), implode( ', ', (array) ( $bundle['files'] ?? [] ) ) ),
+		];
+
+	}
+
+	/*
+	VIDEO ROWS
+	-- Video files parked until they are in view, and their size when local
+	---------------------------------------------------------- */
+
+	public static function video_rows( array $videos ): array {
+
+		if ( empty( $videos ) ) {
+
+			return [ __( 'No video files deferred.', 'octave-addons' ) ];
+
+		}
+
+		$bytes = array_sum( array_map( 'intval', array_column( $videos, 'bytes' ) ) );
+
+		$rows = [
+			/* translators: 1: number of files, 2: size. */
+			sprintf( __( '%1$d video files wait until they are in view, avoiding up to %2$s on first load.', 'octave-addons' ), count( $videos ), $bytes > 0 ? size_format( $bytes ) : __( 'an unknown amount', 'octave-addons' ) ),
+		];
+
+		foreach ( array_slice( $videos, 0, 5 ) as $video ) {
+
+			$rows[] = (string) ( $video['src'] ?? '' ) . ( ! empty( $video['bytes'] ) ? ' (' . size_format( (int) $video['bytes'] ) . ')' : '' );
+
+		}
+
+		return $rows;
 
 	}
 

@@ -44,8 +44,19 @@ class Octave_Addons_Perf_Cache {
 	/** Shortest gap between two automatic full purges from Breakdance. */
 	protected const BREAKDANCE_DEBOUNCE = MINUTE_IN_SECONDS;
 
+	/** Full-purge reasons limited to one per BREAKDANCE_DEBOUNCE. */
+	protected const DEBOUNCED_REASONS = [ 'breakdance' ];
+
 	/** @var string Reason of a full purge waiting for the end of the request, or ''. */
 	protected static string $queued_full = '';
+
+	/** @var array<string, bool> URLs waiting for the targeted purge => whether to warm them. */
+	protected static array $queued_urls = [];
+
+	/** @var bool Whether the end-of-request purge is booked. */
+	protected static bool $listening = false;
+
+	public const LAST_CLEARS_OPTION = 'octave_addons_perf_last_clears';
 
 	/*
 	GENERATION
@@ -101,13 +112,19 @@ class Octave_Addons_Perf_Cache {
 			 * Each layer adds [ 'label' => string, 'status' => success|error|skipped|queued, 'message' => string ].
 			 *
 			 * @param array  $report Per-layer results so far.
-			 * @param string $reason manual, settings, environment, fonts, breakdance, imagify or update.
+			 * @param string $reason manual, settings, environment, fonts, breakdance, menu, imagify or update.
 			 */
 			$report = (array) apply_filters( 'octave_addons_perf_purge_all_layers', $report, $reason );
 
 		}
 
 		do_action( 'octave_addons_perf_purged_all', $report, $reason, $scope );
+
+		if ( 'all' === $scope ) {
+
+			self::remember_clear( 'full', $reason, $report );
+
+		}
 
 		if ( 'manual' === $reason ) {
 
@@ -121,8 +138,9 @@ class Octave_Addons_Perf_Cache {
 
 	/*
 	PURGE URLS
-	-- Targeted invalidation. No per-page HTML is kept, so the files layer
-	-- has nothing URL-specific to clear; the URLs go to the other layers
+	-- Targeted invalidation. Minified files are shared across pages, so the
+	-- files layer has nothing URL-specific to clear; the URLs go to the page
+	-- caches and Cloudflare
 	---------------------------------------------------------- */
 
 	public static function purge_urls( array $urls, string $reason = 'content' ): array {
@@ -131,7 +149,7 @@ class Octave_Addons_Perf_Cache {
 		 * Filters the URLs a targeted purge covers.
 		 *
 		 * @param string[] $urls   Absolute URLs.
-		 * @param string   $reason content, menu, lcp, manual.
+		 * @param string   $reason content, lcp, assets or manual.
 		 */
 		$urls = self::normalize_urls( (array) apply_filters( 'octave_addons_perf_purge_urls', $urls, $reason ) );
 
@@ -154,11 +172,13 @@ class Octave_Addons_Perf_Cache {
 		 *
 		 * @param array    $report Per-layer results so far.
 		 * @param string[] $urls   Absolute URLs.
-		 * @param string   $reason content, menu, lcp, manual.
+		 * @param string   $reason content, lcp, assets or manual.
 		 */
 		$report = (array) apply_filters( 'octave_addons_perf_purge_url_layers', $report, $urls, $reason );
 
 		do_action( 'octave_addons_perf_purged_urls', $urls, $report, $reason );
+
+		self::remember_clear( 'targeted', $reason, $report, $urls );
 
 		if ( 'manual' === $reason ) {
 
@@ -212,6 +232,60 @@ class Octave_Addons_Perf_Cache {
 
 	}
 
+	/*
+	REMEMBER CLEAR
+	-- The last full and the last targeted clear, whatever caused them, with
+	-- any layer that failed, for the Performance page
+	---------------------------------------------------------- */
+
+	protected static function remember_clear( string $kind, string $reason, array $report, array $urls = [] ): void {
+
+		$failed = [];
+
+		foreach ( $report as $layer ) {
+
+			if ( 'error' === ( $layer['status'] ?? '' ) ) {
+
+				$failed[] = (string) ( $layer['label'] ?? '' ) . ': ' . (string) ( $layer['message'] ?? '' );
+
+			}
+
+		}
+
+		$clears          = self::last_clears();
+		$clears[ $kind ] = [
+			'time'   => time(),
+			'reason' => $reason,
+			'urls'   => array_slice( $urls, 0, 10 ),
+			'count'  => count( $urls ),
+			'failed' => $failed,
+		];
+
+		update_option( self::LAST_CLEARS_OPTION, $clears, false );
+
+	}
+
+	public static function last_clears(): array {
+
+		$clears = get_option( self::LAST_CLEARS_OPTION, [] );
+
+		return is_array( $clears ) ? $clears : [];
+
+	}
+
+	/*
+	RESET
+	-- Forgets anything queued for the end of the request
+	---------------------------------------------------------- */
+
+	public static function reset(): void {
+
+		self::$queued_full = '';
+		self::$queued_urls = [];
+		self::$listening   = false;
+
+	}
+
 	public static function last_purge(): array {
 
 		$last = get_option( self::LAST_PURGE_OPTION, [] );
@@ -250,15 +324,21 @@ class Octave_Addons_Perf_Cache {
 
 	/*
 	REGISTER INVALIDATION
-	-- Content edits purge their own URLs. Theme and plugin switches clear
-	-- the minified files, since they change which assets a page loads. Settings
-	-- changes are handled where the option is saved
+	-- Content, term and menu edits purge the pages they appear on. Theme
+	-- and plugin switches and Performance settings changes clear everything,
+	-- since they change what every page loads
+	-- Nothing is purged while a save is still running: URLs are collected
+	-- and purged once, when the request ends. Breakdance saves a page with
+	-- wp_update_post() before it writes the page's CSS, so purging any
+	-- earlier would let a cache refill with the old styles
 	---------------------------------------------------------- */
 
 	public static function register_invalidation(): void {
 
-		add_action( 'transition_post_status', [ __CLASS__, 'on_transition_post_status' ], 20, 3 );
+		add_action( 'wp_after_insert_post', [ __CLASS__, 'on_after_insert_post' ], 20, 4 );
 		add_action( 'before_delete_post', [ __CLASS__, 'on_delete_post' ], 20, 1 );
+		add_action( 'edited_term', [ __CLASS__, 'on_term_change' ], 20, 3 );
+		add_action( 'pre_delete_term', [ __CLASS__, 'on_term_delete' ], 20, 2 );
 		add_action( 'wp_update_nav_menu', [ __CLASS__, 'on_menu_update' ] );
 		add_action( 'switch_theme', [ __CLASS__, 'on_environment_change' ] );
 		add_action( 'activated_plugin', [ __CLASS__, 'on_environment_change' ] );
@@ -283,9 +363,10 @@ class Octave_Addons_Perf_Cache {
 	/*
 	ON BREAKDANCE DOCUMENT
 	-- A template, header, footer, global block or popup can appear on any
-	-- page, so it purges everything. An ordinary page's URLs were already
-	-- purged when Breakdance saved the post; its learned LCP record is
-	-- retired here so the next view relearns it
+	-- page, so it purges everything, at most once a minute. An ordinary
+	-- page has just had its CSS written: its own URLs join the purge that
+	-- runs when the save request ends, and its learned LCP record is
+	-- retired so the next view relearns it
 	---------------------------------------------------------- */
 
 	public static function on_breakdance_document( $post_id ): void {
@@ -301,6 +382,14 @@ class Octave_Addons_Perf_Cache {
 		}
 
 		Octave_Addons_Perf_Lcp::forget_post( (int) $post_id );
+
+		$post = get_post( (int) $post_id );
+
+		if ( $post instanceof WP_Post && 'publish' === $post->post_status ) {
+
+			self::queue_urls( self::post_urls( $post ) );
+
+		}
 
 	}
 
@@ -325,20 +414,90 @@ class Octave_Addons_Perf_Cache {
 
 	/*
 	QUEUE FULL PURGE
-	-- One Breakdance save can update several global options. They become a
-	-- single full purge once the request has finished, and at most one a
-	-- minute, so Breakdance has written its new CSS before caches refill
+	-- One save can update several global options. They become a single full
+	-- purge once the request has finished. Breakdance's purges also run at
+	-- most once a minute, so a burst of builder saves clears caches once
 	---------------------------------------------------------- */
 
 	public static function queue_full_purge( string $reason ): void {
 
-		if ( '' === self::$queued_full ) {
+		self::listen_for_shutdown();
 
-			add_action( 'shutdown', [ __CLASS__, 'run_queued_full_purge' ] );
+		// A reason that is never skipped wins over one that may be debounced away.
+		if ( '' === self::$queued_full || in_array( self::$queued_full, self::DEBOUNCED_REASONS, true ) ) {
+
+			self::$queued_full = $reason;
 
 		}
 
-		self::$queued_full = $reason;
+	}
+
+	/*
+	QUEUE URLS
+	-- Collects URLs for the targeted purge at the end of the request. $warm
+	-- false marks URLs that no longer show the content, such as an
+	-- unpublished post: they are purged but not refilled
+	---------------------------------------------------------- */
+
+	public static function queue_urls( array $urls, bool $warm = true ): void {
+
+		foreach ( $urls as $url ) {
+
+			$url = (string) $url;
+
+			if ( '' === $url ) {
+
+				continue;
+
+			}
+
+			self::$queued_urls[ $url ] = $warm || ! empty( self::$queued_urls[ $url ] );
+
+		}
+
+		self::listen_for_shutdown();
+
+	}
+
+	protected static function listen_for_shutdown(): void {
+
+		if ( ! self::$listening ) {
+
+			self::$listening = true;
+
+			add_action( 'shutdown', [ __CLASS__, 'run_queued' ], 5 );
+
+		}
+
+	}
+
+	/*
+	RUN QUEUED
+	-- The full purge if one was asked for, otherwise, or when a debounced
+	-- full purge was skipped, one targeted purge for every collected URL,
+	-- which are then queued for warming so no visitor waits on them
+	---------------------------------------------------------- */
+
+	public static function run_queued(): array {
+
+		self::$listening = false;
+
+		$report = self::run_queued_full_purge();
+
+		$urls              = self::$queued_urls;
+		self::$queued_urls = [];
+
+		if ( ! empty( $report ) || empty( $urls ) ) {
+
+			return $report;
+
+		}
+
+		$report = self::purge_urls( array_keys( $urls ), 'content' );
+
+		Octave_Addons_Perf_Page_Cache::queue_warm( 'content', array_keys( array_filter( $urls ) ) );
+
+		return $report;
 
 	}
 
@@ -347,33 +506,77 @@ class Octave_Addons_Perf_Cache {
 		$reason            = self::$queued_full;
 		self::$queued_full = '';
 
-		if ( '' === $reason || false !== get_transient( 'oa_perf_full_purge_' . $reason ) ) {
+		if ( '' === $reason ) {
 
 			return [];
 
 		}
 
-		set_transient( 'oa_perf_full_purge_' . $reason, 1, self::BREAKDANCE_DEBOUNCE );
+		if ( in_array( $reason, self::DEBOUNCED_REASONS, true ) ) {
+
+			if ( false !== get_transient( 'oa_perf_full_purge_' . $reason ) ) {
+
+				return [];
+
+			}
+
+			set_transient( 'oa_perf_full_purge_' . $reason, 1, self::BREAKDANCE_DEBOUNCE );
+
+		}
 
 		return self::purge_all( 'all', $reason );
 
 	}
 
-	public static function on_transition_post_status( $new_status, $old_status, $post ): void {
+	/*
+	ON AFTER INSERT POST
+	-- Runs once a post, its terms and its meta are saved. A published post
+	-- purges where it appears now; a post leaving publish, trash included,
+	-- purges where it used to appear, so no cache keeps showing it. A
+	-- published post whose address changed purges its old address too.
+	-- Revisions, autosaves, auto-drafts and drafts that stay drafts are ignored
+	---------------------------------------------------------- */
 
-		if ( ! $post instanceof WP_Post || ( 'publish' !== $new_status && 'publish' !== $old_status ) ) {
+	public static function on_after_insert_post( $post_id, $post = null, $update = false, $post_before = null ): void {
+
+		if ( ! $post instanceof WP_Post || wp_is_post_revision( $post ) || wp_is_post_autosave( $post ) || 'auto-draft' === $post->post_status ) {
 
 			return;
 
 		}
 
-		if ( wp_is_post_revision( $post ) || wp_is_post_autosave( $post ) ) {
+		$was_public = $post_before instanceof WP_Post && 'publish' === $post_before->post_status;
+
+		if ( 'publish' === $post->post_status ) {
+
+			self::queue_urls( self::post_urls( $post ) );
+
+			if ( $was_public ) {
+
+				$old = get_permalink( $post_before );
+				$new = get_permalink( $post );
+
+				if ( is_string( $old ) && $old !== $new ) {
+
+					self::queue_urls( [ $old ], false );
+
+				}
+
+			}
 
 			return;
 
 		}
 
-		self::purge_urls( self::post_urls( $post ), 'content' );
+		if ( $was_public ) {
+
+			$urls = self::post_urls( $post_before );
+			$gone = get_permalink( $post_before );
+
+			self::queue_urls( array_diff( $urls, [ $gone ] ) );
+			self::queue_urls( [ $gone ], false );
+
+		}
 
 	}
 
@@ -383,27 +586,89 @@ class Octave_Addons_Perf_Cache {
 
 		if ( $post instanceof WP_Post && 'publish' === $post->post_status ) {
 
-			self::purge_urls( self::post_urls( $post ), 'content' );
+			$gone = get_permalink( $post );
+
+			self::queue_urls( array_diff( self::post_urls( $post ), [ $gone ] ) );
+			self::queue_urls( [ $gone ], false );
 
 		}
 
 	}
 
+	/*
+	ON TERM CHANGE
+	-- A renamed or edited public term changes its archive and the home page
+	---------------------------------------------------------- */
+
+	public static function on_term_change( $term_id, $tt_id = 0, $taxonomy = '' ): void {
+
+		$urls = self::term_urls( (int) $term_id, (string) $taxonomy );
+
+		if ( ! empty( $urls ) ) {
+
+			self::queue_urls( array_merge( [ home_url( '/' ) ], $urls ) );
+
+		}
+
+	}
+
+	/*
+	ON TERM DELETE
+	-- Read before the term goes, while its archive address still exists
+	---------------------------------------------------------- */
+
+	public static function on_term_delete( $term_id, $taxonomy = '' ): void {
+
+		$urls = self::term_urls( (int) $term_id, (string) $taxonomy );
+
+		if ( ! empty( $urls ) ) {
+
+			self::queue_urls( [ home_url( '/' ) ] );
+			self::queue_urls( $urls, false );
+
+		}
+
+	}
+
+	protected static function term_urls( int $term_id, string $taxonomy ): array {
+
+		$object = '' !== $taxonomy ? get_taxonomy( $taxonomy ) : false;
+
+		if ( ! $object || empty( $object->public ) ) {
+
+			return [];
+
+		}
+
+		$link = get_term_link( $term_id, $taxonomy );
+
+		return is_string( $link ) ? [ $link ] : [];
+
+	}
+
+	/*
+	ON MENU UPDATE
+	-- Menus print in headers and footers on every page, so every page is
+	-- affected. One full purge when the request ends, however many menus
+	-- the save touched
+	---------------------------------------------------------- */
+
 	public static function on_menu_update(): void {
 
-		self::purge_urls( [ home_url( '/' ) ], 'menu' );
+		self::queue_full_purge( 'menu' );
 
 	}
 
 	public static function on_environment_change(): void {
 
-		self::purge_all( 'files', 'environment' );
+		self::queue_full_purge( 'environment' );
 
 	}
 
 	/*
 	ON SETTINGS UPDATE
-	-- Clears the minified files when any Performance module's settings changed
+	-- Clears everything when any Performance module's settings changed:
+	-- cached pages hold the markup the old settings produced
 	---------------------------------------------------------- */
 
 	public static function on_settings_update( $old, $new ): void {
@@ -415,7 +680,7 @@ class Octave_Addons_Perf_Cache {
 
 			if ( 0 === strpos( (string) $id, 'performance-' ) && ( $old[ $id ] ?? null ) !== $settings ) {
 
-				self::purge_all( 'files', 'settings' );
+				self::queue_full_purge( 'settings' );
 
 				return;
 

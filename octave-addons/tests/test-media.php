@@ -125,13 +125,14 @@ VIDEOS
 
 function test_existing_video_lazy_loading_still_works(): void {
 
-	$html = Octave_Addons_Module_Breakdance_Lazy_Load::filter_video_markup( '<video src="/v.mp4" autoplay muted playsinline poster="/p.jpg"></video>' );
+	$html   = Octave_Addons_Module_Breakdance_Lazy_Load::filter_video_markup( '<video src="/v.mp4" autoplay muted playsinline poster="/p.jpg"></video>' );
+	$parked = strstr( $html, '<noscript>', true );
 
-	oa_assert_contains( 'preload="none"', $html );
-	oa_assert_contains( 'data-oa-autoplay', $html );
-	oa_assert_not_contains( ' autoplay ', $html );
-	oa_assert_contains( 'poster="/p.jpg"', $html );
-	oa_assert_contains( 'playsinline', $html );
+	oa_assert_contains( 'preload="none"', $parked );
+	oa_assert_contains( 'data-oa-autoplay', $parked );
+	oa_assert_not_contains( ' autoplay ', $parked );
+	oa_assert_contains( 'poster="/p.jpg"', $parked );
+	oa_assert_contains( 'playsinline', $parked );
 
 }
 

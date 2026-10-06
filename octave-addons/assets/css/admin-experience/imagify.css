@@ -1,0 +1,127 @@
+/*
+IMAGIFY ADMIN EXPERIENCE
+-- Maps Imagify's settings, file lists and bulk optimizer onto the shared
+-- Octave admin palette while preserving the plugin's status colours.
+---------------------------------------------------------- */
+
+body.wp-admin :is(.imagify-settings, .imagify-main-content) {
+    --oa-plugin-accent: var(--oa-admin-accent);
+    --oa-plugin-surface: var(--oa-admin-surface);
+    --oa-plugin-surface-soft: var(--oa-admin-surface-soft);
+    --oa-plugin-border: var(--oa-admin-border);
+    --oa-plugin-text: var(--oa-admin-text);
+    --oa-plugin-text-soft: var(--oa-admin-text-soft);
+}
+
+.imagify-main-content button {
+    text-shadow: none !important;
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin :is(.imagify-settings, .imagify-main-content) :is(.imagify-card, .imagify-settings-section, .imagify-options) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin :is(.imagify-settings, .imagify-main-content) :is(h1, h2, h3, h4, label, legend) {
+    color: var(--oa-plugin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin :is(.imagify-settings, .imagify-main-content) :is(p, .description, .imagify-help) {
+    color: var(--oa-plugin-text-soft);
+}
+
+body.wp-admin :is(.imagify-settings, .imagify-main-content) :is(.button-primary, .imagify-button-primary) {
+    color: var(--oa-admin-on-accent);
+    border-color: var(--oa-plugin-accent);
+    background: var(--oa-plugin-accent);
+    text-shadow: none;
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-header, .imagify-sidebar, .imagify-settings-footer, .imagify-notice, .imagify-options-line) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+    background-color: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-admin-border-strong);
+    background-color: var(--oa-plugin-surface-soft);
+}
+
+/*
+MEDIA LIST
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list :is(.sortable, .sorted) a {
+    color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list :is(.sortable, .sorted) a:is(:hover, :focus) {
+    color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorting-indicator::before {
+    color: var(--oa-admin-text-dim);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list :is(.sorted.asc .sorting-indicator.asc, .sorted.desc .sorting-indicator.desc)::before {
+    color: var(--oa-admin-accent-dark);
+}
+
+/*
+BULK OPTIMIZATION
+-- The bulk screen uses a Media Library body class and its own fixed light
+-- colours, so it does not inherit the settings-screen rules above.
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk :is(.imagify-h2-like, .imagify-settings-section, .imagify-info-block, .imagify-newbie .imagify-table-header, .imagify-bulk-table-content, .imagify-bulk-table-footer, .imagify-selector-list) {
+    color: var(--oa-plugin-text);
+    border-color: var(--oa-plugin-border);
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk :is(.imagify-h2-like, .imagify-list-infos li + li, .imagify-bulk-table-details, .imagify-bulk-table tbody tr + tr, .imagify-selector-list li + li) {
+    border-color: var(--oa-plugin-border);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk :is(.imagify-newbie .imagify-th-title, .imagify-cell-original-size .imagify-cell-label, .imagify-cell-title label, h3, li, p) {
+    color: var(--oa-plugin-text);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk :is(.imagify-list-infos li, .imagify-col-content .imagify-space-left p, .imagify-number-you-optimized .text, .imagify-th-subtitle, .imagify-th-action .imagify-button-clean, .imagify-cell-value, .imagify-cell-optimized-size, .imagify-cell-original-size, .imagifilename, .imagiuploaded, .imagistatus) {
+    color: var(--oa-plugin-text-soft);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk .imagify-number-you-optimized .number {
+    color: var(--oa-plugin-text);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk :is(.imagify-bulk-table-details tbody tr:nth-child(odd) td, .imagify-bulk-table-footer, .imagify-bulk-table .imagify-no-uploaded-yet td) {
+    color: var(--oa-plugin-text-soft);
+    background: var(--oa-plugin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk .imagify-bulk-table tbody :is(tr, td) {
+    background: var(--oa-plugin-surface);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk .imagify-bulk-table-details tbody tr:nth-child(odd) td {
+    background: var(--oa-plugin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk .imagify-selector-list :is(label, li) {
+    color: var(--oa-plugin-text);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-bulk .imagify-selector-list :is(.imagify-selector-current-value label, input:checked + label) {
+    color: var(--oa-plugin-text);
+    background: var(--oa-admin-surface-selected);
+}
+
+html[data-oa-admin-theme="dark"] body:is(.media_page_imagify-bulk-optimization, [class*="_imagify-ngg-bulk-optimization"]) .imagify-settings .button-primary.button-primary[disabled] {
+    color: var(--oa-admin-text-dim) !important;
+    border-color: var(--oa-admin-border) !important;
+    background: var(--oa-admin-surface-hover) !important;
+}

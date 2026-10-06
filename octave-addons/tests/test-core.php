@@ -8,6 +8,7 @@ CORE TESTS
 
 const OA_PERF_MODULES = [
 	'performance-cache',
+	'performance-page-cache',
 	'performance-media',
 	'performance-delay',
 	'performance-files',
@@ -452,9 +453,18 @@ function test_settings_change_purges_only_for_performance_modules(): void {
 
 	oa_assert_same( $generation, Octave_Addons_Perf_Cache::generation(), 'unrelated module' );
 
+	do_action( 'shutdown' );
+
+	oa_assert_same( $generation, Octave_Addons_Perf_Cache::generation(), 'unrelated module, after the request' );
+
 	update_option( OCTAVE_ADDONS_OPTION_KEY, [ 'animations' => [ 'enabled' => true ], 'performance-media' => [ 'enabled' => true ] ] );
 
+	oa_assert_same( $generation, Octave_Addons_Perf_Cache::generation(), 'not while the save is running' );
+
+	do_action( 'shutdown' );
+
 	oa_assert_same( $generation + 1, Octave_Addons_Perf_Cache::generation(), 'performance module' );
+	oa_assert_same( 'settings', Octave_Addons_Perf_Cache::last_clears()['full']['reason'], 'a full clear, so cached pages lose the old markup' );
 
 }
 

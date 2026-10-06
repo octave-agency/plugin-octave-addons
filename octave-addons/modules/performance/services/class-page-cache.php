@@ -2,15 +2,15 @@
 
 /*
 PERFORMANCE: PAGE CACHE INTEGRATION
--- Octave is not a page cache. This connects Octave's purges to whichever
--- page cache the site has, and refills that cache in the background
--- Purges are passed on only for changes the page cache cannot see for
--- itself: a manual purge, a Breakdance design change, an Imagify delivery
--- change, a font change, or a page whose learned LCP image changed.
--- Ordinary post edits and updates are left to the cache plugin, which
--- already purges for them
--- Each connector is guarded by the function or class it calls, wrapped so
--- a failing cache API only marks its own layer as failed
+-- Connects Octave's purges to whichever page cache the site has, and
+-- refills it in the background. The page cache is chosen in this order:
+-- Cloudways Varnish when it is running, else another detected page cache,
+-- else Octave's own (see class-disk-cache.php), never two stacked
+-- Every purge reaches the page cache, ordinary content and menu saves
+-- included: a cache plugin noticing those changes by itself is not
+-- something to rely on. Each connector is guarded by the function or class
+-- it calls, wrapped so a failing cache API only marks its own layer as
+-- failed. A connector may return its own layer result
 -- Warming requests public URLs as a logged-out visitor, a few at a time
 -- from cron, so a full purge never turns into a request storm. Cart,
 -- checkout, account, preview, admin and nonce URLs, and pages marked
@@ -38,12 +38,17 @@ class Octave_Addons_Perf_Page_Cache {
 	/** Most URLs one warming cycle visits. */
 	public const MAX_URLS = 50;
 
-	/** Purge reasons the page cache cannot notice by itself. */
-	protected const PURGE_ALL_REASONS = [ 'manual', 'breakdance', 'imagify', 'fonts' ];
-	protected const PURGE_URL_REASONS = [ 'manual', 'lcp' ];
+	/** Full purges that reach the page cache: every change that alters what pages print or load. */
+	protected const PURGE_ALL_REASONS = [ 'manual', 'breakdance', 'imagify', 'fonts', 'menu', 'settings', 'update', 'environment' ];
 
 	/** Full purges after which the cache is refilled. */
-	protected const WARM_REASONS = [ 'manual', 'breakdance', 'imagify', 'fonts', 'settings', 'update', 'environment' ];
+	protected const WARM_REASONS = [ 'manual', 'breakdance', 'imagify', 'fonts', 'menu', 'settings', 'update', 'environment' ];
+
+	/** Targeted purges whose URLs are refilled straight away. Content saves queue their own, minus URLs that no longer exist. */
+	protected const WARM_URL_REASONS = [ 'manual', 'lcp' ];
+
+	/** Warming reasons whose page may be held by a cache with older markup, so it is purged before it is requested. */
+	protected const PURGE_FIRST_REASONS = [ 'minify', 'bundle' ];
 
 	/*
 	BOOT
@@ -54,6 +59,7 @@ class Octave_Addons_Perf_Page_Cache {
 		add_filter( 'octave_addons_perf_purge_all_layers', [ __CLASS__, 'purge_all_layer' ], 20, 2 );
 		add_filter( 'octave_addons_perf_purge_url_layers', [ __CLASS__, 'purge_url_layer' ], 20, 3 );
 		add_action( 'octave_addons_perf_purged_all', [ __CLASS__, 'on_purged_all' ], 10, 3 );
+		add_action( 'octave_addons_perf_purged_urls', [ __CLASS__, 'on_purged_urls' ], 10, 3 );
 		add_action( 'upgrader_process_complete', [ __CLASS__, 'on_upgrade' ], 20, 2 );
 		add_action( self::WARM_HOOK, [ __CLASS__, 'warm_batch' ] );
 
@@ -68,6 +74,15 @@ class Octave_Addons_Perf_Page_Cache {
 	public static function connectors(): array {
 
 		$connectors = [];
+
+		if ( Octave_Addons_Perf::is_enabled() && Octave_Addons_Perf_Varnish::is_running() && '' === Octave_Addons_Perf_Varnish::handled_by() ) {
+
+			$connectors[ Octave_Addons_Perf_Varnish::LABEL ] = [
+				'all'  => [ 'Octave_Addons_Perf_Varnish', 'purge_all' ],
+				'urls' => [ 'Octave_Addons_Perf_Varnish', 'purge_urls' ],
+			];
+
+		}
 
 		if ( function_exists( 'rocket_clean_domain' ) ) {
 
@@ -181,6 +196,31 @@ class Octave_Addons_Perf_Page_Cache {
 	}
 
 	/*
+	ACTIVE LABEL
+	-- Which page cache serves the site, in plain words
+	---------------------------------------------------------- */
+
+	public static function active_label(): string {
+
+		if ( Octave_Addons_Perf_Varnish::is_running() ) {
+
+			return Octave_Addons_Perf_Varnish::LABEL;
+
+		}
+
+		$owner = Octave_Addons_Perf::handled_elsewhere( 'page_cache' );
+
+		if ( '' !== $owner ) {
+
+			return $owner;
+
+		}
+
+		return Octave_Addons_Perf_Disk_Cache::is_active() ? Octave_Addons_Perf_Disk_Cache::LABEL : __( 'No page cache', 'octave-addons' );
+
+	}
+
+	/*
 	PURGE LAYERS
 	---------------------------------------------------------- */
 
@@ -208,12 +248,6 @@ class Octave_Addons_Perf_Page_Cache {
 
 		$report = (array) $report;
 
-		if ( ! in_array( (string) $reason, self::PURGE_URL_REASONS, true ) ) {
-
-			return $report;
-
-		}
-
 		foreach ( self::connectors() as $label => $connector ) {
 
 			$report[ 'page-cache-' . sanitize_key( $label ) ] = self::call( $label, $connector['urls'] ?? null, [ (array) $urls ] );
@@ -233,19 +267,25 @@ class Octave_Addons_Perf_Page_Cache {
 
 		if ( ! is_callable( $callback ) ) {
 
-			return [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'This cache has no API for a targeted purge; it clears itself when content changes.', 'octave-addons' ) ];
+			return [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'This cache has no API for a targeted purge.', 'octave-addons' ) ];
 
 		}
 
 		try {
 
-			call_user_func_array( $callback, $args );
+			$result = call_user_func_array( $callback, $args );
 
 		} catch ( \Throwable $error ) {
 
 			Octave_Addons_Perf_Log::error( 'page-cache', $error->getMessage(), $label );
 
 			return [ 'label' => $label, 'status' => 'error', 'message' => $error->getMessage() ];
+
+		}
+
+		if ( is_array( $result ) && isset( $result['status'] ) ) {
+
+			return array_merge( [ 'label' => $label, 'message' => '' ], $result );
 
 		}
 
@@ -271,17 +311,34 @@ class Octave_Addons_Perf_Page_Cache {
 	}
 
 	/*
+	ON PURGED URLS
+	-- A manual URL purge, or a page whose learned LCP image changed, is
+	-- refilled straight away rather than by its next visitor
+	---------------------------------------------------------- */
+
+	public static function on_purged_urls( $urls, $report, $reason ): void {
+
+		if ( in_array( (string) $reason, self::WARM_URL_REASONS, true ) ) {
+
+			self::queue_warm( (string) $reason, (array) $urls );
+
+		}
+
+	}
+
+	/*
 	ON UPGRADE
 	-- A plugin, theme or core update can change any asset, so Octave's own
-	-- minified copies are cleared and the cache is refilled. Page caches
-	-- clear themselves on updates, so they are not purged again here
+	-- minified copies and every cached page that points at them are
+	-- cleared once the update request ends, then the cache is refilled.
+	-- Varnish and Octave's page cache do not clear themselves on updates
 	---------------------------------------------------------- */
 
 	public static function on_upgrade( $upgrader = null, $extra = [] ): void {
 
 		if ( in_array( (string) ( $extra['type'] ?? '' ), [ 'plugin', 'theme', 'core' ], true ) ) {
 
-			Octave_Addons_Perf_Cache::purge_all( 'files', 'update' );
+			Octave_Addons_Perf_Cache::queue_full_purge( 'update' );
 
 		}
 
@@ -298,7 +355,8 @@ class Octave_Addons_Perf_Page_Cache {
 		$files = Octave_Addons_Perf::settings( 'performance-files' );
 
 		$warm = '' !== Octave_Addons_Perf::handled_elsewhere( 'page_cache' )
-			|| ( ! empty( $files['enabled'] ) && ( ! empty( $files['minify_css'] ) || ! empty( $files['minify_js'] ) ) );
+			|| Octave_Addons_Perf_Disk_Cache::is_active()
+			|| ( ! empty( $files['enabled'] ) && ( ! empty( $files['minify_css'] ) || ! empty( $files['minify_js'] ) || ! empty( $files['breakdance_css'] ) ) );
 
 		/**
 		 * Filters whether Octave refills caches after a purge.
@@ -335,11 +393,21 @@ class Octave_Addons_Perf_Page_Cache {
 
 		if ( empty( $state['queue'] ) ) {
 
-			$state = [ 'reason' => $reason, 'started' => time(), 'done' => 0, 'failed' => [], 'log' => (array) ( $state['log'] ?? [] ) ];
+			$state = [ 'reason' => $reason, 'started' => time(), 'done' => 0, 'failed' => [], 'purge_first' => [], 'log' => (array) ( $state['log'] ?? [] ) ];
 
 		}
 
 		$state['queue'] = array_slice( $queue, 0, self::MAX_URLS );
+
+		if ( in_array( $reason, self::PURGE_FIRST_REASONS, true ) ) {
+
+			foreach ( $urls as $url ) {
+
+				$state['purge_first'][ $url ] = true;
+
+			}
+
+		}
 
 		update_option( self::WARM_OPTION, $state, false );
 
@@ -442,6 +510,15 @@ class Octave_Addons_Perf_Page_Cache {
 
 		foreach ( $batch as $url ) {
 
+			// The page a visitor saw before a deferred file was ready may sit in a cache.
+			if ( ! empty( $state['purge_first'][ $url ] ) ) {
+
+				unset( $state['purge_first'][ $url ] );
+
+				Octave_Addons_Perf_Cache::purge_urls( [ $url ], 'assets' );
+
+			}
+
 			$response = wp_remote_get( $url, [
 				'timeout'     => 15,
 				'redirection' => 2,
@@ -501,7 +578,7 @@ class Octave_Addons_Perf_Page_Cache {
 		$state = get_option( self::WARM_OPTION, [] );
 		$state = is_array( $state ) ? $state : [];
 
-		return array_merge( [ 'queue' => [], 'failed' => [], 'log' => [], 'done' => 0 ], $state );
+		return array_merge( [ 'queue' => [], 'failed' => [], 'log' => [], 'done' => 0, 'purge_first' => [] ], $state );
 
 	}
 

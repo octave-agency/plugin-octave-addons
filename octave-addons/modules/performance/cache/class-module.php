@@ -4,8 +4,11 @@
 PERFORMANCE: CACHE
 -- Always on and hidden from the Performance page, because it only manages
 -- the plugin's own cache directory and the purge coordination other layers
--- hook into. It is not a full-page cache: it passes purges on to whichever
--- page cache the site has and refills it in the background
+-- hook into. It passes purges on to whichever page cache the site has,
+-- Cloudways Varnish included, and refills it in the background. Octave's
+-- own page cache is the separate Page Cache module
+-- While any Performance feature is on, it also stops Breakdance's view and
+-- session counting when no condition needs it, so pages can be cached
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -56,9 +59,10 @@ class Octave_Addons_Module_Performance_Cache extends Octave_Addons_Module {
 
 	/*
 	SHOW IN ADMIN
-	-- Nothing to configure: the admin bar shortcut is always offered to
-	-- administrators and logged-in visitors always see unoptimised pages, so
-	-- editors and shop staff are never the first to meet a compatibility problem
+	-- Nothing to configure: the admin bar's Clear cache appears for
+	-- administrators while a Performance feature is on, and logged-in
+	-- visitors always see unoptimised pages, so editors and shop staff are
+	-- never the first to meet a compatibility problem
 	---------------------------------------------------------- */
 
 	public function show_in_admin(): bool {
@@ -71,6 +75,7 @@ class Octave_Addons_Module_Performance_Cache extends Octave_Addons_Module {
 
 		Octave_Addons_Perf_Cache::register_invalidation();
 		Octave_Addons_Perf_Page_Cache::boot();
+		Octave_Addons_Perf_Sessions::boot();
 
 	}
 

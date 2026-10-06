@@ -98,6 +98,19 @@ function oa_test_reset(): void {
 
 	}
 
+	if ( class_exists( 'Octave_Addons_Perf_Cache' ) ) {
+
+		Octave_Addons_Perf_Cache::reset();
+		Octave_Addons_Perf_Disk_Cache::reset();
+
+	}
+
+	unset( $_SERVER['cw_allowed_ip'], $_SERVER['HTTP_X_VARNISH'], $_SERVER['HTTP_X_APPLICATION'] );
+
+	$GLOBALS['oa_terms']    = [];
+	$GLOBALS['oa_redirect'] = null;
+	$GLOBALS['wpdb']        = null;
+
 	exec( 'rm -rf ' . escapeshellarg( WP_CONTENT_DIR . '/cache' ) );
 
 }
@@ -318,6 +331,115 @@ function wp_clear_scheduled_hook( $hook ) {
 	} ) );
 
 	return 0;
+
+}
+
+/*
+POSTS AND TERMS
+-- Posts live in $GLOBALS['oa_posts'] as id => [ type, status ], terms in
+-- $GLOBALS['oa_terms'] as post id => [ term link, … ]
+---------------------------------------------------------- */
+
+class WP_Post {
+
+	public int $ID = 0;
+	public string $post_type = 'post';
+	public string $post_status = 'publish';
+	public string $post_name = '';
+
+	public function __construct( array $fields = [] ) {
+
+		foreach ( $fields as $key => $value ) {
+
+			$this->$key = $value;
+
+		}
+
+	}
+
+}
+
+function get_post( $post ) {
+
+	if ( $post instanceof WP_Post ) {
+
+		return $post;
+
+	}
+
+	$data = $GLOBALS['oa_posts'][ (int) $post ] ?? null;
+
+	return $data ? new WP_Post( [ 'ID' => (int) $post, 'post_type' => $data[0], 'post_status' => $data[1] ] ) : null;
+
+}
+
+function wp_is_post_revision( $post ) {
+
+	return 'revision' === ( get_post( $post )->post_type ?? '' );
+
+}
+
+function wp_is_post_autosave( $post ) {
+
+	return 'autosave' === ( get_post( $post )->post_name ?? '' );
+
+}
+
+function is_post_type_viewable( $type ) {
+
+	return in_array( $type, [ 'post', 'page' ], true );
+
+}
+
+function get_post_type_archive_link( $type ) {
+
+	return false;
+
+}
+
+function get_object_taxonomies( $type, $output = 'names' ) {
+
+	return 'post' === $type ? [ (object) [ 'name' => 'category', 'public' => true ], (object) [ 'name' => 'secret', 'public' => false ] ] : [];
+
+}
+
+function get_the_terms( $post, $taxonomy ) {
+
+	return 'category' === $taxonomy ? array_map( static function ( $link ) {
+
+		return (object) [ 'link' => $link ];
+
+	}, $GLOBALS['oa_terms'][ $post->ID ] ?? [] ) : false;
+
+}
+
+function get_term_link( $term, $taxonomy = '' ) {
+
+	if ( is_object( $term ) ) {
+
+		return $term->link;
+
+	}
+
+	return 'category' === $taxonomy ? 'https://example.com/category/term-' . (int) $term . '/' : new WP_Error( 'invalid_term' );
+
+}
+
+function get_taxonomy( $taxonomy ) {
+
+	return in_array( $taxonomy, [ 'category', 'secret' ], true ) ? (object) [ 'name' => $taxonomy, 'public' => 'category' === $taxonomy ] : false;
+
+}
+
+function is_404() {
+
+	return oa_flag( '404' );
+
+}
+
+function post_password_required( $post = null ) {
+
+	return oa_flag( 'password' );
 
 }
 
@@ -956,6 +1078,8 @@ require_once OCTAVE_ADDONS_DIR . 'includes/class-module.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-module-manager.php';
 
 $GLOBALS['oa_manager'] = new Octave_Addons_Module_Manager();
+
+Octave_Addons_Perf::use_manager( $GLOBALS['oa_manager'] );
 
 function oa_module( string $id ): Octave_Addons_Module {
 

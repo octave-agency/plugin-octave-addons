@@ -46,6 +46,7 @@ class Octave_Addons_Perf_Admin {
 		add_action( 'admin_bar_menu', [ __CLASS__, 'admin_bar' ], 90 );
 		add_action( 'admin_post_' . self::BAR_ACTION, [ __CLASS__, 'handle_admin_bar' ] );
 		add_action( 'admin_notices', [ __CLASS__, 'print_purge_notice' ] );
+		add_action( 'wp_footer', [ __CLASS__, 'print_frontend_notice' ], 999 );
 
 		foreach ( self::ENDPOINTS as $action => $method ) {
 
@@ -182,6 +183,24 @@ class Octave_Addons_Perf_Admin {
 
 			<div class="notice notice-warning inline oa-inline-notice">
 				<p><?php esc_html_e( 'Page markup optimisations need WordPress 6.2 or newer. Until WordPress is updated, lazy loading, script delay and font rewriting leave pages untouched.', 'octave-addons' ); ?></p>
+			</div>
+
+			<?php
+
+			endif;
+
+			?>
+
+			<?php
+
+			$session_warning = Octave_Addons_Perf_Sessions::warning();
+
+			if ( '' !== $session_warning ) :
+
+			?>
+
+			<div class="notice notice-error inline oa-inline-notice">
+				<p><strong><?= esc_html( $session_warning ); ?></strong></p>
 			</div>
 
 			<?php
@@ -431,33 +450,137 @@ class Octave_Addons_Perf_Admin {
 
 	/*
 	RENDER PAGE CACHE
-	-- Who caches whole pages, what Octave's own cache does, and how the last
-	-- background refill went
+	-- Which page cache serves the site, what can stop it keeping pages,
+	-- the last full and targeted clears with any failed layer, and how the
+	-- background refill is going
 	---------------------------------------------------------- */
 
 	protected static function render_page_cache(): void {
 
-		$owner = Octave_Addons_Perf::handled_elsewhere( 'page_cache' );
-		$warm  = Octave_Addons_Perf_Page_Cache::state();
-		$last  = (array) ( $warm['log'][0] ?? [] );
+		$warm     = Octave_Addons_Perf_Page_Cache::state();
+		$last     = (array) ( $warm['log'][0] ?? [] );
+		$clears   = Octave_Addons_Perf_Cache::last_clears();
+		$sessions = class_exists( 'Octave_Addons' ) && Octave_Addons::is_breakdance_active() ? Octave_Addons_Perf_Sessions::state() : [];
+		$disk     = Octave_Addons_Perf_Disk_Cache::status();
+		$kinds    = [
+			'full'     => __( 'Last full clear', 'octave-addons' ),
+			'targeted' => __( 'Last targeted clear', 'octave-addons' ),
+		];
 
 		?>
 
 		<section class="oa-perf-section">
 			<div class="oa-perf-section-copy">
 				<h3><?php esc_html_e( 'Page cache', 'octave-addons' ); ?></h3>
-				<p><?php esc_html_e( 'Octave\'s Performance Cache manages its generated files and coordinates purges; it is not a full-page cache. Purges are passed to the page cache below, and pages are refilled in small background batches afterwards.', 'octave-addons' ); ?></p>
+				<p><?php esc_html_e( 'Saving content clears the pages it appears on and refills them in the background. Clear cache in the toolbar clears every layer at once.', 'octave-addons' ); ?></p>
 			</div>
 			<table class="widefat striped oa-perf-table">
 				<tbody>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Full-page cache', 'octave-addons' ); ?></th>
-						<td><?= esc_html( '' !== $owner ? $owner : __( 'None detected. A page cache from the host or a plugin makes the biggest difference to response time.', 'octave-addons' ) ); ?></td>
+						<th scope="row"><?php esc_html_e( 'Page cache', 'octave-addons' ); ?></th>
+						<td><?= esc_html( Octave_Addons_Perf_Page_Cache::active_label() ); ?></td>
 					</tr>
+
+					<?php
+
+					if ( 'off' !== $disk['code'] ) :
+
+					?>
+
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Purges passed to', 'octave-addons' ); ?></th>
-						<td><?= esc_html( implode( ', ', array_keys( Octave_Addons_Perf_Page_Cache::connectors() ) ) ?: __( 'No supported cache API found', 'octave-addons' ) ); ?></td>
+						<th scope="row"><?php esc_html_e( 'Octave page cache', 'octave-addons' ); ?></th>
+						<td><?= esc_html( $disk['message'] ); ?></td>
 					</tr>
+
+					<?php
+
+					endif;
+
+					if ( ! empty( $sessions ) ) :
+
+					?>
+
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Breakdance view counting', 'octave-addons' ); ?></th>
+						<td>
+							<?php
+
+							if ( 'unused' === $sessions['state'] && Octave_Addons_Perf::is_enabled() ) {
+
+								esc_html_e( 'Off: no Page View Count or Session Count condition is used, so Breakdance starts no PHP session and sets no cookies.', 'octave-addons' );
+
+							} elseif ( 'used' === $sessions['state'] ) {
+
+								esc_html_e( 'On: a Page View Count or Session Count condition is used. Every page view starts a PHP session and sets cookies, so pages cannot be cached.', 'octave-addons' );
+
+							} else {
+
+								esc_html_e( 'On: Octave could not confirm that no session condition is used. Pages that set cookies cannot be cached.', 'octave-addons' );
+
+							}
+
+							?>
+						</td>
+					</tr>
+
+					<?php
+
+					endif;
+
+					?>
+
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Clears passed to', 'octave-addons' ); ?></th>
+						<td><?= esc_html( implode( ', ', array_merge( Octave_Addons_Perf_Disk_Cache::is_active() ? [ Octave_Addons_Perf_Disk_Cache::LABEL ] : [], array_keys( Octave_Addons_Perf_Page_Cache::connectors() ) ) ) ?: __( 'No supported cache found', 'octave-addons' ) ); ?></td>
+					</tr>
+
+					<?php
+
+					foreach ( $kinds as $kind => $label ) :
+
+						$clear = (array) ( $clears[ $kind ] ?? [] );
+
+					?>
+
+					<tr>
+						<th scope="row"><?= esc_html( $label ); ?></th>
+						<td>
+							<?php
+
+							if ( empty( $clear['time'] ) ) {
+
+								esc_html_e( 'None yet.', 'octave-addons' );
+
+							} else {
+
+								/* translators: 1: relative time, 2: reason code. */
+								echo esc_html( sprintf( __( '%1$s (%2$s)', 'octave-addons' ), self::time_ago( (int) $clear['time'] ), (string) $clear['reason'] ) );
+
+								if ( ! empty( $clear['count'] ) ) {
+
+									/* translators: %d: number of URLs. */
+									echo esc_html( ' · ' . sprintf( _n( '%d URL', '%d URLs', (int) $clear['count'], 'octave-addons' ), (int) $clear['count'] ) );
+
+								}
+
+								foreach ( (array) ( $clear['failed'] ?? [] ) as $failure ) {
+
+									echo '<br><span class="oa-perf-failed">' . esc_html( '⚠ ' . (string) $failure ) . '</span>';
+
+								}
+
+							}
+
+							?>
+						</td>
+					</tr>
+
+					<?php
+
+					endforeach;
+
+					?>
+
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Cache warming', 'octave-addons' ); ?></th>
 						<td>
@@ -481,7 +604,7 @@ class Octave_Addons_Perf_Admin {
 
 							} else {
 
-								echo esc_html( Octave_Addons_Perf_Page_Cache::should_warm() ? __( 'Runs after the next full purge.', 'octave-addons' ) : __( 'Off: no page cache or minified files to prepare.', 'octave-addons' ) );
+								echo esc_html( Octave_Addons_Perf_Page_Cache::should_warm() ? __( 'Idle. Runs after the next clear.', 'octave-addons' ) : __( 'Off: no page cache or optimised files to prepare.', 'octave-addons' ) );
 
 							}
 
@@ -490,6 +613,7 @@ class Octave_Addons_Perf_Admin {
 					</tr>
 				</tbody>
 			</table>
+			<p class="oa-help"><?php esc_html_e( 'Run diagnostics below to see whether a page is served from the cache (HIT, MISS or BYPASS) and what stops it being cached.', 'octave-addons' ); ?></p>
 		</section>
 
 		<?php
@@ -1036,21 +1160,18 @@ class Octave_Addons_Perf_Admin {
 
 	/*
 	ADMIN BAR
-	-- Shortcut for administrators to the Performance page and its purges
+	-- Only while a Performance feature is switched on, and only for
+	-- administrators: "Performance", linking to its settings, with one
+	-- "Clear cache" action. Per-layer controls stay on the settings page
 	---------------------------------------------------------- */
 
 	public static function admin_bar( WP_Admin_Bar $bar ): void {
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Octave_Addons_Perf::is_enabled() || ! current_user_can( 'manage_options' ) ) {
 
 			return;
 
 		}
-
-		$base = add_query_arg( [
-			'action'   => self::BAR_ACTION,
-			'_wpnonce' => wp_create_nonce( self::BAR_ACTION ),
-		], admin_url( 'admin-post.php' ) );
 
 		$bar->add_node( [
 			'id'    => 'oa-performance',
@@ -1061,54 +1182,39 @@ class Octave_Addons_Perf_Admin {
 		$bar->add_node( [
 			'parent' => 'oa-performance',
 			'id'     => 'oa-performance-clear',
-			'title'  => esc_html__( 'Clear Performance Cache', 'octave-addons' ),
-			'href'   => add_query_arg( 'scope', 'all', $base ),
+			'title'  => esc_html__( 'Clear cache', 'octave-addons' ),
+			'href'   => self::clear_url(),
 		] );
 
-		if ( ! empty( Octave_Addons_Perf::settings( 'performance-files' )['enabled'] ) ) {
+	}
 
-			$bar->add_node( [
-				'parent' => 'oa-performance',
-				'id'     => 'oa-performance-files',
-				'title'  => esc_html__( 'Clear minified files', 'octave-addons' ),
-				'href'   => add_query_arg( 'scope', 'files', $base ),
-			] );
+	public static function clear_url(): string {
 
-		}
-
-		if ( ! empty( Octave_Addons_Perf::settings( 'performance-cloudflare' )['enabled'] ) && Octave_Addons_Perf_Cloudflare::is_configured() ) {
-
-			$bar->add_node( [
-				'parent' => 'oa-performance',
-				'id'     => 'oa-performance-cloudflare',
-				'title'  => esc_html__( 'Purge Cloudflare', 'octave-addons' ),
-				'href'   => add_query_arg( 'scope', 'cloudflare', $base ),
-			] );
-
-		}
-
-		if ( ! is_admin() ) {
-
-			$request = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
-
-			$bar->add_node( [
-				'parent' => 'oa-performance',
-				'id'     => 'oa-performance-url',
-				'title'  => esc_html__( 'Purge this URL', 'octave-addons' ),
-				'href'   => add_query_arg( [ 'scope' => 'url', 'url' => rawurlencode( home_url( $request ) ) ], $base ),
-			] );
-
-		}
+		return add_query_arg( [
+			'action'   => self::BAR_ACTION,
+			'_wpnonce' => wp_create_nonce( self::BAR_ACTION ),
+		], admin_url( 'admin-post.php' ) );
 
 	}
 
 	/*
 	HANDLE ADMIN BAR
-	-- Runs the purge, keeps the report for a one-time notice, and returns the
-	-- administrator to the page they came from
+	-- Checks the nonce and capability, clears every active layer, keeps the
+	-- report for a one-time notice and returns the administrator to the
+	-- page they came from
 	---------------------------------------------------------- */
 
 	public static function handle_admin_bar(): void {
+
+		self::clear_from_toolbar();
+
+		wp_safe_redirect( wp_get_referer() ?: admin_url() );
+
+		exit;
+
+	}
+
+	public static function clear_from_toolbar(): array {
 
 		check_admin_referer( self::BAR_ACTION );
 
@@ -1118,20 +1224,55 @@ class Octave_Addons_Perf_Admin {
 
 		}
 
-		$scope  = isset( $_GET['scope'] ) ? sanitize_key( wp_unslash( $_GET['scope'] ) ) : 'all';
-		$url    = isset( $_GET['url'] ) ? esc_url_raw( wp_unslash( $_GET['url'] ) ) : '';
-		$report = self::purge_scope( $scope, $url );
+		$report = Octave_Addons_Perf_Cache::purge_all( 'all', 'manual' );
 
 		set_transient( 'oa_perf_notice_' . get_current_user_id(), $report, MINUTE_IN_SECONDS );
 
-		wp_safe_redirect( wp_get_referer() ?: admin_url() );
+		return $report;
 
-		exit;
+	}
+
+	/*
+	NOTICE TEXT
+	-- "Cache cleared.", plus one short line naming any layer that failed
+	---------------------------------------------------------- */
+
+	public static function notice_text( array $report ): array {
+
+		$failed = [];
+
+		foreach ( $report as $layer ) {
+
+			if ( 'error' === ( $layer['status'] ?? '' ) ) {
+
+				$failed[] = (string) ( $layer['label'] ?? '' );
+
+			}
+
+		}
+
+		return [
+			'message' => __( 'Cache cleared.', 'octave-addons' ),
+			/* translators: %s: names of the cache layers that failed. */
+			'warning' => empty( $failed ) ? '' : sprintf( __( 'Could not clear: %s. See Performance for details.', 'octave-addons' ), implode( ', ', array_filter( $failed ) ) ),
+		];
+
+	}
+
+	public static function print_frontend_notice(): void {
+
+		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+
+			self::print_purge_notice();
+
+		}
 
 	}
 
 	/*
 	PRINT PURGE NOTICE
+	-- Shown once after the toolbar action, in the admin or, for an
+	-- administrator who cleared from the site, at the foot of the page
 	---------------------------------------------------------- */
 
 	public static function print_purge_notice(): void {
@@ -1147,36 +1288,29 @@ class Octave_Addons_Perf_Admin {
 
 		delete_transient( $key );
 
-		$failed = false;
+		$text = self::notice_text( $report );
 
-		foreach ( $report as $layer ) {
-
-			$failed = $failed || 'error' === ( $layer['status'] ?? '' );
-
-		}
+		if ( is_admin() ) :
 
 		?>
 
-		<div class="notice <?= $failed ? 'notice-warning' : 'notice-success'; ?> is-dismissible">
-			<p><strong><?php esc_html_e( 'Performance cache', 'octave-addons' ); ?></strong></p>
-			<ul>
-				<?php
-
-				foreach ( $report as $layer ) :
-
-				?>
-
-				<li><?= esc_html( ( $layer['label'] ?? '' ) . ': ' . ( $layer['message'] ?? '' ) ); ?></li>
-
-				<?php
-
-				endforeach;
-
-				?>
-			</ul>
+		<div class="notice <?= '' !== $text['warning'] ? 'notice-warning' : 'notice-success'; ?> is-dismissible">
+			<p><?= esc_html( $text['message'] ); ?><?= '' !== $text['warning'] ? ' ' . esc_html( $text['warning'] ) : ''; ?></p>
 		</div>
 
 		<?php
+
+		else :
+
+		?>
+
+		<div class="oa-perf-toast" role="status" style="position:fixed;z-index:100000;right:16px;bottom:16px;max-width:360px;padding:12px 16px;border-radius:6px;background:#1d2327;color:#fff;font:14px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.2)">
+			<?= esc_html( $text['message'] ); ?><?= '' !== $text['warning'] ? ' ' . esc_html( $text['warning'] ) : ''; ?>
+		</div>
+
+		<?php
+
+		endif;
 
 	}
 

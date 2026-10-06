@@ -12,8 +12,11 @@ BREAKDANCE LAZY LOAD
 -- module, a third-party plugin or the browser
 -- Videos are always handled here and lazy loaded by default: Breakdance
 -- Video elements use their lightweight YouTube/Vimeo players, HTML5 and
--- section background videos start with preload="none" and are loaded by a
--- small viewport observer, and provider iframes receive loading="lazy"
+-- section background videos have their src and <source src> parked in
+-- data-oa-src with preload="none", so nothing downloads until a small
+-- viewport loader activates them once they are actually in view, and
+-- provider iframes receive loading="lazy". A <noscript> copy of each
+-- parked video keeps it playable without JavaScript
 -- Rewrites run only on known video markup through WP_HTML_Tag_Processor,
 -- never on the whole page
 -- Always on and hidden from the admin. The Media Lazy Loading module can
@@ -85,7 +88,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Hands Breakdance image lazy loading to Performance > Media Lazy Loading or a third-party plugin when one owns it, and loads videos lazily as they approach the viewport.', 'octave-addons' );
+		return __( 'Hands Breakdance image lazy loading to Performance > Lazy Loading or a third-party plugin when one owns it, and loads videos lazily as they approach the viewport.', 'octave-addons' );
 
 	}
 
@@ -160,7 +163,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 		return [
 			'lazy_images'  => $images,
 			'lazy_iframes' => '' !== $iframes ? $iframes : __( 'Nobody (browser default)', 'octave-addons' ),
-			'lazy_videos'  => $videos ? __( 'Octave Breakdance video loader', 'octave-addons' ) : __( 'Nobody (switched off in Media Lazy Loading)', 'octave-addons' ),
+			'lazy_videos'  => $videos ? __( 'Octave Breakdance video loader', 'octave-addons' ) : __( 'Nobody (switched off in Lazy Loading)', 'octave-addons' ),
 		];
 
 	}
@@ -407,19 +410,45 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
-		$tags = new WP_HTML_Tag_Processor( $html );
+		$tags   = new WP_HTML_Tag_Processor( $html );
+		$parked = [];
+		$index  = 0;
 
-		while ( $tags->next_tag( [ 'class_name' => 'section-background-video' ] ) ) {
+		while ( $tags->next_tag( [ 'tag_closers' => 'visit' ] ) ) {
+
+			$tag = $tags->get_tag();
+
+			if ( 'VIDEO' === $tag && ! $tags->is_tag_closer() ) {
+
+				$index++;
+
+				continue;
+
+			}
+
+			if ( $tags->is_tag_closer() || ! $tags->has_class( 'section-background-video' ) ) {
+
+				continue;
+
+			}
 
 			if ( $tags->next_tag() && 'VIDEO' === $tags->get_tag() ) {
 
-				self::defer_video( $tags );
+				$index++;
+
+				if ( self::defer_video( $tags ) ) {
+
+					$parked[] = $index;
+
+					self::park_sources( $tags );
+
+				}
 
 			}
 
 		}
 
-		return $tags->get_updated_html();
+		return self::add_fallbacks( $html, $tags->get_updated_html(), $parked );
 
 	}
 
@@ -428,7 +457,9 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 	-- Shared by the Breakdance Video element, the core video and embed blocks,
 	-- the [video] shortcode and oEmbed output. Each filter hands over one small
 	-- fragment of known video markup rather than the whole page.
-	-- Without WP_HTML_Tag_Processor (WordPress before 6.2) markup is untouched
+	-- Videos inside <noscript>, such as the fallback copies added here, are
+	-- left as they are. Without WP_HTML_Tag_Processor (WordPress before 6.2)
+	-- markup is untouched
 	---------------------------------------------------------- */
 
 	public static function filter_video_markup( $html ) {
@@ -445,21 +476,46 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
-		$tags = new WP_HTML_Tag_Processor( $html );
+		$tags     = new WP_HTML_Tag_Processor( $html );
+		$noscript = 0;
+		$parked   = [];
+		$index    = 0;
 
-		while ( $tags->next_tag() ) {
+		while ( $tags->next_tag( [ 'tag_closers' => 'visit' ] ) ) {
 
 			$tag = $tags->get_tag();
 
-			if ( 'VIDEO' === $tag ) {
+			if ( 'NOSCRIPT' === $tag ) {
 
-				self::defer_video( $tags );
+				$noscript += $tags->is_tag_closer() ? -1 : 1;
 
 				continue;
 
 			}
 
-			if ( 'IFRAME' === $tag && null === $tags->get_attribute( 'loading' ) && null !== $tags->get_attribute( 'src' ) && ! self::is_opted_out( $tags ) ) {
+			if ( $tags->is_tag_closer() ) {
+
+				continue;
+
+			}
+
+			if ( 'VIDEO' === $tag ) {
+
+				$index++;
+
+				if ( $noscript <= 0 && self::defer_video( $tags ) ) {
+
+					$parked[] = $index;
+
+					self::park_sources( $tags );
+
+				}
+
+				continue;
+
+			}
+
+			if ( 'IFRAME' === $tag && $noscript <= 0 && null === $tags->get_attribute( 'loading' ) && null !== $tags->get_attribute( 'src' ) && ! self::is_opted_out( $tags ) ) {
 
 				$tags->set_attribute( 'loading', 'lazy' );
 
@@ -467,39 +523,51 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
-		return $tags->get_updated_html();
+		return self::add_fallbacks( $html, $tags->get_updated_html(), $parked );
 
 	}
 
 	/*
 	DEFER VIDEO
-	-- Starts an HTML5 video with preload="none" and parks autoplay in a data
-	-- attribute, so an offscreen autoplay video neither downloads nor plays
-	-- until the viewport loader activates it. src, poster, controls, tracks,
-	-- loop, muted and playsinline are untouched, so without JavaScript the
-	-- video keeps its poster and dimensions and still plays from its controls.
-	-- Videos opted out of lazy loading, or excluded in Media Lazy Loading, are skipped
+	-- Parks an HTML5 video until the viewport loader activates it: its src
+	-- moves to data-oa-src and autoplay to data-oa-autoplay, and it starts
+	-- with preload="none", so nothing downloads speculatively and an
+	-- offscreen autoplay video neither loads nor plays. Poster, controls,
+	-- tracks, loop, muted and playsinline are untouched, and a local poster
+	-- with WordPress sizes gets data-oa-poster-srcset so the loader can pick
+	-- the size it is shown at. Returns whether the video was parked here.
+	-- Videos opted out of lazy loading, or excluded in Lazy Loading, are skipped
 	---------------------------------------------------------- */
 
-	protected static function defer_video( WP_HTML_Tag_Processor $tags ): void {
+	protected static function defer_video( WP_HTML_Tag_Processor $tags ): bool {
 
 		if ( null !== $tags->get_attribute( 'data-oa-lazy-video' ) ) {
 
-			return;
+			return false;
 
 		}
 
 		if ( self::is_opted_out( $tags ) ) {
 
-			return;
+			return false;
 
 		}
 
 		$preload = strtolower( (string) $tags->get_attribute( 'preload' ) );
+		$src     = trim( (string) $tags->get_attribute( 'src' ) );
 
 		$tags->set_attribute( 'data-oa-lazy-video', '' );
 		$tags->set_attribute( 'data-oa-preload', in_array( $preload, [ 'auto', 'metadata' ], true ) ? $preload : 'metadata' );
 		$tags->set_attribute( 'preload', 'none' );
+
+		if ( '' !== $src ) {
+
+			$tags->set_attribute( 'data-oa-src', $src );
+			$tags->remove_attribute( 'src' );
+
+			self::note_deferred( $src );
+
+		}
 
 		if ( null !== $tags->get_attribute( 'autoplay' ) ) {
 
@@ -508,7 +576,146 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
+		$srcset = self::poster_srcset( (string) $tags->get_attribute( 'poster' ) );
+
+		if ( '' !== $srcset ) {
+
+			$tags->set_attribute( 'data-oa-poster-srcset', $srcset );
+
+		}
+
 		self::enqueue_script();
+
+		return true;
+
+	}
+
+	/*
+	PARK SOURCES
+	-- Moves the src of every <source> inside the video just parked to
+	-- data-oa-src, stopping at its closing tag. <track> keeps its src
+	---------------------------------------------------------- */
+
+	protected static function park_sources( WP_HTML_Tag_Processor $tags ): void {
+
+		while ( $tags->next_tag( [ 'tag_closers' => 'visit' ] ) ) {
+
+			$tag = $tags->get_tag();
+
+			if ( 'VIDEO' === $tag && $tags->is_tag_closer() ) {
+
+				return;
+
+			}
+
+			if ( 'SOURCE' !== $tag || $tags->is_tag_closer() ) {
+
+				continue;
+
+			}
+
+			$src = trim( (string) $tags->get_attribute( 'src' ) );
+
+			if ( '' !== $src ) {
+
+				$tags->set_attribute( 'data-oa-src', $src );
+				$tags->remove_attribute( 'src' );
+
+				self::note_deferred( $src );
+
+			}
+
+		}
+
+	}
+
+	/*
+	ADD FALLBACKS
+	-- Without JavaScript a parked video could never load, so each one is
+	-- followed by its original markup inside <noscript>. With JavaScript
+	-- that copy is never parsed; without it, a stylesheet printed in the
+	-- footer hides the parked video and the original plays instead.
+	-- Skipped when the videos cannot be paired up one to one
+	---------------------------------------------------------- */
+
+	protected static function add_fallbacks( string $original, string $updated, array $parked ): string {
+
+		if ( empty( $parked ) ) {
+
+			return $updated;
+
+		}
+
+		$pattern = '#<video\b[^>]*>.*?</video>#is';
+
+		preg_match_all( $pattern, $original, $before );
+
+		if ( count( $before[0] ) !== preg_match_all( $pattern, $updated ) ) {
+
+			return $updated;
+
+		}
+
+		$index = 0;
+
+		return (string) preg_replace_callback( $pattern, static function ( array $match ) use ( &$index, $parked, $before ): string {
+
+			$index++;
+
+			return in_array( $index, $parked, true ) ? $match[0] . '<noscript>' . $before[0][ $index - 1 ] . '</noscript>' : $match[0];
+
+		}, $updated );
+
+	}
+
+	/*
+	POSTER SRCSET
+	-- The WordPress sizes of a local poster image, as a srcset, or ''
+	---------------------------------------------------------- */
+
+	protected static function poster_srcset( string $poster ): string {
+
+		if ( '' === $poster || ! function_exists( 'attachment_url_to_postid' ) || ! function_exists( 'wp_get_attachment_image_srcset' ) || ! Octave_Addons_Perf::is_same_origin( $poster ) ) {
+
+			return '';
+
+		}
+
+		$cached = wp_cache_get( md5( $poster ), 'octave_addons_poster_srcset' );
+
+		if ( is_string( $cached ) ) {
+
+			return $cached;
+
+		}
+
+		// Generated sizes carry -WIDTHxHEIGHT; the attachment is found from the original's URL.
+		$id     = (int) attachment_url_to_postid( (string) preg_replace( '/-\d+x\d+(\.[a-z0-9]+)$/i', '$1', $poster ) );
+		$srcset = $id > 0 ? (string) wp_get_attachment_image_srcset( $id, 'full' ) : '';
+
+		wp_cache_set( md5( $poster ), $srcset, 'octave_addons_poster_srcset', DAY_IN_SECONDS );
+
+		return $srcset;
+
+	}
+
+	/*
+	NOTE DEFERRED
+	-- Records a parked video file for diagnostics, with its size when it
+	-- is a local file
+	---------------------------------------------------------- */
+
+	protected static function note_deferred( string $src ): void {
+
+		if ( ! class_exists( 'Octave_Addons_Perf_Log' ) || ! Octave_Addons_Perf_Log::is_reporting() ) {
+
+			return;
+
+		}
+
+		$file = Octave_Addons_Perf_Admin::local_path( $src );
+
+		Octave_Addons_Perf_Log::note( 'videos', [ 'src' => $src, 'bytes' => '' !== $file ? (int) filesize( $file ) : 0 ] );
 
 	}
 
@@ -604,11 +811,20 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 	public static function print_late_script(): void {
 
-		if ( self::$needs_script && ! wp_script_is( self::SCRIPT_HANDLE, 'done' ) ) {
+		if ( ! self::$needs_script ) {
+
+			return;
+
+		}
+
+		if ( ! wp_script_is( self::SCRIPT_HANDLE, 'done' ) ) {
 
 			wp_print_scripts( self::SCRIPT_HANDLE );
 
 		}
+
+		// Without JavaScript the <noscript> copy plays, so the parked video steps aside.
+		echo '<noscript><style>video[data-oa-lazy-video]{display:none!important}</style></noscript>';
 
 	}
 

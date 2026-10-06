@@ -348,8 +348,6 @@ FOCUS STATES
 
 .oa-nav-sub {
     margin: 0 0 8px 15px;
-    padding-left: 10px;
-    border-left: 1px solid var(--oa-border);
 }
 
 .oa-nav-subitem {

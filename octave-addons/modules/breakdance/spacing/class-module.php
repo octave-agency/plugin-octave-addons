@@ -129,7 +129,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 		return [
 			'heading' => [
 				'label'    => __( 'Heading — all levels', 'octave-addons' ),
-				'selector' => 'h1, h2, h3, h4, h5, h6, .bde-heading',
+				'selector' => 'h1, h2, h3, h4, h5, h6, .bde-heading, .bde-dual-heading',
 				'section'  => 'headings',
 				'unit'     => 'heading-margin',
 			],
@@ -806,7 +806,8 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 	-- Breakdance writes its stylesheets as raw link tags into a placeholder it
 	-- echoes on wp_head at priority 1000000, so every enqueued style — inline
 	-- ones included — lands before that whole block. Its element defaults
-	-- include ".breakdance .bde-heading { margin: 0 }", which matches these
+	-- include ".breakdance .bde-heading { margin: 0 }" (and the same for
+	-- .bde-dual-heading), which matches these
 	-- rules for specificity, so an enqueued default always lost on source
 	-- order and nothing here took effect.
 	--

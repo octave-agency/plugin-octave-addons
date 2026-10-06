@@ -10,7 +10,7 @@ Shared plugin colour aliases
 /* The Breeze top notice and its one-click section sit outside .breeze-box,
    so they are named here too or the rules below resolve to nothing. */
 
-body.wp-admin :is(.breeze-box, .breeze-top-notice, .breeze-one-click-optimization-section, .wpr-wrap, .imagify-settings, .imagify-main-content) {
+body.wp-admin :is(.breeze-box, .breeze-top-notice, .breeze-one-click-optimization-section, .wpr-wrap) {
     --oa-plugin-accent: var(--oa-admin-accent);
     --oa-plugin-accent-strong: var(--oa-admin-accent-dark);
     --oa-plugin-accent-soft: var(--oa-admin-accent-soft);
@@ -77,12 +77,12 @@ body.settings_page_breeze .breeze-top-notice.optimization-notice .explore-optimi
 }
 
 /*
-WP ROCKET AND IMAGIFY
--- Covers the shared cards, settings panels, and primary actions used by the
--- companion WP Media interfaces while preserving their own page structure.
+WP ROCKET
+-- Covers its cards, settings panels, and primary actions while preserving
+-- the plugin's own page structure.
 ---------------------------------------------------------- */
 
-html[data-oa-admin-theme="dark"] body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(.wpr-page, .wpr-card, .wpr-fieldset, .wpr-sidebar, .imagify-card, .imagify-settings-section, .imagify-options) {
+html[data-oa-admin-theme="dark"] body.wp-admin .wpr-wrap :is(.wpr-page, .wpr-card, .wpr-fieldset, .wpr-sidebar) {
     color: var(--oa-plugin-text);
     border-color: var(--oa-plugin-border);
     background: var(--oa-plugin-surface);
@@ -105,15 +105,15 @@ html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(.wpr-
     background: var(--oa-plugin-surface-hover);
 }
 
-html[data-oa-admin-theme="dark"] body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(h1, h2, h3, h4, label, legend, .wpr-title, .wpr-optionHeader) {
+html[data-oa-admin-theme="dark"] body.wp-admin .wpr-wrap :is(h1, h2, h3, h4, label, legend, .wpr-title, .wpr-optionHeader) {
     color: var(--oa-plugin-text);
 }
 
-html[data-oa-admin-theme="dark"] body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(p, .description, .wpr-description, .imagify-help) {
+html[data-oa-admin-theme="dark"] body.wp-admin .wpr-wrap :is(p, .description, .wpr-description) {
     color: var(--oa-plugin-text-soft);
 }
 
-body.wp-admin :is(.wpr-wrap, .imagify-settings, .imagify-main-content) :is(.button-primary, .wpr-button--primary, .imagify-button-primary) {
+body.wp-admin .wpr-wrap :is(.button-primary, .wpr-button--primary) {
     color: var(--oa-admin-on-accent);
     border-color: var(--oa-plugin-accent);
     background: var(--oa-plugin-accent);
@@ -211,20 +211,18 @@ html[data-oa-admin-theme="dark"] body.settings_page_objectcache :is(p, small, .d
 }
 
 /*
-WP ROCKET AND IMAGIFY DETAILS
--- Their outer wrappers were already themed above; these rules cover the
--- navigation, notices, fixed footers and form controls nested outside cards.
+WP ROCKET DETAILS
+-- Its outer wrapper is already themed above; these rules cover navigation,
+-- notices, fixed footers and form controls nested outside cards.
 ---------------------------------------------------------- */
 
-html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(.wpr-header, .wpr-menu, .wpr-nav, .wpr-footer, .wpr-notice, .wpr-option, .wpr-fieldsContainer),
-html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(.imagify-header, .imagify-sidebar, .imagify-settings-footer, .imagify-notice, .imagify-options-line) {
+html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(.wpr-header, .wpr-menu, .wpr-nav, .wpr-footer, .wpr-notice, .wpr-option, .wpr-fieldsContainer) {
     color: var(--oa-plugin-text);
     border-color: var(--oa-plugin-border);
     background-color: var(--oa-plugin-surface);
 }
 
-html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
-html[data-oa-admin-theme="dark"] body.settings_page_imagify :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+html[data-oa-admin-theme="dark"] body.settings_page_wprocket .wpr-wrap :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
     color: var(--oa-plugin-text);
     border-color: var(--oa-admin-border-strong);
     background-color: var(--oa-plugin-surface-soft);

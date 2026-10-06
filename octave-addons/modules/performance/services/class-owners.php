@@ -31,8 +31,12 @@ class Octave_Addons_Perf_Owners {
 		'autoptimize' => 'Autoptimize',
 		'imagify'     => 'Imagify',
 		'breeze'      => 'Breeze',
+		'cloudways'   => 'Cloudways Varnish',
 		'host'        => '',
 	];
+
+	/** Owners that cache in front of WordPress and stack with a plugin cache by design, so never count as a duplicate. */
+	protected const PROXY_OWNERS = [ 'Cloudways Varnish' ];
 
 	/** @var array<string, string[]>|null Feature => owner names, per request. */
 	protected static ?array $owners = null;
@@ -112,9 +116,8 @@ class Octave_Addons_Perf_Owners {
 
 	/*
 	OCTAVE STATE
-	-- Whether Octave itself is switched on for a feature. Page caching and
-	-- next-generation delivery are never Octave's: the Imagify module only
-	-- configures Imagify
+	-- Whether Octave itself is switched on for a feature. Next-generation
+	-- delivery is never Octave's: the Imagify module only configures Imagify
 	---------------------------------------------------------- */
 
 	public static function octave_enabled( string $feature ): bool {
@@ -126,6 +129,7 @@ class Octave_Addons_Perf_Owners {
 			'minify_js'    => [ 'performance-files', 'minify_js' ],
 			'minify_css'   => [ 'performance-files', 'minify_css' ],
 			'google_fonts' => [ 'performance-fonts', 'self_host' ],
+			'page_cache'   => [ 'performance-page-cache', 'enabled' ],
 		];
 
 		if ( ! isset( $map[ $feature ] ) ) {
@@ -157,7 +161,7 @@ class Octave_Addons_Perf_Owners {
 			$octave = self::octave_enabled( $feature );
 			$status = 'none';
 
-			if ( count( $owners ) > 1 ) {
+			if ( count( array_diff( $owners, self::PROXY_OWNERS ) ) > 1 ) {
 
 				$status = 'conflict';
 
@@ -378,6 +382,17 @@ class Octave_Addons_Perf_Owners {
 			'minify_js'    => $basic['breeze-minify-js'] ?? false,
 			'page_cache'   => $basic['breeze-active'] ?? false,
 		];
+
+	}
+
+	/*
+	CLOUDWAYS VARNISH
+	-- Varnish in front of the application, while Cloudways has it switched on
+	---------------------------------------------------------- */
+
+	protected static function detect_cloudways(): array {
+
+		return [ 'page_cache' => Octave_Addons_Perf_Varnish::is_running() ];
 
 	}
 

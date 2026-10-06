@@ -17,6 +17,14 @@ PERFORMANCE: FILE OPTIMIZATION
 -- and anything dynamic (extra query arguments) are never minified
 -- Inlining moves a small stylesheet's contents into the page in place of
 -- its <link>, Breakdance's per-page files included, without changing order
+-- Breakdance CSS delivery replaces each unbroken run of Breakdance and
+-- Octave stylesheets in the <head> (normalize, dependencies, fonts,
+-- globals, presets, selectors and each post-ID.css) with one bundle of the
+-- same CSS in the same order, inlined when small enough or else served as
+-- one cached file, so first paint waits on one request instead of fifteen.
+-- Nothing is removed or loaded late: unused-CSS deletion and asynchronous
+-- loading are deliberately not done, as dynamic states and the header,
+-- navigation and hero must all be styled at first paint
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -49,6 +57,15 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 	/** Stylesheets shared by many pages, which are never inlined. */
 	protected const SHARED_PATTERNS = [ '/wp-content/plugins/', '/wp-includes/' ];
 
+	/** Stylesheets bundled by Breakdance CSS delivery, matched on the URL path. */
+	protected const BUNDLE_PATTERNS = [ '/breakdance/', '/octave-addons/' ];
+
+	/** A bundle up to this size is inlined into the page; larger ones are linked as one file. */
+	public const BUNDLE_INLINE_MAX = 96 * KB_IN_BYTES;
+
+	/** Largest bundle built at all; past it the original links stay. */
+	public const BUNDLE_MAX = 1024 * KB_IN_BYTES;
+
 	/** Handles that are never deferred. */
 	protected const PROTECTED_HANDLES = [ 'jquery', 'jquery-core', 'jquery-migrate', 'wp-hooks', 'wp-i18n', 'wp-polyfill' ];
 
@@ -68,7 +85,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Per-file minification of local CSS and JavaScript, and deferral of scripts you choose. Files are never combined.', 'octave-addons' );
+		return __( 'Per-file minification of local CSS and JavaScript, Breakdance CSS delivered as one ordered bundle, and deferral of scripts you choose.', 'octave-addons' );
 
 	}
 
@@ -85,8 +102,9 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 			'minify_css'    => false,
 			'minify_js'     => false,
 			'defer_js'      => false,
-			'inline_css'    => true,
-			'inline_max'    => 4,
+			'inline_css'     => true,
+			'inline_max'     => 4,
+			'breakdance_css' => false,
 			'defer_handles' => '',
 			'exclude'       => '',
 		];
@@ -97,7 +115,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		$clean = parent::sanitize( $input );
 
-		foreach ( [ 'minify_css', 'minify_js', 'defer_js', 'inline_css' ] as $key ) {
+		foreach ( [ 'minify_css', 'minify_js', 'defer_js', 'inline_css', 'breakdance_css' ] as $key ) {
 
 			$clean[ $key ] = ! empty( $input[ $key ] );
 
@@ -138,6 +156,13 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 		if ( ! empty( $s['defer_js'] ) && '' !== trim( (string) $s['defer_handles'] ) ) {
 
 			add_action( 'wp_print_scripts', [ $this, 'apply_defer' ], 1 );
+
+		}
+
+		// After the font rewrite (40) and before inlining (50), so the bundle holds the final links.
+		if ( ! empty( $s['breakdance_css'] ) ) {
+
+			Octave_Addons_Perf_Html::register( 'files-bundle', [ $this, 'bundle_styles' ], 45 );
 
 		}
 
@@ -234,6 +259,403 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 		Octave_Addons_Perf_Log::summary( 'inlined_css_bytes', $total );
 
 		return $output . substr( $html, $cursor );
+
+	}
+
+	/*
+	BUNDLE STYLES
+	-- Replaces each unbroken run of bundleable stylesheets in the <head>
+	-- with one bundle. A run only continues across whitespace, <meta> tags
+	-- and non-stylesheet <link>s such as preloads, which are kept and moved
+	-- ahead of the bundle; inline <style> blocks inside a run join the
+	-- bundle at their own position, so the cascade is exactly as before.
+	-- Anything else ends the run. Runs of fewer than two files are left
+	---------------------------------------------------------- */
+
+	public function bundle_styles( string $html ): string {
+
+		$end = stripos( $html, '</head>' );
+
+		if ( ! Octave_Addons_Perf::has_html_api() || false === $end ) {
+
+			return $html;
+
+		}
+
+		$head  = substr( $html, 0, $end );
+		$items = $this->head_items( $head );
+		$runs  = [];
+		$run   = [];
+		$last  = null;
+
+		foreach ( $items as $item ) {
+
+			$gap = null === $last ? '' : substr( $head, $last, $item['offset'] - $last );
+
+			if ( null !== $last && '' !== trim( (string) preg_replace( '#<meta\b[^>]*>#i', '', $gap ) ) || 'barrier' === $item['kind'] ) {
+
+				$runs[] = $run;
+				$run    = [];
+
+			}
+
+			if ( 'barrier' !== $item['kind'] && ( ! empty( $run ) || 'file' === $item['kind'] ) ) {
+
+				$run[] = $item;
+
+			}
+
+			$last = $item['offset'] + strlen( $item['tag'] );
+
+		}
+
+		$runs[] = $run;
+		$output = $head;
+		$shift  = 0;
+		$number = 0;
+
+		foreach ( $runs as $run ) {
+
+			// Trailing non-files add nothing to a bundle.
+			while ( ! empty( $run ) && 'file' !== end( $run )['kind'] ) {
+
+				array_pop( $run );
+
+			}
+
+			if ( count( array_filter( $run, static function ( array $item ): bool {
+
+				return 'file' === $item['kind'];
+
+			} ) ) < 2 ) {
+
+				continue;
+
+			}
+
+			$markup = $this->bundle_markup( $run, ++$number );
+
+			if ( '' === $markup ) {
+
+				continue;
+
+			}
+
+			$start  = $run[0]['offset'];
+			$stop   = end( $run )['offset'] + strlen( end( $run )['tag'] );
+			$kept   = '';
+
+			foreach ( $run as $item ) {
+
+				$kept .= 'keep' === $item['kind'] ? $item['tag'] . "\n" : '';
+
+			}
+
+			preg_match_all( '#<meta\b[^>]*>#i', substr( $head, $start, $stop - $start ), $metas );
+
+			$replacement = implode( "\n", $metas[0] ) . ( empty( $metas[0] ) ? '' : "\n" ) . $kept . $markup;
+			$output      = substr( $output, 0, $start + $shift ) . $replacement . substr( $output, $stop + $shift );
+			$shift      += strlen( $replacement ) - ( $stop - $start );
+
+		}
+
+		return $output . substr( $html, $end );
+
+	}
+
+	/*
+	HEAD ITEMS
+	-- Every <link> and <style> in the <head>, outside comments, <noscript>
+	-- and <template>, classed as a bundleable 'file' or 'style', a 'keep'
+	-- link that is not a stylesheet, or a 'barrier' that ends a run.
+	-- <script>, <noscript>, <title> and comments end a run too, as they
+	-- appear in the gap between items
+	---------------------------------------------------------- */
+
+	protected function head_items( string $head ): array {
+
+		$skipped = [];
+
+		preg_match_all( '#<!--.*?-->|<noscript\b.*?</noscript>|<template\b.*?</template>|<script\b.*?</script>#is', $head, $blocks, PREG_OFFSET_CAPTURE );
+
+		foreach ( $blocks[0] as $block ) {
+
+			$skipped[] = [ $block[1], $block[1] + strlen( $block[0] ) ];
+
+		}
+
+		preg_match_all( '#<link\b[^>]*>|<style\b[^>]*>.*?</style>#is', $head, $matches, PREG_OFFSET_CAPTURE );
+
+		$items = [];
+
+		foreach ( $matches[0] as [ $tag, $offset ] ) {
+
+			foreach ( $skipped as [ $start, $stop ] ) {
+
+				if ( $offset >= $start && $offset < $stop ) {
+
+					continue 2;
+
+				}
+
+			}
+
+			$items[] = array_merge( [ 'tag' => $tag, 'offset' => $offset ], $this->bundle_item( $tag ) );
+
+		}
+
+		return $items;
+
+	}
+
+	/*
+	BUNDLE ITEM
+	-- What one <link> or <style> contributes: kind, and for a file its
+	-- href, local path, media and CSS
+	---------------------------------------------------------- */
+
+	protected function bundle_item( string $tag ): array {
+
+		$barrier = [ 'kind' => 'barrier' ];
+		$tags    = new WP_HTML_Tag_Processor( $tag );
+
+		if ( ! $tags->next_tag() ) {
+
+			return $barrier;
+
+		}
+
+		$media = trim( (string) $tags->get_attribute( 'media' ) );
+
+		// A print stylesheet never blocks rendering, so it stays a link of its own.
+		if ( preg_match( '/[<>"\'{};]/', $media ) || false !== stripos( $media, 'print' ) ) {
+
+			return $barrier;
+
+		}
+
+		foreach ( [ 'integrity', 'disabled', 'onload', 'title', 'data-oa-no-inline', 'data-oa-no-bundle', 'nonce' ] as $attribute ) {
+
+			if ( null !== $tags->get_attribute( $attribute ) ) {
+
+				return $barrier;
+
+			}
+
+		}
+
+		if ( 'STYLE' === $tags->get_tag() ) {
+
+			$css = (string) preg_replace( '#^<style\b[^>]*>|</style>$#i', '', $tag );
+			$type = strtolower( trim( (string) $tags->get_attribute( 'type' ) ) );
+
+			if ( ( '' !== $type && 'text/css' !== $type ) || false !== stripos( $css, '@import' ) ) {
+
+				return $barrier;
+
+			}
+
+			return [ 'kind' => 'style', 'css' => $css, 'media' => $media, 'source' => md5( $css ) ];
+
+		}
+
+		$rel = preg_split( '/\s+/', strtolower( trim( (string) $tags->get_attribute( 'rel' ) ) ) );
+
+		if ( ! in_array( 'stylesheet', (array) $rel, true ) ) {
+
+			return [ 'kind' => 'keep' ];
+
+		}
+
+		$href = html_entity_decode( trim( (string) $tags->get_attribute( 'href' ) ) );
+		$path = (string) wp_parse_url( $href, PHP_URL_PATH );
+
+		/**
+		 * Filters the URL path fragments of stylesheets Breakdance CSS delivery bundles.
+		 *
+		 * @param string[] $patterns Case-insensitive substrings.
+		 */
+		$patterns = (array) apply_filters( 'octave_addons_perf_bundle_patterns', self::BUNDLE_PATTERNS );
+
+		if ( [ 'stylesheet' ] !== $rel || ! Octave_Addons_Perf::is_same_origin( $href ) || '' === Octave_Addons_Perf::matches_any( $path, $patterns ) || '' !== $this->bundle_exclusion( (string) $tags->get_attribute( 'id' ), $href ) ) {
+
+			return $barrier;
+
+		}
+
+		$file = Octave_Addons_Perf_Admin::local_path( $href );
+
+		if ( '' === $file || 'css' !== strtolower( pathinfo( $file, PATHINFO_EXTENSION ) ) || filesize( $file ) > self::MAX_BYTES ) {
+
+			return $barrier;
+
+		}
+
+		return [
+			'kind'   => 'file',
+			'href'   => $href,
+			'file'   => $file,
+			'media'  => $media,
+			'source' => $file . '|' . filemtime( $file ) . '|' . filesize( $file ),
+		];
+
+	}
+
+	/*
+	BUNDLE EXCLUSION
+	-- The administrator's never-minify-or-inline list applies here too
+	---------------------------------------------------------- */
+
+	public function bundle_exclusion( string $id, string $url ): string {
+
+		/**
+		 * Filters the id and URL patterns whose stylesheets Breakdance CSS delivery leaves as links.
+		 *
+		 * @param string[] $patterns Case-insensitive substrings.
+		 */
+		$patterns = (array) apply_filters( 'octave_addons_perf_bundle_exclusions', Octave_Addons_Perf::lines( $this->settings['exclude'] ?? '' ) );
+
+		return Octave_Addons_Perf::matches_any( $id . ' ' . $url, $patterns );
+
+	}
+
+	/*
+	BUNDLE MARKUP
+	-- The tag replacing one run: an inline <style> or one <link> to the
+	-- cached bundle file, or '' to keep the original tags. The bundle is
+	-- built by the cache warmer, cron or a scan; a visitor meanwhile gets
+	-- the original links, and that page is kept out of Octave's page cache
+	---------------------------------------------------------- */
+
+	protected function bundle_markup( array $run, int $number ): string {
+
+		$sources = array_column( $run, 'source' );
+		$key     = substr( md5( wp_json_encode( [ $sources, array_column( $run, 'media' ), Octave_Addons_Perf_Cache::generation(), OCTAVE_ADDONS_VERSION ] ) ), 0, 16 );
+		$dir     = Octave_Addons_Perf_Store::dir( Octave_Addons_Perf_Cache::MIN_DIR );
+		$name    = 'bundle-' . $key . '.css';
+		$files   = array_values( array_filter( array_column( $run, 'href' ) ) );
+
+		if ( ! file_exists( $dir . $name ) ) {
+
+			if ( get_transient( 'oa_perf_min_fail_' . $key ) ) {
+
+				return '';
+
+			}
+
+			if ( $this->defer_minify( $key, 'bundle' ) ) {
+
+				Octave_Addons_Perf_Disk_Cache::skip( 'incomplete' );
+				Octave_Addons_Perf_Log::summary( 'css_bundle', [ 'mode' => 'queued', 'bytes' => 0, 'files' => $files ] );
+
+				return '';
+
+			}
+
+			$css = self::build_bundle( $run );
+
+			if ( null === $css ) {
+
+				set_transient( 'oa_perf_min_fail_' . $key, 1, DAY_IN_SECONDS );
+				Octave_Addons_Perf_Log::error( 'files', __( 'Breakdance CSS could not be bundled safely, so the original stylesheets are served.', 'octave-addons' ), implode( ', ', $files ) );
+
+				return '';
+
+			}
+
+			if ( ! Octave_Addons_Perf_Store::write( $dir . $name, $css ) ) {
+
+				set_transient( 'oa_perf_min_fail_' . $key, 1, HOUR_IN_SECONDS );
+
+				return '';
+
+			}
+
+		}
+
+		$size = (int) filesize( $dir . $name );
+
+		/**
+		 * Filters the largest Breakdance CSS bundle inlined into the page, in bytes.
+		 *
+		 * @param int $bytes Larger bundles are linked as one cached file instead.
+		 */
+		$inline = $size <= (int) apply_filters( 'octave_addons_perf_bundle_inline_max', self::BUNDLE_INLINE_MAX );
+
+		Octave_Addons_Perf_Log::summary( 'css_bundle', [ 'mode' => $inline ? 'inline' : 'file', 'bytes' => $size, 'files' => $files ] );
+
+		if ( $inline ) {
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Octave's own cache file.
+			return '<style id="oa-css-bundle-' . $number . '" data-oa-bundle="' . count( $files ) . '">' . (string) file_get_contents( $dir . $name ) . '</style>';
+
+		}
+
+		return '<link rel="stylesheet" id="oa-css-bundle-' . $number . '-css" href="' . esc_url( Octave_Addons_Perf_Store::url( Octave_Addons_Perf_Cache::MIN_DIR ) . $name ) . '" data-oa-bundle="' . count( $files ) . '">';
+
+	}
+
+	/*
+	BUILD BUNDLE
+	-- The run's CSS in order: relative URLs made absolute against each
+	-- file, @charset dropped, and each part under its own media condition.
+	-- null when any part is unsafe or the whole is too large
+	---------------------------------------------------------- */
+
+	public static function build_bundle( array $run ): ?string {
+
+		$parts = [];
+		$total = 0;
+
+		foreach ( $run as $item ) {
+
+			if ( 'keep' === $item['kind'] ) {
+
+				continue;
+
+			}
+
+			if ( 'file' === $item['kind'] ) {
+
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file.
+				$css  = (string) file_get_contents( $item['file'] );
+				$base = 0 === strpos( $item['href'], '/' ) && 0 !== strpos( $item['href'], '//' ) ? home_url( $item['href'] ) : $item['href'];
+
+				if ( false !== stripos( $css, '@import' ) ) {
+
+					return null;
+
+				}
+
+				$css = Octave_Addons_Perf_Minifier::absolutize_css_urls( $css, $base );
+
+			} else {
+
+				$css = (string) $item['css'];
+
+			}
+
+			$css = trim( (string) preg_replace( '/^\s*@charset\s+[^;]+;/i', '', $css ) );
+
+			if ( false !== stripos( $css, '</style' ) || null === Octave_Addons_Perf_Css::rules( $css ) ) {
+
+				return null;
+
+			}
+
+			$media   = (string) ( $item['media'] ?? '' );
+			$parts[] = '' !== $media && 'all' !== strtolower( $media ) ? '@media ' . $media . '{' . $css . '}' : $css;
+			$total  += strlen( $css );
+
+			if ( $total > self::BUNDLE_MAX ) {
+
+				return null;
+
+			}
+
+		}
+
+		return implode( "\n", $parts );
 
 	}
 
@@ -547,6 +969,8 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		if ( $this->defer_minify( $key ) ) {
 
+			Octave_Addons_Perf_Disk_Cache::skip( 'incomplete' );
+
 			return '';
 
 		}
@@ -603,7 +1027,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 	-- does the work after all
 	---------------------------------------------------------- */
 
-	protected function defer_minify( string $key ): bool {
+	protected function defer_minify( string $key, string $reason = 'minify' ): bool {
 
 		if ( Octave_Addons_Perf_Page_Cache::is_warm_request() ) {
 
@@ -626,7 +1050,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 			$path   = (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/', PHP_URL_PATH ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only the path is used, and normalised below.
 			$origin = (string) preg_replace( '#^(https?://[^/]+).*$#i', '$1', home_url() );
 
-			Octave_Addons_Perf_Page_Cache::queue_warm( 'minify', [ $origin . ( '' !== $path ? $path : '/' ) ] );
+			Octave_Addons_Perf_Page_Cache::queue_warm( $reason, [ $origin . ( '' !== $path ? $path : '/' ) ] );
 
 		}
 
@@ -746,7 +1170,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		?>
 
-		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Compatibility first: each file is minified on its own and stays in its original position. Combining files, removing unused CSS and generating critical CSS are deliberately not offered, as they are the most common cause of broken layouts and scripts.', 'octave-addons' ); ?></p>
+		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Compatibility first: each file is minified on its own and keeps its place in the cascade. Breakdance CSS delivery builds the first-render CSS from exactly the stylesheets Breakdance links for each page, in their original order. Removing "unused" CSS and loading layout CSS late are deliberately not offered, as they are the most common cause of broken layouts, menus and interactive states.', 'octave-addons' ); ?></p>
 
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
@@ -755,6 +1179,10 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 			$this->switch_row( 'minify_css', __( 'Minify local CSS', 'octave-addons' ), __( 'Recommended when files are unminified. Removes comments and whitespace from each local stylesheet; relative image and font URLs are rewritten so they keep working.', 'octave-addons' ), $s );
 			$this->switch_row( 'minify_js', __( 'Minify local JavaScript', 'octave-addons' ), __( 'Advanced. Removes comments and indentation only, keeping every line break so behaviour cannot change. Savings are modest; test interactive features after enabling.', 'octave-addons' ), $s );
+
+			Octave_Addons_Fields::section( [ 'label' => __( 'Breakdance CSS delivery', 'octave-addons' ) ] );
+
+			$this->switch_row( 'breakdance_css', __( 'Deliver Breakdance CSS as one bundle', 'octave-addons' ), __( 'Recommended for Breakdance sites. A Breakdance page links many small stylesheets (normalize, dependencies, fonts, global settings, presets, selectors and one per page, header, footer and template), and the browser shows nothing until every one has downloaded. Each unbroken run of Breakdance and Octave stylesheets becomes one bundle with the same CSS in the same order and media: placed in the page when under 96 KB, otherwise served as one cached file. Bundles are prepared by the cache warmer, so visitors are never kept waiting while one is built; until then the original links are served.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Small stylesheets', 'octave-addons' ) ] );
 
@@ -773,12 +1201,12 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Exclusions', 'octave-addons' ) ] );
 
-			$this->textarea_row( 'exclude', __( 'Never minify or inline', 'octave-addons' ), __( 'One handle, stylesheet id or URL pattern per line. Breakdance assets, WordPress core and files already ending in .min.css or .min.js are never minified. A stylesheet can also opt out of inlining with the data-oa-no-inline attribute.', 'octave-addons' ), $s );
+			$this->textarea_row( 'exclude', __( 'Never minify, inline or bundle', 'octave-addons' ), __( 'One handle, stylesheet id or URL pattern per line. Breakdance assets, WordPress core and files already ending in .min.css or .min.js are never minified. A stylesheet can also opt out of inlining and bundling with the data-oa-no-inline attribute, or of bundling alone with data-oa-no-bundle.', 'octave-addons' ), $s );
 
 			?>
 		</table>
 
-		<p class="oa-help"><?php esc_html_e( 'To delay third-party scripts such as analytics, use Third-Party Script Delay above.', 'octave-addons' ); ?></p>
+		<p class="oa-help"><?php esc_html_e( 'To delay third-party scripts such as analytics, use Script Delay above.', 'octave-addons' ); ?></p>
 
 		<?php
 

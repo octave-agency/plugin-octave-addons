@@ -3,7 +3,6 @@ Contributors:      octaveagency
 Tags:              addons, animations, comments, accessibility, debug
 Requires at least: 5.8
 Tested up to:      6.5
-Stable tag:        3.34.2
 Requires PHP:      7.4
 License:           GPL-2.0+
 License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
@@ -166,6 +165,26 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.35.0 =
+* Performance toolbar simplified: "Performance" and a single "Clear cache" action that clears every active layer, shown only to administrators while at least one Performance feature is switched on. Per-layer results and specialist controls stay on the Performance page.
+* Saving published content now clears the pages it appears on (the page itself, the home and posts pages, its archive and public term archives) once the save request has finished, then refills them in the background. Unpublished, trashed and deleted posts clear their old addresses; term edits clear their archives; menu changes clear every page. Page-cache plugins now receive these clears too.
+* Breakdance page saves clear that page only after Breakdance has written its CSS, once per save. Headers, footers, templates, global blocks, popups, global styles and Breakdance cache regeneration still clear everything once, at most once a minute.
+* Added Cloudways Varnish support: detected from the Cloudways server, cleared with PURGE requests to the local Varnish service (by path, or the whole site by regex) on every save and Clear cache, with honest per-layer results. Skipped when WP Rocket or Breeze already purges Varnish.
+* Breakdance view and session counting, which starts a PHP session and sets three cookies on every page view, is switched off while Performance is on when no Page View Count or Session Count condition is used, so pages can be cached. When one is used, or that cannot be confirmed, counting stays on and the Performance page warns that full-page caching cannot work.
+* Added Page Cache, Octave's own filesystem page cache for sites with no other: pages are served by an advanced-cache.php drop-in before WordPress loads, written atomically, cleared with every purge and expired by an hourly job. It never replaces another plugin's drop-in, never edits wp-config.php and steps aside for Cloudways Varnish, page-cache plugins and managed hosts.
+* Breakdance hero backgrounds are now found in the page's own Breakdance CSS and preloaded from the first view, with the correct image for each screen width (for example the 1024px image below 1024px and the full image above). fetchpriority on a section no longer stops the hero image guess, and learned LCP reports still correct the page's guess without duplicate preloads. Up to two preconnects are added for the hero's other hosts.
+* Added Breakdance CSS delivery to File Optimization: each unbroken run of Breakdance and Octave stylesheets becomes one bundle with the same CSS, order and media, inlined up to 96 KB or served as one cached file, prepared by the cache warmer. Unsafe stylesheets keep their own links.
+* Videos are stricter: video and source URLs are parked until the video is actually in view, autoplay videos never preload early, Save-Data and 2G connections get posters and load on play, videos added later are handled, local posters load at the size shown, and a noscript copy keeps videos playable without JavaScript.
+* The notifications bar no longer forces layout reads after style changes.
+* Heading word animations no longer nest a styling span around the word masks. A span such as `<span class="text-gradient">` that only holds text now passes its class to each word, giving `<span class="oa-w text-gradient"><span class="oa-wi">word</span></span>`, so the gradient applies to every word.
+* Breakdance Default Spacing now applies the heading margin to Dual Heading elements (`.bde-dual-heading`) as well as headings.
+* Removed the left padding and border from the admin sidebar's module sub-navigation.
+* The Performance page now names the page cache in use, what stops pages being cached, the last full and targeted clears with any failed layer, and, in page diagnostics, HIT/MISS/BYPASS, the hero image chosen per screen size, the CSS bundle and the videos left deferred.
+
+= 3.34.3 =
+* Combined the normal WordPress admin theme into one cached stylesheet assembled from the integrations active on the site. The Customizer and block-editor canvas keep their context-specific stylesheets, and the separate files remain available as a fallback when uploads are not writable.
+* Added an Imagify-only admin stylesheet with complete dark-mode coverage for the bulk optimization overview, tables, empty states, selectors and disabled actions. It loads only while Imagify is active.
 
 = 3.34.2 =
 * Replaced the Breakdance Heading element's added `div` tag option with `span`. Paragraph and span headings both retain the global heading typography.

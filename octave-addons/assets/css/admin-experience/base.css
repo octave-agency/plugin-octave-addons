@@ -60,14 +60,6 @@ html[data-oa-admin-theme="dark"] {
 }
 
 /*
-IMAGIFY BUTTON TEXT SHADOW
----------------------------------------------------------- */
-
-.imagify-main-content button {
-    text-shadow: none !important;
-}
-
-/*
 FOUNDATIONS
 ---------------------------------------------------------- */
 
@@ -2110,27 +2102,6 @@ html[data-oa-admin-theme="dark"] body.wp-admin .plugins .active.updated + .plugi
 html[data-oa-admin-theme="dark"] body.wp-admin .plugins tr.paused td,
 html[data-oa-admin-theme="dark"] body.wp-admin .plugins tr.paused th {
     background: var(--oa-admin-surface-subtle);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sortable a,
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted a {
-    color: var(--oa-admin-accent-dark);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sortable a:hover,
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sortable a:focus,
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted a:hover,
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted a:focus {
-    color: var(--oa-admin-accent);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorting-indicator::before {
-    color: var(--oa-admin-text-dim);
-}
-
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted.asc .sorting-indicator.asc::before,
-html[data-oa-admin-theme="dark"] body.wp-admin .imagify-files-list .sorted.desc .sorting-indicator.desc::before {
-    color: var(--oa-admin-accent-dark);
 }
 
 html[data-oa-admin-theme="dark"] body.wp-admin .plugin-install #the-list td,

@@ -4,7 +4,7 @@
  * Plugin Name:       Octave Addons
  * Plugin URI:        https://www.octaveagency.com/
  * Description:       A modular collection of Octave site add-ons.
- * Version:           3.34.2
+ * Version:           3.35.0
  * Author:            Octave Agency
  * Author URI:        https://octaveagency.com
  * License:           GPL-2.0+
@@ -95,9 +95,16 @@ register_deactivation_hook( __FILE__, function () {
 	Octave_Addons_Site_Status::remove_status_drop_ins();
 
 	// Performance background jobs are booked again when their modules next run.
-	foreach ( [ 'octave_addons_perf_fonts_refresh', 'octave_addons_perf_fonts_fetch', 'octave_addons_perf_cf_flush', 'octave_addons_perf_db_cleanup', 'octave_addons_perf_db_cleanup_continue', 'octave_addons_perf_warm', 'octave_addons_perf_imagify_verify' ] as $hook ) {
+	foreach ( [ 'octave_addons_perf_fonts_refresh', 'octave_addons_perf_fonts_fetch', 'octave_addons_perf_cf_flush', 'octave_addons_perf_db_cleanup', 'octave_addons_perf_db_cleanup_continue', 'octave_addons_perf_warm', 'octave_addons_perf_imagify_verify', 'octave_addons_perf_page_cache_gc' ] as $hook ) {
 
 		wp_clear_scheduled_hook( $hook );
+
+	}
+
+	// Octave's page-cache drop-in and stored pages only; anyone else's drop-in is left alone.
+	if ( class_exists( 'Octave_Addons_Perf_Disk_Cache' ) ) {
+
+		Octave_Addons_Perf_Disk_Cache::uninstall();
 
 	}
 
