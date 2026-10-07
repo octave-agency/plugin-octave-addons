@@ -166,6 +166,23 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.39.0 =
+* Settings, notes and messages across the plugin, and the whole Performance area in particular, are rewritten in plain language. Technical names such as attributes and file paths now only appear in notes marked for developers.
+* Imagify Next-Gen Images is now Imagify Setup. Its delivery setting defaults to Automatic, which now uses Imagify's server rules where the server supports them and Octave Addons Rewriting everywhere else (such as on Cloudways), and no longer falls back to picture tags.
+* Page Transitions is now Page Loader & Transitions, with its settings split into three cards: Page loader, Page transitions and Customisation.
+* The page loader can show the brand text, a logo, both, or nothing, with an optional tagline, and can play only on someone's first visit as well as once per visit or on every page load. Orbital can now show content too.
+* Page transitions can show the brand text, logo, an image or a loading spinner in the middle of the screen while the next page loads, with every style, not only Brand Wipe.
+* Customisation adds a tagline and a text size, and holds the brand text, logo, image, colours and the "Keep pages fast" option shared by both. Existing settings keep their current look.
+
+= 3.38.0 =
+* Divi 4 and 5 support alongside Breakdance. Octave recognises Divi as the Divi or Extra theme, a child theme of either, or the Divi Builder plugin.
+* Builder-specific parts now appear and run only where their builder is active. Without Breakdance, the Breakdance menu and its modules, Animations, Accessibility Tree, the Breakdance icon field type, Breakdance colour options and the Breakdance audit are hidden; Divi's audit appears only with Divi. Hidden modules keep their saved settings for when the builder returns.
+* Divi's Visual Builder, backend builder, previews, Theme Builder and Divi admin screens are now left untouched, like Breakdance's builder: no optimisation, page loader, animations, Heartbeat change or video rewriting runs inside them.
+* Divi pages get the first-view hero preload: the first section's background is read from Divi's et-cache CSS or its inline critical CSS and preloaded per screen width, skipping the Theme Builder header.
+* Page-builder CSS delivery (formerly Breakdance CSS delivery, same setting) also bundles Divi's theme and et-cache stylesheets, leaving Divi's deferred critical CSS as it is. Octave URL rewriting also adds WebP/AVIF to Divi's background images.
+* Divi site-wide changes (its own CSS clear, Theme Builder layouts, Library items, theme options and global colours) clear every cache layer once, at most once a minute; an ordinary Divi page save clears that page.
+* Divi's own scripts are never delayed, and Octave's Google Fonts self-hosting steps aside when Divi's "Improve Google Fonts Loading" is on. A Divi performance audit lists Divi's own performance settings on the Performance page.
+
 = 3.37.0 =
 * Added Octave URL rewriting as an Imagify delivery option, for servers such as Cloudways where Nginx serves images itself and never reads Imagify's .htaccess rules, and for layouts picture tags would break. Imagify keeps creating the WebP or AVIF copies but stops delivering them; Octave points image src and srcset, video posters, inline style backgrounds and image preloads at each copy that exists (preloads also name the format, so other browsers skip them), and serves Breakdance stylesheets as copies in which each background image gains an image-set() offering the copy with the original as fallback. Page markup is the same for every visitor, so page caches and Varnish keep working. The delivery test checks the copy itself in this mode.
 * Heading word animations now treat any span with a class the same way, not only gradient text: it stays one span, and what it paints behind or through its text is handed to each word as an aligned slice (`data-oa-span`, `--oa-span-x`, `--oa-span-w`, replacing `data-oa-gradient`, `--oa-gx` and `--oa-gw`).

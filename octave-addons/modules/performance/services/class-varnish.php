@@ -165,7 +165,7 @@ class Octave_Addons_Perf_Varnish {
 
 		if ( empty( $paths ) ) {
 
-			return self::result( 'skipped', __( 'No URL on this site to clear.', 'octave-addons' ) );
+			return self::result( 'skipped', __( 'No pages on this site to clear.', 'octave-addons' ) );
 
 		}
 
@@ -182,7 +182,7 @@ class Octave_Addons_Perf_Varnish {
 		}
 
 		/* translators: %d: number of URLs. */
-		return self::result( 'success', sprintf( _n( 'Cleared %d URL.', 'Cleared %d URLs.', count( $paths ), 'octave-addons' ), count( $paths ) ) );
+		return self::result( 'success', sprintf( _n( 'Cleared %d page.', 'Cleared %d pages.', count( $paths ), 'octave-addons' ), count( $paths ) ) );
 
 	}
 
@@ -232,7 +232,7 @@ class Octave_Addons_Perf_Varnish {
 
 		if ( '' === $host || '' === $path ) {
 
-			return __( 'The site address could not be read.', 'octave-addons' );
+			return __( 'Your site address could not be read.', 'octave-addons' );
 
 		}
 
@@ -252,7 +252,7 @@ class Octave_Addons_Perf_Varnish {
 			Octave_Addons_Perf_Log::error( 'page-cache', $response->get_error_message(), self::LABEL );
 
 			/* translators: %s: error message. */
-			return sprintf( __( 'Varnish did not answer: %s', 'octave-addons' ), $response->get_error_message() );
+			return sprintf( __( 'Cloudways Varnish did not respond: %s', 'octave-addons' ), $response->get_error_message() );
 
 		}
 
@@ -261,7 +261,7 @@ class Octave_Addons_Perf_Varnish {
 		if ( $code < 200 || $code >= 300 ) {
 
 			/* translators: %d: HTTP status code. */
-			return sprintf( __( 'Varnish refused the purge (HTTP %d).', 'octave-addons' ), $code );
+			return sprintf( __( 'Cloudways Varnish would not clear the page (error %d).', 'octave-addons' ), $code );
 
 		}
 

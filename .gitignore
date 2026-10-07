@@ -1,6 +1,7 @@
 AGENTS.md
 CLAUDE.md
 .claude/
+.codex/
 /graphify-out/
 
 .mcp.json
@@ -15,3 +16,6 @@ CLAUDE.md
 # Site-specific Breakdance elements — the shared library in
 # modules/breakdance-custom-elements/library/ is tracked; the per-site save
 # location keeps its own .gitignore in modules/breakdance-custom-elements/elements/
+
+/Divi 4/
+/Divi 5/

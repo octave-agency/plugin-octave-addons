@@ -22,8 +22,8 @@ class Octave_Addons_Perf_Diagnostics {
 
 	/*
 	NOTE ASSETS
-	-- During a scan, after every footer script has printed: which Octave and
-	-- Breakdance scripts and styles the page actually loaded
+	-- During a scan, after every footer script has printed: which Octave,
+	-- Breakdance and Divi scripts and styles the page actually loaded
 	---------------------------------------------------------- */
 
 	public static function note_assets(): void {
@@ -34,7 +34,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 		}
 
-		$assets = [ 'octave' => [], 'breakdance' => [] ];
+		$assets = [ 'octave' => [], 'breakdance' => [], 'divi' => [] ];
 
 		foreach ( [ wp_scripts(), wp_styles() ] as $dependencies ) {
 
@@ -49,6 +49,10 @@ class Octave_Addons_Perf_Diagnostics {
 				} elseif ( 0 === strpos( (string) $handle, 'breakdance' ) || false !== strpos( $src, '/breakdance/' ) ) {
 
 					$assets['breakdance'][] = (string) $handle;
+
+				} elseif ( 0 === strpos( (string) $handle, 'divi' ) || 0 === strpos( (string) $handle, 'et-' ) || false !== stripos( $src, '/themes/Divi/' ) || false !== strpos( $src, '/et-cache/' ) ) {
+
+					$assets['divi'][] = (string) $handle;
 
 				}
 
@@ -84,13 +88,13 @@ class Octave_Addons_Perf_Diagnostics {
 
 		if ( false !== stripos( $body, 'This website is like a Rocket' ) ) {
 
-			return __( 'WP Rocket cached page', 'octave-addons' );
+			return __( 'Saved copy from WP Rocket', 'octave-addons' );
 
 		}
 
 		if ( false !== stripos( $body, 'Cache served by breeze' ) ) {
 
-			return __( 'Breeze cached page', 'octave-addons' );
+			return __( 'Saved copy from Breeze', 'octave-addons' );
 
 		}
 
@@ -113,32 +117,32 @@ class Octave_Addons_Perf_Diagnostics {
 		$status = is_wp_error( $plain ) ? '' : self::cache_status( $plain );
 
 		$details[] = [
-			'heading' => __( 'Page delivery', 'octave-addons' ),
+			'heading' => __( 'How the page loaded', 'octave-addons' ),
 			'rows'    => array_filter( [
 				/* translators: %d: milliseconds. */
-				sprintf( __( 'Uncached response (scan): %d ms', 'octave-addons' ), (int) $scan_ms ),
-				is_wp_error( $plain ) ? '' : sprintf( /* translators: %d: milliseconds. */ __( 'Response as a visitor (time to full response, not only first byte): %d ms', 'octave-addons' ), (int) $plain_ms ),
+				sprintf( __( 'Built fresh: %d ms', 'octave-addons' ), (int) $scan_ms ),
+				is_wp_error( $plain ) ? '' : sprintf( /* translators: %d: milliseconds. */ __( 'As a visitor sees it: %d ms', 'octave-addons' ), (int) $plain_ms ),
 				/* translators: %s: cache owner. */
-				sprintf( __( 'Full-page cache: %s', 'octave-addons' ), '' !== $owner ? $owner : __( 'none detected', 'octave-addons' ) ),
+				sprintf( __( 'Saved copies of pages: %s', 'octave-addons' ), '' !== $owner ? $owner : __( 'not set up', 'octave-addons' ) ),
 				/* translators: %s: cache status header. */
-				sprintf( __( 'Cache or edge status: %s', 'octave-addons' ), '' !== $status ? $status : __( 'not reported by the response', 'octave-addons' ) ),
+				sprintf( __( 'Served from a saved copy: %s', 'octave-addons' ), '' !== $status ? $status : __( 'unknown', 'octave-addons' ) ),
 			] ),
 		];
 
 		$blockers = is_wp_error( $plain ) ? [] : self::cache_blockers( $plain );
 
 		$details[] = [
-			'heading' => __( 'What stops the page being cached', 'octave-addons' ),
-			'rows'    => $blockers ?: [ __( 'Nothing: the response sets no cookies and allows caching.', 'octave-addons' ) ],
+			'heading' => __( 'Anything stopping a saved copy', 'octave-addons' ),
+			'rows'    => $blockers ?: [ __( 'Nothing: this page can be saved for quick loading.', 'octave-addons' ) ],
 		];
 
 		$names = [
-			'oa-media'      => __( 'Media processing', 'octave-addons' ),
-			'oa-delay'      => __( 'Third-party delay', 'octave-addons' ),
-			'oa-fonts'      => __( 'Font rewriting', 'octave-addons' ),
-			'oa-css-inline' => __( 'Stylesheet inlining', 'octave-addons' ),
-			'oa-css-bundle' => __( 'Breakdance CSS bundle', 'octave-addons' ),
-			'oa-total'      => __( 'Total HTML processing', 'octave-addons' ),
+			'oa-media'      => __( 'Images and videos', 'octave-addons' ),
+			'oa-delay'      => __( 'Held-back scripts', 'octave-addons' ),
+			'oa-fonts'      => __( 'Fonts', 'octave-addons' ),
+			'oa-css-inline' => __( 'Styles placed in the page', 'octave-addons' ),
+			'oa-css-bundle' => __( 'Combined page-builder styles', 'octave-addons' ),
+			'oa-total'      => __( 'Total time Octave spent', 'octave-addons' ),
 		];
 		$rows  = [];
 
@@ -149,7 +153,7 @@ class Octave_Addons_Perf_Diagnostics {
 		}
 
 		/* translators: %s: size. */
-		$rows[] = sprintf( __( 'Inlined CSS: %s', 'octave-addons' ), size_format( (int) ( $summary['inlined_css_bytes'] ?? 0 ) ) ?: '0 B' );
+		$rows[] = sprintf( __( 'Styles placed in the page: %s', 'octave-addons' ), size_format( (int) ( $summary['inlined_css_bytes'] ?? 0 ) ) ?: '0 B' );
 
 		$delayed = count( array_filter( (array) ( $report['delay'] ?? [] ), static function ( $item ): bool {
 
@@ -164,27 +168,29 @@ class Octave_Addons_Perf_Diagnostics {
 		} ) );
 
 		/* translators: %d: count. */
-		$rows[] = sprintf( __( 'Delayed scripts: %d', 'octave-addons' ), $delayed );
+		$rows[] = sprintf( __( 'Scripts held back: %d', 'octave-addons' ), $delayed );
 		/* translators: %d: count. */
-		$rows[] = sprintf( __( 'Lazy-loaded media: %d', 'octave-addons' ), $lazy );
+		$rows[] = sprintf( __( 'Loaded as visitors scroll: %d', 'octave-addons' ), $lazy );
 
-		$details[] = [ 'heading' => __( 'HTML processing', 'octave-addons' ), 'rows' => $rows ];
+		$details[] = [ 'heading' => __( 'Octave\'s changes', 'octave-addons' ), 'rows' => $rows ];
 
-		$assets    = (array) ( $summary['assets'] ?? [] );
-		$details[] = [
-			'heading' => __( 'Assets loaded', 'octave-addons' ),
-			'rows'    => [
-				/* translators: %s: handles. */
-				sprintf( __( 'Octave: %s', 'octave-addons' ), implode( ', ', (array) ( $assets['octave'] ?? [] ) ) ?: __( 'none', 'octave-addons' ) ),
-				/* translators: %s: handles. */
-				sprintf( __( 'Breakdance: %s', 'octave-addons' ), implode( ', ', (array) ( $assets['breakdance'] ?? [] ) ) ?: __( 'none', 'octave-addons' ) ),
-				/* translators: %s: font URLs. */
-				sprintf( __( 'Preloaded fonts: %s', 'octave-addons' ), implode( ', ', (array) ( $summary['preloaded_fonts'] ?? [] ) ) ?: __( 'none', 'octave-addons' ) ),
-			],
-		];
+		$assets = (array) ( $summary['assets'] ?? [] );
+		/* translators: %s: handles. */
+		$rows   = [ sprintf( __( 'Octave: %s', 'octave-addons' ), implode( ', ', (array) ( $assets['octave'] ?? [] ) ) ?: __( 'none', 'octave-addons' ) ) ];
 
-		$details[] = [ 'heading' => __( 'Largest Contentful Paint', 'octave-addons' ), 'rows' => array_merge( self::hero_rows( (array) ( $summary['lcp_hero'] ?? [] ) ), self::lcp_rows( Octave_Addons_Perf_Lcp::entry( Octave_Addons_Perf_Lcp::path( $url ) ) ) ) ];
-		$details[] = [ 'heading' => __( 'Render-blocking CSS', 'octave-addons' ), 'rows' => self::bundle_rows( (array) ( $summary['css_bundle'] ?? [] ) ) ];
+		foreach ( Octave_Addons_Builders::active() as $builder ) {
+
+			/* translators: 1: page builder name, 2: handles. */
+			$rows[] = sprintf( __( '%1$s: %2$s', 'octave-addons' ), Octave_Addons_Builders::label( $builder ), implode( ', ', (array) ( $assets[ $builder ] ?? [] ) ) ?: __( 'none', 'octave-addons' ) );
+
+		}
+
+		/* translators: %s: font URLs. */
+		$rows[]    = sprintf( __( 'Fonts loaded early: %s', 'octave-addons' ), implode( ', ', (array) ( $summary['preloaded_fonts'] ?? [] ) ) ?: __( 'none', 'octave-addons' ) );
+		$details[] = [ 'heading' => __( 'Files the page loaded', 'octave-addons' ), 'rows' => $rows ];
+
+		$details[] = [ 'heading' => __( 'Main image', 'octave-addons' ), 'rows' => array_merge( self::hero_rows( (array) ( $summary['lcp_hero'] ?? [] ) ), self::lcp_rows( Octave_Addons_Perf_Lcp::entry( Octave_Addons_Perf_Lcp::path( $url ) ) ) ) ];
+		$details[] = [ 'heading' => __( 'Styles the page waits for', 'octave-addons' ), 'rows' => self::bundle_rows( (array) ( $summary['css_bundle'] ?? [] ) ) ];
 		$details[] = [ 'heading' => __( 'Videos', 'octave-addons' ), 'rows' => self::video_rows( (array) ( $report['videos'] ?? [] ) ) ];
 
 		$imagify = [];
@@ -193,7 +199,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 			$test      = Octave_Addons_Perf_Imagify::status()['test'] ?? [];
 			$imagify[] = Octave_Addons_Perf_Imagify::available() ? sprintf( /* translators: %s: version. */ __( 'Imagify %s', 'octave-addons' ), Octave_Addons_Perf_Imagify::version() ) : Octave_Addons_Perf_Imagify::unavailable_reason();
-			$imagify[] = empty( $test['time'] ) ? __( 'WebP/AVIF delivery test: not run yet', 'octave-addons' ) : ( ! empty( $test['ok'] ) ? __( 'WebP/AVIF delivery test: passed', 'octave-addons' ) : __( 'WebP/AVIF delivery test: failed', 'octave-addons' ) );
+			$imagify[] = empty( $test['time'] ) ? __( 'Modern image formats: not checked yet', 'octave-addons' ) : ( ! empty( $test['ok'] ) ? __( 'Modern image formats: working', 'octave-addons' ) : __( 'Modern image formats: not working', 'octave-addons' ) );
 
 		} else {
 
@@ -201,7 +207,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 		}
 
-		$details[] = [ 'heading' => __( 'Next-generation images', 'octave-addons' ), 'rows' => $imagify ];
+		$details[] = [ 'heading' => __( 'Modern image formats', 'octave-addons' ), 'rows' => $imagify ];
 
 		$conflicts = [];
 
@@ -211,7 +217,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 		}
 
-		$details[] = [ 'heading' => __( 'Duplicate optimisation', 'octave-addons' ), 'rows' => $conflicts ?: [ __( 'None: each feature has at most one owner.', 'octave-addons' ) ] ];
+		$details[] = [ 'heading' => __( 'Doubled-up features', 'octave-addons' ), 'rows' => $conflicts ?: [ __( 'None: each feature is handled by one plugin.', 'octave-addons' ) ] ];
 
 		return $details;
 
@@ -239,7 +245,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 		if ( empty( $hero['preloads'] ) ) {
 
-			return [ __( 'Found in the page: no Breakdance hero background.', 'octave-addons' ) ];
+			return [ __( 'No page-builder background image found at the top of the page.', 'octave-addons' ) ];
 
 		}
 
@@ -248,7 +254,7 @@ class Octave_Addons_Perf_Diagnostics {
 		foreach ( $hero['preloads'] as $preload ) {
 
 			/* translators: 1: media condition, 2: image URL. */
-			$rows[] = sprintf( __( 'Found in the page, preloaded for %1$s: %2$s', 'octave-addons' ), '' !== $preload['media'] ? $preload['media'] : __( 'every screen', 'octave-addons' ), $preload['url'] );
+			$rows[] = sprintf( __( 'Loaded first on %1$s: %2$s', 'octave-addons' ), '' !== $preload['media'] ? $preload['media'] : __( 'every screen size', 'octave-addons' ), $preload['url'] );
 
 		}
 
@@ -264,21 +270,21 @@ class Octave_Addons_Perf_Diagnostics {
 
 		if ( empty( $bundle ) ) {
 
-			return [ __( 'No Breakdance CSS bundle on this page.', 'octave-addons' ) ];
+			return [ __( 'No page-builder styles were combined on this page.', 'octave-addons' ) ];
 
 		}
 
 		$modes = [
 			'inline' => __( 'placed in the page', 'octave-addons' ),
 			'file'   => __( 'served as one file', 'octave-addons' ),
-			'queued' => __( 'being prepared; original stylesheets served meanwhile', 'octave-addons' ),
+			'queued' => __( 'being prepared; the original files are used meanwhile', 'octave-addons' ),
 		];
 
 		return [
 			/* translators: 1: number of stylesheets, 2: size, 3: delivery mode. */
-			sprintf( __( 'Breakdance CSS bundle: %1$d stylesheets, %2$s, %3$s', 'octave-addons' ), count( (array) ( $bundle['files'] ?? [] ) ), size_format( (int) ( $bundle['bytes'] ?? 0 ) ) ?: '0 B', $modes[ $bundle['mode'] ?? '' ] ?? '' ),
+			sprintf( __( 'Page-builder styles combined: %1$d files, %2$s, %3$s', 'octave-addons' ), count( (array) ( $bundle['files'] ?? [] ) ), size_format( (int) ( $bundle['bytes'] ?? 0 ) ) ?: '0 B', $modes[ $bundle['mode'] ?? '' ] ?? '' ),
 			/* translators: %s: stylesheet URLs. */
-			sprintf( __( 'Sources: %s', 'octave-addons' ), implode( ', ', (array) ( $bundle['files'] ?? [] ) ) ),
+			sprintf( __( 'Files: %s', 'octave-addons' ), implode( ', ', (array) ( $bundle['files'] ?? [] ) ) ),
 		];
 
 	}
@@ -292,7 +298,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 		if ( empty( $videos ) ) {
 
-			return [ __( 'No video files deferred.', 'octave-addons' ) ];
+			return [ __( 'No videos were held back.', 'octave-addons' ) ];
 
 		}
 
@@ -300,7 +306,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 		$rows = [
 			/* translators: 1: number of files, 2: size. */
-			sprintf( __( '%1$d video files wait until they are in view, avoiding up to %2$s on first load.', 'octave-addons' ), count( $videos ), $bytes > 0 ? size_format( $bytes ) : __( 'an unknown amount', 'octave-addons' ) ),
+			sprintf( __( '%1$d videos wait until they are on screen, saving up to %2$s when the page first loads.', 'octave-addons' ), count( $videos ), $bytes > 0 ? size_format( $bytes ) : __( 'an unknown amount', 'octave-addons' ) ),
 		];
 
 		foreach ( array_slice( $videos, 0, 5 ) as $video ) {
@@ -337,7 +343,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 			if ( 'none' === ( $record['kind'] ?? '' ) ) {
 
-				$rows[] = $labels[ $device ] . ': ' . __( 'no image (text is the largest element)', 'octave-addons' );
+				$rows[] = $labels[ $device ] . ': ' . __( 'no image (text is the biggest thing at the top)', 'octave-addons' );
 
 				continue;
 
@@ -420,13 +426,13 @@ class Octave_Addons_Perf_Diagnostics {
 
 		if ( ! isset( $files['webp'] ) && ! isset( $files['avif'] ) ) {
 
-			$lines[] = __( 'WebP/AVIF: no Imagify next-generation copy to test.', 'octave-addons' );
+			$lines[] = __( 'Modern image formats: no Imagify copy found to check.', 'octave-addons' );
 
 		}
 
 		$lines[] = 'nginx' === Octave_Addons_Perf_Imagify::server()
-			? __( 'Nginx: add compression, caching and MIME rules in the server configuration; .htaccess is not read.', 'octave-addons' )
-			: __( 'Octave never writes these rules. Add missing ones through the host, the web server or the cache plugin that already manages them.', 'octave-addons' );
+			? __( 'This server (Nginx) needs any missing settings added by your host.', 'octave-addons' )
+			: __( 'Octave only reports these. Ask your host, or the cache plugin that manages them, to fix anything missing.', 'octave-addons' );
 
 		return $lines;
 
@@ -455,7 +461,7 @@ class Octave_Addons_Perf_Diagnostics {
 		if ( is_wp_error( $response ) ) {
 
 			/* translators: %s: error. */
-			return [ sprintf( __( 'could not be requested: %s', 'octave-addons' ), $response->get_error_message() ) ];
+			return [ sprintf( __( 'could not be opened: %s', 'octave-addons' ), $response->get_error_message() ) ];
 
 		}
 
@@ -474,7 +480,7 @@ class Octave_Addons_Perf_Diagnostics {
 
 		if ( in_array( $kind, [ 'css', 'js' ], true ) ) {
 
-			$found[] = false !== strpos( $encoding, 'br' ) ? __( 'Brotli', 'octave-addons' ) : ( false !== strpos( $encoding, 'gzip' ) ? __( 'Gzip (no Brotli)', 'octave-addons' ) : __( 'not compressed', 'octave-addons' ) );
+			$found[] = false !== strpos( $encoding, 'br' ) ? __( 'Brotli', 'octave-addons' ) : ( false !== strpos( $encoding, 'gzip' ) ? __( 'compressed (Gzip)', 'octave-addons' ) : __( 'not compressed: ask your host to turn on compression', 'octave-addons' ) );
 
 		}
 
@@ -482,18 +488,18 @@ class Octave_Addons_Perf_Diagnostics {
 
 		if ( 'font' === $kind ) {
 
-			$found[] = '' !== (string) wp_remote_retrieve_header( $response, 'access-control-allow-origin' ) ? __( 'CORS header sent', 'octave-addons' ) : __( 'no CORS header (needed only if fonts are served from another domain)', 'octave-addons' );
+			$found[] = '' !== (string) wp_remote_retrieve_header( $response, 'access-control-allow-origin' ) ? __( 'fonts allowed from other sites', 'octave-addons' ) : __( 'fonts not shared with other sites (only matters if fonts come from another domain)', 'octave-addons' );
 
 		}
 
 		if ( in_array( $kind, [ 'webp', 'avif' ], true ) ) {
 
 			/* translators: 1: MIME type received, 2: MIME type expected. */
-			$found[] = 'image/' . $kind === $type ? sprintf( __( 'MIME %s', 'octave-addons' ), $type ) : sprintf( __( 'wrong MIME %1$s, expected %2$s', 'octave-addons' ), '' !== $type ? $type : '?', 'image/' . $kind );
+			$found[] = 'image/' . $kind === $type ? sprintf( __( 'MIME %s', 'octave-addons' ), $type ) : sprintf( __( 'served as the wrong type (%1$s instead of %2$s)', 'octave-addons' ), '' !== $type ? $type : '?', 'image/' . $kind );
 
 			if ( 'rewrite' === ( Octave_Addons_Perf_Imagify::config()['display_nextgen_method'] ?? '' ) ) {
 
-				$found[] = false !== stripos( (string) wp_remote_retrieve_header( $response, 'vary' ), 'accept' ) ? __( 'Vary: Accept', 'octave-addons' ) : __( 'no Vary: Accept', 'octave-addons' );
+				$found[] = false !== stripos( (string) wp_remote_retrieve_header( $response, 'vary' ), 'accept' ) ? __( 'right format for each browser', 'octave-addons' ) : __( 'may send one browser\'s format to another', 'octave-addons' );
 
 			}
 
@@ -525,11 +531,11 @@ class Octave_Addons_Perf_Diagnostics {
 			$days = (int) floor( (int) $match[1] / DAY_IN_SECONDS );
 
 			/* translators: %d: days. */
-			return $days >= 30 ? sprintf( __( 'cached %d days', 'octave-addons' ), $days ) : sprintf( __( 'cached only %d days', 'octave-addons' ), $days );
+			return $days >= 30 ? sprintf( __( 'kept by browsers for %d days', 'octave-addons' ), $days ) : sprintf( __( 'kept by browsers for only %d days', 'octave-addons' ), $days );
 
 		}
 
-		return '' !== (string) wp_remote_retrieve_header( $response, 'expires' ) ? __( 'Expires header only', 'octave-addons' ) : __( 'no browser caching header', 'octave-addons' );
+		return '' !== (string) wp_remote_retrieve_header( $response, 'expires' ) ? __( 'kept by browsers (older method)', 'octave-addons' ) : __( 'not kept by browsers between visits', 'octave-addons' );
 
 	}
 
@@ -578,7 +584,7 @@ class Octave_Addons_Perf_Diagnostics {
 		$rows[] = [
 			'label'  => __( 'Image responsive attributes', 'octave-addons' ),
 			'status' => has_filter( 'wp_calculate_image_srcset_meta' ) ? __( 'Filtered by a plugin or theme', 'octave-addons' ) : __( 'Added by WordPress', 'octave-addons' ),
-			'note'   => __( 'Breakdance image elements can also switch srcset and sizes off per element.', 'octave-addons' ),
+			'note'   => __( 'Breakdance image elements can also turn this off one at a time.', 'octave-addons' ),
 		];
 
 		$fonts = glob( trailingslashit( (string) ( wp_upload_dir( null, false )['basedir'] ?? '' ) ) . 'breakdance/font_styles/*.css' );
@@ -588,7 +594,7 @@ class Octave_Addons_Perf_Diagnostics {
 			'label'  => __( 'Custom/local fonts', 'octave-addons' ),
 			/* translators: %d: number of stylesheets. */
 			'status' => $count ? sprintf( _n( '%d stylesheet, served from this site', '%d stylesheets, served from this site', $count, 'octave-addons' ), $count ) : __( 'None', 'octave-addons' ),
-			'note'   => __( 'Already self-hosted, so Octave preloads them like any local font and never rewrites them.', 'octave-addons' ),
+			'note'   => __( 'Already served from your site, so Octave simply loads them early when needed.', 'octave-addons' ),
 		];
 
 		return $rows;
@@ -598,6 +604,59 @@ class Octave_Addons_Perf_Diagnostics {
 	public static function breakdance_settings_url(): string {
 
 		return admin_url( 'admin.php?page=breakdance_settings&tab=bloat_eliminator' );
+
+	}
+
+	/*
+	DIVI AUDIT
+	-- Which of Divi's own performance settings (Theme Options > General >
+	-- Performance) are on, with how each sits beside Octave. Read only:
+	-- Octave never changes them. A setting never saved shows Divi's default
+	---------------------------------------------------------- */
+
+	public static function divi_audit(): array {
+
+		if ( ! Octave_Addons_Builders::divi() ) {
+
+			return [];
+
+		}
+
+		$options = get_option( 'et_divi', [] );
+		$options = is_array( $options ) ? $options : [];
+
+		$items = [
+			'divi_dynamic_module_framework' => [ __( 'Dynamic Module Framework', 'octave-addons' ), 'on', __( 'Loads only the modules a page uses.', 'octave-addons' ) ],
+			'divi_dynamic_css'              => [ __( 'Dynamic CSS', 'octave-addons' ), 'on', __( 'Writes each page\'s styles to a file, which Octave can combine.', 'octave-addons' ) ],
+			'divi_critical_css'             => [ __( 'Critical CSS', 'octave-addons' ), 'on', __( 'Loads styles for lower down the page later. Octave leaves those alone.', 'octave-addons' ) ],
+			'divi_dynamic_js_libraries'     => [ __( 'Dynamic JavaScript Libraries', 'octave-addons' ), 'on', __( 'Loads only the scripts a page uses. Octave never delays Divi\'s own scripts.', 'octave-addons' ) ],
+			'divi_disable_emojis'           => [ __( 'Disable WordPress Emojis', 'octave-addons' ), 'on', '' ],
+			'divi_defer_block_css'          => [ __( 'Defer Gutenberg Block CSS', 'octave-addons' ), 'on', '' ],
+			'divi_google_fonts_inline'      => [ __( 'Improve Google Fonts Loading', 'octave-addons' ), 'off', __( 'When on, Divi handles Google Fonts, so Octave leaves them to it.', 'octave-addons' ) ],
+			'divi_enable_jquery_body'       => [ __( 'Defer jQuery And jQuery Migrate', 'octave-addons' ), 'on', __( 'Works alongside Octave\'s Script Delay.', 'octave-addons' ) ],
+		];
+
+		$rows = [];
+
+		foreach ( $items as $key => [ $label, $default, $note ] ) {
+
+			$value = (string) ( $options[ $key ] ?? $default );
+
+			$rows[] = [
+				'label'  => $label,
+				'status' => 'on' === $value ? __( 'On', 'octave-addons' ) : __( 'Off', 'octave-addons' ),
+				'note'   => $note,
+			];
+
+		}
+
+		return $rows;
+
+	}
+
+	public static function divi_settings_url(): string {
+
+		return admin_url( 'admin.php?page=et_divi_options' );
 
 	}
 

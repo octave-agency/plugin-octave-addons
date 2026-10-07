@@ -612,6 +612,30 @@ PAGE TRANSITIONS CORE
 
 		}
 
+		// First visit ever on this device: remembered beyond the session.
+		if ( 'once' === cfg.frequency ) {
+
+			try {
+
+				if ( window.localStorage.getItem( seenKey ) ) {
+
+					return false;
+
+				}
+
+				window.localStorage.setItem( seenKey, '1' );
+
+				return true;
+
+			} catch ( error ) {
+
+				// Without storage the first visit cannot be remembered, so skip it.
+				return false;
+
+			}
+
+		}
+
 		if ( store( 'get', seenKey ) ) {
 
 			return false;

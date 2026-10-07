@@ -129,7 +129,7 @@ function test_a_broken_stylesheet_fails_open(): void {
 	$html = oa_bundle_page( oa_bd_link( 'a.css', '.a{color:red' ) . oa_bd_link( 'b.css', '.b{}' ) );
 
 	oa_assert_same( $html, oa_warm_bundle( $html ) );
-	oa_assert_contains( 'could not be bundled', Octave_Addons_Perf_Log::entries()[0]['message'] ?? '' );
+	oa_assert_contains( 'could not be combined', Octave_Addons_Perf_Log::entries()[0]['message'] ?? '' );
 
 }
 

@@ -384,6 +384,37 @@ function test_manual_refresh_discovers_fonts_on_the_home_page(): void {
 
 }
 
+function test_manual_refresh_drops_fonts_no_longer_on_the_home_page(): void {
+
+	oa_fonts( [ 'self_host' => true ] );
+	oa_fake_google();
+	Octave_Addons_Perf_Google_Fonts::fetch( OA_GOOGLE_CSS );
+
+	$old  = Octave_Addons_Perf_Google_Fonts::key( OA_GOOGLE_CSS );
+	$fake = $GLOBALS['oa_http'];
+
+	$GLOBALS['oa_http'] = static function ( string $url ) use ( $fake ) {
+
+		if ( 0 === strpos( $url, 'https://example.com/' ) ) {
+
+			return oa_http_response( 200, '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora&display=swap">', 'text/html' );
+
+		}
+
+		return $fake( $url );
+
+	};
+
+	Octave_Addons_Perf_Google_Fonts::refresh();
+
+	$manifest = Octave_Addons_Perf_Google_Fonts::manifest();
+
+	oa_assert( ! isset( $manifest[ $old ] ), 'old stylesheet forgotten' );
+	oa_assert( ! is_dir( Octave_Addons_Perf_Store::dir( 'fonts/' . $old ) ), 'old folder deleted' );
+	oa_assert_same( 1, count( $manifest ), 'only the current stylesheet kept' );
+
+}
+
 /*
 PRELOAD FALLBACK
 ---------------------------------------------------------- */

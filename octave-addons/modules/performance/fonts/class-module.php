@@ -60,7 +60,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Preloads the fonts each page needs first and can serve Google Fonts from this site instead of Google.', 'octave-addons' );
+		return __( 'Loads the fonts each page needs straight away, and can serve Google Fonts from your own site instead of Google.', 'octave-addons' );
 
 	}
 
@@ -431,13 +431,13 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 		if ( false !== strpos( $url, '/cache/octave-addons/fonts/' ) ) {
 
-			return __( 'Google Font, self-hosted by Octave', 'octave-addons' );
+			return __( 'Google Font, served from your site by Octave', 'octave-addons' );
 
 		}
 
 		if ( false !== strpos( $url, '/breakdance/' ) ) {
 
-			return __( 'Breakdance custom font, already self-hosted', 'octave-addons' );
+			return __( 'Breakdance custom font, already served from your site', 'octave-addons' );
 
 		}
 
@@ -664,21 +664,21 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Font preloading', 'octave-addons' ), 'first' => true ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Load fonts early', 'octave-addons' ), 'first' => true ] );
 
-			$this->select_row( 'preload_max', __( 'Fonts to preload', 'octave-addons' ), [
-				1 => __( 'One essential face (recommended)', 'octave-addons' ),
-				2 => __( 'Up to two, when needed above the fold', 'octave-addons' ),
-				3 => __( 'Up to three, when needed above the fold', 'octave-addons' ),
-			], __( 'Every preload competes with the hero image. More than one is only used when visitors\' browsers report that many fonts were fetched before the page\'s largest element appeared.', 'octave-addons' ), $s );
+			$this->select_row( 'preload_max', __( 'Fonts to load early', 'octave-addons' ), [
+				1 => __( 'The one most important font (recommended)', 'octave-addons' ),
+				2 => __( 'Up to two, when the top of the page uses them', 'octave-addons' ),
+				3 => __( 'Up to three, when the top of the page uses them', 'octave-addons' ),
+			], __( 'Each font loaded early competes with your main image, so one is best. More are only loaded early when visitors\' browsers show the top of the page really uses them.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::row( [
-				'label' => __( 'Detected fonts', 'octave-addons' ),
+				'label' => __( 'Fonts found', 'octave-addons' ),
 				'field' => function () use ( $families ) {
 
 					if ( empty( $families ) ) {
 
-						echo '<p class="oa-help">' . esc_html__( 'Detected automatically for each kind of page: the fonts a page needs before its largest element appears are reported by the next visitor and preloaded from then on, refreshed daily.', 'octave-addons' ) . '</p>';
+						echo '<p class="oa-help">' . esc_html__( 'Found automatically for each kind of page: visitors\' browsers report which fonts the top of the page uses, and those are loaded early from then on. Checked again daily.', 'octave-addons' ) . '</p>';
 
 						return;
 
@@ -704,7 +704,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 							?>
 
-							<span><?php esc_html_e( 'No fonts needed above the fold', 'octave-addons' ); ?></span>
+							<span><?php esc_html_e( 'No fonts needed at the top of the page', 'octave-addons' ); ?></span>
 
 							<?php
 
@@ -736,21 +736,21 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 				},
 			] );
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Self-host Google Fonts', 'octave-addons' ) ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Serve Google Fonts from your site', 'octave-addons' ) ] );
 
-			$this->switch_row( 'self_host', __( 'Serve Google Fonts locally', 'octave-addons' ), __( 'Downloads Google Fonts stylesheets and their WOFF2 files to this site, so visitors never contact Google. Until a stylesheet is cached, the page keeps using Google; if Google is unavailable the last good copy stays in use.', 'octave-addons' ), $s );
+			$this->switch_row( 'self_host', __( 'Serve Google Fonts from your site', 'octave-addons' ), __( 'Copies the Google Fonts your site uses onto your own site, so visitors\' browsers never contact Google, which is faster and better for privacy. Until a font has been copied, Google is used as before.', 'octave-addons' ), $s );
 
-			$this->select_row( 'font_display', __( 'font-display', 'octave-addons' ), [
-				'swap'     => __( 'swap (recommended)', 'octave-addons' ),
+			$this->select_row( 'font_display', __( 'While fonts load', 'octave-addons' ), [
+				'swap'     => __( 'Show text straight away in a backup font (recommended)', 'octave-addons' ),
 				'optional' => 'optional',
 				'fallback' => 'fallback',
 				'block'    => 'block',
 				'auto'     => 'auto',
-				'keep'     => __( 'Keep Google\'s value', 'octave-addons' ),
-			], __( 'Added to @font-face rules that do not set their own. A value chosen in the stylesheet URL is always kept. Changes apply on the next refresh.', 'octave-addons' ), $s );
+				'keep'     => __( 'Use Google\'s setting', 'octave-addons' ),
+			], __( 'What visitors see before a font has arrived. Showing text straight away means nothing is hidden while fonts load. Applies from the next refresh.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::row( [
-				'label' => __( 'Refresh every', 'octave-addons' ),
+				'label' => __( 'Check for font updates every', 'octave-addons' ),
 				'for'   => $this->field_id( 'refresh_days' ),
 				'field' => function () use ( $s ) {
 
@@ -767,12 +767,12 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 			] );
 
 			Octave_Addons_Fields::row( [
-				'label' => __( 'Cached stylesheets', 'octave-addons' ),
+				'label' => __( 'Fonts copied to your site', 'octave-addons' ),
 				'field' => function () use ( $manifest ) {
 
 					if ( empty( $manifest ) ) {
 
-						echo '<p class="oa-help">' . esc_html__( 'Nothing cached yet. Google Fonts on the home page are found automatically, others as logged-out visitors view pages, then downloaded in the background. Refresh to look again now.', 'octave-addons' ) . '</p>';
+						echo '<p class="oa-help">' . esc_html__( 'Nothing copied yet. Google Fonts on your home page are found automatically, and others as visitors browse, then copied in the background. Use Refresh to check now.', 'octave-addons' ) . '</p>';
 
 					}
 
@@ -821,7 +821,7 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 
 						?>
 					</ul>
-					<button type="button" class="button" data-oa-perf-action="oa_perf_fonts_refresh" data-result="oa-perf-fonts-result"><?php esc_html_e( 'Refresh self-hosted fonts', 'octave-addons' ); ?></button>
+					<button type="button" class="button" data-oa-perf-action="oa_perf_fonts_refresh" data-result="oa-perf-fonts-result"><?php esc_html_e( 'Refresh copied fonts', 'octave-addons' ); ?></button>
 					<div id="oa-perf-fonts-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
 					<?php

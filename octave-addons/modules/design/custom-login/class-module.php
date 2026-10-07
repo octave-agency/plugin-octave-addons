@@ -31,7 +31,7 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
 
     public function get_description(): string {
 
-        return __( 'Moves the WordPress login page to a custom URL slug, blocks direct access to /wp-login.php and /wp-login, and lets you style the login page with custom colours and logo.', 'octave-addons' );
+        return __( 'Moves your login page to an address only you know, blocks the usual WordPress login address, and lets you add your logo and colours.', 'octave-addons' );
 
     }
 
@@ -130,7 +130,7 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
                         'name'        => $this->field_name( 'redirect_url' ),
                         'value'       => $s['redirect_url'],
                         'placeholder' => home_url( '/' ),
-                        'help'        => __( 'Where to send anyone who accesses /wp-login.php or /wp-login directly. Defaults to home page if blank.', 'octave-addons' ),
+                        'help'        => __( 'Where to send anyone who tries the usual WordPress login address. Leave blank to send them to your home page.', 'octave-addons' ),
                     ] );
 
                 },
@@ -147,7 +147,7 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
                         'id'    => $this->field_id( 'custom_logo_url' ),
                         'name'  => $this->field_name( 'custom_logo_url' ),
                         'value' => $s['custom_logo_url'],
-                        'help'  => __( 'Choose the brand logo from the WordPress Media Library.', 'octave-addons' ),
+                        'help'  => __( 'Choose your logo from the Media Library.', 'octave-addons' ),
                     ] );
 
                 },
@@ -175,7 +175,7 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
                         'id'    => $this->field_id( 'primary_color' ),
                         'name'  => $this->field_name( 'primary_color' ),
                         'value' => $primary_color,
-                        'help'  => __( 'Used for the submit button, input focus ring and links.', 'octave-addons' ),
+                        'help'  => __( 'Used for the log in button, links and the outline of the field being typed in.', 'octave-addons' ),
                     ] );
 
                 },
@@ -195,7 +195,7 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
                         'rows'        => 10,
                         'spellcheck'  => false,
                         'placeholder' => '/* Additional login page styles */',
-                        'help'        => __( 'Appended after the built-in login styles. Targets the WordPress login page only.', 'octave-addons' ),
+                        'help'        => __( 'For developers. Extra CSS for the login page only.', 'octave-addons' ),
                     ] );
 
                 },

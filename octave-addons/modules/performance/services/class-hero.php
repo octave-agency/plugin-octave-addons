@@ -1,18 +1,22 @@
 <?php
 
 /*
-PERFORMANCE: BREAKDANCE HERO
--- Finds a Breakdance page's hero background from the page itself, so the
--- very first visitor already gets the right image preloaded rather than
--- waiting for browsers to report it
+PERFORMANCE: BUILDER HERO
+-- Finds a Breakdance or Divi page's hero background from the page itself,
+-- so the very first visitor already gets the right image preloaded rather
+-- than waiting for browsers to report it
 -- A CSS background is only requested once the stylesheet that names it has
 -- arrived, and fetchpriority on a <section> or <div> does nothing for it.
--- So the first Breakdance section after the site header is located in the
--- page, and the Breakdance stylesheets the page links are read for rules
--- that give that section, or failing that one of its first inner layout
--- elements, a background image, each under its media condition
+-- So the builder's first section after the site header is located in the
+-- page, and the builder's stylesheets are read for rules that give that
+-- section, or failing that one of its first inner layout elements, a
+-- background image, each under its media condition
+-- Each builder is a profile: the class its sections and inner elements
+-- carry, and where its CSS lives. Breakdance writes bde-section-{post}-{node}
+-- classes and its CSS under /breakdance/; Divi 4 and 5 write et_pb_section_N
+-- classes and their CSS to /et-cache/ files or <style> blocks in the head
 -- Those conditions are resolved into screen-width ranges, so each range
--- preloads exactly the image Breakdance's CSS shows it: with Breakdance's
+-- preloads exactly the image the builder's CSS shows it: with Breakdance's
 -- default breakpoints, phones and tablets get the image set below 1024px
 -- and larger screens the desktop one. Each range preloads one image at
 -- most, so no two high-priority preloads compete on any screen
@@ -20,7 +24,7 @@ PERFORMANCE: BREAKDANCE HERO
 -- max-width in px, several layered images, image-set(), an unreadable
 -- stylesheet — means no preload, and the learned LCP record is used
 -- The answer is cached against the stylesheets' paths, sizes and
--- modification times, so a Breakdance save is seen straight away
+-- modification times, so a builder save is seen straight away
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -30,12 +34,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Octave_Addons_Perf_Hero {
-
-	/** Breakdance's per-element class: bde-{element}-{post id}-{node id}. */
-	protected const ELEMENT_CLASS = '/^bde-([a-z0-9-]+?)-\d+-\d+$/';
-
-	/** Elements that can be or hold the hero background. */
-	protected const LAYOUT_ELEMENTS = [ 'section', 'div', 'columns', 'column', 'container' ];
 
 	/** Inner elements checked when the section itself has no background. */
 	protected const MAX_INNER = 6;
@@ -47,20 +45,84 @@ class Octave_Addons_Perf_Hero {
 	public const MAX_ORIGINS = 2;
 
 	/*
+	PROFILES
+	-- One per active page builder: the class a top-level section carries,
+	-- the classes of the inner elements that may hold the background, the
+	-- classes that are never the hero, a marker that shows the builder's
+	-- markup is on the page, and the URL paths of its stylesheets
+	---------------------------------------------------------- */
+
+	public static function profiles(): array {
+
+		$profiles = [];
+
+		if ( Octave_Addons_Builders::breakdance() ) {
+
+			$profiles['breakdance'] = [
+				'marker'  => 'bde-section-',
+				'section' => '/^bde-section-\d+-\d+$/',
+				'inner'   => '/^bde-(?:div|columns|column|container)-\d+-\d+$/',
+				'skip'    => '/^bde-(?:popup|header)/',
+				'css'     => Octave_Addons_Builders::css_paths()['breakdance'],
+			];
+
+		}
+
+		if ( Octave_Addons_Builders::divi() ) {
+
+			// Theme Builder layouts add a suffix, e.g. et_pb_section_0_tb_body.
+			$profiles['divi'] = [
+				'marker'  => 'et_pb_section_',
+				'section' => '/^et_pb_section_\d+(?:_tb_body)?$/',
+				'inner'   => '/^et_pb_(?:row|column|fullwidth_header|slide)_\d+(?:_tb_body)?$/',
+				'skip'    => '/_tb_(?:header|footer)$/',
+				'css'     => Octave_Addons_Builders::css_paths()['divi'],
+			];
+
+		}
+
+		/**
+		 * Filters the page-builder profiles hero discovery uses.
+		 *
+		 * @param array $profiles Builder => [ marker, section, inner, skip, css ].
+		 */
+		return (array) apply_filters( 'octave_addons_perf_hero_profiles', $profiles );
+
+	}
+
+	/*
 	DISCOVER
-	-- [ 'element' => class, 'preloads' => [ [ 'url', 'media' ], … ],
-	-- 'origins' => [ origin => cors ] ] for a Breakdance page, or []
+	-- [ 'element' => class, 'preloads' => [ [ 'url', 'media' ], … ] ] for
+	-- the first builder whose markup the page holds, or []
 	---------------------------------------------------------- */
 
 	public static function discover( string $html ): array {
 
-		if ( ! Octave_Addons_Perf::has_html_api() || false === strpos( $html, 'bde-' ) ) {
+		if ( ! Octave_Addons_Perf::has_html_api() ) {
 
 			return [];
 
 		}
 
-		$elements = self::hero_elements( $html );
+		foreach ( self::profiles() as $profile ) {
+
+			if ( false === strpos( $html, (string) $profile['marker'] ) ) {
+
+				continue;
+
+			}
+
+			return self::discover_with( $html, $profile );
+
+		}
+
+		return [];
+
+	}
+
+	protected static function discover_with( string $html, array $profile ): array {
+
+		$elements = self::hero_elements( $html, $profile );
 
 		if ( empty( $elements ) ) {
 
@@ -68,7 +130,7 @@ class Octave_Addons_Perf_Hero {
 
 		}
 
-		$sources = self::sources( $html );
+		$sources = self::sources( $html, (array) $profile['css'] );
 
 		if ( empty( $sources ) ) {
 
@@ -115,18 +177,17 @@ class Octave_Addons_Perf_Hero {
 
 	/*
 	HERO ELEMENTS
-	-- The first Breakdance section outside the site header, then its first
-	-- few inner layout elements, as their bde-…-ID-ID classes
+	-- The first builder section outside the site header, navigation and
+	-- footer, then its first few inner layout elements, as their classes
 	---------------------------------------------------------- */
 
-	public static function hero_elements( string $html ): array {
+	public static function hero_elements( string $html, array $profile ): array {
 
-		$tags     = new WP_HTML_Tag_Processor( $html );
-		$header   = 0;
-		$skip     = 0;
-		$found    = [];
-		$depth    = 0;
-		$in_hero  = false;
+		$tags    = new WP_HTML_Tag_Processor( $html );
+		$header  = 0;
+		$found   = [];
+		$depth   = 0;
+		$in_hero = false;
 
 		while ( $tags->next_tag( [ 'tag_closers' => 'visit' ] ) ) {
 
@@ -165,22 +226,15 @@ class Octave_Addons_Perf_Hero {
 
 			}
 
-			$class = self::element_class( $tags );
+			$class = self::element_class( $tags, $in_hero ? (string) $profile['inner'] : (string) $profile['section'], (string) $profile['skip'] );
 
-			// Popups and the header builder are never the page's hero.
-			if ( '' === $class || 0 === strpos( $class, 'bde-popup' ) || 0 === strpos( $class, 'bde-header' ) ) {
+			if ( '' === $class ) {
 
 				continue;
 
 			}
 
 			if ( ! $in_hero ) {
-
-				if ( 0 !== strpos( $class, 'bde-section-' ) ) {
-
-					continue;
-
-				}
 
 				$in_hero = true;
 				$depth   = 1;
@@ -195,11 +249,23 @@ class Octave_Addons_Perf_Hero {
 
 	}
 
-	protected static function element_class( WP_HTML_Tag_Processor $tags ): string {
+	protected static function element_class( WP_HTML_Tag_Processor $tags, string $pattern, string $skip ): string {
 
-		foreach ( preg_split( '/\s+/', trim( (string) $tags->get_attribute( 'class' ) ) ) as $class ) {
+		$classes = preg_split( '/\s+/', trim( (string) $tags->get_attribute( 'class' ) ) );
 
-			if ( preg_match( self::ELEMENT_CLASS, $class, $match ) && in_array( $match[1], self::LAYOUT_ELEMENTS, true ) ) {
+		foreach ( $classes as $class ) {
+
+			if ( '' !== $skip && preg_match( $skip, $class ) ) {
+
+				return '';
+
+			}
+
+		}
+
+		foreach ( $classes as $class ) {
+
+			if ( preg_match( $pattern, $class ) ) {
 
 				return $class;
 
@@ -213,24 +279,47 @@ class Octave_Addons_Perf_Hero {
 
 	/*
 	SOURCES
-	-- The Breakdance stylesheets the page links in its <head>, in order,
-	-- read from disk: [ [ 'url', 'css', 'key' ], … ]
+	-- The builder's stylesheets the page links in its <head>, read from
+	-- disk, and every <style> block there, in order: [ [ 'url', 'file' or
+	-- 'css', 'media', 'key' ], … ]
 	---------------------------------------------------------- */
 
-	public static function sources( string $html ): array {
+	public static function sources( string $html, array $paths ): array {
 
 		$end  = stripos( $html, '</head>' );
 		$head = false === $end ? '' : substr( $html, 0, $end );
 
-		preg_match_all( '#<link\b[^>]*>#i', $head, $links );
+		preg_match_all( '#<link\b[^>]*>|<style\b[^>]*>(.*?)</style>#is', $head, $items, PREG_SET_ORDER );
 
 		$sources = [];
 
-		foreach ( $links[0] as $link ) {
+		foreach ( $items as $item ) {
 
-			$tags = new WP_HTML_Tag_Processor( $link );
+			$tags = new WP_HTML_Tag_Processor( $item[0] );
 
-			if ( ! $tags->next_tag( 'LINK' ) || false === stripos( (string) $tags->get_attribute( 'rel' ), 'stylesheet' ) ) {
+			if ( ! $tags->next_tag() ) {
+
+				continue;
+
+			}
+
+			$media = trim( (string) $tags->get_attribute( 'media' ) );
+
+			if ( 'STYLE' === $tags->get_tag() ) {
+
+				$css = (string) ( $item[1] ?? '' );
+
+				if ( '' !== trim( $css ) && strlen( $css ) <= self::MAX_BYTES ) {
+
+					$sources[] = [ 'url' => home_url( '/' ), 'css' => $css, 'media' => $media, 'key' => md5( $css ) ];
+
+				}
+
+				continue;
+
+			}
+
+			if ( false === stripos( (string) $tags->get_attribute( 'rel' ), 'stylesheet' ) ) {
 
 				continue;
 
@@ -239,7 +328,7 @@ class Octave_Addons_Perf_Hero {
 			$href = html_entity_decode( trim( (string) $tags->get_attribute( 'href' ) ) );
 			$path = (string) wp_parse_url( $href, PHP_URL_PATH );
 
-			if ( false === strpos( $path, '/breakdance/' ) || ! Octave_Addons_Perf::is_same_origin( $href ) ) {
+			if ( '' === Octave_Addons_Perf::matches_any( $path, $paths ) || ! Octave_Addons_Perf::is_same_origin( $href ) ) {
 
 				continue;
 
@@ -253,12 +342,10 @@ class Octave_Addons_Perf_Hero {
 
 			}
 
-			$url = 0 === strpos( $href, '/' ) && 0 !== strpos( $href, '//' ) ? home_url( $href ) : $href;
-
 			$sources[] = [
-				'url'   => $url,
+				'url'   => 0 === strpos( $href, '/' ) && 0 !== strpos( $href, '//' ) ? home_url( $href ) : $href,
 				'file'  => $file,
-				'media' => trim( (string) $tags->get_attribute( 'media' ) ),
+				'media' => $media,
 				'key'   => $file . '|' . filemtime( $file ) . '|' . filesize( $file ),
 			];
 

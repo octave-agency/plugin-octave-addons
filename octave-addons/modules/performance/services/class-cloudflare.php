@@ -87,13 +87,13 @@ class Octave_Addons_Perf_Cloudflare {
 
 		if ( ! self::is_valid_zone_id( $zone_id ) ) {
 
-			return self::result( false, __( 'The Zone ID should be the 32-character ID shown on the zone\'s Overview page.', 'octave-addons' ) );
+			return self::result( false, __( 'The Zone ID is the 32-character code on your site\'s Overview page in Cloudflare.', 'octave-addons' ) );
 
 		}
 
 		if ( '' === $token ) {
 
-			return self::result( false, __( 'Enter an API token.', 'octave-addons' ) );
+			return self::result( false, __( 'Enter your API token.', 'octave-addons' ) );
 
 		}
 
@@ -101,13 +101,13 @@ class Octave_Addons_Perf_Cloudflare {
 
 		if ( $result['ok'] && 'active' !== ( $result['data']['result']['status'] ?? '' ) ) {
 
-			$result = self::result( false, __( 'The token exists but is not active.', 'octave-addons' ) );
+			$result = self::result( false, __( 'That token exists but has been switched off in Cloudflare.', 'octave-addons' ) );
 
 		}
 
 		if ( $result['ok'] ) {
 
-			$result['message'] = __( 'Connected. The token is active.', 'octave-addons' );
+			$result['message'] = __( 'Connected and working.', 'octave-addons' );
 
 		}
 
@@ -132,7 +132,7 @@ class Octave_Addons_Perf_Cloudflare {
 
 		if ( empty( $urls ) ) {
 
-			return self::result( true, __( 'No URLs to purge.', 'octave-addons' ) );
+			return self::result( true, __( 'No pages to clear.', 'octave-addons' ) );
 
 		}
 
@@ -150,7 +150,7 @@ class Octave_Addons_Perf_Cloudflare {
 
 		return self::result( true, sprintf(
 			/* translators: %d: number of URLs. */
-			_n( 'Purged %d URL.', 'Purged %d URLs.', count( $urls ), 'octave-addons' ),
+			_n( 'Cleared %d page.', 'Cleared %d pages.', count( $urls ), 'octave-addons' ),
 			count( $urls )
 		) );
 
@@ -162,7 +162,7 @@ class Octave_Addons_Perf_Cloudflare {
 
 		if ( $result['ok'] ) {
 
-			$result['message'] = __( 'Purged everything in the zone.', 'octave-addons' );
+			$result['message'] = __( 'Cleared everything Cloudflare holds for this site.', 'octave-addons' );
 
 		}
 
@@ -267,7 +267,7 @@ class Octave_Addons_Perf_Cloudflare {
 
 			return self::result( false, sprintf(
 				/* translators: %s: transport error message. */
-				__( 'Could not reach Cloudflare: %s', 'octave-addons' ),
+				__( 'Could not connect to Cloudflare: %s', 'octave-addons' ),
 				$response->get_error_message()
 			) );
 
@@ -286,9 +286,9 @@ class Octave_Addons_Perf_Cloudflare {
 
 		return self::result( false, sprintf(
 			/* translators: 1: HTTP status code, 2: Cloudflare error message. */
-			__( 'Cloudflare returned HTTP %1$d. %2$s', 'octave-addons' ),
+			__( 'Cloudflare reported a problem (error %1$d). %2$s', 'octave-addons' ),
 			$code,
-			'' !== $error ? $error : __( 'Check the Zone ID and that the token has Cache Purge permission for this zone.', 'octave-addons' )
+			'' !== $error ? $error : __( 'Check the Zone ID, and that the token is allowed to clear the cache for this site.', 'octave-addons' )
 		) );
 
 	}

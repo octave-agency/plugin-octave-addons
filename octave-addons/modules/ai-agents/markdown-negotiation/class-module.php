@@ -52,7 +52,7 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Answers requests sending Accept: text/markdown with a clean Markdown version of the page, so agents read the text instead of scraping the layout. Browsers keep getting HTML.', 'octave-addons' );
+		return __( 'Gives AI assistants a clean, text-only version of each page when they ask for one, so they read your content accurately. Visitors see your site exactly as before.', 'octave-addons' );
 
 	}
 
@@ -604,9 +604,9 @@ class Octave_Addons_Module_Markdown_Negotiation extends Octave_Addons_Module {
 	public function render_settings( array $s ): void {
 
 		$behaviours = [
-			__( 'Every page, post and custom post type with a public URL answers in Markdown, and archives, taxonomy pages and search results answer as a link index.', 'octave-addons' ),
-			__( 'Each document opens with YAML frontmatter — title, description, canonical URL, dates, author, image and terms — and carries any structured data the page publishes.', 'octave-addons' ),
-			__( 'The page is converted as it renders, so Breakdance sections, blocks and shortcodes all come through as text.', 'octave-addons' ),
+			__( 'Works for every public page and post. Listing pages, such as categories and search results, become a list of links.', 'octave-addons' ),
+			__( 'Each text version starts with the page\'s title, description, address, dates, author, image and categories.', 'octave-addons' ),
+			__( 'The page is converted as it renders, so page-builder sections, blocks and shortcodes all come through as text.', 'octave-addons' ),
 		];
 
 		?>

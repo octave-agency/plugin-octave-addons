@@ -41,7 +41,7 @@ class Octave_Addons_Module_Performance_Preload extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Starts loading a page when a visitor hovers over or touches its link, so it opens faster when clicked.', 'octave-addons' );
+		return __( 'Starts loading the next page as soon as a visitor points at or touches its link, so it opens almost instantly when clicked.', 'octave-addons' );
 
 	}
 
@@ -154,12 +154,12 @@ class Octave_Addons_Module_Performance_Preload extends Octave_Addons_Module {
 
 		?>
 
-		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Safe. Each page is requested once at most, a few at a time, and only after the pointer rests on its link. Logged-in users are not preloaded for unless Optimise for logged-in users is on.', 'octave-addons' ); ?></p>
+		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Safe to turn on. A page is only fetched once, after the pointer rests on its link, and only a few at a time. It does not run for people who are logged in.', 'octave-addons' ); ?></p>
 
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
 
-			$this->textarea_row( 'exclude', __( 'Never preload', 'octave-addons' ), __( 'One URL pattern per line. Admin, login, logout, cart, checkout, account, add-to-cart, download, file and nonce links are always excluded.', 'octave-addons' ), $s );
+			$this->textarea_row( 'exclude', __( 'Never load early', 'octave-addons' ), __( 'Links whose address contains one of these words are never loaded early. One per line. Admin, login, logout, cart, checkout, account, add-to-cart and download links are always skipped.', 'octave-addons' ), $s );
 
 			?>
 		</table>

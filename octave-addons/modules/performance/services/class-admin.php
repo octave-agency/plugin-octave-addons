@@ -121,21 +121,21 @@ class Octave_Addons_Perf_Admin {
 				'working'          => __( 'Working…', 'octave-addons' ),
 				'failed'           => __( 'The request failed. Check your connection and try again.', 'octave-addons' ),
 				'dbTitle'          => __( 'Run database cleanup?', 'octave-addons' ),
-				'dbText'           => __( 'The selected data is permanently deleted and cannot be restored. Take a database backup first if you may need any of it.', 'octave-addons' ),
+				'dbText'           => __( 'The selected items are deleted for good and cannot be brought back. Make a database backup first if you might need any of them.', 'octave-addons' ),
 				'dbAction'         => __( 'Delete permanently', 'octave-addons' ),
-				'cfEverythingTitle'  => __( 'Purge everything from Cloudflare?', 'octave-addons' ),
-				'cfEverythingText'   => __( 'Every cached file in the zone is dropped, so the next visitors are served from the origin while Cloudflare refills its cache.', 'octave-addons' ),
-				'cfEverythingAction' => __( 'Purge everything', 'octave-addons' ),
+				'cfEverythingTitle'  => __( 'Clear everything from Cloudflare?', 'octave-addons' ),
+				'cfEverythingText'   => __( 'Cloudflare forgets every saved copy of this site, so the next few visitors will load pages a little more slowly while it saves fresh copies.', 'octave-addons' ),
+				'cfEverythingAction' => __( 'Clear everything', 'octave-addons' ),
 				'dbNothing'        => __( 'Select at least one item to clean up.', 'octave-addons' ),
 				/* translators: 1: item label, 2: number removed so far. */
 				'dbProgress'       => __( '%1$s: %2$d removed so far…', 'octave-addons' ),
 				'dbDone'           => __( 'Cleanup finished.', 'octave-addons' ),
-				'scanEmpty'        => __( 'Nothing was delayed, lazy loaded or rewritten on that page.', 'octave-addons' ),
-				'scanBypass'       => __( 'The scanned request was not optimised. Reason:', 'octave-addons' ),
+				'scanEmpty'        => __( 'Octave did not need to change anything on that page.', 'octave-addons' ),
+				'scanBypass'       => __( 'Octave left that page as it was. Reason:', 'octave-addons' ),
 				'scanScripts'      => __( 'Scripts', 'octave-addons' ),
 				'scanMedia'        => __( 'Media', 'octave-addons' ),
-				'scanFonts'        => __( 'Google Fonts stylesheets', 'octave-addons' ),
-				'scanQueued'       => __( 'not cached yet, queued for download', 'octave-addons' ),
+				'scanFonts'        => __( 'Google Fonts', 'octave-addons' ),
+				'scanQueued'       => __( 'not copied yet, it will be shortly', 'octave-addons' ),
 			],
 		] );
 
@@ -182,7 +182,7 @@ class Octave_Addons_Perf_Admin {
 			?>
 
 			<div class="notice notice-warning inline oa-inline-notice">
-				<p><?php esc_html_e( 'Page markup optimisations need WordPress 6.2 or newer. Until WordPress is updated, lazy loading, script delay and font rewriting leave pages untouched.', 'octave-addons' ); ?></p>
+				<p><?php esc_html_e( 'Some speed features need WordPress 6.2 or newer. Until WordPress is updated, lazy loading, script delay and font changes are paused.', 'octave-addons' ); ?></p>
 			</div>
 
 			<?php
@@ -212,14 +212,14 @@ class Octave_Addons_Perf_Admin {
 			<div class="oa-perf-status-grid">
 
 				<div class="oa-perf-card">
-					<span class="oa-panel-kicker"><?php esc_html_e( 'Minified files', 'octave-addons' ); ?></span>
+					<span class="oa-panel-kicker"><?php esc_html_e( 'Smaller copies of files', 'octave-addons' ); ?></span>
 					<strong><?= esc_html( size_format( $size['bytes'] ) ?: '0 B' ); ?></strong>
 					<span>
 						<?php
 
 						printf(
 							/* translators: 1: number of files, 2: cache generation number. */
-							esc_html__( '%1$d files · generation %2$d', 'octave-addons' ),
+							esc_html__( '%1$d files, version %2$d', 'octave-addons' ),
 							(int) $size['files'],
 							(int) Octave_Addons_Perf_Cache::generation()
 						);
@@ -236,7 +236,7 @@ class Octave_Addons_Perf_Admin {
 
 					<div class="oa-perf-actions">
 						<button type="button" class="button" data-oa-perf-action="oa_perf_purge" data-scope="files" data-result="oa-perf-purge-result">
-							<?php esc_html_e( 'Clear minified files', 'octave-addons' ); ?>
+							<?php esc_html_e( 'Clear smaller copies', 'octave-addons' ); ?>
 						</button>
 					</div>
 
@@ -263,7 +263,7 @@ class Octave_Addons_Perf_Admin {
 
 					?>
 
-					<strong><?php esc_html_e( 'Needs credentials', 'octave-addons' ); ?></strong>
+					<strong><?php esc_html_e( 'Needs setting up', 'octave-addons' ); ?></strong>
 
 					<?php
 
@@ -275,11 +275,11 @@ class Octave_Addons_Perf_Admin {
 					<span><?= esc_html( (string) ( $cf_status['message'] ?? __( 'Not tested yet.', 'octave-addons' ) ) ); ?></span>
 					<div class="oa-perf-actions">
 						<button type="button" class="button" data-oa-perf-action="oa_perf_purge" data-scope="cloudflare" data-confirm="cfEverything" data-result="oa-perf-purge-result">
-							<?php esc_html_e( 'Purge Cloudflare', 'octave-addons' ); ?>
+							<?php esc_html_e( 'Clear Cloudflare', 'octave-addons' ); ?>
 						</button>
 					</div>
 					<div class="oa-perf-inline-form">
-						<label for="oa-perf-purge-url"><?php esc_html_e( 'Purge one URL', 'octave-addons' ); ?></label>
+						<label for="oa-perf-purge-url"><?php esc_html_e( 'Clear one page', 'octave-addons' ); ?></label>
 						<input type="url" id="oa-perf-purge-url" class="regular-text" placeholder="<?= esc_attr( home_url( '/' ) ); ?>">
 						<button type="button" class="button" data-oa-perf-action="oa_perf_purge" data-scope="url" data-input="oa-perf-purge-url" data-result="oa-perf-purge-result">
 							<?php esc_html_e( 'Purge URL', 'octave-addons' ); ?>
@@ -294,7 +294,7 @@ class Octave_Addons_Perf_Admin {
 				</div>
 
 				<div class="oa-perf-card">
-					<span class="oa-panel-kicker"><?php esc_html_e( 'Self-hosted fonts', 'octave-addons' ); ?></span>
+					<span class="oa-panel-kicker"><?php esc_html_e( 'Fonts on your site', 'octave-addons' ); ?></span>
 					<strong>
 						<?php
 
@@ -311,7 +311,7 @@ class Octave_Addons_Perf_Admin {
 
 						printf(
 							/* translators: %d: number of font files. */
-							esc_html( _n( '%d font file cached', '%d font files cached', $font_files, 'octave-addons' ) ),
+							esc_html( _n( '%d font file copied', '%d font files copied', $font_files, 'octave-addons' ) ),
 							(int) $font_files
 						);
 
@@ -341,7 +341,7 @@ class Octave_Addons_Perf_Admin {
 
 						printf(
 							/* translators: %d: number of rows removed. */
-							esc_html__( '%d entries removed', 'octave-addons' ),
+							esc_html__( '%d items removed', 'octave-addons' ),
 							(int) array_sum( (array) ( $db_last['totals'] ?? [] ) )
 						);
 
@@ -365,6 +365,7 @@ class Octave_Addons_Perf_Admin {
 			self::render_ownership();
 			self::render_static_delivery();
 			self::render_breakdance_audit();
+			self::render_divi_audit();
 
 			?>
 
@@ -376,7 +377,7 @@ class Octave_Addons_Perf_Admin {
 
 						printf(
 							/* translators: %s: query argument. */
-							esc_html__( 'Add %s to any page while logged in as an administrator to see it without performance optimisations.', 'octave-addons' ),
+							esc_html__( 'To see any page without Octave\'s speed changes, add %s to its address while logged in as an administrator.', 'octave-addons' ),
 							'<code>?' . esc_html( Octave_Addons_Perf_Context::BYPASS_ARG ) . '=1</code>'
 						);
 
@@ -387,7 +388,7 @@ class Octave_Addons_Perf_Admin {
 
 						printf(
 							/* translators: %s: query argument with its key. */
-							esc_html__( 'Add %s to any page, logged out, to receive a Server-Timing header with Octave\'s processing times. Keep the key private.', 'octave-addons' ),
+							esc_html__( 'For developers: add %s to a page\'s address while logged out to see how long Octave spent on it (in the Server-Timing header). Keep this key private.', 'octave-addons' ),
 							'<code>?' . esc_html( Octave_Addons_Perf_Html::TIMING_ARG . '=' . Octave_Addons_Perf_Html::timing_key() ) . '</code>'
 						);
 
@@ -395,10 +396,10 @@ class Octave_Addons_Perf_Admin {
 					</p>
 				</div>
 				<div class="oa-perf-inline-form">
-					<label for="oa-perf-scan-url"><?php esc_html_e( 'Scan a page as a logged-out visitor', 'octave-addons' ); ?></label>
+					<label for="oa-perf-scan-url"><?php esc_html_e( 'Check a page as a visitor sees it', 'octave-addons' ); ?></label>
 					<input type="url" id="oa-perf-scan-url" class="regular-text" value="<?= esc_attr( home_url( '/' ) ); ?>">
 					<button type="button" class="button" data-oa-perf-action="oa_perf_scan" data-input="oa-perf-scan-url" data-result="oa-perf-scan-result">
-						<?php esc_html_e( 'Run diagnostics', 'octave-addons' ); ?>
+						<?php esc_html_e( 'Check page', 'octave-addons' ); ?>
 					</button>
 				</div>
 				<div id="oa-perf-scan-result" data-oa-perf-result role="status" aria-live="polite"></div>
@@ -409,7 +410,7 @@ class Octave_Addons_Perf_Admin {
 
 				?>
 
-				<h4><?php esc_html_e( 'Recent optimisation errors', 'octave-addons' ); ?></h4>
+				<h4><?php esc_html_e( 'Recent problems', 'octave-addons' ); ?></h4>
 				<ul class="oa-perf-log">
 					<?php
 
@@ -431,7 +432,7 @@ class Octave_Addons_Perf_Admin {
 					?>
 				</ul>
 				<button type="button" class="button button-small" data-oa-perf-action="oa_perf_log_clear" data-result="oa-perf-log-result">
-					<?php esc_html_e( 'Clear error log', 'octave-addons' ); ?>
+					<?php esc_html_e( 'Clear this list', 'octave-addons' ); ?>
 				</button>
 				<div id="oa-perf-log-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
@@ -464,7 +465,7 @@ class Octave_Addons_Perf_Admin {
 		$disk     = Octave_Addons_Perf_Disk_Cache::status();
 		$kinds    = [
 			'full'     => __( 'Last full clear', 'octave-addons' ),
-			'targeted' => __( 'Last targeted clear', 'octave-addons' ),
+			'targeted' => __( 'Last single-page clear', 'octave-addons' ),
 		];
 
 		?>
@@ -472,7 +473,7 @@ class Octave_Addons_Perf_Admin {
 		<section class="oa-perf-section">
 			<div class="oa-perf-section-copy">
 				<h3><?php esc_html_e( 'Page cache', 'octave-addons' ); ?></h3>
-				<p><?php esc_html_e( 'Saving content clears the pages it appears on and refills them in the background. Clear cache in the toolbar clears every layer at once.', 'octave-addons' ); ?></p>
+				<p><?php esc_html_e( 'Saved copies of your pages make them open much faster. When you change something, the affected pages are cleared and quietly rebuilt. Clear cache in the toolbar clears everything at once.', 'octave-addons' ); ?></p>
 			</div>
 			<table class="widefat striped oa-perf-table">
 				<tbody>
@@ -501,21 +502,21 @@ class Octave_Addons_Perf_Admin {
 					?>
 
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Breakdance view counting', 'octave-addons' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Breakdance visit counting', 'octave-addons' ); ?></th>
 						<td>
 							<?php
 
 							if ( 'unused' === $sessions['state'] && Octave_Addons_Perf::is_enabled() ) {
 
-								esc_html_e( 'Off: no Page View Count or Session Count condition is used, so Breakdance starts no PHP session and sets no cookies.', 'octave-addons' );
+								esc_html_e( 'Off. Your designs do not show anything based on how many pages or visits someone has made, so Breakdance does not need to track visitors, and pages can be saved and served quickly.', 'octave-addons' );
 
 							} elseif ( 'used' === $sessions['state'] ) {
 
-								esc_html_e( 'On: a Page View Count or Session Count condition is used. Every page view starts a PHP session and sets cookies, so pages cannot be cached.', 'octave-addons' );
+								esc_html_e( 'On. A design shows something based on how many pages or visits someone has made, so Breakdance tracks every visitor and pages cannot be saved for quick loading.', 'octave-addons' );
 
 							} else {
 
-								esc_html_e( 'On: Octave could not confirm that no session condition is used. Pages that set cookies cannot be cached.', 'octave-addons' );
+								esc_html_e( 'On. Octave could not confirm your designs do not rely on visit counts, so Breakdance keeps tracking visitors and pages cannot be saved for quick loading.', 'octave-addons' );
 
 							}
 
@@ -530,8 +531,8 @@ class Octave_Addons_Perf_Admin {
 					?>
 
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Clears passed to', 'octave-addons' ); ?></th>
-						<td><?= esc_html( implode( ', ', array_merge( Octave_Addons_Perf_Disk_Cache::is_active() ? [ Octave_Addons_Perf_Disk_Cache::LABEL ] : [], array_keys( Octave_Addons_Perf_Page_Cache::connectors() ) ) ) ?: __( 'No supported cache found', 'octave-addons' ) ); ?></td>
+						<th scope="row"><?php esc_html_e( 'Also clears', 'octave-addons' ); ?></th>
+						<td><?= esc_html( implode( ', ', array_merge( Octave_Addons_Perf_Disk_Cache::is_active() ? [ Octave_Addons_Perf_Disk_Cache::LABEL ] : [], array_keys( Octave_Addons_Perf_Page_Cache::connectors() ) ) ) ?: __( 'Nothing else to clear', 'octave-addons' ) ); ?></td>
 					</tr>
 
 					<?php
@@ -582,19 +583,19 @@ class Octave_Addons_Perf_Admin {
 					?>
 
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Cache warming', 'octave-addons' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Rebuilding pages', 'octave-addons' ); ?></th>
 						<td>
 							<?php
 
 							if ( ! empty( $warm['queue'] ) ) {
 
 								/* translators: %d: number of URLs. */
-								echo esc_html( sprintf( _n( 'Running: %d URL left', 'Running: %d URLs left', count( $warm['queue'] ), 'octave-addons' ), count( $warm['queue'] ) ) );
+								echo esc_html( sprintf( _n( 'In progress: %d page left', 'In progress: %d pages left', count( $warm['queue'] ), 'octave-addons' ), count( $warm['queue'] ) ) );
 
 							} elseif ( ! empty( $last['time'] ) ) {
 
 								/* translators: 1: relative time, 2: pages warmed, 3: failures. */
-								echo esc_html( sprintf( __( 'Last run %1$s: %2$d pages warmed, %3$d failed', 'octave-addons' ), self::time_ago( (int) $last['time'] ), (int) $last['done'], count( (array) $last['failed'] ) ) );
+								echo esc_html( sprintf( __( 'Last run %1$s: %2$d pages rebuilt, %3$d failed', 'octave-addons' ), self::time_ago( (int) $last['time'] ), (int) $last['done'], count( (array) $last['failed'] ) ) );
 
 								foreach ( (array) $last['failed'] as $url => $error ) {
 
@@ -604,7 +605,7 @@ class Octave_Addons_Perf_Admin {
 
 							} else {
 
-								echo esc_html( Octave_Addons_Perf_Page_Cache::should_warm() ? __( 'Idle. Runs after the next clear.', 'octave-addons' ) : __( 'Off: no page cache or optimised files to prepare.', 'octave-addons' ) );
+								echo esc_html( Octave_Addons_Perf_Page_Cache::should_warm() ? __( 'Waiting. Runs after the next clear.', 'octave-addons' ) : __( 'Not needed: there are no saved pages or files to rebuild.', 'octave-addons' ) );
 
 							}
 
@@ -613,7 +614,7 @@ class Octave_Addons_Perf_Admin {
 					</tr>
 				</tbody>
 			</table>
-			<p class="oa-help"><?php esc_html_e( 'Run diagnostics below to see whether a page is served from the cache (HIT, MISS or BYPASS) and what stops it being cached.', 'octave-addons' ); ?></p>
+			<p class="oa-help"><?php esc_html_e( 'Use Check page below to see whether a page is being served from a saved copy, and if not, why.', 'octave-addons' ); ?></p>
 		</section>
 
 		<?php
@@ -633,22 +634,22 @@ class Octave_Addons_Perf_Admin {
 		$states = [
 			'none'     => __( 'Not in use', 'octave-addons' ),
 			'octave'   => __( 'Octave', 'octave-addons' ),
-			'external' => __( 'Handled elsewhere', 'octave-addons' ),
-			'deferred' => __( 'Octave steps aside', 'octave-addons' ),
-			'conflict' => __( 'Duplicate: two plugins do this', 'octave-addons' ),
+			'external' => __( 'Another plugin does this', 'octave-addons' ),
+			'deferred' => __( 'Another plugin does this, so Octave holds back', 'octave-addons' ),
+			'conflict' => __( 'Two plugins are doing this: choose one', 'octave-addons' ),
 		];
 		$media  = [
-			'lazy_images'  => __( 'Image lazy loading', 'octave-addons' ),
-			'lazy_iframes' => __( 'Iframe lazy loading', 'octave-addons' ),
-			'lazy_videos'  => __( 'Video lazy loading', 'octave-addons' ),
+			'lazy_images'  => __( 'Images load as visitors scroll', 'octave-addons' ),
+			'lazy_iframes' => __( 'Embeds load as visitors scroll', 'octave-addons' ),
+			'lazy_videos'  => __( 'Videos load as visitors scroll', 'octave-addons' ),
 		];
 
 		?>
 
 		<section class="oa-perf-section">
 			<div class="oa-perf-section-copy">
-				<h3><?php esc_html_e( 'Optimisation ownership', 'octave-addons' ); ?></h3>
-				<p><?php esc_html_e( 'Each optimisation should have one owner. Octave steps aside wherever another plugin is switched on for the same job; two other plugins doing the same job are flagged here for you to choose one.', 'octave-addons' ); ?></p>
+				<h3><?php esc_html_e( 'Who does what', 'octave-addons' ); ?></h3>
+				<p><?php esc_html_e( 'Each speed feature should be handled by just one plugin. Octave holds back wherever another plugin already does the same job, and flags it here if two other plugins are both doing it.', 'octave-addons' ); ?></p>
 			</div>
 			<table class="widefat striped oa-perf-table">
 				<tbody>
@@ -717,13 +718,65 @@ class Octave_Addons_Perf_Admin {
 
 		<section class="oa-perf-section">
 			<div class="oa-perf-section-copy">
-				<h3><?php esc_html_e( 'Static delivery', 'octave-addons' ); ?></h3>
-				<p><?php esc_html_e( 'Checks Brotli and Gzip, browser caching, WebP and AVIF MIME types, font CORS, Vary: Accept and CDN cache status for a few of this site\'s files. Read only: Octave never adds server rules that the host or another plugin owns.', 'octave-addons' ); ?></p>
+				<h3><?php esc_html_e( 'How files are delivered', 'octave-addons' ); ?></h3>
+				<p><?php esc_html_e( 'Checks a few of your site\'s files are compressed, kept by browsers between visits, and served correctly, including fonts and modern image formats. This only reports: Octave never changes your server.', 'octave-addons' ); ?></p>
 			</div>
 			<div class="oa-perf-actions">
-				<button type="button" class="button" data-oa-perf-action="oa_perf_static_test" data-result="oa-perf-static-result"><?php esc_html_e( 'Check static delivery', 'octave-addons' ); ?></button>
+				<button type="button" class="button" data-oa-perf-action="oa_perf_static_test" data-result="oa-perf-static-result"><?php esc_html_e( 'Check files', 'octave-addons' ); ?></button>
 			</div>
 			<div id="oa-perf-static-result" data-oa-perf-result role="status" aria-live="polite"></div>
+		</section>
+
+		<?php
+
+	}
+
+	/*
+	RENDER DIVI AUDIT
+	-- Divi's own performance settings, read only, with a link to them
+	---------------------------------------------------------- */
+
+	protected static function render_divi_audit(): void {
+
+		$rows = Octave_Addons_Perf_Diagnostics::divi_audit();
+
+		if ( empty( $rows ) ) {
+
+			return;
+
+		}
+
+		?>
+
+		<section class="oa-perf-section">
+			<div class="oa-perf-section-copy">
+				<h3><?php esc_html_e( 'Divi speed settings', 'octave-addons' ); ?></h3>
+				<p>
+					<?php esc_html_e( 'Divi\'s own speed settings, for reference. Octave never changes or repeats them.', 'octave-addons' ); ?>
+					<a href="<?= esc_url( Octave_Addons_Perf_Diagnostics::divi_settings_url() ); ?>"><?php esc_html_e( 'Open Divi theme options', 'octave-addons' ); ?></a>
+				</p>
+			</div>
+			<table class="widefat striped oa-perf-table">
+				<tbody>
+					<?php
+
+					foreach ( $rows as $row ) :
+
+					?>
+
+					<tr>
+						<th scope="row"><?= esc_html( $row['label'] ); ?></th>
+						<td><?= esc_html( $row['status'] ); ?></td>
+						<td><?= esc_html( $row['note'] ); ?></td>
+					</tr>
+
+					<?php
+
+					endforeach;
+
+					?>
+				</tbody>
+			</table>
 		</section>
 
 		<?php
@@ -749,10 +802,10 @@ class Octave_Addons_Perf_Admin {
 
 		<section class="oa-perf-section">
 			<div class="oa-perf-section-copy">
-				<h3><?php esc_html_e( 'Breakdance performance audit', 'octave-addons' ); ?></h3>
+				<h3><?php esc_html_e( 'Breakdance speed settings', 'octave-addons' ); ?></h3>
 				<p>
-					<?php esc_html_e( 'Breakdance\'s own settings, shown for reference. Octave does not change or duplicate them.', 'octave-addons' ); ?>
-					<a href="<?= esc_url( Octave_Addons_Perf_Diagnostics::breakdance_settings_url() ); ?>"><?php esc_html_e( 'Open Breakdance performance settings', 'octave-addons' ); ?></a>
+					<?php esc_html_e( 'Breakdance\'s own speed settings, for reference. Octave never changes or repeats them.', 'octave-addons' ); ?>
+					<a href="<?= esc_url( Octave_Addons_Perf_Diagnostics::breakdance_settings_url() ); ?>"><?php esc_html_e( 'Open Breakdance settings', 'octave-addons' ); ?></a>
 				</p>
 			</div>
 			<table class="widefat striped oa-perf-table">
@@ -791,7 +844,7 @@ class Octave_Addons_Perf_Admin {
 
 		if ( empty( $last['time'] ) ) {
 
-			echo '<span>' . esc_html__( 'No manual purge yet.', 'octave-addons' ) . '</span>';
+			echo '<span>' . esc_html__( 'Not cleared by hand yet.', 'octave-addons' ) . '</span>';
 
 			return;
 
@@ -851,7 +904,7 @@ class Octave_Addons_Perf_Admin {
 
 		if ( 'url' === $scope && empty( Octave_Addons_Perf_Cache::normalize_urls( [ $url ] ) ) ) {
 
-			wp_send_json_error( [ 'message' => __( 'Enter a full URL on this site.', 'octave-addons' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Enter the full address of a page on this site.', 'octave-addons' ) ] );
 
 		}
 
@@ -879,7 +932,7 @@ class Octave_Addons_Perf_Admin {
 
 			if ( ! Octave_Addons_Perf_Cloudflare::is_configured() ) {
 
-				return [ 'cloudflare' => [ 'label' => $label, 'status' => 'error', 'message' => __( 'Not configured: add a Zone ID and API token.', 'octave-addons' ) ] ];
+				return [ 'cloudflare' => [ 'label' => $label, 'status' => 'error', 'message' => __( 'Not set up yet: add your Zone ID and API token.', 'octave-addons' ) ] ];
 
 			}
 
@@ -907,7 +960,7 @@ class Octave_Addons_Perf_Admin {
 
 		if ( empty( Octave_Addons_Perf_Cache::normalize_urls( [ $url ] ) ) ) {
 
-			wp_send_json_error( [ 'message' => __( 'Enter a full URL on this site.', 'octave-addons' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Enter the full address of a page on this site.', 'octave-addons' ) ] );
 
 		}
 
@@ -923,7 +976,7 @@ class Octave_Addons_Perf_Admin {
 
 			wp_send_json_error( [ 'message' => sprintf(
 				/* translators: %s: error message. */
-				__( 'The site could not request its own page: %s', 'octave-addons' ),
+				__( 'Your site could not open its own page: %s', 'octave-addons' ),
 				$response->get_error_message()
 			) ] );
 
@@ -937,10 +990,10 @@ class Octave_Addons_Perf_Admin {
 			$code = (int) wp_remote_retrieve_response_code( $response );
 
 			wp_send_json_error( [ 'message' => 200 === $code
-				? __( 'The page answered but no report was recorded. A server or CDN cache may have answered instead of WordPress; exclude URLs containing oa_perf_scan from it and try again.', 'octave-addons' )
+				? __( 'The page opened, but Octave could not check it, probably because a saved copy was shown instead. Ask your host to skip saved copies for addresses containing oa_perf_scan, then try again.', 'octave-addons' )
 				: sprintf(
 					/* translators: %d: HTTP status code. */
-					__( 'The page answered with HTTP %d, so no report was recorded. Check the URL opens for a logged-out visitor.', 'octave-addons' ),
+					__( 'The page could not be checked (error %d). Make sure it opens for someone who is not logged in.', 'octave-addons' ),
 					$code
 				) ] );
 
@@ -1064,7 +1117,7 @@ class Octave_Addons_Perf_Admin {
 
 		if ( empty( $results ) ) {
 
-			wp_send_json_success( [ 'message' => __( 'No Google Fonts were found on the home page. Fonts on other pages are picked up as logged-out visitors view them, or run diagnostics on one of those pages, then refresh again.', 'octave-addons' ) ] );
+			wp_send_json_success( [ 'message' => __( 'No Google Fonts were found on your home page. Fonts on other pages are found as visitors browse, or use Check page on one of them, then refresh again.', 'octave-addons' ) ] );
 
 		}
 
@@ -1138,7 +1191,7 @@ class Octave_Addons_Perf_Admin {
 
 		if ( ! Octave_Addons_Perf_Cleanup::is_item( $item ) || empty( $_POST['confirmed'] ) ) {
 
-			wp_send_json_error( [ 'message' => __( 'Unknown or unconfirmed cleanup.', 'octave-addons' ) ] );
+			wp_send_json_error( [ 'message' => __( 'That cleanup was not recognised or not confirmed.', 'octave-addons' ) ] );
 
 		}
 

@@ -36,7 +36,7 @@ class Octave_Addons_Module_Performance_Heartbeat extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Reduces how often WordPress polls the server in the background, separately for the frontend, the admin and the editor.', 'octave-addons' );
+		return __( 'WordPress quietly checks in with your server every few seconds while a page is open. This lets you slow that down, or switch it off where it is not needed, to reduce server load.', 'octave-addons' );
 
 	}
 
@@ -181,9 +181,9 @@ class Octave_Addons_Module_Performance_Heartbeat extends Octave_Addons_Module {
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
 
-			$this->select_row( 'frontend', __( 'Frontend', 'octave-addons' ), self::modes( 'frontend' ), __( 'Recommended: Disable. Heartbeat on the frontend only runs for logged-in users and few sites need it there.', 'octave-addons' ), $s );
-			$this->select_row( 'admin', __( 'General admin', 'octave-addons' ), self::modes( 'admin' ), __( 'Recommended: 120 seconds. Disabling also stops the session-expiry login prompt and live dashboard updates.', 'octave-addons' ), $s );
-			$this->select_row( 'editor', __( 'Post editor', 'octave-addons' ), self::modes( 'editor' ), __( 'Recommended: 120 seconds. Cannot be disabled, as it autosaves drafts and prevents two people overwriting each other.', 'octave-addons' ), $s );
+			$this->select_row( 'frontend', __( 'Frontend', 'octave-addons' ), self::modes( 'frontend' ), __( 'Recommended: Off. On your public site it only runs for people who are logged in, and few sites need it there.', 'octave-addons' ), $s );
+			$this->select_row( 'admin', __( 'Rest of the admin', 'octave-addons' ), self::modes( 'admin' ), __( 'Recommended: every 120 seconds. Switching it off also stops the "you have been logged out" prompt and live dashboard updates.', 'octave-addons' ), $s );
+			$this->select_row( 'editor', __( 'Post editor', 'octave-addons' ), self::modes( 'editor' ), __( 'Recommended: every 120 seconds. It cannot be switched off here, because it saves drafts as you write and stops two people overwriting each other\'s changes.', 'octave-addons' ), $s );
 
 			?>
 		</table>

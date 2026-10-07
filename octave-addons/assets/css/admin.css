@@ -880,9 +880,45 @@ Navigation entry
     color: var(--oa-text-muted);
 }
 
-.oa-locked {
-    opacity: 0.5;
-    filter: grayscale(0.4);
+/*
+Settings cards
+-- Separate cards inside one module's settings, such as the page loader,
+-- page transitions and their shared customisation. A card's own switch
+-- sits in its header and shows or hides the card's rows
+---------------------------------------------------------- */
+
+.oa-settings-card {
+    margin: 0 0 16px;
+    border: 1px solid var(--oa-border);
+    border-radius: 12px;
+    background: var(--oa-surface-2);
+}
+
+.oa-settings-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--oa-border-light);
+}
+
+.oa-settings-card-head h3 {
+    margin: 0 0 4px;
+    color: var(--oa-text);
+    font-size: 15px;
+}
+
+.oa-settings-card-head p {
+    margin: 0;
+    color: var(--oa-text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.oa-settings-card .oa-form-table {
+    margin: 0;
+    padding: 4px 20px 12px;
 }
 
 /* --- Panel card ------------------------------------------ */
@@ -6293,6 +6329,53 @@ Loader layers
     font-size: 11px;
     font-variant-numeric: tabular-nums;
     text-align: right;
+}
+
+.oa-motion-stage .oa-pv-mark {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.oa-motion-stage .oa-pv-mark--plain {
+    z-index: 3;
+    color: var(--oa-pv-fg);
+}
+
+.oa-motion-stage .oa-pv-mark-logo {
+    display: block;
+    max-width: 140px;
+    max-height: 44px;
+}
+
+.oa-motion-stage .oa-pv-mark-image {
+    display: block;
+    width: 120px;
+    max-height: 90px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.oa-motion-stage .oa-pv-tagline {
+    font-size: 0.55em;
+    font-weight: 400;
+    opacity: 0.72;
+}
+
+.oa-motion-stage .oa-pv-spinner {
+    display: block;
+    width: 26px;
+    height: 26px;
+    border: 2px solid currentColor;
+    border-top-color: var(--oa-pv-accent);
+    border-radius: 50%;
+}
+
+.oa-motion-stage .oa-pv-inner--stack {
+    flex-direction: column;
+    gap: 14px;
 }
 
 .oa-motion-stage .oa-pv-logo {

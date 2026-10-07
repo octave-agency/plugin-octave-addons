@@ -1,6 +1,7 @@
 /*
 BRAND WIPE TRANSITION
--- An accent surface wipes across with the brand name rising inside it,
+-- An accent surface wipes across with its content (the brand name unless
+-- another is chosen) rising inside it,
 -- then wipes onward over a trailing background-colour band, so the reveal
 -- reads as two tones rather than a single cut
 -- Cover 460ms and reveal 720ms at the 600ms default, matching COVER_MS and
@@ -18,27 +19,15 @@ BRAND WIPE TRANSITION
     background: var(--oa-pm-bg);
 }
 
-.oa-transition--brand-wipe .oa-transition__brand {
-    z-index: 3;
-}
-
-.oa-transition__brand {
-    position: absolute;
-    top: 50%;
-    left: 50%;
+.oa-transition--brand-wipe .oa-transition__content {
     color: var(--oa-pm-bg);
-    font-size: clamp(18px, 2.4vw, 30px);
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-    transform: translate(-50%, -50%);
 }
 
 html.oa-transition-out .oa-transition--brand-wipe .oa-transition__layer {
     animation: oa-bw-cover calc(var(--oa-transition-duration, 600ms) * 0.767) cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
-html.oa-transition-out .oa-transition__brand {
+html.oa-transition-out .oa-transition--brand-wipe .oa-transition__content {
     animation: oa-bw-text calc(var(--oa-transition-duration, 600ms) * 0.767) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--oa-transition-duration, 600ms) * 0.233) both;
 }
 
@@ -50,7 +39,7 @@ html.oa-transition-reveal .oa-transition--brand-wipe .oa-transition__layer--b {
     animation-delay: calc(var(--oa-transition-duration, 600ms) * 0.267);
 }
 
-html.oa-transition-reveal .oa-transition__brand {
+html.oa-transition-reveal .oa-transition--brand-wipe .oa-transition__content {
     animation: oa-pm-fade-out calc(var(--oa-transition-duration, 600ms) * 0.333) ease-out both;
 }
 

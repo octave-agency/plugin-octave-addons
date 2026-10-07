@@ -66,7 +66,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 	public function get_description(): string {
 
-		return __( 'Backs the Breakdance Filter Bar with a real query so filters and paging load every matching post, not just the ones already on the page.', 'octave-addons' );
+		return __( 'Makes the Breakdance Filter Bar search all your posts, so filtering and paging show every matching post, not just the ones already on the page.', 'octave-addons' );
 
 	}
 
@@ -173,7 +173,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 
 		<div class="notice notice-info inline oa-inline-notice">
 			<p><strong><?php esc_html_e( 'This requires the Breakdance Filter to be enabled.', 'octave-addons' ); ?></strong></p>
-			<p><?php esc_html_e( 'Add a Filter Bar to the Breakdance Post Loop you want to filter. Its buttons are taken over and backed by a real query, so the post type and taxonomy are read from the loop itself. Loops without a Filter Bar are left untouched.', 'octave-addons' ); ?></p>
+			<p><?php esc_html_e( 'Add a Filter Bar to the Breakdance Post Loop you want to filter, and its buttons will search all matching posts. It works out which posts and categories to use from the loop itself. Loops without a Filter Bar are left as they are.', 'octave-addons' ); ?></p>
 		</div>
 
 		<table class="form-table oa-form-table" role="presentation">
@@ -197,7 +197,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 								'name'    => $this->field_name( 'all_archives' ),
 								'checked' => ! empty( $settings['all_archives'] ),
 								'data'    => [ 'controls-row-hide' => 'oaBaaRowPagePath' ],
-								'help'    => __( 'Enhances every Breakdance loop that has a Filter Bar, including templates, global blocks, and content areas. Switch off to limit it to a single page.', 'octave-addons' ),
+								'help'    => __( 'Works on every Breakdance loop with a Filter Bar, including in templates and global blocks. Switch off to use it on one page only.', 'octave-addons' ),
 							]
 						);
 
@@ -218,7 +218,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 								'name'        => $this->field_name( 'page_path' ),
 								'value'       => $settings['page_path'],
 								'placeholder' => '/about-us/blog/',
-								'help'        => __( 'Site-relative path of the only page that should be enhanced.', 'octave-addons' ),
+								'help'        => __( 'The page to use it on, for example /blog/.', 'octave-addons' ),
 							]
 						);
 
@@ -243,7 +243,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 								'class'       => 'small-text',
 								'help'        => sprintf(
 									/* translators: %d: the Settings → Reading posts per page value. */
-									__( 'Default posts per page when the query does not supply its own limit. Defaults to the Reading setting (%d). Maximum 100 for this default.', 'octave-addons' ),
+									__( 'How many posts to show at a time when the loop does not set its own number. Uses your Reading setting (%d) unless you change it. Up to 100.', 'octave-addons' ),
 									self::reading_posts_per_page()
 								),
 							]
@@ -321,7 +321,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 							[
 								'name'    => $this->field_name( 'update_url' ),
 								'checked' => ! empty( $settings['update_url'] ),
-								'help'    => __( 'Creates shareable filter URLs and supports the browser Back button. Off by default so filtering leaves the address bar alone.', 'octave-addons' ),
+								'help'    => __( 'Updates the page address as visitors filter, so they can share a filtered view and use the Back button. Off by default.', 'octave-addons' ),
 							]
 						);
 
@@ -338,7 +338,7 @@ class Octave_Addons_Module_Breakdance_Ajax_Filtering extends Octave_Addons_Modul
 							[
 								'name'    => $this->field_name( 'scroll_to_results' ),
 								'checked' => ! empty( $settings['scroll_to_results'] ),
-								'help'    => __( 'Smoothly returns the viewport to the refreshed loop.', 'octave-addons' ),
+								'help'    => __( 'Smoothly scrolls back up to the results after filtering.', 'octave-addons' ),
 							]
 						);
 

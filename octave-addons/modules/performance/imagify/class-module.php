@@ -11,8 +11,10 @@ PERFORMANCE: IMAGIFY NEXT-GENERATION IMAGES
 -- the Octave_Addons_Perf_Imagify adapter, which runs Imagify's own settings
 -- lifecycle. Octave never generates images or writes image rewrite rules
 -- Shown only while Imagify and the APIs the adapter relies on are present
--- Both settings default to Keep, so switching the module on changes nothing
--- in Imagify until a value is chosen
+-- The format defaults to Keep, so Imagify's choice of WebP or AVIF stands
+-- until one is picked here. Delivery defaults to Automatic: Imagify's
+-- rewrite rules where the server can use them, otherwise Octave's URL
+-- rewriting
 -- Imagify is only touched when these settings change, when Imagify is
 -- activated or updated and its expected rules are missing, or when an
 -- administrator asks; never during a page view
@@ -41,13 +43,13 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 
 	public function get_title(): string {
 
-		return __( 'Imagify Next-Gen Images', 'octave-addons' );
+		return __( 'Imagify Setup', 'octave-addons' );
 
 	}
 
 	public function get_description(): string {
 
-		return __( 'Chooses the WebP or AVIF format and delivery method Imagify uses, and tests that browsers receive it.', 'octave-addons' );
+		return __( 'Sets up Imagify to serve your images in modern, smaller formats (WebP or AVIF), and checks visitors actually receive them.', 'octave-addons' );
 
 	}
 
@@ -62,7 +64,7 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 		return [
 			'enabled'  => false,
 			'format'   => 'keep',
-			'delivery' => 'keep',
+			'delivery' => 'auto',
 		];
 
 	}
@@ -77,10 +79,10 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 
 		$clean    = parent::sanitize( $input );
 		$format   = sanitize_key( $input['format'] ?? 'keep' );
-		$delivery = sanitize_key( $input['delivery'] ?? 'keep' );
+		$delivery = sanitize_key( $input['delivery'] ?? 'auto' );
 
 		$clean['format']   = in_array( $format, self::FORMATS, true ) ? $format : 'keep';
-		$clean['delivery'] = in_array( $delivery, self::DELIVERIES, true ) ? $delivery : 'keep';
+		$clean['delivery'] = in_array( $delivery, self::DELIVERIES, true ) ? $delivery : 'auto';
 
 		return $clean;
 
@@ -202,22 +204,22 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 
 		?>
 
-		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Imagify creates the WebP and AVIF files and writes its own rewrite rules. These settings only choose what Imagify does; nothing here generates images or edits .htaccess itself.', 'octave-addons' ); ?></p>
+		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Imagify makes the smaller copies of your images. These settings choose which format it makes and how those copies reach visitors.', 'octave-addons' ); ?></p>
 
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Next-generation images', 'octave-addons' ), 'first' => true ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Modern image formats', 'octave-addons' ), 'first' => true ] );
 
-			$this->select_row( 'format', __( 'Output format', 'octave-addons' ), $formats, __( 'AVIF files are smaller than WebP; every current browser supports both. Changing the format makes Imagify create the new files as images are optimised again.', 'octave-addons' ), $s );
+			$this->select_row( 'format', __( 'Format', 'octave-addons' ), $formats, __( 'AVIF images are smaller than WebP, and every current browser shows both. If you change this, Imagify makes the new copies as it optimises your images again.', 'octave-addons' ), $s );
 
-			$this->select_row( 'delivery', __( 'Delivery', 'octave-addons' ), [
+			$this->select_row( 'delivery', __( 'How they reach visitors', 'octave-addons' ), [
 				'keep'    => __( 'Keep Imagify\'s setting', 'octave-addons' ),
 				'auto'    => __( 'Automatic (recommended)', 'octave-addons' ),
-				'rewrite' => __( 'Rewrite rules', 'octave-addons' ),
-				'picture' => __( 'Picture tags', 'octave-addons' ),
-				'octave'  => __( 'Octave URL rewriting (no server rules or picture tags)', 'octave-addons' ),
-			], __( 'Rewrite rules keep image URLs unchanged and need Apache or LiteSpeed with a writable .htaccess and no CDN in front of images. Picture tags work on every server but wrap each image. Automatic picks rewrite rules only when all of that holds. Octave URL rewriting suits servers like Cloudways, where Nginx serves images itself: Imagify keeps making the files, and Octave points images, posters, preloads and inline styles at them directly, and adds the format to Breakdance background images with the original as fallback. Every current browser supports WebP and AVIF; browsers older than that (Safari before 16.4 for AVIF) cannot show images placed with an img tag.', 'octave-addons' ), $s );
+				'rewrite' => __( 'Server rules (Imagify)', 'octave-addons' ),
+				'picture' => __( 'Picture tags (changes image markup)', 'octave-addons' ),
+				'octave'  => __( 'Octave Addons Rewriting', 'octave-addons' ),
+			], __( 'Automatic is best for most sites: it uses Imagify\'s server rules where your server supports them, and Octave Addons Rewriting everywhere else, such as on Cloudways. Octave Addons Rewriting points your pages straight at the smaller copies, including page-builder background images, without changing your layout. Picture tags also work everywhere, but wrap every image in extra markup, which can affect layouts. Very old browsers (Safari before version 16.4) cannot show AVIF images.', 'octave-addons' ), $s );
 
 			?>
 		</table>
@@ -258,21 +260,21 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 
 		$rows = [
 			__( 'Imagify', 'octave-addons' )                 => sprintf( /* translators: %s: version. */ __( 'Active, version %s', 'octave-addons' ), Octave_Addons_Perf_Imagify::version() ),
-			__( 'Output format', 'octave-addons' )           => 'off' === $format ? __( 'Off', 'octave-addons' ) : strtoupper( $format ),
+			__( 'Format', 'octave-addons' )           => 'off' === $format ? __( 'Off', 'octave-addons' ) : strtoupper( $format ),
 			__( 'Automatic optimisation', 'octave-addons' )  => ! empty( $config['auto_optimize'] ) ? $yes : $no,
-			__( 'Delivery', 'octave-addons' )                => Octave_Addons_Perf_Imagify::octave_delivery() ? __( 'Octave URL rewriting', 'octave-addons' ) : ( $display ? ( 'rewrite' === $method ? __( 'Rewrite rules', 'octave-addons' ) : __( 'Picture tags', 'octave-addons' ) ) : __( 'Not displayed', 'octave-addons' ) ),
+			__( 'How they reach visitors', 'octave-addons' )                => Octave_Addons_Perf_Imagify::octave_delivery() ? __( 'Octave Addons Rewriting', 'octave-addons' ) : ( $display ? ( 'rewrite' === $method ? __( 'Server rules (Imagify)', 'octave-addons' ) : __( 'Picture tags (changes image markup)', 'octave-addons' ) ) : __( 'Not in use', 'octave-addons' ) ),
 			__( 'Web server', 'octave-addons' )              => ucfirst( $server ),
-			__( '.htaccess', 'octave-addons' )               => Octave_Addons_Perf_Imagify::reads_htaccess() ? ( $htaccess['exists'] ? ( $htaccess['writable'] ? __( 'Exists, writable', 'octave-addons' ) : __( 'Exists, not writable', 'octave-addons' ) ) : ( $htaccess['writable'] ? __( 'Missing, can be created', 'octave-addons' ) : __( 'Missing, cannot be created', 'octave-addons' ) ) ) : __( 'Not read by this server', 'octave-addons' ),
-			__( 'Imagify rule markers', 'octave-addons' )    => empty( $expected ) ? implode( ', ', $markers ) . ' ' . __( '(not needed for the current delivery)', 'octave-addons' ) : implode( ', ', $markers ),
-			__( 'CDN and Cloudflare', 'octave-addons' )      => '' !== $cdn || Octave_Addons_Perf_Imagify::behind_cloudflare() ? __( 'Present: rewrite rules could mix formats between browsers', 'octave-addons' ) : __( 'None detected', 'octave-addons' ),
-			__( 'Automatic choice', 'octave-addons' )        => ( 'rewrite' === $choice['method'] ? __( 'Rewrite rules', 'octave-addons' ) : __( 'Picture tags', 'octave-addons' ) ) . ( empty( $choice['reasons'] ) ? '' : ' — ' . implode( ' ', $choice['reasons'] ) ),
-			__( 'Last synchronisation', 'octave-addons' )    => self::describe( $status['sync'] ?? [] ),
-			__( 'Last delivery test', 'octave-addons' )      => self::describe( $status['test'] ?? [] ),
+			__( 'Server rules file (.htaccess)', 'octave-addons' )               => Octave_Addons_Perf_Imagify::reads_htaccess() ? ( $htaccess['exists'] ? ( $htaccess['writable'] ? __( 'Exists, writable', 'octave-addons' ) : __( 'Exists, not writable', 'octave-addons' ) ) : ( $htaccess['writable'] ? __( 'Missing, can be created', 'octave-addons' ) : __( 'Missing, cannot be created', 'octave-addons' ) ) ) : __( 'Not used by this server', 'octave-addons' ),
+			__( 'Imagify\'s server rules', 'octave-addons' )    => empty( $expected ) ? implode( ', ', $markers ) . ' ' . __( '(not needed with the current setting)', 'octave-addons' ) : implode( ', ', $markers ),
+			__( 'CDN and Cloudflare', 'octave-addons' )      => '' !== $cdn || Octave_Addons_Perf_Imagify::behind_cloudflare() ? __( 'Found: server rules could send the wrong format to some browsers', 'octave-addons' ) : __( 'None detected', 'octave-addons' ),
+			__( 'Automatic choice', 'octave-addons' )        => ( 'rewrite' === $choice['method'] ? __( 'Server rules (Imagify)', 'octave-addons' ) : __( 'Octave Addons Rewriting', 'octave-addons' ) ) . ( empty( $choice['reasons'] ) ? '' : ' — ' . implode( ' ', $choice['reasons'] ) ),
+			__( 'Last applied', 'octave-addons' )    => self::describe( $status['sync'] ?? [] ),
+			__( 'Last check', 'octave-addons' )      => self::describe( $status['test'] ?? [] ),
 		];
 
 		if ( ! empty( $htaccess['competing'] ) ) {
 
-			$rows[ __( 'Competing rules', 'octave-addons' ) ] = sprintf( /* translators: %s: plugin names. */ __( '%s also rewrites image formats in .htaccess. Use one plugin for next-generation delivery.', 'octave-addons' ), implode( ', ', $htaccess['competing'] ) );
+			$rows[ __( 'Other plugins', 'octave-addons' ) ] = sprintf( /* translators: %s: plugin names. */ __( '%s also switches image formats. Use just one plugin for this.', 'octave-addons' ), implode( ', ', $htaccess['competing'] ) );
 
 		}
 
@@ -303,8 +305,8 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 				</tbody>
 			</table>
 			<div class="oa-perf-actions">
-				<button type="button" class="button" data-oa-perf-action="oa_perf_imagify_sync" data-result="oa-perf-imagify-result"><?php esc_html_e( 'Repair/synchronize Imagify rules', 'octave-addons' ); ?></button>
-				<button type="button" class="button" data-oa-perf-action="oa_perf_imagify_test" data-result="oa-perf-imagify-result"><?php esc_html_e( 'Test next-generation delivery', 'octave-addons' ); ?></button>
+				<button type="button" class="button" data-oa-perf-action="oa_perf_imagify_sync" data-result="oa-perf-imagify-result"><?php esc_html_e( 'Reapply Imagify settings', 'octave-addons' ); ?></button>
+				<button type="button" class="button" data-oa-perf-action="oa_perf_imagify_test" data-result="oa-perf-imagify-result"><?php esc_html_e( 'Check images are served in the new format', 'octave-addons' ); ?></button>
 			</div>
 			<div id="oa-perf-imagify-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
@@ -317,7 +319,7 @@ class Octave_Addons_Module_Performance_Imagify extends Octave_Addons_Module {
 			?>
 
 			<div class="notice notice-warning inline oa-inline-notice">
-				<p><?php esc_html_e( 'Nginx does not read .htaccess, so nothing was written for it. Include the configuration Imagify generated in this site\'s server block and reload Nginx.', 'octave-addons' ); ?></p>
+				<p><?php esc_html_e( 'This server (Nginx) cannot use Imagify\'s server rules on its own. Either choose Automatic or Octave Addons Rewriting above, or ask your host to add the rules below to the server.', 'octave-addons' ); ?></p>
 			</div>
 
 			<?php

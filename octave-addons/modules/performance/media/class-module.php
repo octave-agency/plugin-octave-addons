@@ -64,7 +64,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Native lazy loading for images, iframes and videos, with the hero image fetched first.', 'octave-addons' );
+		return __( 'Loads images, videos and embeds only as visitors scroll to them, while the main image at the top loads first.', 'octave-addons' );
 
 	}
 
@@ -843,7 +843,7 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 				printf(
 					/* translators: %s: plugin name. */
-					esc_html__( '%s is already lazy loading images, so Octave leaves images to it to avoid processing them twice.', 'octave-addons' ),
+					esc_html__( '%s already loads images as visitors scroll, so Octave leaves images to it.', 'octave-addons' ),
 					esc_html( $lazy_owner )
 				);
 
@@ -860,26 +860,30 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'What to lazy load', 'octave-addons' ), 'first' => true ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Load as visitors scroll', 'octave-addons' ), 'first' => true ] );
 
-			$this->switch_row( 'images', __( 'Images', 'octave-addons' ), __( 'Safe. Adds loading="lazy" and decoding="async" to images. The hero image is fetched first with fetchpriority="high"; add data-oa-no-priority to an image to pass it over. Images marked eager, high priority or opted out are left alone.', 'octave-addons' ), $s );
-			$this->switch_row( 'iframes', __( 'Iframes', 'octave-addons' ), __( 'Safe. Maps, embeds and other iframes load as they approach the viewport.', 'octave-addons' ), $s );
-			$this->switch_row( 'videos', __( 'Videos', 'octave-addons' ), __( 'Safe. HTML5 and Breakdance background videos download nothing until the page has loaded and they are actually in view; autoplay resumes then. With Save-Data or a 2G connection they show their poster and load only when played. A copy inside noscript keeps them playable without JavaScript.', 'octave-addons' ), $s );
+			$this->switch_row( 'images', __( 'Images', 'octave-addons' ), __( 'Recommended. Images further down the page wait until visitors scroll near them, and the main image at the top loads first. Images that are already set to load straight away are left as they are. Tip: add data-oa-no-priority to an image that should not be treated as the main image.', 'octave-addons' ), $s );
+			$this->switch_row( 'iframes', __( 'Iframes', 'octave-addons' ), __( 'Recommended. Maps, videos from YouTube or Vimeo, and other embeds load as visitors scroll near them.', 'octave-addons' ), $s );
+			$this->switch_row( 'videos', __( 'Videos', 'octave-addons' ), ( Octave_Addons_Builders::breakdance() ? __( 'Recommended. Videos (from WordPress, and Breakdance videos and background videos) download nothing until the page has finished loading and the video is on screen. Autoplaying videos start then.', 'octave-addons' ) : __( 'Recommended. Videos added through WordPress download nothing until the page has finished loading and the video is on screen. Autoplaying videos start then.', 'octave-addons' ) ) . ' ' . __( 'On slow connections or with data saving on, visitors see the cover image and the video loads only when they press play.', 'octave-addons' ), $s );
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Builder fixes', 'octave-addons' ) ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Page-builder fixes', 'octave-addons' ) ] );
 
-			$this->switch_row( 'header_eager', __( 'Load header images straight away', 'octave-addons' ), __( 'Safe. The logo and other images in the site header are in view on every page, so a loading="lazy" a builder adds to them is removed.', 'octave-addons' ), $s );
-			$this->switch_row( 'dimensions', __( 'Add missing image dimensions', 'octave-addons' ), __( 'Adds width and height from the file to images that have neither, so their space is held while they load and the page does not jump. Check images still keep their shape after turning this on.', 'octave-addons' ), $s );
+			$this->switch_row( 'header_eager', __( 'Load header images straight away', 'octave-addons' ), __( 'Recommended. Your logo and other header images are visible on every page, so they always load straight away, even if your page builder set them to wait.', 'octave-addons' ), $s );
+			$this->switch_row( 'dimensions', __( 'Add missing image dimensions', 'octave-addons' ), __( 'Reserves the right space for images that have no size set, so the page does not jump as they appear. After turning this on, check your images still look the right shape.', 'octave-addons' ), $s );
 
 
-			$this->switch_row( 'lcp', __( 'Fetch each page\'s largest image first', 'octave-addons' ), __( 'Safe. On Breakdance pages the first section\'s background image is read from the page\'s own Breakdance CSS and preloaded from the very first view, with the right image for each screen width. Browsers also report the image each page shows largest while loading (its Largest Contentful Paint), once for phones and once for larger screens, refreshed weekly, and those reports correct any guess: an image gets fetchpriority="high", and a CSS background or video poster is preloaded.', 'octave-addons' ), $s );
-			$this->switch_row( 'lazy_posters', __( 'Load video posters as they near the viewport', 'octave-addons' ), __( 'Needs Videos above. The first video keeps its poster, unless a hero image comes before it, as do videos in the site header. Every other poster waits until its video is close to view. Add data-oa-no-lazy to a video to keep its poster.', 'octave-addons' ), $s );
+			$this->switch_row( 'lcp', __( 'Load the main image first', 'octave-addons' ), ( empty( Octave_Addons_Builders::active() ) ? __( 'Safe.', 'octave-addons' ) . ' ' : sprintf(
+				/* translators: %s: page builder names, e.g. Breakdance or Divi. */
+				__( 'Recommended. On %s pages, the background image of the first section starts loading straight away, with the right size for phones, tablets and computers.', 'octave-addons' ) . ' ',
+				implode( ' / ', array_map( [ 'Octave_Addons_Builders', 'label' ], Octave_Addons_Builders::active() ) )
+			) ) . __( 'Octave also learns which image appears biggest as each page loads, separately for phones and larger screens, and checks again every week, so that image is always fetched first.', 'octave-addons' ), $s );
+			$this->switch_row( 'lazy_posters', __( 'Load video cover images as visitors scroll', 'octave-addons' ), __( 'Needs Videos above. Each video\'s cover image waits until visitors scroll near it, except for videos in the header, and the first video when nothing above it is the main image. Tip: add data-oa-no-lazy to a video to always load its cover image.', 'octave-addons' ), $s );
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Exclusions', 'octave-addons' ) ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Always load straight away', 'octave-addons' ) ] );
 
-			$this->textarea_row( 'exclude_classes', __( 'Classes', 'octave-addons' ), __( 'One class per line. skip-lazy, no-lazy and oa-no-lazy are always excluded.', 'octave-addons' ), $s );
-			$this->textarea_row( 'exclude_attributes', __( 'Attributes', 'octave-addons' ), __( 'One per line, as name or name=value. data-no-lazy, data-skip-lazy and data-oa-no-lazy are always excluded.', 'octave-addons' ), $s );
-			$this->textarea_row( 'exclude_urls', __( 'URL patterns', 'octave-addons' ), __( 'One per line. Any image, iframe or video whose URL contains the text is excluded.', 'octave-addons' ), $s );
+			$this->textarea_row( 'exclude_classes', __( 'Classes', 'octave-addons' ), __( 'Images or videos with any of these CSS classes always load straight away. One class per line. skip-lazy, no-lazy and oa-no-lazy are always included.', 'octave-addons' ), $s );
+			$this->textarea_row( 'exclude_attributes', __( 'Attributes', 'octave-addons' ), __( 'For developers: elements with any of these HTML attributes always load straight away. One per line, as name or name=value. data-no-lazy, data-skip-lazy and data-oa-no-lazy are always included.', 'octave-addons' ), $s );
+			$this->textarea_row( 'exclude_urls', __( 'URL patterns', 'octave-addons' ), __( 'Any image, video or embed whose address contains one of these words always loads straight away. One per line.', 'octave-addons' ), $s );
 
 			?>
 		</table>

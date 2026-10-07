@@ -236,27 +236,27 @@ class Octave_Addons_Perf_Sessions {
 
 		if ( isset( $names[ (string) ini_get( 'session.name' ) ] ) || isset( $names['PHPSESSID'] ) ) {
 
-			$reasons[] = __( 'A PHP session is started for every visitor.', 'octave-addons' );
+			$reasons[] = __( 'Every visitor is tracked with a session, so pages cannot be saved for quick loading.', 'octave-addons' );
 
 		}
 
 		if ( isset( $names['breakdance_view_count'] ) || isset( $names['breakdance_session_count'] ) ) {
 
-			$reasons[] = __( 'Breakdance is counting page views and sessions, which sets cookies on every view.', 'octave-addons' );
+			$reasons[] = __( 'Breakdance is counting each visitor\'s page views and visits.', 'octave-addons' );
 
 		}
 
 		if ( ! empty( $names ) ) {
 
 			/* translators: %s: cookie names. */
-			$reasons[] = sprintf( __( 'Cookies set: %s', 'octave-addons' ), implode( ', ', array_keys( $names ) ) );
+			$reasons[] = sprintf( __( 'Cookies the page sets: %s', 'octave-addons' ), implode( ', ', array_keys( $names ) ) );
 
 		}
 
 		if ( preg_match( '/\b(no-store|private|no-cache)\b/i', $cache_control ) ) {
 
 			/* translators: %s: Cache-Control header value. */
-			$reasons[] = sprintf( __( 'Cache-Control asks caches not to keep the page: %s', 'octave-addons' ), $cache_control );
+			$reasons[] = sprintf( __( 'The page asks not to be saved: %s', 'octave-addons' ), $cache_control );
 
 		}
 
@@ -286,13 +286,13 @@ class Octave_Addons_Perf_Sessions {
 		if ( 'used' === ( $state['state'] ?? '' ) ) {
 
 			/* translators: %s: post IDs or option names. */
-			return sprintf( __( 'Full-page caching cannot work safely: Breakdance\'s Page View Count or Session Count condition is used (%s). Breakdance starts a PHP session and sets cookies on every page view to support it, so no page cache can keep pages. Remove those conditions to enable caching.', 'octave-addons' ), implode( ', ', array_slice( (array) ( $state['where'] ?? [] ), 0, 5 ) ) );
+			return sprintf( __( 'Pages cannot be saved for quick loading: a Breakdance design shows something based on how many pages or visits someone has made (%s). To do that Breakdance tracks every visitor, which stops pages being saved. Remove those Page View Count or Session Count conditions to fix this.', 'octave-addons' ), implode( ', ', array_slice( (array) ( $state['where'] ?? [] ), 0, 5 ) ) );
 
 		}
 
 		if ( 'unknown' === ( $state['state'] ?? '' ) ) {
 
-			return __( 'Full-page caching may not work: Octave could not confirm whether Breakdance\'s Page View Count or Session Count condition is used, so Breakdance keeps starting a PHP session and setting cookies on every page view. The check runs again after the next Breakdance save.', 'octave-addons' );
+			return __( 'Pages may not be saved for quick loading: Octave could not confirm whether any Breakdance design relies on visit counts, so Breakdance keeps tracking every visitor. Octave checks again the next time you save in Breakdance.', 'octave-addons' );
 
 		}
 

@@ -162,6 +162,41 @@ html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings #bd-el
     border-color: var(--oa-admin-border-strong);
 }
 
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .regenerate-cache-wrapper :is(.breakdance-notification-error, .breakdance-notification-success) {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .regenerate-cache-wrapper .breakdance-notification-error {
+    border-color: var(--oa-admin-danger) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .regenerate-cache-wrapper .breakdance-notification-success {
+    border-color: var(--oa-admin-success) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .regenerate-cache-button {
+    color: var(--oa-admin-accent-dark);
+    background: var(--oa-admin-surface);
+    border-color: var(--oa-admin-accent);
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .regenerate-cache-button:hover {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-hover);
+    border-color: var(--oa-admin-accent-dark);
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .regenerate-cache-button:disabled {
+    color: var(--oa-admin-text-dim) !important;
+    background: var(--oa-admin-surface-hover) !important;
+    border-color: var(--oa-admin-border) !important;
+}
+
+html[data-oa-admin-theme="dark"] body.breakdance_page_breakdance_settings .regenerate-cache-description {
+    color: var(--oa-admin-text-soft);
+}
+
 /*
 WORDPRESS CONNECTORS
 -- Core mounts this screen into a full-height React application and injects a

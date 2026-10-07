@@ -136,11 +136,46 @@ class Octave_Addons_Module_Manager {
 
 		return array_filter(
 			$this->modules,
-			static function ( Octave_Addons_Module $module ): bool {
-				return $module->show_in_admin();
+			function ( Octave_Addons_Module $module, string $id ): bool {
 
-			}
+				return $module->show_in_admin() && $this->is_available( $id );
+
+			},
+			ARRAY_FILTER_USE_BOTH
 		);
+
+	}
+
+	/*
+	REQUIRES
+	-- The page builders a module is for: its own list, or for modules in the
+	-- breakdance/ area, Breakdance
+	---------------------------------------------------------- */
+
+	public function requires( string $id ): array {
+
+		$module = $this->modules[ $id ] ?? null;
+		$own    = $module ? $module->get_requires() : [];
+
+		if ( null !== $own ) {
+
+			return $own;
+
+		}
+
+		return 'breakdance' === ( $this->areas[ $id ] ?? '' ) ? [ Octave_Addons_Builders::BREAKDANCE ] : [];
+
+	}
+
+	/*
+	IS AVAILABLE
+	-- Whether a module's builder is on this site. A module for a missing
+	-- builder is neither shown nor run, and its saved settings are kept
+	---------------------------------------------------------- */
+
+	public function is_available( string $id ): bool {
+
+		return Octave_Addons_Builders::any( $this->requires( $id ) );
 
 	}
 
@@ -288,6 +323,12 @@ class Octave_Addons_Module_Manager {
 
 		foreach ( $this->modules as $id => $module ) {
 
+			if ( ! $this->is_available( (string) $id ) ) {
+
+				continue;
+
+			}
+
 			$settings = $this->settings_for( $id );
 
 			if ( $module->is_always_enabled() || ! empty( $settings['enabled'] ) ) {
@@ -352,7 +393,9 @@ class Octave_Addons_Module_Manager {
 			// values they already hold — or their own defaults when they have
 			// never been saved, which is what lets a module ship switched on
 			// without the first save of some other page switching it off.
-			if ( null !== $submitted && ! in_array( $id, $submitted, true ) ) {
+			// A module whose page builder is missing is never displayed, so
+			// it always keeps its values for when the builder returns.
+			if ( ( null !== $submitted && ! in_array( $id, $submitted, true ) ) || ! $this->is_available( (string) $id ) ) {
 
 				$clean[ $id ] = isset( $stored[ $id ] ) && is_array( $stored[ $id ] )
 					? $stored[ $id ]

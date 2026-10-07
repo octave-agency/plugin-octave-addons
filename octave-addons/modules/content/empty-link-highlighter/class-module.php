@@ -29,7 +29,7 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Highlights empty links and unlinked Breakdance buttons on the frontend so broken navigation is immediately obvious.', 'octave-addons' );
+		return __( 'Highlights links and buttons on your site that go nowhere, so you can spot and fix them.', 'octave-addons' );
 
 	}
 
@@ -112,7 +112,7 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 						<option value="logged_in" <?php selected( $s['visibility'], 'logged_in' ); ?>><?php esc_html_e( 'Logged-in users only', 'octave-addons' ); ?></option>
 						<option value="admins"    <?php selected( $s['visibility'], 'admins' ); ?>><?php esc_html_e( 'Admins only', 'octave-addons' ); ?></option>
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'Who sees the highlight on the frontend. Admins-only is usually what you want in production.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( 'Who sees the highlights on your site. Admins only is best on a live site.', 'octave-addons' ); ?></span>
 					<?php
 
 				},
@@ -180,7 +180,7 @@ class Octave_Addons_Module_Empty_Link_Highlighter extends Octave_Addons_Module {
 						'name'        => $this->field_name( 'ignore_classes' ),
 						'value'       => $s['ignore_classes'],
 						'placeholder' => __( 'button, reset_variations, my-link-class', 'octave-addons' ),
-						'help'        => __( 'Comma or space separated classes to skip when checking empty links.', 'octave-addons' ),
+						'help'        => __( 'CSS classes to ignore, separated by commas or spaces.', 'octave-addons' ),
 					] );
 
 				},

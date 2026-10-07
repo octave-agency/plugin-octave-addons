@@ -41,7 +41,7 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Previews and removes revisions, drafts, trash, spam and expired transients in safe batches, manually or on a schedule.', 'octave-addons' );
+		return __( 'Clears out old revisions, drafts, trash, spam and other leftovers that slow your database down, when you choose or on a schedule.', 'octave-addons' );
 
 	}
 
@@ -176,7 +176,7 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 		?>
 
 		<div class="notice notice-warning inline oa-inline-notice">
-			<p><strong><?php esc_html_e( 'Cleanup cannot be undone.', 'octave-addons' ); ?></strong> <?php esc_html_e( 'Deleted revisions, posts and comments are gone for good. Take a database backup before running a cleanup.', 'octave-addons' ); ?></p>
+			<p><strong><?php esc_html_e( 'Cleanup cannot be undone.', 'octave-addons' ); ?></strong> <?php esc_html_e( 'Anything removed is gone for good. Make a backup of your database first.', 'octave-addons' ); ?></p>
 		</div>
 
 		<div class="oa-perf-db" data-oa-perf-db data-oa-perf-local>
@@ -210,7 +210,7 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 
 							?>
 
-							<span class="oa-help"><?php esc_html_e( 'Removes every transient, including valid ones other plugins are using. They rebuild themselves, but pages may be slower briefly.', 'octave-addons' ); ?></span>
+							<span class="oa-help"><?php esc_html_e( 'Clears all temporary data other plugins have stored, even data still in use. It rebuilds itself, but pages may be a little slower for a short while.', 'octave-addons' ); ?></span>
 
 							<?php
 
@@ -218,7 +218,7 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 
 							?>
 
-							<span class="oa-help"><?php esc_html_e( 'Rebuilds this site\'s tables one at a time. Large tables can be locked while they rebuild, so run this at a quiet time.', 'octave-addons' ); ?></span>
+							<span class="oa-help"><?php esc_html_e( 'Tidies up your database tables one at a time. A large table can be briefly unavailable while this runs, so choose a quiet time.', 'octave-addons' ); ?></span>
 
 							<?php
 
@@ -273,10 +273,10 @@ class Octave_Addons_Module_Performance_Database extends Octave_Addons_Module {
 				'manual'     => __( 'Never (manual only)', 'octave-addons' ),
 				'weekly'     => __( 'Weekly', 'octave-addons' ),
 				'oa_monthly' => __( 'Monthly', 'octave-addons' ),
-			], __( 'Scheduled runs use WordPress cron and stop after 20 seconds, continuing a few minutes later if needed.', 'octave-addons' ), $s );
+			], __( 'Runs in the background in short bursts, so it never slows your site down for long.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::row( [
-				'label' => __( 'Scheduled cleanup includes', 'octave-addons' ),
+				'label' => __( 'Automatic cleanup includes', 'octave-addons' ),
 				'field' => function () use ( $s, $items ) {
 
 					?>

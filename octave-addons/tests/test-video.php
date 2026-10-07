@@ -147,7 +147,7 @@ function test_deferred_videos_are_reported_with_their_size(): void {
 
 	$rows = Octave_Addons_Perf_Diagnostics::video_rows( (array) ( Octave_Addons_Perf_Log::read_scan( $token )['report']['videos'] ?? [] ) );
 
-	oa_assert_contains( '1 video files wait until they are in view', $rows[0] );
+	oa_assert_contains( '1 videos wait until they are on screen', $rows[0] );
 	oa_assert_contains( '/wp-content/uploads/clip.mp4', $rows[1] );
 
 }

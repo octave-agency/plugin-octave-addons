@@ -4831,6 +4831,99 @@ MOTION PREVIEWS
 		}
 
 		/*
+		CONTENT
+		-- The brand text, logo, tagline, image or spinner a loader or
+		-- transition shows, built from the Customisation fields. A missing
+		-- logo or image falls back to the text, as on the frontend
+		---------------------------------------------------------- */
+
+		var textScales = { small: 0.8, medium: 1, large: 1.35, xl: 1.75 };
+
+		function textScale() {
+
+			return textScales[ value( 'textSize' ) ] || 1;
+
+		}
+
+		function loaderMark( parent, type, className ) {
+
+			var content = value( 'loaderContent' ) || ( 'orbital' === type ? 'none' : 'text' );
+			var tagline = field( 'loaderTagline' ) && field( 'loaderTagline' ).checked ? value( 'tagline' ) : '';
+			var logoUrl = 'logo' === content || 'logo-text' === content ? media( 'logo' ) : '';
+			var text = value( 'text' ) || controls.siteName || '';
+
+			if ( 'none' === content && ! tagline ) {
+
+				return null;
+
+			}
+
+			var mark = make( 'span', 'oa-pv-brand oa-pv-mark' + ( className ? ' ' + className : '' ), parent );
+
+			mark.style.fontSize = ( 16 * textScale() ) + 'px';
+
+			if ( logoUrl ) {
+
+				make( 'img', 'oa-pv-mark-logo', mark ).src = logoUrl;
+
+			}
+
+			if ( 'text' === content || 'logo-text' === content || ( 'logo' === content && ! logoUrl ) ) {
+
+				make( 'span', '', mark, text );
+
+			}
+
+			if ( tagline ) {
+
+				make( 'span', 'oa-pv-tagline', mark, tagline );
+
+			}
+
+			return mark;
+
+		}
+
+		function transitionMark( parent, type ) {
+
+			var content = value( 'transitionContent' ) || ( 'brand-wipe' === type ? 'text' : 'none' );
+			var url = 'logo' === content ? media( 'logo' ) : ( 'image' === content ? media( 'image' ) : '' );
+
+			if ( 'none' === content ) {
+
+				return null;
+
+			}
+
+			var mark = make( 'span', 'oa-pv-brand oa-pv-brand--wipe oa-pv-mark', parent );
+
+			mark.style.fontSize = ( 16 * textScale() ) + 'px';
+
+			if ( 'brand-wipe' !== type ) {
+
+				mark.classList.add( 'oa-pv-mark--plain' );
+
+			}
+
+			if ( url ) {
+
+				make( 'img', 'image' === content ? 'oa-pv-mark-image' : 'oa-pv-mark-logo', mark ).src = url;
+
+			} else if ( 'spinner' === content ) {
+
+				animate( make( 'span', 'oa-pv-spinner', mark ), [ { transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' } ], { duration: 800, iterations: Infinity, easing: 'linear' } );
+
+			} else {
+
+				make( 'span', '', mark, value( 'text' ) || controls.siteName || '' );
+
+			}
+
+			return mark;
+
+		}
+
+		/*
 		LOADER PREVIEW
 		-- A mock page under the loader, simulated progress, then the reveal
 		---------------------------------------------------------- */
@@ -4853,7 +4946,7 @@ MOTION PREVIEWS
 
 			if ( 'brand-counter' === type ) {
 
-				var brand = make( 'span', 'oa-pv-brand', inner, text );
+				var brand = loaderMark( inner, type, '' ) || make( 'span', 'oa-pv-brand', inner );
 				var meter = make( 'span', 'oa-pv-meter', inner );
 				var line = make( 'span', 'oa-pv-line', meter );
 
@@ -4907,7 +5000,7 @@ MOTION PREVIEWS
 
 				var top = make( 'span', 'oa-pv-panel oa-pv-panel--a', loader );
 				var bottom = make( 'span', 'oa-pv-panel oa-pv-panel--b', loader );
-				var curtainBrand = make( 'span', 'oa-pv-brand oa-pv-brand--center', loader, text );
+				var curtainBrand = loaderMark( loader, type, 'oa-pv-brand--center' ) || make( 'span', 'oa-pv-brand oa-pv-brand--center', loader );
 
 				progress = make( 'span', 'oa-pv-seam', top );
 
@@ -4925,6 +5018,16 @@ MOTION PREVIEWS
 				svg.setAttribute( 'class', 'oa-pv-orbit' );
 				svg.innerHTML = '<circle class="oa-pv-ring" cx="60" cy="60" r="44"></circle><circle class="oa-pv-arc" cx="60" cy="60" r="44" pathLength="100"></circle><g class="oa-pv-tracker"><circle cx="60" cy="16" r="3"></circle></g>';
 				inner.appendChild( svg );
+				inner.classList.add( 'oa-pv-inner--stack' );
+
+				var orbitalMark = loaderMark( inner, type, '' );
+
+				if ( orbitalMark ) {
+
+					animate( orbitalMark, [ { opacity: 0, transform: 'translate3d(0, 8px, 0)' }, { opacity: 1, transform: 'none' } ], { duration: 700 * scale, delay: 90 * scale } );
+					exits.push( [ orbitalMark, [ { opacity: 1 }, { opacity: 0 } ], 'ease-out', 0.4 ] );
+
+				}
 
 				animate( svg.querySelector( '.oa-pv-tracker' ), [ { transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' } ], { duration: 1800 * scale, iterations: Infinity, easing: 'linear' } );
 				animate( svg.querySelector( '.oa-pv-arc' ), [ { strokeDashoffset: 100 }, { strokeDashoffset: 0 } ], { duration: 1400 * scale, easing: 'linear' } );
@@ -4933,7 +5036,7 @@ MOTION PREVIEWS
 
 			} else {
 
-				make( 'span', 'oa-pv-brand', inner, text );
+				loaderMark( inner, type, '' );
 				label.textContent = oaAdmin.previewCustomLoader;
 				exits.push( [ loader, [ { opacity: 1 }, { opacity: 0 } ], 'ease', 1 ] );
 
@@ -5061,15 +5164,14 @@ MOTION PREVIEWS
 
 			} else if ( 'brand-wipe' === type ) {
 
-				var brand = make( 'span', 'oa-pv-brand oa-pv-brand--wipe', overlay, value( 'text' ) || controls.siteName || '' );
 				var wipeIn = [ { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' } ];
 				var wipeOut = [ { clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 0 100%)' } ];
 
 				layerB.hidden = false;
 				layer.classList.add( 'oa-pv-layer--accent' );
 				overlay.insertBefore( layerB, layer );
-				cover = [ [ layerB, wipeIn, 460, 0 ], [ layer, wipeIn, 460, 0 ], [ brand, [ { opacity: 0, transform: 'translate(-50%, -20%)', clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, transform: 'translate(-50%, -50%)', clipPath: 'inset(0 0 0 0)' } ], 460, 140 ] ];
-				reveal = [ [ layer, wipeOut, 560, 60 ], [ layerB, wipeOut, 560, 160 ], [ brand, [ { opacity: 1 }, { opacity: 0 } ], 200, 0 ] ];
+				cover = [ [ layerB, wipeIn, 460, 0 ], [ layer, wipeIn, 460, 0 ] ];
+				reveal = [ [ layer, wipeOut, 560, 60 ], [ layerB, wipeOut, 560, 160 ] ];
 
 			} else if ( 'soft-fade' === type ) {
 
@@ -5092,6 +5194,16 @@ MOTION PREVIEWS
 				label.textContent = oaAdmin.previewCustomTransition;
 				cover = [ [ layer, [ { opacity: 0 }, { opacity: 1 } ], 400, 0 ] ];
 				reveal = [ [ layer, [ { opacity: 1 }, { opacity: 0 } ], 600, 0 ] ];
+
+			}
+
+			// Every covering style can show content in the middle once covered.
+			var mark = transitionMark( overlay, type );
+
+			if ( mark ) {
+
+				cover.push( [ mark, [ { opacity: 0, transform: 'translate(-50%, -25%)' }, { opacity: 1, transform: 'translate(-50%, -50%)' } ], 360, 160 ] );
+				reveal.push( [ mark, [ { opacity: 1 }, { opacity: 0 } ], 200, 0 ] );
 
 			}
 

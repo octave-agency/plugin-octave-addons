@@ -81,7 +81,7 @@ class Octave_Addons_Module_Modern_Admin extends Octave_Addons_Module {
 						<option value="default" <?php selected( $s['accent_source'], 'default' ); ?>><?php esc_html_e( 'Default blue', 'octave-addons' ); ?></option>
 						<option value="custom"  <?php selected( $s['accent_source'], 'custom' ); ?>><?php esc_html_e( 'Custom brand colour', 'octave-addons' ); ?></option>
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'Drives buttons, links, focus rings and active states across the refreshed admin. Light and dark variants are derived automatically.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( 'Used for buttons, links and highlights across the admin. Light and dark versions are made automatically.', 'octave-addons' ); ?></span>
 					<?php
 
 				},
@@ -96,7 +96,7 @@ class Octave_Addons_Module_Modern_Admin extends Octave_Addons_Module {
 						'id'    => $this->field_id( 'accent_color' ),
 						'name'  => $this->field_name( 'accent_color' ),
 						'value' => $s['accent_color'],
-						'help'  => __( 'Pick a mid-tone. Very light or very dark values leave too little contrast in one of the two modes.', 'octave-addons' ),
+						'help'  => __( 'Pick a medium shade. Very light or very dark colours are hard to read in light or dark mode.', 'octave-addons' ),
 					] );
 
 				},

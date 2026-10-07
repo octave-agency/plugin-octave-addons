@@ -32,7 +32,18 @@ class Octave_Addons_Module_Accessibility_Tree extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Gives unlabelled Breakdance controls, such as Content Toggle switches, a proper name and role, so browser agents can navigate them reliably and screen reader users hear what each control does.', 'octave-addons' );
+		return __( 'Gives Breakdance switches, such as the Content Toggle, a proper label, so screen readers and AI assistants can tell what each one does.', 'octave-addons' );
+
+	}
+
+	/*
+	GET REQUIRES
+	-- It repairs Breakdance controls only
+	---------------------------------------------------------- */
+
+	public function get_requires(): ?array {
+
+		return [ Octave_Addons_Builders::BREAKDANCE ];
 
 	}
 
@@ -86,8 +97,8 @@ class Octave_Addons_Module_Accessibility_Tree extends Octave_Addons_Module {
 		?>
 
 		<ul class="oa-help">
-			<li><?php esc_html_e( 'Content Toggle: the checkbox is named by the visible label for its on state and exposed as a switch, so a Monthly / Yearly toggle reads as "Yearly, switch, off".', 'octave-addons' ); ?></li>
-			<li><?php esc_html_e( 'Controls that already have a name are left exactly as they are, and toggles added later by popups or AJAX are repaired as they appear.', 'octave-addons' ); ?></li>
+			<li><?php esc_html_e( 'Content Toggle: a Monthly / Yearly toggle is read out as "Yearly, switch, off" instead of an unlabelled checkbox.', 'octave-addons' ); ?></li>
+			<li><?php esc_html_e( 'Anything that is already labelled is left alone, and toggles that appear later, such as in popups, are fixed too.', 'octave-addons' ); ?></li>
 		</ul>
 
 		<?php

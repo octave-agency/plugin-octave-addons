@@ -67,6 +67,8 @@ function oa_test_reset(): void {
 	$GLOBALS['oa_flags']     = [];
 	$GLOBALS['oa_deregistered'] = [];
 	$GLOBALS['oa_enqueued']  = [];
+	$GLOBALS['oa_inline_scripts'] = [];
+	$GLOBALS['oa_inline_styles']  = [];
 	$GLOBALS['oa_localized'] = [];
 	$GLOBALS['oa_attachments'] = [];
 	$GLOBALS['oa_registered']  = [];
@@ -107,6 +109,15 @@ function oa_test_reset(): void {
 	}
 
 	unset( $_SERVER['cw_allowed_ip'], $_SERVER['HTTP_X_VARNISH'], $_SERVER['HTTP_X_APPLICATION'] );
+
+	// The page builders the fake site has; a test changes this list.
+	$GLOBALS['oa_builders'] = [ 'breakdance' ];
+
+	add_filter( 'octave_addons_builder_active', static function ( $active, $builder ) {
+
+		return in_array( $builder, $GLOBALS['oa_builders'], true );
+
+	}, 10, 2 );
 
 	$GLOBALS['oa_terms']    = [];
 	$GLOBALS['oa_redirect'] = null;
@@ -713,6 +724,18 @@ function sanitize_text_field( $text ) {
 
 }
 
+function sanitize_email( $email ) {
+
+	return (string) filter_var( trim( (string) $email ), FILTER_VALIDATE_EMAIL );
+
+}
+
+function sanitize_hex_color( $color ) {
+
+	return preg_match( '/^#([A-Fa-f0-9]{3}){1,2}$/', (string) $color ) ? (string) $color : null;
+
+}
+
 function sanitize_textarea_field( $text ) {
 
 	return trim( strip_tags( (string) $text ) );
@@ -896,6 +919,12 @@ function admin_url( $path = '' ) {
 
 }
 
+function wp_login_url( $redirect = '', $force_reauth = false ) {
+
+	return 'https://example.com/wp-login.php';
+
+}
+
 function wp_deregister_script( $handle ) {
 
 	$GLOBALS['oa_deregistered'][] = $handle;
@@ -911,6 +940,25 @@ function wp_enqueue_script( $handle ) {
 function wp_enqueue_style( $handle ) {
 
 	$GLOBALS['oa_enqueued'][] = $handle;
+
+}
+
+function wp_add_inline_script( $handle, $data, $position = 'after' ) {
+
+	$GLOBALS['oa_inline_scripts'][ $handle ][] = [
+		'data'     => $data,
+		'position' => $position,
+	];
+
+	return true;
+
+}
+
+function wp_add_inline_style( $handle, $data ) {
+
+	$GLOBALS['oa_inline_styles'][ $handle ][] = $data;
+
+	return true;
 
 }
 
@@ -1075,6 +1123,7 @@ PLUGIN
 
 oa_test_reset();
 
+require_once OCTAVE_ADDONS_DIR . 'includes/class-builders.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-module.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-module-manager.php';
 

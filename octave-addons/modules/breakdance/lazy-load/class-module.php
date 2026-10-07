@@ -93,6 +93,18 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 	}
 
 	/*
+	GET REQUIRES
+	-- None: besides Breakdance's toggles it lazy loads WordPress video blocks,
+	-- the [video] shortcode and oEmbed players on every site
+	---------------------------------------------------------- */
+
+	public function get_requires(): ?array {
+
+		return [];
+
+	}
+
+	/*
 	LAZY OWNER
 	-- Who lazy loads images or iframes: a third-party plugin first, since
 	-- Octave steps aside for it, then Media Lazy Loading. '' means nobody,

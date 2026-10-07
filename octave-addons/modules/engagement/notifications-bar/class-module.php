@@ -408,7 +408,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 		?>
 
 		<p class="oa-help oa-help--intro">
-			<?php esc_html_e( 'Add one card per announcement. A banner shows while today falls between its dates, and a banner with no dates set is always live. The bar is only printed when at least one banner qualifies.', 'octave-addons' ); ?>
+			<?php esc_html_e( 'Add one card per announcement. Each shows between its start and end dates, or all the time if it has none. The bar only appears when at least one announcement is showing.', 'octave-addons' ); ?>
 		</p>
 
 		<?php $this->render_banners( $s ); ?>
@@ -429,7 +429,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						<option value="top"    <?php selected( $s['position'], 'top' ); ?>><?php esc_html_e( 'Top of the page', 'octave-addons' ); ?></option>
 						<option value="bottom" <?php selected( $s['position'], 'bottom' ); ?>><?php esc_html_e( 'Fixed to the bottom of the screen', 'octave-addons' ); ?></option>
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'A top bar sits above the header in the page flow. A bottom bar floats over the page like a cookie notice.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( 'A top bar sits above your header. A bottom bar floats over the page, like a cookie notice.', 'octave-addons' ); ?></span>
 					<?php
 
 				},
@@ -457,7 +457,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						'name'    => $this->field_name( 'animate' ),
 						'checked' => ! empty( $s['animate'] ),
 						'data'    => [ 'controls-row' => 'oaNbRowAnimation' ],
-						'help'    => __( 'Opens the bar on load, pushing the page and any fixed header down with it. Visitors who ask for reduced motion get the bar straight away instead.', 'octave-addons' ),
+						'help'    => __( 'Animates the bar in as the page loads. Visitors who prefer less motion see it straight away.', 'octave-addons' ),
 					] );
 
 				},
@@ -494,7 +494,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						?>
 
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'Fading takes the space straight away and brings the banners up over it, so nothing on the page moves. Sliding opens the bar from nothing and pushes the page down as it grows, which PageSpeed counts as layout shift (CLS). A bottom bar slides up from the foot of the screen rather than down.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( 'Fade keeps the page still while the announcement appears. Slide pushes the page down as the bar opens, which looks lively but makes the page jump, and speed tests like PageSpeed mark that down. A bottom bar slides up instead.', 'octave-addons' ); ?></span>
 					<?php
 
 				},
@@ -511,7 +511,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						'min'    => 0,
 						'max'    => 365,
 						'suffix' => __( 'days', 'octave-addons' ),
-						'help'   => __( 'How long a closed banner stays hidden for that visitor. Each banner is remembered separately, and 0 hides it until the browser is closed.', 'octave-addons' ),
+						'help'   => __( 'How long an announcement stays hidden after a visitor closes it. Each is remembered separately; 0 hides it until they close their browser.', 'octave-addons' ),
 					] );
 
 				},
@@ -601,7 +601,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						?>
 
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'Banner buttons are rendered with Breakdance button markup, so they inherit the site button styling set in Breakdance global settings.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( 'Announcement buttons use your Breakdance button styles, so they match the rest of your site.', 'octave-addons' ); ?></span>
 					<?php
 
 				},
@@ -615,7 +615,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						'name'    => $this->field_name( 'button_override' ),
 						'checked' => ! empty( $s['button_override'] ),
 						'data'    => [ 'controls-row' => 'oaNbRowButtonBg,oaNbRowButtonColor' ],
-						'help'    => __( 'Replaces the colours of the chosen Breakdance style for banner buttons only. Everything else — typography, hover, the size fields below — is left alone.', 'octave-addons' ),
+						'help'    => __( 'Changes the button colours in announcements only. The font, hover effect and size stay as they are.', 'octave-addons' ),
 					] );
 
 				},
@@ -658,7 +658,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						'name'        => $this->field_name( 'button_padding' ),
 						'value'       => $s['button_padding'],
 						'placeholder' => '8px 16px',
-						'help'        => __( 'Shrinks a site button that is too big for a banner. Takes a CSS padding value — one length, or vertical then horizontal. Leave it empty to keep the padding Breakdance gives the chosen style.', 'octave-addons' ),
+						'help'        => __( 'Makes a button smaller if it is too big for the bar, for example 8px 16px (top and bottom, then left and right). Leave empty to keep your usual button size.', 'octave-addons' ),
 					] );
 
 				},
@@ -696,7 +696,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						?>
 
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'Leave as it is keeps the corners the Breakdance style already has, which matters for a preset built as a pill. Square flattens them, rounded softens them.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( '"Leave as it is" keeps your usual button corners. Square makes them sharp; rounded softens them.', 'octave-addons' ); ?></span>
 					<?php
 
 				},
@@ -712,7 +712,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						'name'        => $this->field_name( 'button_radius_custom' ),
 						'value'       => $s['button_radius_custom'],
 						'placeholder' => '999px',
-						'help'        => __( 'A CSS border-radius value, so a pill or a pair of mismatched corners is reachable as well as a plain radius.', 'octave-addons' ),
+						'help'        => __( 'How round the corners are, for example 6px, or 999px for a pill shape.', 'octave-addons' ),
 					] );
 
 				},
@@ -733,7 +733,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 						'class'       => 'large-text code oa-code-area',
 						'spellcheck'  => false,
 						'placeholder' => ".oa-nb__banner {\n    font-size: 15px;\n}",
-						'help'        => __( 'Printed after the bar stylesheet. Target .oa-nb for the bar, .oa-nb__banner for one banner, .oa-nb__text, .oa-nb__button and .oa-nb__close for the parts inside it. The settings above are written against #oaNotificationsBar, so put that in front of your selector to overrule one of them.', 'octave-addons' ),
+						'help'        => __( 'For developers. Added after the bar\'s own styles. Use .oa-nb for the bar, .oa-nb__banner for one announcement, and .oa-nb__text, .oa-nb__button and .oa-nb__close for its parts. To override a setting above, start your selector with #oaNotificationsBar.', 'octave-addons' ),
 					] );
 
 				},
@@ -759,7 +759,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 			<div class="oa-nb-section-head">
 				<div>
 					<h3><?php esc_html_e( 'Banners', 'octave-addons' ); ?></h3>
-					<p><?php esc_html_e( 'Every banner in date range is shown, stacked in this order. Each one closes on its own.', 'octave-addons' ); ?></p>
+					<p><?php esc_html_e( 'Every announcement that is showing appears in this order, and each can be closed on its own.', 'octave-addons' ); ?></p>
 				</div>
 				<button type="button" class="button oa-nb-add">
 					<span class="oa-nb-add-icon" aria-hidden="true">+</span>
@@ -836,7 +836,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 							<textarea data-oa-nb-title rows="2"
 							          name="<?= esc_attr( $this->banner_field_name( $index, 'text' ) ); ?>"
 							          placeholder="<?php esc_attr_e( 'Free delivery on every order this week', 'octave-addons' ); ?>"><?= esc_textarea( $banner['text'] ); ?></textarea>
-							<small><?php esc_html_e( 'Basic formatting is allowed: strong, em, span, br and a.', 'octave-addons' ); ?></small>
+							<small><?php esc_html_e( 'You can use bold, italic and links.', 'octave-addons' ); ?></small>
 						</label>
 						<label class="oa-nb-field oa-nb-field--full">
 							<span><?php esc_html_e( 'Link', 'octave-addons' ); ?></span>
@@ -865,7 +865,7 @@ class Octave_Addons_Module_Notifications_Bar extends Octave_Addons_Module {
 
 				<fieldset class="oa-nb-group">
 					<legend><?php esc_html_e( 'Schedule', 'octave-addons' ); ?></legend>
-					<p class="oa-nb-group-description"><?php esc_html_e( 'Both dates are inclusive and use the site timezone. Leave a date empty for no limit in that direction, and leave both empty to run the banner permanently.', 'octave-addons' ); ?></p>
+					<p class="oa-nb-group-description"><?php esc_html_e( 'Shows from the start of the first date to the end of the second, in your site\'s timezone. Leave either empty for no limit, or both to show it all the time.', 'octave-addons' ); ?></p>
 					<div class="oa-nb-fields">
 						<label class="oa-nb-field">
 							<span><?php esc_html_e( 'Show from', 'octave-addons' ); ?></span>

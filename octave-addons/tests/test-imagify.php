@@ -162,13 +162,13 @@ function test_imagify_absent_hides_the_module_and_changes_nothing(): void {
 
 function test_unsupported_imagify_version_or_api_is_refused(): void {
 
-	oa_assert_contains( 'needs 2.2.2 or newer', Octave_Addons_Perf_Imagify::api_problem( '2.1.9', true ) );
-	oa_assert_contains( 'settings API', Octave_Addons_Perf_Imagify::api_problem( '2.3.4', false ) );
+	oa_assert_contains( 'update it to 2.2.2 or newer', Octave_Addons_Perf_Imagify::api_problem( '2.1.9', true ) );
+	oa_assert_contains( 'cannot be set up by Octave', Octave_Addons_Perf_Imagify::api_problem( '2.3.4', false ) );
 	oa_assert_same( '', Octave_Addons_Perf_Imagify::api_problem( '2.3.4', true ) );
 
 }
 
-function test_imagify_active_shows_the_module_with_keep_defaults(): void {
+function test_imagify_active_shows_the_module_with_automatic_delivery(): void {
 
 	oa_imagify();
 
@@ -176,8 +176,13 @@ function test_imagify_active_shows_the_module_with_keep_defaults(): void {
 
 	oa_assert( $module->show_in_admin(), 'shown' );
 	oa_assert( Octave_Addons_Perf_Imagify::supports_avif() );
-	oa_assert_same( [], Octave_Addons_Perf_Imagify::desired( $module->get_defaults() ), 'keep changes nothing' );
-	oa_assert_same( [ 'enabled' => false, 'format' => 'keep', 'delivery' => 'keep' ], $module->sanitize( [ 'format' => 'jpeg2000', 'delivery' => 'magic' ] ) );
+	oa_assert_same( [ 'display_nextgen_method' => 'rewrite' ], Octave_Addons_Perf_Imagify::desired( $module->get_defaults() ), 'Apache: Imagify\'s rules, format left to Imagify' );
+	oa_assert_same( [ 'enabled' => false, 'format' => 'keep', 'delivery' => 'auto' ], $module->sanitize( [ 'format' => 'jpeg2000', 'delivery' => 'magic' ] ) );
+
+	$_SERVER['SERVER_SOFTWARE'] = 'nginx/1.25';
+	oa_set_settings( 'performance-imagify', [ 'enabled' => true ] );
+
+	oa_assert( Octave_Addons_Perf_Imagify::octave_delivery(), 'by default, Octave delivers where rules cannot' );
 
 }
 
@@ -275,7 +280,7 @@ function test_http_500_after_a_rewrite_restores_htaccess_and_settings(): void {
 	$result = Octave_Addons_Perf_Imagify::apply( [ 'display_nextgen' => 1, 'display_nextgen_method' => 'rewrite' ] );
 
 	oa_assert( ! $result['ok'] );
-	oa_assert_contains( 'HTTP 500', $result['message'] );
+	oa_assert_contains( 'stopped working', $result['message'] );
 	oa_assert_same( $before, file_get_contents( Octave_Addons_Perf_Imagify::htaccess_path() ), 'file restored' );
 	oa_assert_same( 0, (int) get_option( 'imagify_settings' )['display_nextgen'], 'settings restored' );
 	oa_assert_same( 0, did_action( 'octave_addons_perf_purged_all' ), 'no purge after a failure' );
@@ -300,25 +305,25 @@ function test_automatic_delivery_uses_rewrite_rules_only_when_safe(): void {
 
 	$choice = Octave_Addons_Perf_Imagify::choose_method();
 
-	oa_assert_same( 'picture', $choice['method'] );
+	oa_assert_same( 'octave', $choice['method'], 'Octave\'s URL rewriting, never picture tags' );
 	oa_assert_contains( 'Nginx', $choice['reasons'][0] );
 	oa_assert_same( [], Octave_Addons_Perf_Imagify::expected_markers( [ 'display_nextgen' => 1, 'display_nextgen_method' => 'rewrite' ] ), 'no .htaccess markers expected on Nginx' );
 
 }
 
-function test_unwritable_htaccess_falls_back_to_picture_tags(): void {
+function test_unwritable_htaccess_falls_back_to_octave_url_rewriting(): void {
 
 	oa_imagify();
 	chmod( Octave_Addons_Perf_Imagify::htaccess_path(), 0444 );
 
 	$choice = Octave_Addons_Perf_Imagify::choose_method();
 
-	oa_assert_same( 'picture', $choice['method'] );
-	oa_assert_contains( 'not writable', $choice['reasons'][0] );
+	oa_assert_same( 'octave', $choice['method'] );
+	oa_assert_contains( 'cannot be changed', $choice['reasons'][0] );
 
 	update_option( 'imagify_settings', [ 'display_nextgen' => 1, 'display_nextgen_method' => 'rewrite' ] );
 
-	oa_assert_contains( 'not writable', Octave_Addons_Perf_Imagify::repair()['message'] );
+	oa_assert_contains( 'cannot be changed', Octave_Addons_Perf_Imagify::repair()['message'] );
 
 	chmod( Octave_Addons_Perf_Imagify::htaccess_path(), 0644 );
 
@@ -336,9 +341,13 @@ function test_cdn_or_cloudflare_rules_out_rewrite_delivery(): void {
 
 	$choice = Octave_Addons_Perf_Imagify::choose_method();
 
-	oa_assert_same( 'picture', $choice['method'] );
+	oa_assert_same( 'octave', $choice['method'] );
 	oa_assert_contains( 'Cloudflare', $choice['reasons'][0] );
-	oa_assert_same( 'picture', Octave_Addons_Perf_Imagify::desired( [ 'format' => 'webp', 'delivery' => 'auto' ] )['display_nextgen_method'] );
+
+	$desired = Octave_Addons_Perf_Imagify::desired( [ 'format' => 'webp', 'delivery' => 'auto' ] );
+
+	oa_assert_same( 0, $desired['display_nextgen'], 'Imagify stops delivering so Octave can' );
+	oa_assert( ! isset( $desired['display_nextgen_method'] ), 'no picture tags' );
 
 }
 
@@ -374,7 +383,7 @@ function test_nginx_repair_reports_manual_configuration(): void {
 	$result = Octave_Addons_Perf_Imagify::repair();
 
 	oa_assert( ! $result['ok'] );
-	oa_assert_contains( 'manually', $result['message'] );
+	oa_assert_contains( 'ask your host to add the rules', $result['message'] );
 	oa_assert_same( 0, did_action( 'imagify_activation' ), '.htaccess never touched' );
 
 }
@@ -400,7 +409,7 @@ function test_delivery_test_needs_an_optimised_local_image(): void {
 	oa_imagify();
 	update_option( 'imagify_settings', [ 'display_nextgen' => 1, 'display_nextgen_method' => 'rewrite' ] );
 
-	oa_assert_contains( 'No local image', Octave_Addons_Perf_Imagify::test_delivery()['message'] );
+	oa_assert_contains( 'No image with', Octave_Addons_Perf_Imagify::test_delivery()['message'] );
 
 }
 

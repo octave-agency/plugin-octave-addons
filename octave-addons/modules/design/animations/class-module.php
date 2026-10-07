@@ -48,7 +48,18 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Reveals Breakdance headings, images, text, columns, grids, loops and FAQ items as they scroll into view, using one curated motion preset or your own CSS/JS.', 'octave-addons' );
+		return __( 'Gently animates your Breakdance headings, images, text and other content into view as visitors scroll, in a style you choose.', 'octave-addons' );
+
+	}
+
+	/*
+	GET REQUIRES
+	-- Every target is Breakdance markup, so the module is Breakdance's alone
+	---------------------------------------------------------- */
+
+	public function get_requires(): ?array {
+
+		return [ Octave_Addons_Builders::BREAKDANCE ];
 
 	}
 
@@ -161,7 +172,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 		?>
 
 		<div class="notice notice-warning inline oa-inline-notice">
-			<p><?php esc_html_e( 'Entrance animations keep content hidden until it animates in. When that includes the hero, the largest element appears late, and splitting many headings into words costs main-thread time, both of which can lower Lighthouse LCP and INP scores. Performance mode avoids both.', 'octave-addons' ); ?></p>
+			<p><?php esc_html_e( 'Animations keep content hidden until it animates in, so content at the top of the page appears a moment later, which speed tests such as Lighthouse score lower. Turn on Performance mode to avoid this.', 'octave-addons' ); ?></p>
 		</div>
 
 		<table class="form-table oa-form-table" role="presentation">
@@ -175,7 +186,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 					Octave_Addons_Fields::switch_field( [
 						'name'    => $this->field_name( 'performance' ),
 						'checked' => ! empty( $s['performance'] ),
-						'help'    => __( 'Recommended for speed. Everything visible when the page opens stays visible and still; only content further down animates as it scrolls in, and headings are never split into words or lines.', 'octave-addons' ),
+						'help'    => __( 'Recommended. Whatever is on screen when a page opens appears straight away; only content further down animates as visitors scroll, and headings animate as a whole rather than word by word.', 'octave-addons' ),
 					] );
 
 				},
@@ -206,7 +217,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						?>
 
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'Only the selected preset\'s CSS and JavaScript load. Custom only runs just your overrides, and Off loads nothing and leaves all content visible.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( 'Only the style you choose is loaded. "Custom only" runs just your own code, and Off loads nothing and shows everything normally.', 'octave-addons' ); ?></span>
 					<?php
 
 					Octave_Addons_Fields::motion_preview( 'scroll', [ 'type' => $this->field_id( 'type' ) ] );
@@ -222,7 +233,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 					Octave_Addons_Fields::switch_field( [
 						'name'    => $this->field_name( 'load_in_editor' ),
 						'checked' => ! empty( $s['load_in_editor'] ),
-						'help'    => __( 'Also load inside block editor previews. Breakdance builder canvases are always excluded.', 'octave-addons' ),
+						'help'    => __( 'Also play animations in the WordPress block editor. They never play inside the Breakdance builder.', 'octave-addons' ),
 					] );
 
 				},
@@ -244,7 +255,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						'rows'        => 12,
 						'spellcheck'  => false,
 						'placeholder' => '.oa-anim-ready [data-oa-anim="media"] { --oa-media-dur: 1200ms; }',
-						'help'        => __( 'Printed after the selected preset. Targets carry data-oa-anim (heading, media, text or item) and gain .visible when revealed. Add .oa-no-anim to an element to skip it and everything inside it.', 'octave-addons' ),
+						'help'        => __( 'For developers. Added after the chosen style. Animated elements have a data-oa-anim attribute and gain the .visible class when they appear. Add .oa-no-anim to an element to stop it and everything inside it animating.', 'octave-addons' ),
 					] );
 
 				},
@@ -264,7 +275,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 						'rows'        => 14,
 						'spellcheck'  => false,
 						'placeholder' => "OctaveAnimations.preset( { split: 'words', stagger: 90 } );",
-						'help'        => __( 'Replaces the preset script. The safety controller still runs, so content is always revealed; configure it with OctaveAnimations.preset() or reveal elements with OctaveAnimations.reveal().', 'octave-addons' ),
+						'help'        => __( 'For developers. Replaces the style\'s script. Content is still always shown even if your code fails. Use OctaveAnimations.preset() to configure it or OctaveAnimations.reveal() to show elements.', 'octave-addons' ),
 					] );
 
 				},

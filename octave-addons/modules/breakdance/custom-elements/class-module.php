@@ -564,7 +564,7 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 				<td>
 					<code>octave-addons/modules/breakdance/custom-elements/library</code>
 					<p class="description">
-						<?php esc_html_e( 'Generic elements shipped with the plugin. Read-only in Element Studio, and any element edited here is carried across plugin updates rather than overwritten.', 'octave-addons' ); ?>
+						<?php esc_html_e( 'Elements that come with Octave Addons. If you edit one on this site, your changes are kept when the plugin updates.', 'octave-addons' ); ?>
 					</p>
 				</td>
 			</tr>
@@ -573,7 +573,7 @@ class Octave_Addons_Module_Breakdance_Elements extends Octave_Addons_Module {
 				<td>
 					<code><?= esc_html( $this->get_site_location() ); ?></code>
 					<p class="description">
-						<?php esc_html_e( 'Where Element Studio saves elements that only apply to this site. Create wp-content/plugins/octave-elements/ to keep them outside the plugin so updates cannot remove them.', 'octave-addons' ); ?>
+						<?php esc_html_e( 'Where elements made just for this site are saved. To keep them safe from plugin updates, ask your developer to create a wp-content/plugins/octave-elements/ folder.', 'octave-addons' ); ?>
 					</p>
 				</td>
 			</tr>

@@ -68,7 +68,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Sets the default bottom margin for Breakdance elements, per breakpoint, from two shared spacing tokens — so sites stop needing a hand-written spacing stylesheet.', 'octave-addons' );
+		return __( 'Sets the space below Breakdance elements for each screen size, from two shared values, so you no longer need to add spacing by hand.', 'octave-addons' );
 
 	}
 
@@ -85,13 +85,13 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 			'element-gap' => [
 				'var'     => '--default-element-gap',
 				'label'   => __( 'Default element gap', 'octave-addons' ),
-				'help'    => __( 'Used by content elements and available to your own CSS.', 'octave-addons' ),
+				'help'    => __( 'The space below text, images and other content.', 'octave-addons' ),
 				'default' => '30',
 			],
 			'heading-margin' => [
 				'var'     => '--default-heading-margin',
 				'label'   => __( 'Default heading margin', 'octave-addons' ),
-				'help'    => __( 'Used by headings and available to your own CSS.', 'octave-addons' ),
+				'help'    => __( 'The space below headings.', 'octave-addons' ),
 				'default' => '30',
 			],
 		];
@@ -865,7 +865,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 		<div class="oa-spacing" data-oa-spacing>
 
 			<p class="oa-help oa-help--intro">
-				<?php esc_html_e( 'Default bottom margins for Breakdance elements. They print after Breakdance\'s element defaults but before its per-element CSS, so spacing set on an individual element in the builder still wins. The H1–H6 rows are the exception: they are more specific, so they also override the builder.', 'octave-addons' ); ?>
+				<?php esc_html_e( 'The default space below each kind of Breakdance element. Spacing you set on an individual element in the builder always wins, except for the H1–H6 rows, which also override the builder.', 'octave-addons' ); ?>
 			</p>
 
 			<div class="oa-spacing-bar">
@@ -896,14 +896,14 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 				</div>
 				<p class="oa-spacing-bar-note">
-					<?php esc_html_e( 'Each breakpoint applies from its width down. Leave a field blank to inherit the wider breakpoint.', 'octave-addons' ); ?>
+					<?php esc_html_e( 'Each screen size applies from its width downwards. Leave a box empty to use the value from the next size up.', 'octave-addons' ); ?>
 				</p>
 			</div>
 
 			<div class="oa-spacing-section oa-spacing-section--tokens">
 				<h4 class="oa-spacing-section-title"><?php esc_html_e( 'Shared spacing tokens', 'octave-addons' ); ?></h4>
 				<p class="oa-spacing-section-note">
-					<?php esc_html_e( 'Two values the whole site can point at. Elements set to a token follow it at every breakpoint, and your own CSS can use the variable name shown.', 'octave-addons' ); ?>
+					<?php esc_html_e( 'Two spacing values the whole site can share. Change one here and everything using it updates. Developers can also use the variable name shown in their own CSS.', 'octave-addons' ); ?>
 				</p>
 
 				<div class="oa-spacing-table">
@@ -1015,9 +1015,9 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 							'name'    => $this->field_name( 'last_child_reset' ),
 							'id'      => $this->field_id( 'last_child_reset' ),
 							'checked' => ! empty( $s['last_child_reset'] ),
-							'help'    => __( 'Drops the bottom margin on the last spaced element in a container', 'octave-addons' ),
+							'help'    => __( 'Remove the space below the last element in a section', 'octave-addons' ),
 						] );
-						?><span class="oa-help"><?php esc_html_e( 'Stops the gap doubling up against the padding at the bottom of a section.', 'octave-addons' ); ?></span><?php
+						?><span class="oa-help"><?php esc_html_e( 'Stops a double gap at the bottom of sections.', 'octave-addons' ); ?></span><?php
 
 					},
 				] ); ?>
@@ -1025,7 +1025,7 @@ class Octave_Addons_Module_Breakdance_Spacing extends Octave_Addons_Module {
 
 			<details class="oa-spacing-output">
 				<summary><?php esc_html_e( 'Generated CSS', 'octave-addons' ); ?></summary>
-				<p class="oa-help"><?php esc_html_e( 'Read-only preview of exactly what gets added to the frontend.', 'octave-addons' ); ?></p>
+				<p class="oa-help"><?php esc_html_e( 'For reference: the exact CSS added to your site.', 'octave-addons' ); ?></p>
 				<?php $empty_css = __( '/* Nothing to output yet — set a value above. */', 'octave-addons' ); ?>
 
 				<pre class="oa-spacing-css" data-empty="<?= esc_attr( $empty_css ); ?>"><code><?= esc_html( $this->build_css( $s ) ?: $empty_css ); ?></code></pre>

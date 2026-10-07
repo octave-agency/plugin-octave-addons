@@ -104,9 +104,13 @@ final class Octave_Addons {
 
 	public static function is_breakdance_active(): bool {
 
-		return did_action( 'breakdance_loaded' ) > 0
-			|| class_exists( '\Breakdance\Elements\Element' )
-			|| defined( '__BREAKDANCE_VERSION' );
+		return Octave_Addons_Builders::breakdance();
+
+	}
+
+	public static function is_divi_active(): bool {
+
+		return Octave_Addons_Builders::divi();
 
 	}
 

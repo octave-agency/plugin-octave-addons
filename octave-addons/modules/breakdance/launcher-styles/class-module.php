@@ -61,7 +61,7 @@ class Octave_Addons_Module_Breakdance_Launcher_Styles extends Octave_Addons_Modu
 
 	public function get_description(): string {
 
-		return __( 'Declares Breakdance\'s launcher stylesheet as a block editor style so the "Edit in Breakdance" block keeps its card and buttons inside the editor canvas iframe.', 'octave-addons' );
+		return __( 'Keeps the "Edit in Breakdance" box looking right inside the WordPress block editor.', 'octave-addons' );
 
 	}
 

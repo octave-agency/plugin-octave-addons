@@ -39,7 +39,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Purges Cloudflare\'s cache when content changes, and on demand, using a scoped API token.', 'octave-addons' );
+		return __( 'Clears Cloudflare\'s copy of your pages when you change them, so visitors always see the latest version.', 'octave-addons' );
 
 	}
 
@@ -111,7 +111,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 	/*
 	PURGE ALL LAYER
 	-- Purge everything only with the option on, and only for a manual full
-	-- purge or a Breakdance change that restyles every page. Settings saves
+	-- purge or a Breakdance or Divi change that restyles every page. Settings saves
 	-- and other automatic purges never empty the whole zone
 	---------------------------------------------------------- */
 
@@ -121,15 +121,15 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 		if ( ! Octave_Addons_Perf_Cloudflare::is_configured() ) {
 
-			$report['cloudflare'] = [ 'label' => $label, 'status' => 'error', 'message' => __( 'Not configured: add a Zone ID and API token.', 'octave-addons' ) ];
+			$report['cloudflare'] = [ 'label' => $label, 'status' => 'error', 'message' => __( 'Not set up yet: add your Zone ID and API token below.', 'octave-addons' ) ];
 
 			return $report;
 
 		}
 
-		if ( ! in_array( $reason, [ 'manual', 'breakdance' ], true ) || empty( $s['purge_on_full'] ) ) {
+		if ( ! in_array( $reason, [ 'manual', 'breakdance', 'divi' ], true ) || empty( $s['purge_on_full'] ) ) {
 
-			$report['cloudflare'] = [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'Not purged. Turn on "Purge Cloudflare during a full purge" to include it.', 'octave-addons' ) ];
+			$report['cloudflare'] = [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'Not cleared. Turn on "Clear all of Cloudflare with Clear cache" to include it.', 'octave-addons' ) ];
 
 			return $report;
 
@@ -154,7 +154,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 		if ( ! Octave_Addons_Perf_Cloudflare::is_configured() ) {
 
-			$report['cloudflare'] = [ 'label' => $label, 'status' => 'error', 'message' => __( 'Not configured: add a Zone ID and API token.', 'octave-addons' ) ];
+			$report['cloudflare'] = [ 'label' => $label, 'status' => 'error', 'message' => __( 'Not set up yet: add your Zone ID and API token below.', 'octave-addons' ) ];
 
 			return $report;
 
@@ -178,7 +178,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 		Octave_Addons_Perf_Cloudflare::queue( $urls );
 
-		$report['cloudflare'] = [ 'label' => $label, 'status' => 'queued', 'message' => __( 'Queued; sent to Cloudflare within a minute.', 'octave-addons' ) ];
+		$report['cloudflare'] = [ 'label' => $label, 'status' => 'queued', 'message' => __( 'Will be cleared on Cloudflare within a minute.', 'octave-addons' ) ];
 
 		return $report;
 
@@ -196,7 +196,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 		?>
 
-		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Create a token in Cloudflare under My Profile > API Tokens with the single permission Zone > Cache Purge > Purge, limited to this site\'s zone. The token never leaves the server.', 'octave-addons' ); ?></p>
+		<p class="oa-help oa-help--intro"><?php esc_html_e( 'In Cloudflare, go to My Profile > API Tokens and create a token with just one permission, Zone > Cache Purge > Purge, for this site only. The token stays on your server.', 'octave-addons' ); ?></p>
 
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
@@ -210,7 +210,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 					if ( $zone_constant ) {
 
-						echo '<p class="oa-help">' . esc_html__( 'Defined in wp-config.php.', 'octave-addons' ) . '</p>';
+						echo '<p class="oa-help">' . esc_html__( 'Set in wp-config.php.', 'octave-addons' ) . '</p>';
 
 						return;
 
@@ -222,7 +222,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 						'value'       => $s['zone_id'],
 						'placeholder' => '0123456789abcdef0123456789abcdef',
 						'class'       => 'regular-text code',
-						'help'        => __( 'Shown on the zone\'s Overview page in Cloudflare.', 'octave-addons' ),
+						'help'        => __( 'Find it on your site\'s Overview page in Cloudflare.', 'octave-addons' ),
 					] );
 
 				},
@@ -235,7 +235,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 
 					if ( $token_constant ) {
 
-						echo '<p class="oa-help">' . esc_html__( 'Defined in wp-config.php.', 'octave-addons' ) . '</p>';
+						echo '<p class="oa-help">' . esc_html__( 'Set in wp-config.php.', 'octave-addons' ) . '</p>';
 
 						return;
 
@@ -272,7 +272,7 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 					?>
 
 					<button type="button" class="button" data-oa-perf-action="oa_perf_cf_test" data-fields="<?= esc_attr( $fields ); ?>" data-result="oa-perf-cf-result"><?php esc_html_e( 'Test connection', 'octave-addons' ); ?></button>
-					<span class="oa-help"><?php esc_html_e( 'Tests the values above, saved or not, and runs again when they change.', 'octave-addons' ); ?></span>
+					<span class="oa-help"><?php esc_html_e( 'Checks the details above work, even before you save.', 'octave-addons' ); ?></span>
 					<div id="oa-perf-cf-result" data-oa-perf-result role="status" aria-live="polite"></div>
 
 					<?php
@@ -280,10 +280,10 @@ class Octave_Addons_Module_Performance_Cloudflare extends Octave_Addons_Module {
 				},
 			] );
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Automatic purging', 'octave-addons' ) ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Automatic clearing', 'octave-addons' ) ] );
 
-			$this->switch_row( 'auto_purge', __( 'Purge changed pages', 'octave-addons' ), __( 'Recommended. When content is published, updated or removed, its URL, the home page and related archives are purged in a batch shortly after.', 'octave-addons' ), $s );
-			$this->switch_row( 'purge_on_full', __( 'Purge Cloudflare during a full purge', 'octave-addons' ), __( 'When an administrator uses Clear cache, or a Breakdance header, footer, template, global block or global style changes, also purge everything in the zone. Settings saves never purge everything.', 'octave-addons' ), $s );
+			$this->switch_row( 'auto_purge', __( 'Clear pages you change', 'octave-addons' ), __( 'Recommended. When you publish, update or remove something, Cloudflare\'s copy of that page, your home page and related listings are cleared shortly after.', 'octave-addons' ), $s );
+			$this->switch_row( 'purge_on_full', __( 'Clear all of Cloudflare with Clear cache', 'octave-addons' ), __( 'When you use Clear cache, or change a page-builder header, footer, template or site-wide style, clear everything Cloudflare holds for this site too. Saving settings never does this.', 'octave-addons' ), $s );
 
 			?>
 		</table>

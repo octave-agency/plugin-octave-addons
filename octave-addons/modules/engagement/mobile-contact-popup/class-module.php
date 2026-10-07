@@ -94,7 +94,7 @@ class Octave_Addons_Module_Mobile_Contact_Popup extends Octave_Addons_Module {
 		?>
 
 		<p class="oa-help oa-help--intro">
-			<?php esc_html_e( 'Fill in at least one contact field below. The bar only appears on mobile screens (≤767 px) and only when at least one field is enabled and has a value.', 'octave-addons' ); ?>
+			<?php esc_html_e( 'Fill in at least one way to contact you below. The bar only appears on phones, and only once at least one contact option is switched on and filled in.', 'octave-addons' ); ?>
 		</p>
 
 		<table class="form-table oa-form-table" role="presentation">
@@ -534,6 +534,7 @@ class Octave_Addons_Module_Mobile_Contact_Popup extends Octave_Addons_Module {
 					<div class="oa-icon-picker-controls">
 						<?php
 
+						// Breakdance's icon library is the picker's source, so it is only offered with Breakdance.
 						if ( $has_bd ) :
 
 						?>
@@ -542,7 +543,10 @@ class Octave_Addons_Module_Mobile_Contact_Popup extends Octave_Addons_Module {
 						        data-target="<?= esc_attr( $field_id ); ?>">
 							<?php esc_html_e( 'Choose Icon', 'octave-addons' ); ?>
 						</button>
+
 						<?php
+
+						endif;
 
 						if ( $stored ) :
 
@@ -552,21 +556,7 @@ class Octave_Addons_Module_Mobile_Contact_Popup extends Octave_Addons_Module {
 						        data-target="<?= esc_attr( $field_id ); ?>">
 							<?php esc_html_e( 'Use Default', 'octave-addons' ); ?>
 						</button>
-						<?php
 
-						endif;
-
-						?>
-
-						<?php
-
-						else :
-
-						?>
-
-						<span class="oa-help oa-help--inline">
-							<?php esc_html_e( 'Icon picker requires Breakdance.', 'octave-addons' ); ?>
-						</span>
 						<?php
 
 						endif;

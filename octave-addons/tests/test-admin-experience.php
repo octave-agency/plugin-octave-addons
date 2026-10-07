@@ -38,8 +38,6 @@ class OA_Test_Admin_Experience extends Octave_Addons_Admin_Experience {
 
 }
 
-function wp_add_inline_style( $handle, $css ) {}
-
 function is_ssl() {
 
 	return true;

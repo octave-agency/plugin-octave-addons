@@ -72,6 +72,28 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 	protected const COLUMNS = 5;
 
 	/**
+	 * What a loader shows in its middle. '' follows the style: text for
+	 * Brand Counter, Curtain Reveal and Custom only, nothing for Orbital.
+	 */
+	protected const LOADER_CONTENT = [ '' => true, 'text' => true, 'logo' => true, 'logo-text' => true, 'none' => true ];
+
+	/**
+	 * Loader styles that show the chosen content.
+	 */
+	protected const CONTENT_LOADERS = [ 'brand-counter', 'curtain', 'orbital', 'custom' ];
+
+	/**
+	 * What a transition shows while it covers the page. '' follows the
+	 * style: the site name for Brand Wipe, nothing for the rest.
+	 */
+	protected const TRANSITION_CONTENT = [ '' => true, 'none' => true, 'text' => true, 'logo' => true, 'image' => true, 'spinner' => true ];
+
+	/**
+	 * Text size multipliers.
+	 */
+	protected const TEXT_SIZES = [ 'small' => 0.8, 'medium' => 1, 'large' => 1.35, 'xl' => 1.75 ];
+
+	/**
 	 * Whether the overlays were printed through wp_body_open.
 	 */
 	protected $rendered = false;
@@ -84,13 +106,13 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 	public function get_title(): string {
 
-		return __( 'Page Transitions', 'octave-addons' );
+		return __( 'Page Loader & Transitions', 'octave-addons' );
 
 	}
 
 	public function get_description(): string {
 
-		return __( 'An initial loader for full page loads and quick, separate transitions between internal pages.', 'octave-addons' );
+		return __( 'A branded loader while your site first opens, and smooth transitions between its pages.', 'octave-addons' );
 
 	}
 
@@ -107,6 +129,8 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			'loader_show_progress'   => true,
 			'loader_logo'            => 0,
 			'loader_image'           => 0,
+			'loader_content'         => '',
+			'loader_tagline'         => false,
 			'loader_css'             => '',
 			'loader_js'              => '',
 
@@ -115,6 +139,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			'transition_type'        => 'slide-up',
 			'transition_loader_type' => 'match',
 			'transition_duration'    => 600,
+			'transition_content'     => '',
 			'transition_css'         => '',
 			'transition_js'          => '',
 
@@ -124,6 +149,8 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			'background_color'       => '#0E0E0F',
 			'text_source'            => 'custom',
 			'text_color'             => '#F4F2EE',
+			'tagline'                => '',
+			'text_size'              => 'medium',
 		];
 
 	}
@@ -188,7 +215,17 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$replay                          = sanitize_key( $input['transition_loader_type'] ?? '' );
 		$clean['transition_loader_type'] = 'match' === $replay || array_key_exists( $replay, $this->loader_types() ) ? $replay : 'match';
 
-		$clean['loader_frequency']    = 'every' === ( $input['loader_frequency'] ?? '' ) ? 'every' : 'session';
+		$frequency                    = sanitize_key( $input['loader_frequency'] ?? '' );
+		$clean['loader_frequency']    = in_array( $frequency, [ 'every', 'once' ], true ) ? $frequency : 'session';
+		$clean['loader_tagline']      = ! empty( $input['loader_tagline'] );
+		$clean['tagline']             = sanitize_text_field( $input['tagline'] ?? '' );
+
+		$content                   = sanitize_key( $input['loader_content'] ?? '' );
+		$clean['loader_content']   = array_key_exists( $content, self::LOADER_CONTENT ) ? $content : '';
+		$content                   = sanitize_key( $input['transition_content'] ?? '' );
+		$clean['transition_content'] = array_key_exists( $content, self::TRANSITION_CONTENT ) ? $content : '';
+		$size                      = sanitize_key( $input['text_size'] ?? '' );
+		$clean['text_size']        = array_key_exists( $size, self::TEXT_SIZES ) ? $size : 'medium';
 		$clean['loader_duration']     = max( 400, min( 2000, absint( $input['loader_duration'] ?? 900 ) ) );
 		$clean['transition_duration'] = max( 300, min( 1500, absint( $input['transition_duration'] ?? 600 ) ) );
 		$clean['loader_text']         = sanitize_text_field( $input['loader_text'] ?? '' );
@@ -217,7 +254,8 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 	/*
 	RENDER SETTINGS
-	-- Rows only appear when the selected system and type use them
+	-- Three cards: the page loader, page transitions, and the look both
+	-- share. Rows only appear when the chosen style uses them
 	---------------------------------------------------------- */
 
 	public function render_settings( array $s ): void {
@@ -225,10 +263,15 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$colors   = Octave_Addons_Colors::resolved_values();
 		$controls = [
 			'loaderType'         => $this->field_id( 'loader_type' ),
+			'loaderContent'      => $this->field_id( 'loader_content' ),
+			'loaderTagline'      => $this->field_id( 'loader_tagline' ),
 			'transitionType'     => $this->field_id( 'transition_type' ),
+			'transitionContent'  => $this->field_id( 'transition_content' ),
 			'replayType'         => $this->field_id( 'transition_loader_type' ),
 			'progress'           => $this->field_id( 'loader_show_progress' ),
 			'text'               => $this->field_id( 'loader_text' ),
+			'tagline'            => $this->field_id( 'tagline' ),
+			'textSize'           => $this->field_id( 'text_size' ),
 			'duration'           => $this->field_id( 'loader_duration' ),
 			'transitionDuration' => $this->field_id( 'transition_duration' ),
 			'logo'               => $this->field_id( 'loader_logo' ),
@@ -245,271 +288,455 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		?>
 
 		<div class="notice notice-warning inline oa-inline-notice">
-			<p><?php esc_html_e( 'Loaders and page transitions cover the page while they play, so the largest element appears later and taps wait. That can lower Lighthouse LCP and INP scores. Performance mode keeps every page visible the moment it arrives.', 'octave-addons' ); ?></p>
+			<p><?php esc_html_e( 'Loaders and transitions cover the page while they play, so visitors wait a little longer to see and use it, and speed tests such as Lighthouse score it lower. Turn on "Keep pages fast" in Customisation to keep every page visible the moment it arrives.', 'octave-addons' ); ?></p>
 		</div>
 
-		<table class="form-table oa-form-table" role="presentation">
-
-			<?php
-
-			Octave_Addons_Fields::section( [ 'label' => __( 'Performance', 'octave-addons' ), 'first' => true ] );
-
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Performance mode', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'name'    => $this->field_name( 'performance' ),
-						'checked' => ! empty( $s['performance'] ),
-						'help'    => __( 'Recommended for speed. The initial loader never shows and an arriving page is never covered; transitions only play on the page being left after an internal link is clicked. Reduced-motion visitors and back/forward navigation never see an overlay either way.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::section( [ 'label' => __( 'Initial page loader', 'octave-addons' ) ] );
-
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Initial page loader', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'name'    => $this->field_name( 'loader_enabled' ),
-						'checked' => ! empty( $s['loader_enabled'] ),
-						'data'    => [ 'controls-row' => 'oaPlRowLoaderType,oaPlRowLoaderPreview,oaPlRowFrequency,oaPlRowDuration,oaPlRowText,oaPlRowProgress,oaPlRowLogo,oaPlRowImage,oaPlRowLoaderCss,oaPlRowLoaderJs' ],
-						'help'    => __( 'Shown on a cold, full page load. Off by default.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowLoaderType',
-				'for'   => $this->field_id( 'loader_type' ),
-				'label' => __( 'Loader type', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					$this->render_select(
-						'loader_type',
-						$this->loader_types(),
-						$s['loader_type'],
-						'oaPlRowText:brand-counter|curtain|custom,oaPlRowProgress:brand-counter,oaPlRowLogo:logo-mask,oaPlRowImage:image-window'
-					);
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowLoaderPreview',
-				'label' => __( 'Preview', 'octave-addons' ),
-				'field' => function () use ( $controls, $colors ) {
-
-					Octave_Addons_Fields::motion_preview( 'loader', $controls, $colors );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowText',
-				'for'   => $this->field_id( 'loader_text' ),
-				'label' => __( 'Loader text', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::text( [
-						'id'          => $this->field_id( 'loader_text' ),
-						'name'        => $this->field_name( 'loader_text' ),
-						'value'       => $s['loader_text'],
-						'placeholder' => get_bloginfo( 'name' ),
-						'help'        => __( 'Leave blank to use the site title.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowProgress',
-				'label' => __( 'Progress number', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'id'      => $this->field_id( 'loader_show_progress' ),
-						'name'    => $this->field_name( 'loader_show_progress' ),
-						'checked' => ! empty( $s['loader_show_progress'] ),
-						'help'    => __( 'Shows real loading progress as a number beside the progress line.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowLogo',
-				'for'   => $this->field_id( 'loader_logo' ) . '-select',
-				'label' => __( 'Logo', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::media_asset( [
-						'id'    => $this->field_id( 'loader_logo' ),
-						'name'  => $this->field_name( 'loader_logo' ),
-						'value' => $s['loader_logo'],
-						'title' => __( 'Choose a logo', 'octave-addons' ),
-						'help'  => __( 'A raster image or, where the site allows SVG uploads, an SVG. Revealed through a mask. Without one, the loader text is used.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowImage',
-				'for'   => $this->field_id( 'loader_image' ) . '-select',
-				'label' => __( 'Image', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::media_asset( [
-						'id'    => $this->field_id( 'loader_image' ),
-						'name'  => $this->field_name( 'loader_image' ),
-						'value' => $s['loader_image'],
-						'help'  => __( 'Revealed inside a changing crop window while the page loads.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowFrequency',
-				'for'   => $this->field_id( 'loader_frequency' ),
-				'label' => __( 'Display frequency', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					$this->render_select( 'loader_frequency', [
-						'session' => __( 'First visit in session', 'octave-addons' ),
-						'every'   => __( 'Every full page load', 'octave-addons' ),
-					], $s['loader_frequency'] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowDuration',
-				'for'   => $this->field_id( 'loader_duration' ),
-				'label' => __( 'Loader duration', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::number( [
-						'id'     => $this->field_id( 'loader_duration' ),
-						'name'   => $this->field_name( 'loader_duration' ),
-						'value'  => $s['loader_duration'],
-						'min'    => 400,
-						'max'    => 2000,
-						'step'   => 50,
-						'suffix' => 'ms',
-						'help'   => __( 'One base value for the whole loader: its entrance, the minimum time it stays up (about 1.7× this, so a fast page still shows the full animation), progress pacing and the reveal all scale from it. Higher is slower; 900ms is the default. The loader always gives up after 8 seconds.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::section( [ 'label' => __( 'Internal page transitions', 'octave-addons' ) ] );
-
-			Octave_Addons_Fields::row( [
-				'label' => __( 'Internal page transitions', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::switch_field( [
-						'name'    => $this->field_name( 'transitions_enabled' ),
-						'checked' => ! empty( $s['transitions_enabled'] ),
-						'data'    => [ 'controls-row' => 'oaPlRowTransitionType,oaPlRowTransitionPreview,oaPlRowTransitionDuration,oaPlRowReplay,oaPlRowTransitionCss,oaPlRowTransitionJs' ],
-						'help'    => __( 'Covers the page on same-origin link clicks and reveals the destination. Normal page loads, so forms, analytics and plugins are unaffected.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowTransitionType',
-				'for'   => $this->field_id( 'transition_type' ),
-				'label' => __( 'Transition type', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					// Replay Loader runs on the Loader duration, so it hides this one.
-					$timed = implode( '|', array_diff( array_keys( $this->transition_types() ), [ 'replay-loader' ] ) );
-
-					$this->render_select( 'transition_type', $this->transition_types(), $s['transition_type'], 'oaPlRowReplay:replay-loader,oaPlRowTransitionDuration:' . $timed );
-
-					?>
-
-					<span class="oa-help"><?php esc_html_e( 'Links with data-oa-no-transition (on the link or a parent) are skipped.', 'octave-addons' ); ?></span>
-					<?php
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowTransitionPreview',
-				'label' => __( 'Preview', 'octave-addons' ),
-				'field' => function () use ( $controls, $colors ) {
-
-					Octave_Addons_Fields::motion_preview( 'transition', $controls, $colors );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowTransitionDuration',
-				'for'   => $this->field_id( 'transition_duration' ),
-				'label' => __( 'Transition duration', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					Octave_Addons_Fields::number( [
-						'id'     => $this->field_id( 'transition_duration' ),
-						'name'   => $this->field_name( 'transition_duration' ),
-						'value'  => $s['transition_duration'],
-						'min'    => 300,
-						'max'    => 1500,
-						'step'   => 50,
-						'suffix' => 'ms',
-						'help'   => __( 'One base value for every transition: the cover, the wait before navigating, the reveal on the next page and each preset\'s staggers all scale from it. Higher is slower; 600ms is the default. Replay Loader uses the Loader duration instead.', 'octave-addons' ),
-					] );
-
-				},
-			] );
-
-			Octave_Addons_Fields::row( [
-				'id'    => 'oaPlRowReplay',
-				'for'   => $this->field_id( 'transition_loader_type' ),
-				'label' => __( 'Loader to replay', 'octave-addons' ),
-				'field' => function () use ( $s ) {
-
-					$this->render_select( 'transition_loader_type', array_merge(
-						[ 'match' => __( 'Same as the initial loader', 'octave-addons' ) ],
-						$this->loader_types()
-					), $s['transition_loader_type'] );
-
-					?>
-
-					<span class="oa-help"><?php esc_html_e( 'Plays a loader on every internal navigation, using the loader text, media and colours above. While the initial loader is on, its own style is replayed so one loader serves both.', 'octave-addons' ); ?></span>
-					<?php
-
-				},
-			] );
-
-			Octave_Addons_Fields::section( [ 'label' => __( 'Colours', 'octave-addons' ) ] );
-
-			$this->render_color_rows( 'accent', __( 'Accent colour', 'octave-addons' ), __( 'Progress lines, wipes and highlights.', 'octave-addons' ), $s );
-			$this->render_color_rows( 'background', __( 'Background colour', 'octave-addons' ), __( 'The loader and transition surface.', 'octave-addons' ), $s );
-			$this->render_color_rows( 'text', __( 'Text colour', 'octave-addons' ), __( 'Loader text and numbers on presets that show text.', 'octave-addons' ), $s );
-
-			Octave_Addons_Fields::custom_setup( [ 'oaPlRowLoaderCss', 'oaPlRowLoaderJs', 'oaPlRowTransitionCss', 'oaPlRowTransitionJs' ] );
-
-			$this->render_code_row( 'oaPlRowLoaderCss', 'loader_css', __( 'Loader CSS', 'octave-addons' ), '#oa-page-loader { }', __( 'Printed after the loader preset. States: html.oa-loader-active while shown, html.oa-loader-exit while revealing; --oa-progress runs from 0 to 1.', 'octave-addons' ), $s );
-			$this->render_code_row( 'oaPlRowLoaderJs', 'loader_js', __( 'Loader JavaScript', 'octave-addons' ), "document.addEventListener( 'oa-loader:progress', function ( event ) { } );", __( 'Runs after the lifecycle script, which cannot be replaced. Events: oa-loader:start, oa-loader:progress (detail.progress), oa-loader:exit and oa-loader:done. The 8-second safety timeout always applies.', 'octave-addons' ), $s );
-
-			$this->render_code_row( 'oaPlRowTransitionCss', 'transition_css', __( 'Transition CSS', 'octave-addons' ), '#oa-page-transition { }', __( 'Printed after the transition preset. States: html.oa-transition-out while covering, html.oa-transition-in then html.oa-transition-reveal on the destination. Time animations from --oa-transition-duration to follow the Transition duration.', 'octave-addons' ), $s );
-			$this->render_code_row( 'oaPlRowTransitionJs', 'transition_js', __( 'Transition JavaScript', 'octave-addons' ), "document.addEventListener( 'oa-transition:out', function ( event ) { } );", __( 'Runs after the lifecycle script, which cannot be replaced. Events: oa-transition:out (detail.url), oa-transition:in and oa-transition:done.', 'octave-addons' ), $s );
-
-			?>
-
-		</table>
 		<?php
+
+		$this->render_loader_card( $s, $controls, $colors );
+		$this->render_transition_card( $s, $controls, $colors );
+		$this->render_customisation_card( $s );
+
+	}
+
+	/*
+	CARD
+	-- Opens one settings card: a title, a sentence, an optional on/off
+	-- switch that shows or hides the card's rows, and its table
+	---------------------------------------------------------- */
+
+	protected function open_card( string $title, string $description, string $switch_key = '', array $rows = [], array $s = [] ): void {
+
+		?>
+
+		<section class="oa-settings-card">
+			<header class="oa-settings-card-head">
+				<div>
+					<h3><?= esc_html( $title ); ?></h3>
+					<p><?= esc_html( $description ); ?></p>
+				</div>
+
+				<?php
+
+				if ( '' !== $switch_key ) {
+
+					Octave_Addons_Fields::switch_field( [
+						'id'      => $this->field_id( $switch_key ),
+						'name'    => $this->field_name( $switch_key ),
+						'checked' => ! empty( $s[ $switch_key ] ),
+						'data'    => [ 'controls-row' => implode( ',', $rows ) ],
+					] );
+
+				}
+
+				?>
+
+			</header>
+			<table class="form-table oa-form-table" role="presentation">
+
+		<?php
+
+	}
+
+	protected function close_card(): void {
+
+		?>
+
+			</table>
+		</section>
+
+		<?php
+
+	}
+
+	/*
+	LOADER CARD
+	---------------------------------------------------------- */
+
+	protected function render_loader_card( array $s, array $controls, array $colors ): void {
+
+		$rows = [ 'oaPlRowLoaderType', 'oaPlRowLoaderPreview', 'oaPlRowLoaderContent', 'oaPlRowLoaderTagline', 'oaPlRowProgress', 'oaPlRowFrequency', 'oaPlRowDuration', 'oaPlRowLoaderCustom', 'oaPlRowLoaderCss', 'oaPlRowLoaderJs' ];
+
+		$this->open_card( __( 'Page loader', 'octave-addons' ), __( 'A short animation shown while a page first loads, then lifted away to reveal it.', 'octave-addons' ), 'loader_enabled', $rows, $s );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowLoaderType',
+			'for'   => $this->field_id( 'loader_type' ),
+			'label' => __( 'Style', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				$this->render_select(
+					'loader_type',
+					$this->loader_types(),
+					$s['loader_type'],
+					'oaPlRowLoaderContent:' . implode( '|', self::CONTENT_LOADERS ) . ',oaPlRowProgress:brand-counter'
+				);
+
+				?>
+
+				<span class="oa-help"><?php esc_html_e( 'Logo Mask always shows your logo and Image Window your image, both set in Customisation.', 'octave-addons' ); ?></span>
+				<?php
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowLoaderPreview',
+			'label' => __( 'Preview', 'octave-addons' ),
+			'field' => function () use ( $controls, $colors ) {
+
+				Octave_Addons_Fields::motion_preview( 'loader', $controls, $colors );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowLoaderContent',
+			'for'   => $this->field_id( 'loader_content' ),
+			'label' => __( 'Show', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				$this->render_select( 'loader_content', [
+					''          => __( 'What the style normally shows', 'octave-addons' ),
+					'text'      => __( 'Brand text', 'octave-addons' ),
+					'logo'      => __( 'Logo', 'octave-addons' ),
+					'logo-text' => __( 'Logo and brand text', 'octave-addons' ),
+					'none'      => __( 'Nothing', 'octave-addons' ),
+				], $s['loader_content'] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowLoaderTagline',
+			'label' => __( 'Tagline', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::switch_field( [
+					'id'      => $this->field_id( 'loader_tagline' ),
+					'name'    => $this->field_name( 'loader_tagline' ),
+					'checked' => ! empty( $s['loader_tagline'] ),
+					'help'    => __( 'Shows the tagline from Customisation under the brand text or logo.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowProgress',
+			'label' => __( 'Percentage', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::switch_field( [
+					'id'      => $this->field_id( 'loader_show_progress' ),
+					'name'    => $this->field_name( 'loader_show_progress' ),
+					'checked' => ! empty( $s['loader_show_progress'] ),
+					'help'    => __( 'Counts up to 100% as the page actually loads.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowFrequency',
+			'for'   => $this->field_id( 'loader_frequency' ),
+			'label' => __( 'How often', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				$this->render_select( 'loader_frequency', [
+					'session' => __( 'Once per visit', 'octave-addons' ),
+					'once'    => __( 'Only on someone\'s first visit', 'octave-addons' ),
+					'every'   => __( 'Every time a page loads', 'octave-addons' ),
+				], $s['loader_frequency'] );
+
+				?>
+
+				<span class="oa-help"><?php esc_html_e( 'A visit ends when the browser tab is closed. "First visit" is remembered on that device.', 'octave-addons' ); ?></span>
+				<?php
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowDuration',
+			'for'   => $this->field_id( 'loader_duration' ),
+			'label' => __( 'Speed', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::number( [
+					'id'     => $this->field_id( 'loader_duration' ),
+					'name'   => $this->field_name( 'loader_duration' ),
+					'value'  => $s['loader_duration'],
+					'min'    => 400,
+					'max'    => 2000,
+					'step'   => 50,
+					'suffix' => 'ms',
+					'help'   => __( 'Higher numbers play the loader more slowly. 900 is the default. The loader stays up just long enough to finish its animation on fast pages, and never longer than 8 seconds.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		$this->render_custom_code( 'oaPlRowLoaderCustom', 'oaPlRowLoaderCss', 'oaPlRowLoaderJs', 'loader', $s );
+
+		$this->close_card();
+
+	}
+
+	/*
+	TRANSITION CARD
+	---------------------------------------------------------- */
+
+	protected function render_transition_card( array $s, array $controls, array $colors ): void {
+
+		$rows = [ 'oaPlRowTransitionType', 'oaPlRowTransitionPreview', 'oaPlRowTransitionContent', 'oaPlRowTransitionDuration', 'oaPlRowReplay', 'oaPlRowTransitionCustom', 'oaPlRowTransitionCss', 'oaPlRowTransitionJs' ];
+
+		$this->open_card( __( 'Page transitions', 'octave-addons' ), __( 'Covers the page when someone clicks a link to another page on your site, then reveals the new page.', 'octave-addons' ), 'transitions_enabled', $rows, $s );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowTransitionType',
+			'for'   => $this->field_id( 'transition_type' ),
+			'label' => __( 'Style', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				// Replay Loader plays the page loader, so it has its own speed and content.
+				$covering = implode( '|', array_diff( array_keys( $this->transition_types() ), [ 'replay-loader' ] ) );
+
+				$this->render_select( 'transition_type', $this->transition_types(), $s['transition_type'], 'oaPlRowReplay:replay-loader,oaPlRowTransitionDuration:' . $covering . ',oaPlRowTransitionContent:' . $covering );
+
+				?>
+
+				<span class="oa-help"><?php esc_html_e( 'To skip the transition for a particular link, add data-oa-no-transition to the link or to something around it.', 'octave-addons' ); ?></span>
+				<?php
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowTransitionPreview',
+			'label' => __( 'Preview', 'octave-addons' ),
+			'field' => function () use ( $controls, $colors ) {
+
+				Octave_Addons_Fields::motion_preview( 'transition', $controls, $colors );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowTransitionContent',
+			'for'   => $this->field_id( 'transition_content' ),
+			'label' => __( 'Show while covered', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				$this->render_select( 'transition_content', [
+					''        => __( 'What the style normally shows', 'octave-addons' ),
+					'none'    => __( 'Nothing', 'octave-addons' ),
+					'text'    => __( 'Brand text', 'octave-addons' ),
+					'logo'    => __( 'Logo', 'octave-addons' ),
+					'image'   => __( 'Image', 'octave-addons' ),
+					'spinner' => __( 'Loading spinner', 'octave-addons' ),
+				], $s['transition_content'] );
+
+				?>
+
+				<span class="oa-help"><?php esc_html_e( 'Appears in the middle of the screen while the next page loads. Brand Wipe normally shows your brand text; the other styles show nothing.', 'octave-addons' ); ?></span>
+				<?php
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowTransitionDuration',
+			'for'   => $this->field_id( 'transition_duration' ),
+			'label' => __( 'Speed', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::number( [
+					'id'     => $this->field_id( 'transition_duration' ),
+					'name'   => $this->field_name( 'transition_duration' ),
+					'value'  => $s['transition_duration'],
+					'min'    => 300,
+					'max'    => 1500,
+					'step'   => 50,
+					'suffix' => 'ms',
+					'help'   => __( 'Higher numbers play the transition more slowly. 600 is the default.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'id'    => 'oaPlRowReplay',
+			'for'   => $this->field_id( 'transition_loader_type' ),
+			'label' => __( 'Loader to play', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				$this->render_select( 'transition_loader_type', array_merge(
+					[ 'match' => __( 'Same as the page loader', 'octave-addons' ) ],
+					$this->loader_types()
+				), $s['transition_loader_type'] );
+
+				?>
+
+				<span class="oa-help"><?php esc_html_e( 'Plays a page loader between pages, using its speed and content settings and your Customisation. While the page loader is on, its own style is used.', 'octave-addons' ); ?></span>
+				<?php
+
+			},
+		] );
+
+		$this->render_custom_code( 'oaPlRowTransitionCustom', 'oaPlRowTransitionCss', 'oaPlRowTransitionJs', 'transition', $s );
+
+		$this->close_card();
+
+	}
+
+	/*
+	CUSTOMISATION CARD
+	-- The brand content and colours both systems use, and the speed mode
+	---------------------------------------------------------- */
+
+	protected function render_customisation_card( array $s ): void {
+
+		$this->open_card( __( 'Customisation', 'octave-addons' ), __( 'Your brand text, logo, image and colours, shared by the page loader and page transitions.', 'octave-addons' ) );
+
+		Octave_Addons_Fields::section( [ 'label' => __( 'Brand', 'octave-addons' ), 'first' => true ] );
+
+		Octave_Addons_Fields::row( [
+			'for'   => $this->field_id( 'loader_text' ),
+			'label' => __( 'Brand text', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::text( [
+					'id'          => $this->field_id( 'loader_text' ),
+					'name'        => $this->field_name( 'loader_text' ),
+					'value'       => $s['loader_text'],
+					'placeholder' => get_bloginfo( 'name' ),
+					'help'        => __( 'Leave blank to use your site name.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'for'   => $this->field_id( 'tagline' ),
+			'label' => __( 'Tagline', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::text( [
+					'id'          => $this->field_id( 'tagline' ),
+					'name'        => $this->field_name( 'tagline' ),
+					'value'       => $s['tagline'],
+					'placeholder' => get_bloginfo( 'description' ),
+					'help'        => __( 'A short line shown under the brand text when the page loader\'s Tagline is on.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'for'   => $this->field_id( 'loader_logo' ) . '-select',
+			'label' => __( 'Logo', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::media_asset( [
+					'id'    => $this->field_id( 'loader_logo' ),
+					'name'  => $this->field_name( 'loader_logo' ),
+					'value' => $s['loader_logo'],
+					'title' => __( 'Choose a logo', 'octave-addons' ),
+					'help'  => __( 'Any image, or an SVG if your site allows them. Without a logo, the brand text is shown instead.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'for'   => $this->field_id( 'loader_image' ) . '-select',
+			'label' => __( 'Image', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::media_asset( [
+					'id'    => $this->field_id( 'loader_image' ),
+					'name'  => $this->field_name( 'loader_image' ),
+					'value' => $s['loader_image'],
+					'help'  => __( 'Used by the Image Window loader, and by transitions set to show an image.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::row( [
+			'for'   => $this->field_id( 'text_size' ),
+			'label' => __( 'Text size', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				$this->render_select( 'text_size', [
+					'small'  => __( 'Small', 'octave-addons' ),
+					'medium' => __( 'Medium', 'octave-addons' ),
+					'large'  => __( 'Large', 'octave-addons' ),
+					'xl'     => __( 'Extra large', 'octave-addons' ),
+				], $s['text_size'] );
+
+			},
+		] );
+
+		Octave_Addons_Fields::section( [ 'label' => __( 'Colours', 'octave-addons' ) ] );
+
+		$this->render_color_rows( 'accent', __( 'Accent colour', 'octave-addons' ), __( 'Progress lines, wipes and highlights.', 'octave-addons' ), $s );
+		$this->render_color_rows( 'background', __( 'Background colour', 'octave-addons' ), __( 'The colour that covers the page.', 'octave-addons' ), $s );
+		$this->render_color_rows( 'text', __( 'Text colour', 'octave-addons' ), __( 'Brand text, tagline and percentage.', 'octave-addons' ), $s );
+
+		Octave_Addons_Fields::section( [ 'label' => __( 'Speed', 'octave-addons' ) ] );
+
+		Octave_Addons_Fields::row( [
+			'label' => __( 'Keep pages fast', 'octave-addons' ),
+			'field' => function () use ( $s ) {
+
+				Octave_Addons_Fields::switch_field( [
+					'name'    => $this->field_name( 'performance' ),
+					'checked' => ! empty( $s['performance'] ),
+					'help'    => __( 'Recommended. The page loader never shows and a new page is never covered as it arrives: transitions only play on the page being left. Visitors who prefer reduced motion, and the browser\'s back and forward buttons, never see either.', 'octave-addons' ),
+				] );
+
+			},
+		] );
+
+		$this->close_card();
+
+	}
+
+	/*
+	RENDER CUSTOM CODE
+	-- A collapsed "Custom setup" group with CSS and JavaScript rows
+	---------------------------------------------------------- */
+
+	protected function render_custom_code( string $toggle_id, string $css_row, string $js_row, string $system, array $s ): void {
+
+		?>
+
+		<tr id="<?= esc_attr( $toggle_id ); ?>">
+			<th colspan="2" class="oa-section-heading oa-section-heading--toggle">
+				<button type="button" class="oa-section-toggle" aria-expanded="false"
+				        aria-controls="<?= esc_attr( $css_row . ' ' . $js_row ); ?>"
+				        data-controls-row="<?= esc_attr( $css_row . ',' . $js_row ); ?>">
+					<span><?php esc_html_e( 'Custom code', 'octave-addons' ); ?></span>
+					<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+				</button>
+			</th>
+		</tr>
+
+		<?php
+
+		if ( 'loader' === $system ) {
+
+			$this->render_code_row( $css_row, 'loader_css', __( 'Loader CSS', 'octave-addons' ), '#oa-page-loader { }', __( 'For developers. Added after the loader\'s own styles. While the loader shows, the page has the class oa-loader-active, then oa-loader-exit as it lifts away; --oa-progress counts from 0 to 1.', 'octave-addons' ), $s );
+			$this->render_code_row( $js_row, 'loader_js', __( 'Loader JavaScript', 'octave-addons' ), "document.addEventListener( 'oa-loader:progress', function ( event ) { } );", __( 'For developers. Runs after Octave\'s own loader script. Listen for oa-loader:start, oa-loader:progress (event.detail.progress), oa-loader:exit and oa-loader:done. The loader still always closes after 8 seconds.', 'octave-addons' ), $s );
+
+			return;
+
+		}
+
+		$this->render_code_row( $css_row, 'transition_css', __( 'Transition CSS', 'octave-addons' ), '#oa-page-transition { }', __( 'For developers. Added after the transition\'s own styles. The page has the class oa-transition-out while covering, then oa-transition-in and oa-transition-reveal on the new page. Use --oa-transition-duration to match the Speed setting.', 'octave-addons' ), $s );
+		$this->render_code_row( $js_row, 'transition_js', __( 'Transition JavaScript', 'octave-addons' ), "document.addEventListener( 'oa-transition:out', function ( event ) { } );", __( 'For developers. Runs after Octave\'s own transition script. Listen for oa-transition:out (event.detail.url), oa-transition:in and oa-transition:done.', 'octave-addons' ), $s );
 
 	}
 
@@ -746,7 +973,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		wp_add_inline_style( 'octave-addons-page-motion', $this->root_css( $s ) );
 
-		if ( ! empty( $s['loader_enabled'] ) && '' !== trim( $s['loader_css'] ) ) {
+		if ( '' !== $loader && '' !== trim( $s['loader_css'] ) ) {
 
 			wp_add_inline_style( $css_handle, $s['loader_css'] );
 
@@ -766,7 +993,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		wp_add_inline_script( 'octave-addons-page-motion', 'window.oaPageMotion = ' . wp_json_encode( $this->script_config( $s, $loader, $transition ) ) . ';', 'before' );
 
 		$custom = [
-			'loader'     => ! empty( $s['loader_enabled'] ) && empty( $s['performance'] ) ? $s['loader_js'] : '',
+			'loader'     => '' !== $loader ? $s['loader_js'] : '',
 			'transition' => '' !== $transition ? $s['transition_js'] : '',
 		];
 
@@ -798,12 +1025,13 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 	protected function root_css( array $s ): string {
 
 		return sprintf(
-			':root{--oa-pm-accent:%s;--oa-pm-bg:%s;--oa-pm-fg:%s;--oa-loader-duration:%dms;--oa-transition-duration:%dms;}',
+			':root{--oa-pm-accent:%s;--oa-pm-bg:%s;--oa-pm-fg:%s;--oa-loader-duration:%dms;--oa-transition-duration:%dms;--oa-pm-text-scale:%s;}',
 			$this->color_value( 'accent', $s ),
 			$this->color_value( 'background', $s ),
 			$this->color_value( 'text', $s ),
 			(int) $s['loader_duration'],
-			(int) $s['transition_duration']
+			(int) $s['transition_duration'],
+			(string) ( self::TEXT_SIZES[ $s['text_size'] ?? 'medium' ] ?? 1 )
 		);
 
 	}
@@ -900,11 +1128,13 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 				}
 
-				if ( 'brand-wipe' === $transition ) :
+				$content = $this->transition_content( $transition, $s );
+
+				if ( '' !== $content ) :
 
 				?>
 
-				<span class="oa-transition__brand"><?= esc_html( $text ); ?></span>
+				<span class="oa-transition__content oa-transition__content--<?= esc_attr( $content ); ?>"><?php $this->print_transition_content( $content, $text, $s ); ?></span>
 				<?php
 
 				endif;
@@ -940,7 +1170,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 				?>
 
-				<span class="oa-loader__brand"><?= esc_html( $text ); ?></span>
+				<?php $this->print_mark( $type, $text, $s ); ?>
 				<span class="oa-loader__meter">
 					<span class="oa-loader__line"><span class="oa-loader__bar"></span></span>
 					<?php
@@ -1015,7 +1245,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 				<span class="oa-loader__panel oa-loader__panel--a"></span>
 				<span class="oa-loader__panel oa-loader__panel--b"></span>
-				<span class="oa-loader__brand"><?= esc_html( $text ); ?></span>
+				<?php $this->print_mark( $type, $text, $s ); ?>
 				<?php
 
 				elseif ( 'orbital' === $type ) :
@@ -1029,12 +1259,15 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 				</svg>
 				<?php
 
+				$this->print_mark( $type, $text, $s );
+
 				else :
 
 				?>
 
-				<span class="oa-loader__brand" data-oa-loader-text><?= esc_html( $text ); ?></span>
 				<?php
+
+				$this->print_mark( $type, $text, $s, ' data-oa-loader-text' );
 
 				endif;
 
@@ -1043,6 +1276,106 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			</div>
 		</div>
 		<?php
+
+	}
+
+	/*
+	PRINT MARK
+	-- What a loader shows in its middle: the brand text, the logo, both or
+	-- nothing, with the tagline under it when chosen. A missing logo falls
+	-- back to the text. The wrapper keeps .oa-loader__brand, which each
+	-- style positions and animates
+	---------------------------------------------------------- */
+
+	protected function print_mark( string $type, string $text, array $s, string $attributes = '' ): void {
+
+		$content = (string) $s['loader_content'];
+
+		if ( '' === $content ) {
+
+			$content = 'orbital' === $type ? 'none' : 'text';
+
+		}
+
+		$logo    = in_array( $content, [ 'logo', 'logo-text' ], true ) ? Octave_Addons_Fields::media_asset_url( $s['loader_logo'] ) : '';
+		$tagline = ! empty( $s['loader_tagline'] ) ? trim( (string) $s['tagline'] ) : '';
+
+		if ( 'none' === $content && '' === $tagline ) {
+
+			return;
+
+		}
+
+		$show_text = 'text' === $content || 'logo-text' === $content || ( 'logo' === $content && '' === $logo );
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute string from this class.
+		echo '<span class="oa-loader__brand"' . $attributes . '>';
+
+		if ( '' !== $logo ) {
+
+			echo '<img class="oa-pm-logo" src="' . esc_url( $logo ) . '" alt="" decoding="async">';
+
+		}
+
+		if ( $show_text ) {
+
+			echo '<span class="oa-pm-text">' . esc_html( $text ) . '</span>';
+
+		}
+
+		if ( '' !== $tagline ) {
+
+			echo '<span class="oa-pm-tagline">' . esc_html( $tagline ) . '</span>';
+
+		}
+
+		echo '</span>';
+
+	}
+
+	/*
+	TRANSITION CONTENT
+	-- What a covering transition shows in the middle, '' for nothing. The
+	-- style's own choice is the site name for Brand Wipe only
+	---------------------------------------------------------- */
+
+	protected function transition_content( string $transition, array $s ): string {
+
+		$content = (string) $s['transition_content'];
+
+		if ( '' === $content ) {
+
+			$content = 'brand-wipe' === $transition ? 'text' : 'none';
+
+		}
+
+		return 'none' === $content ? '' : $content;
+
+	}
+
+	protected function print_transition_content( string $content, string $text, array $s ): void {
+
+		$logo  = 'logo' === $content ? Octave_Addons_Fields::media_asset_url( $s['loader_logo'] ) : '';
+		$image = 'image' === $content ? Octave_Addons_Fields::media_asset_url( $s['loader_image'] ) : '';
+
+		if ( '' !== $logo ) {
+
+			echo '<img class="oa-pm-logo" src="' . esc_url( $logo ) . '" alt="" decoding="async">';
+
+		} elseif ( '' !== $image ) {
+
+			echo '<img class="oa-pm-image" src="' . esc_url( $image ) . '" alt="" decoding="async">';
+
+		} elseif ( 'spinner' === $content ) {
+
+			echo '<span class="oa-pm-spinner"></span>';
+
+		} else {
+
+			// Text, and the fallback for a logo or image that is not set.
+			echo '<span class="oa-pm-text">' . esc_html( $text ) . '</span>';
+
+		}
 
 	}
 

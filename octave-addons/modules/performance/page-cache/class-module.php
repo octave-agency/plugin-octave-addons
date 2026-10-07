@@ -37,7 +37,7 @@ class Octave_Addons_Module_Performance_Page_Cache extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Stores finished pages as files and serves them to visitors before WordPress loads. Used only when the host or another plugin is not already caching pages.', 'octave-addons' );
+		return __( 'Saves a ready-made copy of each page and shows it to visitors instantly, without building the page each time. Only used when your host or another plugin is not already doing this.', 'octave-addons' );
 
 	}
 
@@ -104,12 +104,12 @@ class Octave_Addons_Module_Performance_Page_Cache extends Octave_Addons_Module {
 				10 => __( '10 hours (recommended)', 'octave-addons' ),
 				24 => __( '24 hours', 'octave-addons' ),
 				72 => __( '3 days', 'octave-addons' ),
-			], __( 'Pages are also cleared whenever content, menus, Breakdance designs or Performance settings change, so this only limits how old a page that nobody edited can get. Forms and other features that use security tokens expire after about 12 hours, so keep this shorter than that on sites that rely on them.', 'octave-addons' ), $s );
+			], __( 'Saved pages are refreshed automatically whenever you change content, menus, designs or settings, so this is only the longest a page nobody edited is kept. Forms can stop working on pages kept for more than about 12 hours, so keep this shorter if your site relies on forms.', 'octave-addons' ), $s );
 
 			?>
 		</table>
 
-		<p class="oa-help"><?php esc_html_e( 'Never cached: logged-in visitors, carts, checkouts and accounts, password-protected pages, previews, searches, URLs with query strings and any response that sets cookies or asks not to be cached. Code can keep a page out with the DONOTCACHEPAGE constant.', 'octave-addons' ); ?></p>
+		<p class="oa-help"><?php esc_html_e( 'Never saved: pages for logged-in people, baskets, checkouts and accounts, password-protected pages, previews and search results. For developers: the DONOTCACHEPAGE constant keeps a page out.', 'octave-addons' ); ?></p>
 
 		<?php
 

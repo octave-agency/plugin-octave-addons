@@ -35,13 +35,13 @@ function test_static_delivery_reports_compression_caching_and_cors(): void {
 	$lines = Octave_Addons_Perf_Diagnostics::static_delivery();
 
 	oa_assert_contains( 'Brotli', $lines[0] );
-	oa_assert_contains( 'cached 365 days', $lines[0] );
+	oa_assert_contains( 'kept by browsers for 365 days', $lines[0] );
 	oa_assert_contains( 'cf-cache-status: HIT', $lines[0] );
-	oa_assert_contains( 'Gzip (no Brotli)', $lines[1] );
-	oa_assert_contains( 'cached only 0 days', $lines[1] );
-	oa_assert_contains( 'no CORS header', $lines[2] );
-	oa_assert_contains( 'no browser caching header', $lines[2] );
-	oa_assert_contains( 'no Imagify next-generation copy', $lines[3] );
+	oa_assert_contains( 'compressed (Gzip)', $lines[1] );
+	oa_assert_contains( 'kept by browsers for only 0 days', $lines[1] );
+	oa_assert_contains( 'fonts not shared with other sites', $lines[2] );
+	oa_assert_contains( 'not kept by browsers between visits', $lines[2] );
+	oa_assert_contains( 'no Imagify copy found', $lines[3] );
 	oa_assert_same( 'br, gzip', $GLOBALS['oa_http_log'][0]['args']['headers']['Accept-Encoding'] );
 	oa_assert_same( false, $GLOBALS['oa_http_log'][0]['args']['decompress'], 'encoding seen as sent' );
 
@@ -54,7 +54,7 @@ function test_static_delivery_names_nginx_instead_of_htaccess(): void {
 	$lines = Octave_Addons_Perf_Diagnostics::static_delivery();
 
 	oa_assert_contains( 'Nginx', end( $lines ) );
-	oa_assert_contains( 'could not be requested', $lines[0], 'transport errors reported, not hidden' );
+	oa_assert_contains( 'could not be opened', $lines[0], 'transport errors reported, not hidden' );
 
 	$_SERVER['SERVER_SOFTWARE'] = 'Apache';
 
@@ -63,7 +63,7 @@ function test_static_delivery_names_nginx_instead_of_htaccess(): void {
 function test_cache_status_reads_headers_and_signatures(): void {
 
 	oa_assert_same( 'x-litespeed-cache: hit', Octave_Addons_Perf_Diagnostics::cache_status( oa_headers( [ 'x-litespeed-cache' => 'hit', 'cf-cache-status' => 'DYNAMIC' ] ) ) );
-	oa_assert_same( 'WP Rocket cached page', Octave_Addons_Perf_Diagnostics::cache_status( oa_headers( [], 200, '<html></html><!-- This website is like a Rocket -->' ) ) );
+	oa_assert_same( 'Saved copy from WP Rocket', Octave_Addons_Perf_Diagnostics::cache_status( oa_headers( [], 200, '<html></html><!-- This website is like a Rocket -->' ) ) );
 	oa_assert_same( '', Octave_Addons_Perf_Diagnostics::cache_status( oa_headers( [] ) ) );
 
 }
@@ -83,7 +83,7 @@ function test_scan_details_cover_timings_assets_lcp_and_ownership(): void {
 	$details = Octave_Addons_Perf_Diagnostics::scan_details( 'https://example.com/about/', $scan, 320.4, oa_headers( [ 'x-cache' => 'MISS' ] ), 85.2 );
 	$text    = wp_json_encode( $details );
 
-	foreach ( [ 'Uncached response (scan): 320 ms', 'x-cache: MISS', 'Media processing: 1.50 ms', 'Total HTML processing: 2.25 ms', 'Inlined CSS: 2048 B', 'Delayed scripts: 1', 'Lazy-loaded media: 2', 'octave-addons-lazy-video', 'breakdance-global', '/f.woff2', 'hero.jpg (JPEG, 2400', 'Larger screens: not reported yet', 'Imagify', 'None: each feature has at most one owner.' ] as $needle ) {
+	foreach ( [ 'Built fresh: 320 ms', 'x-cache: MISS', 'Images and videos: 1.50 ms', 'Total time Octave spent: 2.25 ms', 'Styles placed in the page: 2048 B', 'Scripts held back: 1', 'Loaded as visitors scroll: 2', 'octave-addons-lazy-video', 'breakdance-global', '/f.woff2', 'hero.jpg (JPEG, 2400', 'Larger screens: not reported yet', 'Imagify', 'None: each feature is handled by one plugin.' ] as $needle ) {
 
 		oa_assert_contains( $needle, str_replace( [ '\/', '×' ], [ '/', 'x' ], $text ), $needle );
 

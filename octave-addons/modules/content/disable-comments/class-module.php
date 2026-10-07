@@ -31,7 +31,7 @@ class Octave_Addons_Module_Disable_Comments extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Comprehensively disables comments across the site — comment forms, REST endpoints, admin menus and the admin bar counter.', 'octave-addons' );
+		return __( 'Turns comments off everywhere: comment forms, the comments menu and the comment counter in the toolbar.', 'octave-addons' );
 
 	}
 
@@ -62,11 +62,11 @@ class Octave_Addons_Module_Disable_Comments extends Octave_Addons_Module {
 	public function render_settings( array $s ): void {
 
 		$rows = [
-			'disable_everywhere' => __( 'Remove comment support from all post types (posts, pages, media, CPTs).', 'octave-addons' ),
+			'disable_everywhere' => __( 'Remove comments from all content, including posts, pages and media.', 'octave-addons' ),
 			'disable_rest'       => __( 'Block the comments REST API endpoint.', 'octave-addons' ),
 			'hide_admin_menu'    => __( 'Hide the "Comments" entry in the WordPress admin menu.', 'octave-addons' ),
 			'hide_admin_bar'     => __( 'Hide the comment count icon in the admin bar.', 'octave-addons' ),
-			'close_existing'     => __( 'Force comments and pingbacks closed on every post at query time.', 'octave-addons' ),
+			'close_existing'     => __( 'Close comments on every post, including old ones.', 'octave-addons' ),
 		];
 		?>
 

@@ -141,35 +141,35 @@ class Octave_Addons_Perf_Disk_Cache {
 		if ( '' !== $owner ) {
 
 			/* translators: %s: cache name. */
-			return [ 'code' => 'deferred', 'message' => sprintf( __( 'Not used: %s already caches pages, and two page caches would only get in each other\'s way.', 'octave-addons' ), $owner ) ];
+			return [ 'code' => 'deferred', 'message' => sprintf( __( 'Not in use: %s already saves copies of your pages, and two would get in each other\'s way.', 'octave-addons' ), $owner ) ];
 
 		}
 
 		if ( self::foreign_drop_in() ) {
 
-			return [ 'code' => 'conflict', 'message' => __( 'Not used: wp-content/advanced-cache.php belongs to another plugin, which means another page cache is installed. Remove that plugin\'s cache, or switch this module off.', 'octave-addons' ) ];
+			return [ 'code' => 'conflict', 'message' => __( 'Not in use: another caching plugin is installed. Remove it, or switch this module off.', 'octave-addons' ) ];
 
 		}
 
 		if ( ! wp_mkdir_p( Octave_Addons_Perf_Store::dir( self::DIR ) ) || ! is_writable( Octave_Addons_Perf_Store::dir( self::DIR ) ) ) {
 
-			return [ 'code' => 'unwritable', 'message' => __( 'Not used: wp-content/cache/octave-addons/ is not writable. Make it writable by the web server.', 'octave-addons' ) ];
+			return [ 'code' => 'unwritable', 'message' => __( 'Not in use: Octave cannot save files to wp-content/cache/octave-addons/. Ask your host to make it writable.', 'octave-addons' ) ];
 
 		}
 
 		if ( ! defined( 'WP_CACHE' ) || ! WP_CACHE ) {
 
-			return [ 'code' => 'plugin', 'message' => __( 'Caching. Pages are answered once plugins have loaded. For the fastest answers add define( \'WP_CACHE\', true ); to wp-config.php, above the line that says to stop editing; Octave never edits that file itself.', 'octave-addons' ) ];
+			return [ 'code' => 'plugin', 'message' => __( 'Working. For even faster pages, ask your developer or host to add define( \'WP_CACHE\', true ); to wp-config.php, above the line that says to stop editing. Octave never changes that file itself.', 'octave-addons' ) ];
 
 		}
 
 		if ( ! self::own_drop_in() ) {
 
-			return [ 'code' => 'plugin', 'message' => __( 'Caching. Pages are answered once plugins have loaded, because wp-content/advanced-cache.php could not be written. Make wp-content writable to let Octave answer before WordPress loads.', 'octave-addons' ) ];
+			return [ 'code' => 'plugin', 'message' => __( 'Working. For even faster pages, ask your host to make the wp-content folder writable so Octave can finish setting up.', 'octave-addons' ) ];
 
 		}
 
-		return [ 'code' => 'active', 'message' => __( 'Caching. Pages are answered before WordPress loads.', 'octave-addons' ) ];
+		return [ 'code' => 'active', 'message' => __( 'Working at full speed.', 'octave-addons' ) ];
 
 	}
 

@@ -34,7 +34,7 @@ class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Choose the highlight colour and the text colour used when a visitor selects text on the frontend.', 'octave-addons' );
+		return __( 'Choose the colours visitors see when they highlight text on your site.', 'octave-addons' );
 
 	}
 
@@ -111,14 +111,14 @@ class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 
 				printf(
 					/* translators: %s: sample words rendered with the chosen selection colours. */
-					esc_html__( 'Text a visitor highlights on the frontend looks %s.', 'octave-addons' ),
+					esc_html__( 'Text a visitor highlights on your site looks %s.', 'octave-addons' ),
 					$sample // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
 				);
 
 				?>
 			</p>
 			<span class="oa-help oa-selection-demo-note<?= $unresolved ? '' : ' oa-hidden'; ?>">
-				<?php esc_html_e( 'A chosen Breakdance colour is not set in the site global settings, so it is previewed here with the custom colour instead. The frontend still follows the variable.', 'octave-addons' ); ?>
+				<?php esc_html_e( 'That Breakdance colour is not set in your Breakdance settings, so the preview uses your custom colour. Your site still uses the Breakdance colour once it is set.', 'octave-addons' ); ?>
 			</span>
 		</div>
 
@@ -138,7 +138,7 @@ class Octave_Addons_Module_Text_Selection extends Octave_Addons_Module {
 						<?php $this->render_source_options( $s['background_source'] ); ?>
 						<option value="custom" <?php selected( $s['background_source'], 'custom' ); ?>><?php esc_html_e( 'Custom colour', 'octave-addons' ); ?></option>
 					</select>
-					<span class="oa-help"><?php esc_html_e( 'A Breakdance colour follows its CSS variable, so the highlight changes with the site palette.', 'octave-addons' ); ?></span>
+					<?php if ( Octave_Addons_Builders::breakdance() ) : ?><span class="oa-help"><?php esc_html_e( 'A Breakdance colour updates automatically if you change your site\'s colours.', 'octave-addons' ); ?></span><?php endif; ?>
 					<?php
 
 				},

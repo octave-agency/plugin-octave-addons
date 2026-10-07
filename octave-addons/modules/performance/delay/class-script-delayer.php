@@ -8,7 +8,7 @@ SCRIPT DELAYER
 -- attribute. Every other attribute (async, defer, integrity, crossorigin,
 -- nomodule, referrerpolicy, id) stays where it is for the loader to copy
 -- Only scripts matching a selected service or an administrator's include
--- pattern are delayed. Protected scripts — Breakdance, Octave, WordPress
+-- pattern are delayed. Protected scripts — Breakdance, Divi, Octave, WordPress
 -- core, jQuery, consent, payment, form and CAPTCHA code — are never delayed,
 -- whatever the patterns say. Same-origin files are only delayed when an
 -- administrator includes them by pattern
@@ -33,9 +33,10 @@ class Octave_Addons_Perf_Script_Delayer {
 
 	/** Patterns that are never delayed, matched against src, id and inline code. */
 	protected const PROTECTED = [
-		// Builder, plugin and WordPress core.
+		// Builders, plugin and WordPress core. Divi's scripts and the data it prints inline (et_pb_custom, et_animation_data, et_link_options_data) included.
 		'breakdance', 'octave', '/wp-includes/', '/wp-admin/', 'jquery', 'wp-emoji', 'wp.i18n', 'wp-hooks',
-		// Menus and headers outside Breakdance.
+		'/themes/divi/', '/themes/extra/', 'divi-', 'et_pb', 'et-builder', 'et-core', 'et_builder', 'et-cache', 'et_animation_data', 'et_link_options_data', 'et_frontend', 'et_shortcodes',
+		// Menus and headers outside the builders.
 		'responsive-menu', 'mega-menu', 'navigation.js', 'menu.js',
 		// Consent management.
 		'consent', 'cookiebot', 'onetrust', 'cookielaw', 'cookieyes', 'complianz', 'cmplz', 'iubenda', 'usercentrics', 'termly', 'cookie-law-info', 'borlabs', 'didomi', 'osano', 'quantcast', 'cookie-notice',

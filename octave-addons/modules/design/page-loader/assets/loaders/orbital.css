@@ -4,6 +4,15 @@ ORBITAL SIGNAL LOADER
 -- point in steady orbit. Generated SVG; no asset required.
 ---------------------------------------------------------- */
 
+.oa-loader--orbital .oa-loader__inner {
+    flex-direction: column;
+    gap: 24px;
+}
+
+.oa-loader--orbital .oa-loader__brand {
+    animation: oa-os-in calc(var(--oa-loader-duration, 900ms) * 0.778) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--oa-loader-duration, 900ms) * 0.1) both;
+}
+
 .oa-loader__orbit {
     width: 88px;
     height: 88px;

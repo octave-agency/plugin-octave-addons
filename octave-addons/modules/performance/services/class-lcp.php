@@ -366,21 +366,21 @@ class Octave_Addons_Perf_Lcp {
 		if ( '' !== (string) ( $record['url'] ?? '' ) && ! in_array( $format, [ 'WEBP', 'AVIF', 'SVG+XML' ], true ) ) {
 
 			/* translators: %s: image format. */
-			$warnings[] = sprintf( __( 'Delivered as %s rather than WebP or AVIF.', 'octave-addons' ), $format );
+			$warnings[] = sprintf( __( 'Sent as %s: a modern format (WebP or AVIF) would be smaller.', 'octave-addons' ), $format );
 
 		}
 
 		if ( (int) ( $record['bytes'] ?? 0 ) > self::OVERSIZED_BYTES ) {
 
 			/* translators: %s: file size. */
-			$warnings[] = sprintf( __( 'The image transferred %s; aim for under 200 KB.', 'octave-addons' ), size_format( (int) $record['bytes'] ) );
+			$warnings[] = sprintf( __( 'The image is %s; under 200 KB loads faster.', 'octave-addons' ), size_format( (int) $record['bytes'] ) );
 
 		}
 
 		if ( (int) ( $record['rw'] ?? 0 ) > 0 && (int) ( $record['w'] ?? 0 ) > 2 * (int) $record['rw'] ) {
 
 			/* translators: 1: intrinsic width, 2: rendered width. */
-			$warnings[] = sprintf( __( 'The image is %1$dpx wide but shown at %2$dpx; serve a smaller size.', 'octave-addons' ), (int) $record['w'], (int) $record['rw'] );
+			$warnings[] = sprintf( __( 'The image is %1$dpx wide but only shown %2$dpx wide; a smaller version would load faster.', 'octave-addons' ), (int) $record['w'], (int) $record['rw'] );
 
 		}
 

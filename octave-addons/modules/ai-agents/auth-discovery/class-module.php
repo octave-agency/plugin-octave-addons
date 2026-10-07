@@ -46,7 +46,7 @@ class Octave_Addons_Module_Auth_Discovery extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Publishes /auth.md so agents can discover how to authenticate with the site — what is readable without credentials, how an operator asks for access, and how a credential is sent.', 'octave-addons' );
+		return __( 'Publishes a short guide at /auth.md telling AI assistants what they can read on your site freely, and how to ask for more access.', 'octave-addons' );
 
 	}
 
@@ -409,13 +409,13 @@ class Octave_Addons_Module_Auth_Discovery extends Octave_Addons_Module {
 
 				printf(
 					/* translators: %s: the auth.md URL. */
-					esc_html__( 'Published at %s. Anonymous read access and how a credential is sent are described automatically.', 'octave-addons' ),
+					esc_html__( 'Published at %s. The basics are filled in for you automatically.', 'octave-addons' ),
 					'<code>' . esc_html( home_url( self::AUTH_PATH ) ) . '</code>'
 				);
 
 				?>
 			</li>
-			<li><?php esc_html_e( 'No sign-in URL is ever published, so a site using Custom Login URL keeps its login address private.', 'octave-addons' ); ?></li>
+			<li><?php esc_html_e( 'Your login address is never included, so it stays private.', 'octave-addons' ); ?></li>
 		</ul>
 
 		<table class="form-table oa-form-table" role="presentation">
@@ -432,7 +432,7 @@ class Octave_Addons_Module_Auth_Discovery extends Octave_Addons_Module {
 						'name'        => $this->field_name( 'account_url' ),
 						'value'       => $s['account_url'],
 						'placeholder' => home_url( '/account/' ),
-						'help'        => __( 'Where someone manages an existing account and its credentials — /account, /my-account, whatever this site uses. Leave empty if there is none.', 'octave-addons' ),
+						'help'        => __( 'The page where people manage their account, such as /my-account. Leave empty if your site has none.', 'octave-addons' ),
 					] );
 
 				},
@@ -448,7 +448,7 @@ class Octave_Addons_Module_Auth_Discovery extends Octave_Addons_Module {
 						'name'        => $this->field_name( 'register_url' ),
 						'value'       => $s['register_url'],
 						'placeholder' => home_url( '/register/' ),
-						'help'        => __( 'Where an operator signs up for programmatic access, if that is a different page from the account one.', 'octave-addons' ),
+						'help'        => __( 'The page where someone can apply for access, if that is different from the account page.', 'octave-addons' ),
 					] );
 
 				},
@@ -464,7 +464,7 @@ class Octave_Addons_Module_Auth_Discovery extends Octave_Addons_Module {
 						'name'        => $this->field_name( 'contact_email' ),
 						'value'       => $s['contact_email'],
 						'placeholder' => 'api@example.com',
-						'help'        => __( 'An address an operator can write to. Published in the document, so use one that can take public mail.', 'octave-addons' ),
+						'help'        => __( 'An email address for access requests. It is published, so use one you are happy to share publicly.', 'octave-addons' ),
 					] );
 
 				},

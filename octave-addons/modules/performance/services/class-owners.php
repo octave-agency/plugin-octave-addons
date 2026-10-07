@@ -32,6 +32,7 @@ class Octave_Addons_Perf_Owners {
 		'imagify'     => 'Imagify',
 		'breeze'      => 'Breeze',
 		'cloudways'   => 'Cloudways Varnish',
+		'divi'        => 'Divi',
 		'host'        => '',
 	];
 
@@ -55,14 +56,14 @@ class Octave_Addons_Perf_Owners {
 	public static function labels(): array {
 
 		return [
-			'lazy_images'    => __( 'Image lazy loading', 'octave-addons' ),
-			'lazy_iframes'   => __( 'Iframe lazy loading', 'octave-addons' ),
-			'delay'          => __( 'JavaScript delay', 'octave-addons' ),
-			'minify_js'      => __( 'JavaScript minification', 'octave-addons' ),
-			'minify_css'     => __( 'CSS minification', 'octave-addons' ),
-			'page_cache'     => __( 'Page caching', 'octave-addons' ),
-			'nextgen_images' => __( 'WebP/AVIF delivery', 'octave-addons' ),
-			'google_fonts'   => __( 'Google Fonts self-hosting', 'octave-addons' ),
+			'lazy_images'    => __( 'Images load as visitors scroll', 'octave-addons' ),
+			'lazy_iframes'   => __( 'Embeds load as visitors scroll', 'octave-addons' ),
+			'delay'          => __( 'Holding back scripts', 'octave-addons' ),
+			'minify_js'      => __( 'Smaller script files', 'octave-addons' ),
+			'minify_css'     => __( 'Smaller style files', 'octave-addons' ),
+			'page_cache'     => __( 'Saved copies of pages', 'octave-addons' ),
+			'nextgen_images' => __( 'Modern image formats', 'octave-addons' ),
+			'google_fonts'   => __( 'Google Fonts from your site', 'octave-addons' ),
 		];
 
 	}
@@ -389,6 +390,26 @@ class Octave_Addons_Perf_Owners {
 			'minify_js'    => $basic['breeze-minify-js'] ?? false,
 			'page_cache'   => $basic['breeze-active'] ?? false,
 		];
+
+	}
+
+	/*
+	DIVI
+	-- Divi's "Improve Google Fonts Loading" caches and inlines Google Fonts
+	-- itself. Its other performance options do jobs Octave does not
+	---------------------------------------------------------- */
+
+	protected static function detect_divi(): array {
+
+		if ( ! Octave_Addons_Builders::divi() ) {
+
+			return [];
+
+		}
+
+		$options = self::option( 'et_divi' );
+
+		return [ 'google_fonts' => 'on' === ( $options['divi_google_fonts_inline'] ?? 'off' ) ];
 
 	}
 

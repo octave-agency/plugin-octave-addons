@@ -12,7 +12,8 @@ PERFORMANCE: NEXT-GENERATION IMAGE URLS
 --   <img> src and srcset, video posters (parked ones included), inline
 --   style url()s and image preloads, which also gain a type attribute so a
 --   browser without the format skips the preload
--- Breakdance's stylesheets are served as copies in which every background
+-- The page builder's stylesheets (Breakdance's, and Divi's theme and et-cache
+-- CSS) are served as copies in which every background
 -- image declaration is followed, inside the same rule, by an image-set()
 -- offering the copy with the original as fallback. The cascade is
 -- untouched, and a browser that cannot show the format keeps the original
@@ -31,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Octave_Addons_Perf_Nextgen {
 
-	/** Cache sub-folder for rewritten Breakdance stylesheets. Each copy keeps its original path tail and name, so inlining and bundling treat it exactly like the original, and a full purge clears it with the minified files. */
+	/** Cache sub-folder for rewritten page-builder stylesheets. Each copy keeps its original path tail and name, so inlining and bundling treat it exactly like the original, and a full purge clears it with the minified files. */
 	public const CSS_DIR = Octave_Addons_Perf_Cache::MIN_DIR . '/nextgen';
 
 	/** Image extensions Imagify makes copies of. */
@@ -272,7 +273,7 @@ class Octave_Addons_Perf_Nextgen {
 
 	/*
 	LINK
-	-- Image preloads point at the copy and name its type; Breakdance
+	-- Image preloads point at the copy and name its type; page-builder
 	-- stylesheets are swapped for their rewritten copies
 	---------------------------------------------------------- */
 
@@ -302,7 +303,10 @@ class Octave_Addons_Perf_Nextgen {
 
 		$href = html_entity_decode( (string) $tags->get_attribute( 'href' ) );
 
-		if ( false === strpos( (string) wp_parse_url( $href, PHP_URL_PATH ), '/breakdance/' ) || 0 === strpos( (string) wp_parse_url( $href, PHP_URL_PATH ), (string) wp_parse_url( Octave_Addons_Perf_Store::url( self::CSS_DIR ), PHP_URL_PATH ) ) ) {
+		$path     = (string) wp_parse_url( $href, PHP_URL_PATH );
+		$builders = array_merge( [], ...array_values( Octave_Addons_Builders::css_paths() ) );
+
+		if ( '' === Octave_Addons_Perf::matches_any( $path, $builders ) || 0 === strpos( $path, (string) wp_parse_url( Octave_Addons_Perf_Store::url( self::CSS_DIR ), PHP_URL_PATH ) ) ) {
 
 			return 0;
 
@@ -341,7 +345,7 @@ class Octave_Addons_Perf_Nextgen {
 
 	/*
 	CSS COPY
-	-- URL of a Breakdance stylesheet's rewritten copy, written on first use
+	-- URL of a page-builder stylesheet's rewritten copy, written on first use
 	-- and kept until the source, the format or the cache generation changes.
 	-- '' when nothing in it has a copy, or it cannot be read or written
 	---------------------------------------------------------- */
@@ -358,7 +362,7 @@ class Octave_Addons_Perf_Nextgen {
 
 		$key  = substr( md5( implode( '|', [ $file, filemtime( $file ), filesize( $file ), self::format(), Octave_Addons_Perf_Cache::generation(), OCTAVE_ADDONS_VERSION ] ) ), 0, 12 );
 		$name = sanitize_file_name( basename( $file ) );
-		$sub  = self::CSS_DIR . '/' . $key . '/breakdance/css';
+		$sub  = self::CSS_DIR . '/' . $key . '/' . self::folder( $href );
 		$dir  = Octave_Addons_Perf_Store::dir( $sub );
 		$url  = Octave_Addons_Perf_Store::url( $sub ) . $name;
 
@@ -387,6 +391,30 @@ class Octave_Addons_Perf_Nextgen {
 		}
 
 		return Octave_Addons_Perf_Store::write( $dir . $name, $css ) ? $url : '';
+
+	}
+
+	/*
+	FOLDER
+	-- The stylesheet's folder below wp-content, e.g. uploads/breakdance/css
+	-- or et-cache/42, kept in the copy's path so path-based rules (bundling,
+	-- Breakdance's per-page inlining) treat the copy like the original
+	---------------------------------------------------------- */
+
+	protected static function folder( string $href ): string {
+
+		$path    = (string) dirname( (string) wp_parse_url( $href, PHP_URL_PATH ) );
+		$content = untrailingslashit( (string) wp_parse_url( content_url(), PHP_URL_PATH ) );
+
+		if ( '' !== $content && 0 === strpos( $path, $content . '/' ) ) {
+
+			$path = substr( $path, strlen( $content ) );
+
+		}
+
+		$folder = trim( (string) preg_replace( '#[^A-Za-z0-9/_.-]+|\.\.+#', '', $path ), '/' );
+
+		return '' !== $folder ? $folder : 'css';
 
 	}
 

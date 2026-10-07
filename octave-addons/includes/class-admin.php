@@ -305,15 +305,15 @@ class Octave_Addons_Admin {
 			'replaceImageText'    => __( 'Replace image', 'octave-addons' ),
 			'previewCustomLoader'     => __( 'Custom only: styled by your Loader CSS.', 'octave-addons' ),
 			'previewCustomTransition' => __( 'Custom only: styled by your Transition CSS.', 'octave-addons' ),
-			'previewCustomScroll'     => __( 'Custom only: animated by your CSS and JavaScript overrides.', 'octave-addons' ),
+			'previewCustomScroll'     => __( 'Custom only: animated by your own code.', 'octave-addons' ),
 			'previewOff'              => __( 'Off: content is shown with no animation.', 'octave-addons' ),
-			'previewReduced'          => __( 'Reduced motion is on, so the final frame is shown.', 'octave-addons' ),
+			'previewReduced'          => __( 'Your device is set to reduce motion, so the preview shows the end result.', 'octave-addons' ),
 			'searchOptionsText'   => __( 'Search options…', 'octave-addons' ),
 			'confirmTitleText'    => __( 'Please confirm', 'octave-addons' ),
 			'confirmActionText'   => __( 'Confirm', 'octave-addons' ),
 			'cancelActionText'    => __( 'Cancel', 'octave-addons' ),
 			'removePostTypeTitle' => __( 'Remove custom post type?', 'octave-addons' ),
-			'removePostTypeText'  => __( 'Remove this custom post type? Existing content will remain in the database but will be hidden until its post type is registered again.', 'octave-addons' ),
+			'removePostTypeText'  => __( 'Remove this post type? Its content is kept, but hidden until you add the post type back.', 'octave-addons' ),
 			'removeActionText'    => __( 'Remove post type', 'octave-addons' ),
 			'postTypeMovedText'   => __( 'Post type order updated.', 'octave-addons' ),
 			'taxonomyMovedText'   => __( 'Category order updated for this post type.', 'octave-addons' ),
@@ -322,7 +322,7 @@ class Octave_Addons_Admin {
 			'renameKeyTitle'         => __( 'Edit this key?', 'octave-addons' ),
 			'renameKeyAction'        => __( 'Edit key', 'octave-addons' ),
 			'removeDefinitionTitle'  => __( 'Remove definition?', 'octave-addons' ),
-			'removeDefinitionText'   => __( 'Saved content values and terms will remain in the database, but this definition will no longer be registered.', 'octave-addons' ),
+			'removeDefinitionText'   => __( 'Anything already saved is kept, but this will no longer appear in the admin.', 'octave-addons' ),
 			'removeDefinitionAction' => __( 'Remove', 'octave-addons' ),
 			'moduleEnabledText'      => __( 'Module enabled. Save settings to apply it.', 'octave-addons' ),
 			'moduleDisabledText'     => __( 'Module disabled. Save settings to apply it.', 'octave-addons' ),
@@ -677,33 +677,27 @@ class Octave_Addons_Admin {
 		$groups = [
 			'ai-agents' => [
 				'title'       => __( 'AI Agents', 'octave-addons' ),
-				'description' => __( 'What an AI agent gets when it asks the site for a page. These add-ons hand agents clean, structured text instead of leaving them to scrape a dense builder layout, while every browser carries on receiving the normal HTML.', 'octave-addons' ),
-				'requires'    => '',
+				'description' => __( 'Helps AI assistants understand your site by giving them clean, simple text versions of your pages. Visitors see your site exactly as before.', 'octave-addons' ),
 			],
 			'breakdance' => [
 				'title'       => __( 'Breakdance', 'octave-addons' ),
-				'description' => __( 'Everything that plugs into the Breakdance builder — AJAX filtering for post loops, default element spacing, and the custom element library.', 'octave-addons' ),
-				'requires'    => 'breakdance',
+				'description' => __( 'Extras for the Breakdance builder: filtering for post lists, default spacing, and the custom element library.', 'octave-addons' ),
 			],
 			'content' => [
 				'title'       => __( 'Content', 'octave-addons' ),
-				'description' => __( 'How content is structured and managed — custom post types and fields, comments, and spotting empty links.', 'octave-addons' ),
-				'requires'    => '',
+				'description' => __( 'How your content is organised and managed: custom post types and fields, comments, and spotting broken links.', 'octave-addons' ),
 			],
 			'design' => [
 				'title'       => __( 'Design', 'octave-addons' ),
-				'description' => __( 'How the site and the WordPress admin look — the admin refresh, the login screen, page loading and scroll animations, and the colours a visitor sees when they select text.', 'octave-addons' ),
-				'requires'    => '',
+				'description' => __( 'How your site and admin look: the admin design, login page, page loader and transitions, scroll animations and text highlight colours.', 'octave-addons' ),
 			],
 			'engagement' => [
 				'title'       => __( 'Engagement', 'octave-addons' ),
-				'description' => __( 'Ways to reach visitors on the page — a notifications bar across the site and a contact popup on mobile.', 'octave-addons' ),
-				'requires'    => '',
+				'description' => __( 'Ways to reach visitors: an announcement bar across your site and a contact bar on phones.', 'octave-addons' ),
 			],
 			'performance' => [
 				'title'       => __( 'Performance', 'octave-addons' ),
-				'description' => __( 'Compatibility-first speed tools. Every feature switches on independently, Breakdance and WordPress core assets are never delayed or rewritten, and anything that cannot be processed safely is served exactly as it was.', 'octave-addons' ),
-				'requires'    => '',
+				'description' => __( 'Makes your site faster without breaking it. Switch on each feature separately; anything Octave cannot change safely is left exactly as it was.', 'octave-addons' ),
 			],
 		];
 
@@ -716,14 +710,13 @@ class Octave_Addons_Admin {
 		return [
 			'title'       => ucwords( str_replace( '-', ' ', $group ) ),
 			'description' => '',
-			'requires'    => '',
 		];
 
 	}
 
 	/*
 	ENTRY META
-	-- Title, description, icon and lock state for one navigation entry,
+	-- Title, description and icon for one navigation entry,
 	-- whether it is a single module or a group of them.
 	---------------------------------------------------------- */
 
@@ -739,7 +732,6 @@ class Octave_Addons_Admin {
 				'title'       => $module->get_title(),
 				'description' => $module->get_description(),
 				'icon'        => $this->module_icon( $entry['id'] ),
-				'locked'      => false,
 			];
 
 		}
@@ -750,7 +742,6 @@ class Octave_Addons_Admin {
 			'title'       => $config['title'],
 			'description' => $config['description'],
 			'icon'        => $this->module_icon( $entry['id'] ),
-			'locked'      => 'breakdance' === $config['requires'] && ! Octave_Addons::is_breakdance_active(),
 		];
 
 	}
@@ -1147,7 +1138,7 @@ class Octave_Addons_Admin {
 					?>
 
 						<div class="notice notice-warning inline">
-							<p><?php esc_html_e( 'No modules found. Drop a folder into /modules/ with a class-module.php file to add one.', 'octave-addons' ); ?></p>
+							<p><?php esc_html_e( 'No add-ons found.', 'octave-addons' ); ?></p>
 						</div>
 
 					<?php
@@ -1205,7 +1196,7 @@ class Octave_Addons_Admin {
 					?>
 
 						<div class="notice notice-warning inline">
-							<p><?php esc_html_e( 'No modules found. Drop a folder into /modules/ with a class-module.php file to add one.', 'octave-addons' ); ?></p>
+							<p><?php esc_html_e( 'No add-ons found.', 'octave-addons' ); ?></p>
 						</div>
 
 					<?php
@@ -1266,19 +1257,6 @@ class Octave_Addons_Admin {
 							 */
 							do_action( 'octave_addons_render_entry_intro', $entry_id, $entry );
 
-							if ( $meta['locked'] ) :
-
-							?>
-
-							<div class="notice notice-error inline oa-inline-notice">
-								<p><strong><?php esc_html_e( 'Breakdance is not installed or active.', 'octave-addons' ); ?></strong></p>
-								<p><?php esc_html_e( 'These settings are locked and nothing on this page runs until Breakdance is available. Saved values are kept exactly as they are.', 'octave-addons' ); ?></p>
-							</div>
-
-							<?php
-
-							endif;
-
 							foreach ( $rendered as $id => $module ) :
 
 								$settings      = $module_settings[ $id ];
@@ -1314,7 +1292,7 @@ class Octave_Addons_Admin {
 									</div>
 								</div>
 
-								<div class="oa-settings-body<?= $show_settings ? '' : ' oa-hidden'; ?><?= $meta['locked'] ? ' oa-locked' : ''; ?>"<?= $meta['locked'] ? ' inert' : ''; ?>>
+								<div class="oa-settings-body<?= $show_settings ? '' : ' oa-hidden'; ?>">
 									<?php $module->render_settings( $settings ); ?>
 								</div>
 

@@ -251,11 +251,14 @@ class Octave_Addons_Perf_Google_Fonts {
 	-- unoptimised and past any page cache, and returns the Google Fonts
 	-- stylesheets found. Stylesheets used to be found only as uncached pages
 	-- were rendered, which a page cache can prevent indefinitely
+	-- Returns null when no page could be loaded, so callers can tell a failed
+	-- check apart from a site that uses no Google Fonts
 	---------------------------------------------------------- */
 
-	public static function discover( array $urls = [] ): array {
+	public static function discover( array $urls = [] ): ?array {
 
-		$found = [];
+		$found   = [];
+		$reached = false;
 
 		foreach ( $urls ?: [ home_url( '/' ) ] as $url ) {
 
@@ -274,6 +277,8 @@ class Octave_Addons_Perf_Google_Fonts {
 
 			}
 
+			$reached = true;
+
 			foreach ( self::sources_in( (string) wp_remote_retrieve_body( $response ) ) as $source ) {
 
 				$found[ $source ] = true;
@@ -284,7 +289,7 @@ class Octave_Addons_Perf_Google_Fonts {
 
 		set_transient( self::DISCOVERED_FLAG, time(), DAY_IN_SECONDS );
 
-		return array_keys( $found );
+		return $reached ? array_keys( $found ) : null;
 
 	}
 
@@ -298,7 +303,7 @@ class Octave_Addons_Perf_Google_Fonts {
 
 		$manifest = self::manifest();
 
-		foreach ( self::discover() as $source ) {
+		foreach ( self::discover() ?? [] as $source ) {
 
 			if ( empty( $manifest[ self::key( $source ) ]['folder'] ) ) {
 
@@ -398,14 +403,28 @@ class Octave_Addons_Perf_Google_Fonts {
 	/*
 	REFRESH
 	-- Re-downloads every known stylesheet, or only those older than $max_age
+	-- A manual refresh ($max_age 0) starts fresh from what the home page uses
+	-- now and drops every other copy; pages elsewhere that still use one queue
+	-- it again on their next view
 	---------------------------------------------------------- */
 
 	public static function refresh( int $max_age = 0 ): array {
 
-		$results = [];
-		$sources = [];
+		$results    = [];
+		$discovered = 0 === $max_age ? self::discover() : null;
+		$sources    = $discovered ?? [];
 
-		foreach ( self::manifest() as $entry ) {
+		// A failed check falls back to refreshing what is cached rather than
+		// wiping it.
+		if ( null !== $discovered ) {
+
+			delete_option( self::QUEUE_OPTION );
+
+			self::prune( $discovered );
+
+		}
+
+		foreach ( null === $discovered ? self::manifest() : [] as $entry ) {
 
 			if ( $max_age > 0 && ( time() - (int) ( $entry['fetched'] ?? 0 ) ) < $max_age ) {
 
@@ -417,18 +436,6 @@ class Octave_Addons_Perf_Google_Fonts {
 
 		}
 
-		$queue = get_option( self::QUEUE_OPTION, [] );
-
-		// A manual refresh also looks at the site itself, so stylesheets are
-		// found even when no uncached page view has reported them.
-		if ( 0 === $max_age ) {
-
-			$sources = array_merge( $sources, is_array( $queue ) ? $queue : [], self::discover() );
-
-			delete_option( self::QUEUE_OPTION );
-
-		}
-
 		foreach ( array_unique( array_filter( $sources ) ) as $source ) {
 
 			$results[ $source ] = self::fetch( $source );
@@ -436,6 +443,35 @@ class Octave_Addons_Perf_Google_Fonts {
 		}
 
 		return $results;
+
+	}
+
+	/*
+	PRUNE
+	-- Deletes every cached stylesheet whose source is not in $keep
+	---------------------------------------------------------- */
+
+	protected static function prune( array $keep ): void {
+
+		$manifest = self::manifest();
+		$keep     = array_flip( array_map( [ self::class, 'key' ], $keep ) );
+		$removed  = array_diff_key( $manifest, $keep );
+
+		if ( empty( $removed ) ) {
+
+			return;
+
+		}
+
+		foreach ( $removed as $key => $entry ) {
+
+			Octave_Addons_Perf_Store::delete( self::DIR . '/' . $key );
+
+		}
+
+		update_option( self::MANIFEST_OPTION, array_diff_key( $manifest, $removed ), false );
+
+		do_action( 'octave_addons_perf_fonts_changed', '' );
 
 	}
 
@@ -451,7 +487,7 @@ class Octave_Addons_Perf_Google_Fonts {
 
 		if ( ! self::is_stylesheet_url( $source ) ) {
 
-			return self::fail( $key, $source, __( 'Not a Google Fonts stylesheet URL.', 'octave-addons' ) );
+			return self::fail( $key, $source, __( 'That is not a Google Fonts address.', 'octave-addons' ) );
 
 		}
 
@@ -469,7 +505,7 @@ class Octave_Addons_Perf_Google_Fonts {
 
 		if ( empty( $urls ) || count( $urls ) > self::MAX_FILES ) {
 
-			return self::fail( $key, $source, __( 'The stylesheet did not contain a usable list of font files.', 'octave-addons' ) );
+			return self::fail( $key, $source, __( 'Google did not send a usable list of fonts.', 'octave-addons' ) );
 
 		}
 
@@ -481,7 +517,7 @@ class Octave_Addons_Perf_Google_Fonts {
 
 			if ( ! self::is_font_file_url( $url ) ) {
 
-				return self::fail( $key, $source, __( 'The stylesheet referenced a file outside fonts.gstatic.com, so it was not cached.', 'octave-addons' ) );
+				return self::fail( $key, $source, __( 'Google pointed to a font somewhere unexpected, so it was not copied.', 'octave-addons' ) );
 
 			}
 
@@ -518,7 +554,7 @@ class Octave_Addons_Perf_Google_Fonts {
 
 				self::remove_files( $dir, array_diff( array_keys( $map ), $previous ) );
 
-				return self::fail( $key, $source, __( 'A font file could not be written to the cache folder.', 'octave-addons' ) );
+				return self::fail( $key, $source, __( 'A font could not be saved to your site. Ask your host to make wp-content/cache writable.', 'octave-addons' ) );
 
 			}
 
@@ -531,7 +567,7 @@ class Octave_Addons_Perf_Google_Fonts {
 
 			self::remove_files( $dir, array_diff( array_values( $map ), $previous ) );
 
-			return self::fail( $key, $source, __( 'The stylesheet could not be written to the cache folder.', 'octave-addons' ) );
+			return self::fail( $key, $source, __( 'The font list could not be saved to your site. Ask your host to make wp-content/cache writable.', 'octave-addons' ) );
 
 		}
 
@@ -553,7 +589,7 @@ class Octave_Addons_Perf_Google_Fonts {
 
 		return [ 'ok' => true, 'message' => sprintf(
 			/* translators: %d: number of font files. */
-			_n( 'Cached %d font file.', 'Cached %d font files.', count( $files ), 'octave-addons' ),
+			_n( 'Copied %d font file.', 'Copied %d font files.', count( $files ), 'octave-addons' ),
 			count( $files )
 		) ];
 
@@ -760,20 +796,20 @@ class Octave_Addons_Perf_Google_Fonts {
 		if ( 200 !== $code ) {
 
 			/* translators: 1: HTTP status code, 2: URL. */
-			return new WP_Error( 'oa_font_http', sprintf( __( 'Google returned HTTP %1$d for %2$s.', 'octave-addons' ), $code, $url ) );
+			return new WP_Error( 'oa_font_http', sprintf( __( 'Google reported a problem (error %1$d) for %2$s.', 'octave-addons' ), $code, $url ) );
 
 		}
 
 		if ( '' === Octave_Addons_Perf::matches_any( $type, $types ) ) {
 
 			/* translators: %s: content type. */
-			return new WP_Error( 'oa_font_type', sprintf( __( 'Unexpected content type "%s".', 'octave-addons' ), $type ) );
+			return new WP_Error( 'oa_font_type', sprintf( __( 'Google sent something unexpected (%s).', 'octave-addons' ), $type ) );
 
 		}
 
 		if ( '' === $body || strlen( $body ) > $max_bytes ) {
 
-			return new WP_Error( 'oa_font_size', __( 'The response was empty or larger than allowed.', 'octave-addons' ) );
+			return new WP_Error( 'oa_font_size', __( 'Google sent nothing, or far more than expected.', 'octave-addons' ) );
 
 		}
 

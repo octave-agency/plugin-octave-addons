@@ -4,7 +4,7 @@
  * Plugin Name:       Octave Addons
  * Plugin URI:        https://www.octaveagency.com/
  * Description:       A modular collection of Octave site add-ons.
- * Version:           3.37.0
+ * Version:           3.39.1
  * Author:            Octave Agency
  * Author URI:        https://octaveagency.com
  * License:           GPL-2.0+
@@ -47,6 +47,7 @@ unset( $octave_addons_plugin_data );
 // -------------------------------------------------------------------------
 
 require_once OCTAVE_ADDONS_DIR . 'includes/class-icons.php';
+require_once OCTAVE_ADDONS_DIR . 'includes/class-builders.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-module.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-module-manager.php';
 require_once OCTAVE_ADDONS_DIR . 'includes/class-admin-experience.php';

@@ -83,6 +83,13 @@ class Octave_Addons_Colors {
 
 	public static function render_options( string $selected, array $only = [] ): void {
 
+		// Without Breakdance its variables do not exist, so only the caller's own options remain.
+		if ( ! Octave_Addons_Builders::breakdance() ) {
+
+			return;
+
+		}
+
 		foreach ( self::sources() as $key => $source ) {
 
 			if ( $only && ! in_array( $key, $only, true ) ) {
@@ -113,7 +120,8 @@ class Octave_Addons_Colors {
 	/*
 	RESOLVE
 	-- Turns a source and its saved hex into the value written to CSS. A
-	-- Breakdance source stays a variable so it keeps tracking the site palette
+	-- Breakdance source stays a variable so it keeps tracking the site palette,
+	-- with the saved hex as its fallback; without Breakdance it is that hex
 	---------------------------------------------------------- */
 
 	public static function resolve( string $source, string $color ): string {
@@ -122,7 +130,16 @@ class Octave_Addons_Colors {
 
 		if ( isset( $sources[ $source ] ) ) {
 
-			return 'var(' . $sources[ $source ]['variable'] . ')';
+			$hex = sanitize_hex_color( $color ) ?: '';
+
+			// Saved while Breakdance was active: without it the saved colour, or the variable's own fallback, stands in.
+			if ( ! Octave_Addons_Builders::breakdance() ) {
+
+				return '' !== $hex ? $hex : (string) $sources[ $source ]['fallback'];
+
+			}
+
+			return 'var(' . $sources[ $source ]['variable'] . ( '' !== $hex ? ', ' . $hex : '' ) . ')';
 
 		}
 
@@ -145,6 +162,13 @@ class Octave_Addons_Colors {
 	---------------------------------------------------------- */
 
 	public static function resolved_values(): array {
+
+		// Without Breakdance there is no palette to read; previews use the saved colours.
+		if ( ! Octave_Addons_Builders::breakdance() ) {
+
+			return [];
+
+		}
 
 		$settings = function_exists( 'Breakdance\\Data\\get_global_settings_array' )
 			? \Breakdance\Data\get_global_settings_array()['settings'] ?? []

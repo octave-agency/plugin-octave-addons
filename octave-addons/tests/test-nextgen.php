@@ -189,6 +189,22 @@ function test_the_delivery_test_checks_the_copy_itself_for_octave_delivery(): vo
 
 	oa_assert( $result['ok'], $result['message'] );
 	oa_assert_contains( '/photo.jpg.avif?oa_nextgen_test=', $GLOBALS['oa_http_log'][0]['url'], 'the copy, not the original URL' );
-	oa_assert_contains( 'no server rules or picture tags', $result['message'] );
+	oa_assert_contains( 'no server rules are needed', $result['message'] );
+
+}
+
+function test_divi_backgrounds_get_next_generation_copies(): void {
+
+	oa_nextgen();
+	oa_builders( [ 'divi' ] );
+
+	$link = oa_divi_css( '15/et-core-unified-15.min.css', '.et_pb_section_0{background-image:url(' . oa_nextgen_url( 'hero.jpg' ) . ')}' );
+	$html = Octave_Addons_Perf_Nextgen::transform( '<!doctype html><html><head><link rel="stylesheet" href="' . $link . '"></head><body></body></html>' );
+
+	preg_match( '#href="([^"]+)"#', $html, $match );
+
+	oa_assert_contains( '/min/nextgen/', $match[1] );
+	oa_assert_contains( '/et-cache/15/et-core-unified-15.min.css', $match[1], 'folder and name kept' );
+	oa_assert_contains( 'image-set(url("' . oa_nextgen_url( 'hero.jpg' ) . '.avif") type("image/avif")', (string) file_get_contents( Octave_Addons_Perf_Admin::local_path( $match[1] ) ) );
 
 }

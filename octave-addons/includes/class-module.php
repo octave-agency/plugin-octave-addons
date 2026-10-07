@@ -81,6 +81,20 @@ abstract class Octave_Addons_Module {
 
 	}
 
+	/*
+	GET REQUIRES
+	-- The page builders this module is for, any one of which must be active
+	-- for it to appear or run, e.g. [ 'breakdance' ] or [ 'breakdance',
+	-- 'divi' ]. [] needs none. null, the default, follows the area it sits
+	-- in: modules in the breakdance/ area need Breakdance
+	---------------------------------------------------------- */
+
+	public function get_requires(): ?array {
+
+		return null;
+
+	}
+
 	/**
 	 * Whether this module should run regardless of saved toggle state.
 	 */
@@ -164,7 +178,8 @@ abstract class Octave_Addons_Module {
 	/*
 	IS BUILDER REQUEST
 	-- Detects Breakdance builder canvases, server-side renders and the block
-	-- editor iframe without disabling frontend features across all of wp-admin
+	-- editor iframe, and Divi's Visual Builder, backend builder, previews and
+	-- admin screens, without disabling frontend features across all of wp-admin
 	---------------------------------------------------------- */
 
 	public static function is_builder_request(): bool {
@@ -191,7 +206,7 @@ abstract class Octave_Addons_Module {
 
 		}
 
-		return false;
+		return class_exists( 'Octave_Addons_Builders' ) && Octave_Addons_Builders::is_divi_builder_request();
 
 	}
 

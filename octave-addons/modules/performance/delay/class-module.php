@@ -42,7 +42,7 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Loads the analytics, pixels and widgets you select after the first scroll, tap, click or key press instead of during page load.', 'octave-addons' );
+		return __( 'Holds back analytics, tracking pixels and chat widgets until a visitor first scrolls, taps, clicks or types, so the page itself appears sooner.', 'octave-addons' );
 
 	}
 
@@ -160,7 +160,7 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 				printf(
 					/* translators: %s: plugin name. */
-					esc_html__( '%s is already delaying JavaScript, so Octave leaves scripts alone to avoid delaying them twice.', 'octave-addons' ),
+					esc_html__( '%s already holds back scripts, so Octave leaves them to it.', 'octave-addons' ),
 					esc_html( $owner )
 				);
 
@@ -174,12 +174,12 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 		?>
 
-		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Delayed tools start after the visitor first scrolls, taps, clicks or presses a key. Analytics may record fewer visits from people who leave without interacting.', 'octave-addons' ); ?></p>
+		<p class="oa-help oa-help--intro"><?php esc_html_e( 'The tools you tick start as soon as a visitor scrolls, taps, clicks or types. Analytics may count slightly fewer visits from people who leave without doing any of those.', 'octave-addons' ); ?></p>
 
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Services to delay', 'octave-addons' ), 'first' => true ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Tools to hold back', 'octave-addons' ), 'first' => true ] );
 
 			foreach ( $categories as $category => $category_label ) {
 
@@ -224,7 +224,7 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 						?>
 
-						<span class="oa-help"><?php esc_html_e( 'Test maps and every form after enabling these. CAPTCHA scripts are otherwise never delayed, and a form plugin that expects its CAPTCHA immediately may need it excluded.', 'octave-addons' ); ?></span>
+						<span class="oa-help"><?php esc_html_e( 'After turning these on, check your maps and every form still work. Spam checks (CAPTCHA) are never held back unless you tick them here, and some form plugins need theirs straight away.', 'octave-addons' ); ?></span>
 
 						<?php
 
@@ -237,8 +237,8 @@ class Octave_Addons_Module_Performance_Delay extends Octave_Addons_Module {
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Fine-tuning', 'octave-addons' ) ] );
 
-			$this->textarea_row( 'include', __( 'Also delay', 'octave-addons' ), __( 'Advanced. One pattern per line, matched against script URLs, ids and inline code. This is the only way a script from your own domain is delayed. Protected scripts are never delayed.', 'octave-addons' ), $s );
-			$this->textarea_row( 'exclude', __( 'Never delay', 'octave-addons' ), __( 'One pattern per line. A script can also opt out with the data-oa-no-delay attribute.', 'octave-addons' ), $s );
+			$this->textarea_row( 'include', __( 'Also delay', 'octave-addons' ), __( 'For developers. Also holds back any script whose address or code contains one of these words, one per line. This is the only way to hold back a script from your own site. Scripts your site needs to work are never held back.', 'octave-addons' ), $s );
+			$this->textarea_row( 'exclude', __( 'Never delay', 'octave-addons' ), __( 'Scripts whose address or code contains one of these words always load straight away, one per line. Tip: a script with the data-oa-no-delay attribute is never held back.', 'octave-addons' ), $s );
 
 			?>
 		</table>

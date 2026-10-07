@@ -74,10 +74,63 @@ LOADER SURFACE
 }
 
 .oa-loader__brand {
-    font-size: clamp(18px, 2.4vw, 30px);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45em;
+    font-size: calc(clamp(18px, 2.4vw, 30px) * var(--oa-pm-text-scale, 1));
     font-weight: 500;
     line-height: 1.1;
     letter-spacing: -0.01em;
+    text-align: center;
+}
+
+/*
+BRAND CONTENT
+-- The logo, tagline, image and spinner a loader or transition can show,
+-- all sized from the shared text size
+---------------------------------------------------------- */
+
+.oa-pm-logo {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: min(calc(220px * var(--oa-pm-text-scale, 1)), 60vw);
+    max-height: calc(72px * var(--oa-pm-text-scale, 1));
+}
+
+.oa-pm-tagline {
+    font-size: 0.5em;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    opacity: 0.72;
+}
+
+.oa-pm-image {
+    display: block;
+    width: min(calc(320px * var(--oa-pm-text-scale, 1)), 60vw);
+    max-height: 40vh;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.oa-pm-spinner {
+    display: block;
+    width: calc(34px * var(--oa-pm-text-scale, 1));
+    height: calc(34px * var(--oa-pm-text-scale, 1));
+    border: 2px solid currentColor;
+    border-top-color: var(--oa-pm-accent);
+    border-radius: 50%;
+    opacity: 0.85;
+    animation: oa-pm-spin 0.8s linear infinite;
+}
+
+@keyframes oa-pm-spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
 }
 
 html.oa-loader-exit .oa-loader::before,
@@ -103,6 +156,52 @@ TRANSITION SURFACE
 
 .oa-transition__layer--b {
     display: none;
+}
+
+/*
+TRANSITION CONTENT
+-- Brand text, logo, image or spinner in the middle of a covering
+-- transition: it rises in once the page is covered and fades as the new
+-- page is revealed
+---------------------------------------------------------- */
+
+.oa-transition__content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 3;
+    font-size: calc(clamp(18px, 2.4vw, 30px) * var(--oa-pm-text-scale, 1));
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+}
+
+html.oa-transition-out .oa-transition__content {
+    animation: oa-pm-content-in calc(var(--oa-transition-duration, 600ms) * 0.6) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--oa-transition-duration, 600ms) * 0.35) both;
+}
+
+html.oa-transition-in .oa-transition__content {
+    opacity: 1;
+}
+
+html.oa-transition-reveal .oa-transition__content {
+    animation: oa-pm-fade-out calc(var(--oa-transition-duration, 600ms) * 0.333) ease-out both;
+}
+
+@keyframes oa-pm-content-in {
+
+    from {
+        opacity: 0;
+        transform: translate(-50%, -30%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+
 }
 
 /*

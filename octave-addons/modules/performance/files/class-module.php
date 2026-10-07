@@ -13,15 +13,18 @@ PERFORMANCE: FILE OPTIMIZATION
 -- cannot be minified safely is logged once a day and served as it is
 -- Copies are created by the cache warmer, cron or a diagnostics scan rather
 -- than during a visitor's page view, which is served the original meanwhile
--- Breakdance assets, already-minified files, files with an integrity hash
--- and anything dynamic (extra query arguments) are never minified
+-- Page-builder assets (Breakdance's, and Divi's generated et-cache files),
+-- already-minified files, files with an integrity hash and anything dynamic
+-- (extra query arguments) are never minified
 -- Inlining moves a small stylesheet's contents into the page in place of
 -- its <link>, Breakdance's per-page files included, without changing order
--- Breakdance CSS delivery replaces each unbroken run of Breakdance and
--- Octave stylesheets in the <head> (normalize, dependencies, fonts,
--- globals, presets, selectors and each post-ID.css) with one bundle of the
--- same CSS in the same order, inlined when small enough or else served as
--- one cached file, so first paint waits on one request instead of fifteen.
+-- Page-builder CSS delivery replaces each unbroken run of builder and
+-- Octave stylesheets in the <head> (for Breakdance: normalize, dependencies,
+-- fonts, globals, presets, selectors and each post-ID.css; for Divi: the
+-- theme stylesheet and its et-cache files) with one bundle of the same CSS
+-- in the same order, inlined when small enough or else served as one
+-- cached file, so first paint waits on one request instead of fifteen.
+-- It is offered only while Breakdance or Divi is active.
 -- Nothing is removed or loaded late: unused-CSS deletion and asynchronous
 -- loading are deliberately not done, as dynamic states and the header,
 -- navigation and hero must all be styled at first paint
@@ -43,7 +46,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 	protected const MAX_BYTES = 400 * KB_IN_BYTES;
 
 	/** URL fragments that are never minified or deferred. */
-	protected const ALWAYS_EXCLUDED = [ 'breakdance', '/cache/octave-addons/', '.min.', '-min.', '/wp-includes/', '/wp-admin/' ];
+	protected const ALWAYS_EXCLUDED = [ 'breakdance', '/et-cache/', '/cache/octave-addons/', '.min.', '-min.', '/wp-includes/', '/wp-admin/' ];
 
 	/** Inline size limits offered, in KB; 0 turns inlining off. */
 	public const INLINE_SIZES = [ 4, 8, 16 ];
@@ -57,8 +60,8 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 	/** Stylesheets shared by many pages, which are never inlined. */
 	protected const SHARED_PATTERNS = [ '/wp-content/plugins/', '/wp-includes/' ];
 
-	/** Stylesheets bundled by Breakdance CSS delivery, matched on the URL path. */
-	protected const BUNDLE_PATTERNS = [ '/breakdance/', '/octave-addons/' ];
+	/** Stylesheets bundled besides the active builders' own (Octave_Addons_Builders::css_paths()), matched on the URL path. */
+	protected const BUNDLE_PATTERNS = [ '/octave-addons/' ];
 
 	/** A bundle up to this size is inlined into the page; larger ones are linked as one file. */
 	public const BUNDLE_INLINE_MAX = 96 * KB_IN_BYTES;
@@ -85,7 +88,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Per-file minification of local CSS and JavaScript, Breakdance CSS delivered as one ordered bundle, and deferral of scripts you choose.', 'octave-addons' );
+		return __( 'Makes your site\'s style and script files smaller, and combines page-builder styles so pages appear sooner.', 'octave-addons' );
 
 	}
 
@@ -160,7 +163,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 		}
 
 		// After the font rewrite (40) and before inlining (50), so the bundle holds the final links.
-		if ( ! empty( $s['breakdance_css'] ) ) {
+		if ( ! empty( $s['breakdance_css'] ) && ! empty( Octave_Addons_Builders::css_paths() ) ) {
 
 			Octave_Addons_Perf_Html::register( 'files-bundle', [ $this, 'bundle_styles' ], 45 );
 
@@ -471,11 +474,11 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 		$path = (string) wp_parse_url( $href, PHP_URL_PATH );
 
 		/**
-		 * Filters the URL path fragments of stylesheets Breakdance CSS delivery bundles.
+		 * Filters the URL path fragments of stylesheets page-builder CSS delivery bundles.
 		 *
 		 * @param string[] $patterns Case-insensitive substrings.
 		 */
-		$patterns = (array) apply_filters( 'octave_addons_perf_bundle_patterns', self::BUNDLE_PATTERNS );
+		$patterns = (array) apply_filters( 'octave_addons_perf_bundle_patterns', array_merge( array_merge( [], ...array_values( Octave_Addons_Builders::css_paths() ) ), self::BUNDLE_PATTERNS ) );
 
 		if ( [ 'stylesheet' ] !== $rel || ! Octave_Addons_Perf::is_same_origin( $href ) || '' === Octave_Addons_Perf::matches_any( $path, $patterns ) || '' !== $this->bundle_exclusion( (string) $tags->get_attribute( 'id' ), $href ) ) {
 
@@ -509,7 +512,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 	public function bundle_exclusion( string $id, string $url ): string {
 
 		/**
-		 * Filters the id and URL patterns whose stylesheets Breakdance CSS delivery leaves as links.
+		 * Filters the id and URL patterns whose stylesheets page-builder CSS delivery leaves as links.
 		 *
 		 * @param string[] $patterns Case-insensitive substrings.
 		 */
@@ -557,7 +560,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 			if ( null === $css ) {
 
 				set_transient( 'oa_perf_min_fail_' . $key, 1, DAY_IN_SECONDS );
-				Octave_Addons_Perf_Log::error( 'files', __( 'Breakdance CSS could not be bundled safely, so the original stylesheets are served.', 'octave-addons' ), implode( ', ', $files ) );
+				Octave_Addons_Perf_Log::error( 'files', __( 'Some page-builder styles could not be combined safely, so the original files are used.', 'octave-addons' ), implode( ', ', $files ) );
 
 				return '';
 
@@ -576,7 +579,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 		$size = (int) filesize( $dir . $name );
 
 		/**
-		 * Filters the largest Breakdance CSS bundle inlined into the page, in bytes.
+		 * Filters the largest page-builder CSS bundle inlined into the page, in bytes.
 		 *
 		 * @param int $bytes Larger bundles are linked as one cached file instead.
 		 */
@@ -982,7 +985,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 		if ( null === $output || '' === trim( $output ) && '' !== trim( $source ) ) {
 
 			set_transient( 'oa_perf_min_fail_' . $key, 1, DAY_IN_SECONDS );
-			Octave_Addons_Perf_Log::error( 'files', __( 'File could not be minified safely, so the original is served.', 'octave-addons' ), $url );
+			Octave_Addons_Perf_Log::error( 'files', __( 'A file could not be made smaller safely, so the original is used.', 'octave-addons' ), $url );
 
 			return '';
 
@@ -997,7 +1000,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 		if ( ! Octave_Addons_Perf_Store::write( $dir . $name, $output ) ) {
 
 			set_transient( 'oa_perf_min_fail_' . $key, 1, HOUR_IN_SECONDS );
-			Octave_Addons_Perf_Log::error( 'files', __( 'The cache folder is not writable, so original files are served.', 'octave-addons' ), $dir );
+			Octave_Addons_Perf_Log::error( 'files', __( 'Octave cannot save files to its cache folder, so the original files are used. Ask your host to make wp-content/cache writable.', 'octave-addons' ), $dir );
 
 			return '';
 
@@ -1170,43 +1173,53 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		?>
 
-		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Compatibility first: each file is minified on its own and keeps its place in the cascade. Breakdance CSS delivery builds the first-render CSS from exactly the stylesheets Breakdance links for each page, in their original order. Removing "unused" CSS and loading layout CSS late are deliberately not offered, as they are the most common cause of broken layouts, menus and interactive states.', 'octave-addons' ); ?></p>
+		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Built to avoid breaking your design: each file is made smaller on its own and stays in the same order. Features that remove "unused" styles or load styles late are deliberately left out, because they are the most common cause of broken layouts and menus.', 'octave-addons' ); ?></p>
 
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Minification', 'octave-addons' ), 'first' => true ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Smaller files', 'octave-addons' ), 'first' => true ] );
 
-			$this->switch_row( 'minify_css', __( 'Minify local CSS', 'octave-addons' ), __( 'Recommended when files are unminified. Removes comments and whitespace from each local stylesheet; relative image and font URLs are rewritten so they keep working.', 'octave-addons' ), $s );
-			$this->switch_row( 'minify_js', __( 'Minify local JavaScript', 'octave-addons' ), __( 'Advanced. Removes comments and indentation only, keeping every line break so behaviour cannot change. Savings are modest; test interactive features after enabling.', 'octave-addons' ), $s );
+			$this->switch_row( 'minify_css', __( 'Make style files smaller', 'octave-addons' ), __( 'Recommended. Removes spaces and notes from your site\'s style files so they download faster. Images and fonts they use keep working.', 'octave-addons' ), $s );
+			$this->switch_row( 'minify_js', __( 'Make script files smaller', 'octave-addons' ), __( 'Optional. Removes notes and spacing from your site\'s script files without changing how they work. The saving is small, so check menus, sliders and forms after turning it on.', 'octave-addons' ), $s );
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Breakdance CSS delivery', 'octave-addons' ) ] );
+			$builders = array_map( [ 'Octave_Addons_Builders', 'label' ], array_keys( Octave_Addons_Builders::css_paths() ) );
 
-			$this->switch_row( 'breakdance_css', __( 'Deliver Breakdance CSS as one bundle', 'octave-addons' ), __( 'Recommended for Breakdance sites. A Breakdance page links many small stylesheets (normalize, dependencies, fonts, global settings, presets, selectors and one per page, header, footer and template), and the browser shows nothing until every one has downloaded. Each unbroken run of Breakdance and Octave stylesheets becomes one bundle with the same CSS in the same order and media: placed in the page when under 96 KB, otherwise served as one cached file. Bundles are prepared by the cache warmer, so visitors are never kept waiting while one is built; until then the original links are served.', 'octave-addons' ), $s );
+			if ( ! empty( $builders ) ) {
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Small stylesheets', 'octave-addons' ) ] );
+				Octave_Addons_Fields::section( [ 'label' => __( 'Page-builder styles', 'octave-addons' ) ] );
 
-			$this->switch_row( 'inline_css', __( 'Inline small stylesheets', 'octave-addons' ), __( 'Recommended. Every stylesheet in the page has to download before anything is shown. Small local ones, such as the per-page CSS Breakdance writes, are placed straight into the page instead, in the same order, so the first paint waits on fewer requests. Large files stay as links, so they can still be cached between pages.', 'octave-addons' ), $s );
+				$this->switch_row( 'breakdance_css', __( 'Combine page-builder styles', 'octave-addons' ), sprintf(
+					/* translators: %s: page builder names, e.g. Breakdance or Divi. */
+					__( 'Recommended for %s sites. Your page builder loads its styles as many small files, and a page stays blank until every one has arrived. This combines them into one, in exactly the same order, so the page appears sooner. Small combinations go straight into the page; larger ones become a single file. Octave prepares them in the background, so visitors never wait while it does.', 'octave-addons' ),
+					implode( ' / ', $builders )
+				), $s );
+
+			}
+
+			Octave_Addons_Fields::section( [ 'label' => __( 'Small style files', 'octave-addons' ) ] );
+
+			$this->switch_row( 'inline_css', __( 'Put small style files inside the page', 'octave-addons' ), __( 'Recommended. A page cannot appear until all its style files have arrived. Small ones, such as the styles a page builder writes for each page, are placed inside the page instead, so there is less to wait for. Large files stay separate so browsers can reuse them between pages.', 'octave-addons' ), $s );
 
 			$this->select_row( 'inline_max', __( 'Inline files up to', 'octave-addons' ), [
 				4  => __( '4 KB (recommended)', 'octave-addons' ),
 				8  => '8 KB',
 				16 => '16 KB',
-			], __( 'Larger limits remove more requests but make every page heavier, as inlined CSS is downloaded again with each page instead of being cached. Breakdance\'s per-page files are inlined first; plugin, WordPress and Breakdance global stylesheets are shared by every page, so they always stay as cached links.', 'octave-addons' ), $s );
+			], __( 'A bigger limit means fewer files to wait for, but every page gets heavier, because styles placed inside a page are downloaded again on each page. Styles used across the whole site always stay as separate files.', 'octave-addons' ), $s );
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Deferral', 'octave-addons' ) ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Script loading', 'octave-addons' ) ] );
 
-			$this->switch_row( 'defer_js', __( 'Defer selected local JavaScript', 'octave-addons' ), __( 'Advanced. Lets the scripts listed below download without blocking the page (WordPress 6.3+). WordPress skips any script whose dependents or inline code need it to run immediately. jQuery and Breakdance are never deferred.', 'octave-addons' ), $s );
-			$this->textarea_row( 'defer_handles', __( 'Script handles to defer', 'octave-addons' ), __( 'One registered script handle per line, for example contact-form-7.', 'octave-addons' ), $s );
+			$this->switch_row( 'defer_js', __( 'Load chosen scripts without holding up the page', 'octave-addons' ), __( 'For developers. The scripts listed below load in the background instead of holding up the page (needs WordPress 6.3 or newer). WordPress skips any that other code needs straight away. jQuery and page-builder scripts are never changed.', 'octave-addons' ), $s );
+			$this->textarea_row( 'defer_handles', __( 'Scripts to load in the background', 'octave-addons' ), __( 'One script name (its WordPress handle) per line, for example contact-form-7.', 'octave-addons' ), $s );
 
-			Octave_Addons_Fields::section( [ 'label' => __( 'Exclusions', 'octave-addons' ) ] );
+			Octave_Addons_Fields::section( [ 'label' => __( 'Leave alone', 'octave-addons' ) ] );
 
-			$this->textarea_row( 'exclude', __( 'Never minify, inline or bundle', 'octave-addons' ), __( 'One handle, stylesheet id or URL pattern per line. Breakdance assets, WordPress core and files already ending in .min.css or .min.js are never minified. A stylesheet can also opt out of inlining and bundling with the data-oa-no-inline attribute, or of bundling alone with data-oa-no-bundle.', 'octave-addons' ), $s );
+			$this->textarea_row( 'exclude', __( 'Leave these files alone', 'octave-addons' ), __( 'Files whose name or address contains one of these words are never made smaller, placed inside the page or combined. One per line. Page-builder files, WordPress\'s own files and files that are already small (.min.css, .min.js) are never made smaller. Tip: the data-oa-no-inline and data-oa-no-bundle attributes do the same for a single style file.', 'octave-addons' ), $s );
 
 			?>
 		</table>
 
-		<p class="oa-help"><?php esc_html_e( 'To delay third-party scripts such as analytics, use Script Delay above.', 'octave-addons' ); ?></p>
+		<p class="oa-help"><?php esc_html_e( 'To hold back analytics and other outside tools until visitors interact, use Script Delay above.', 'octave-addons' ); ?></p>
 
 		<?php
 

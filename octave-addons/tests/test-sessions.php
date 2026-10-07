@@ -108,7 +108,7 @@ function test_session_dependent_designs_keep_tracking_and_warn(): void {
 
 	oa_assert( ! oa_tracking_disabled(), 'the condition keeps working' );
 	oa_assert_same( [ 'state' => 'used', 'where' => [ '12' ] ], array_intersect_key( Octave_Addons_Perf_Sessions::state(), [ 'state' => 1, 'where' => 1 ] ) );
-	oa_assert_contains( 'Full-page caching cannot work safely', Octave_Addons_Perf_Sessions::message( Octave_Addons_Perf_Sessions::state() ) );
+	oa_assert_contains( 'Pages cannot be saved for quick loading', Octave_Addons_Perf_Sessions::message( Octave_Addons_Perf_Sessions::state() ) );
 	oa_assert_contains( '12', Octave_Addons_Perf_Sessions::message( Octave_Addons_Perf_Sessions::state() ), 'names where' );
 
 	oa_test_reset();
@@ -195,7 +195,7 @@ function test_cache_blockers_name_sessions_cookies_and_headers(): void {
 
 	$reasons = Octave_Addons_Perf_Sessions::cache_blockers( [ 'PHPSESSID=abc; path=/', 'breakdance_view_count=3', 'breakdance_session_count=1' ], 'no-store, no-cache, must-revalidate' );
 
-	oa_assert_contains( 'PHP session', $reasons[0] );
+	oa_assert_contains( 'tracked with a session', $reasons[0] );
 	oa_assert_contains( 'Breakdance', $reasons[1] );
 	oa_assert_contains( 'PHPSESSID, breakdance_view_count, breakdance_session_count', $reasons[2] );
 	oa_assert_not_contains( 'abc', implode( ' ', $reasons ), 'cookie values never shown' );

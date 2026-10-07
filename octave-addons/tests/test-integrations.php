@@ -71,7 +71,7 @@ function test_cloudflare_errors_are_reported_readably(): void {
 	$result = Octave_Addons_Perf_Cloudflare::purge_files( [ 'https://example.com/' ] );
 
 	oa_assert( ! $result['ok'] );
-	oa_assert_contains( 'HTTP 403', $result['message'] );
+	oa_assert_contains( 'error 403', $result['message'] );
 	oa_assert_contains( 'Authentication error', $result['message'] );
 
 	$GLOBALS['oa_http'] = static function () {

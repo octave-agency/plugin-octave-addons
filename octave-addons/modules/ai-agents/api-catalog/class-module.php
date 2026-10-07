@@ -47,7 +47,7 @@ class Octave_Addons_Module_Api_Catalog extends Octave_Addons_Module {
 
 	public function get_description(): string {
 
-		return __( 'Publishes /.well-known/api-catalog so agents can discover the site\'s APIs automatically, following RFC 9727. Built from the REST namespaces the site actually registers.', 'octave-addons' );
+		return __( 'Publishes a standard list of the ways software can connect to your site, so AI assistants can find them automatically. It updates itself as plugins are added or removed.', 'octave-addons' );
 
 	}
 
@@ -346,7 +346,7 @@ class Octave_Addons_Module_Api_Catalog extends Octave_Addons_Module {
 
 				?>
 			</li>
-			<li><?php esc_html_e( 'Advertised with an api-catalog link relation in both the response headers and the page head.', 'octave-addons' ); ?></li>
+			<li><?php esc_html_e( 'Your pages point to this list automatically.', 'octave-addons' ); ?></li>
 			<li>
 				<?php
 
@@ -354,13 +354,13 @@ class Octave_Addons_Module_Api_Catalog extends Octave_Addons_Module {
 
 					printf(
 						/* translators: %s: comma-separated list of REST API namespaces. */
-						esc_html__( 'Currently listing: %s. The list follows what the site registers, so an API appears and disappears with the plugin that provides it.', 'octave-addons' ),
+						esc_html__( 'Currently listing: %s. This updates automatically as plugins are added or removed.', 'octave-addons' ),
 						'<code>' . implode( '</code>, <code>', array_map( 'esc_html', $catalogued ) ) . '</code>'
 					);
 
 				} else {
 
-					esc_html_e( 'No catalogued APIs were detected on this site yet.', 'octave-addons' );
+					esc_html_e( 'Nothing to list on this site yet.', 'octave-addons' );
 
 				}
 

@@ -169,7 +169,7 @@ class Octave_Addons_Updater {
 
 		return new WP_Error(
 			'octave_addons_source_directory',
-			__( 'The GitHub release could not be prepared for installation.', 'octave-addons' )
+			__( 'The update could not be prepared. Please try again later.', 'octave-addons' )
 		);
 
 	}

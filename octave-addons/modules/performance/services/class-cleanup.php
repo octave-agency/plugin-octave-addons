@@ -33,9 +33,9 @@ class Octave_Addons_Perf_Cleanup {
 			'trashed_posts'      => [ 'label' => __( 'Trashed posts', 'octave-addons' ), 'advanced' => false ],
 			'spam_comments'      => [ 'label' => __( 'Spam comments', 'octave-addons' ), 'advanced' => false ],
 			'trashed_comments'   => [ 'label' => __( 'Trashed comments', 'octave-addons' ), 'advanced' => false ],
-			'expired_transients' => [ 'label' => __( 'Expired transients', 'octave-addons' ), 'advanced' => false ],
-			'all_transients'     => [ 'label' => __( 'All transients (advanced)', 'octave-addons' ), 'advanced' => true ],
-			'optimize_tables'    => [ 'label' => __( 'Optimise database tables (advanced)', 'octave-addons' ), 'advanced' => true ],
+			'expired_transients' => [ 'label' => __( 'Expired temporary data', 'octave-addons' ), 'advanced' => false ],
+			'all_transients'     => [ 'label' => __( 'All temporary data (advanced)', 'octave-addons' ), 'advanced' => true ],
+			'optimize_tables'    => [ 'label' => __( 'Tidy up database tables (advanced)', 'octave-addons' ), 'advanced' => true ],
 		];
 
 	}

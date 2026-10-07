@@ -38,6 +38,9 @@ class Octave_Addons_Perf_Cache {
 		'variables_json_string',
 	];
 
+	/** Divi documents shown on many pages: Theme Builder templates and layouts, and Divi Library items used as global modules. */
+	public const DIVI_SHARED_TYPES = [ 'et_template', 'et_header_layout', 'et_body_layout', 'et_footer_layout', 'et_theme_builder', 'et_pb_layout' ];
+
 	/** Breakdance documents shown on many pages: templates, headers, footers, global blocks and popups. */
 	public const BREAKDANCE_SHARED_TYPES = [ 'breakdance_template', 'breakdance_header', 'breakdance_footer', 'breakdance_block', 'breakdance_popup' ];
 
@@ -45,7 +48,7 @@ class Octave_Addons_Perf_Cache {
 	protected const BREAKDANCE_DEBOUNCE = MINUTE_IN_SECONDS;
 
 	/** Full-purge reasons limited to one per BREAKDANCE_DEBOUNCE. */
-	protected const DEBOUNCED_REASONS = [ 'breakdance' ];
+	protected const DEBOUNCED_REASONS = [ 'breakdance', 'divi' ];
 
 	/** @var string Reason of a full purge waiting for the end of the request, or ''. */
 	protected static string $queued_full = '';
@@ -92,7 +95,7 @@ class Octave_Addons_Perf_Cache {
 		$report = [ 'files' => self::clear_files() ];
 
 		// Design-wide changes also retire what was learned from the old design.
-		if ( 'all' === $scope && in_array( $reason, [ 'breakdance', 'fonts', 'manual' ], true ) ) {
+		if ( 'all' === $scope && in_array( $reason, [ 'breakdance', 'divi', 'fonts', 'manual' ], true ) ) {
 
 			Octave_Addons_Perf_Lcp::forget_all();
 
@@ -112,7 +115,7 @@ class Octave_Addons_Perf_Cache {
 			 * Each layer adds [ 'label' => string, 'status' => success|error|skipped|queued, 'message' => string ].
 			 *
 			 * @param array  $report Per-layer results so far.
-			 * @param string $reason manual, settings, environment, fonts, breakdance, menu, imagify or update.
+			 * @param string $reason manual, settings, environment, fonts, breakdance, divi, menu, imagify or update.
 			 */
 			$report = (array) apply_filters( 'octave_addons_perf_purge_all_layers', $report, $reason );
 
@@ -128,7 +131,7 @@ class Octave_Addons_Perf_Cache {
 
 		if ( 'manual' === $reason ) {
 
-			self::record( 'all' === $scope ? __( 'Full purge', 'octave-addons' ) : __( 'Minified files', 'octave-addons' ), $report );
+			self::record( 'all' === $scope ? __( 'Full purge', 'octave-addons' ) : __( 'Smaller copies of files', 'octave-addons' ), $report );
 
 		}
 
@@ -161,9 +164,9 @@ class Octave_Addons_Perf_Cache {
 
 		$report = [
 			'files' => [
-				'label'   => __( 'Minified files', 'octave-addons' ),
+				'label'   => __( 'Smaller copies of files', 'octave-addons' ),
 				'status'  => 'skipped',
-				'message' => __( 'Minified files are shared across pages, so there is nothing URL-specific to clear.', 'octave-addons' ),
+				'message' => __( 'These are shared by every page, so there is nothing to clear for one page.', 'octave-addons' ),
 			],
 		];
 
@@ -204,11 +207,11 @@ class Octave_Addons_Perf_Cache {
 		self::bump_generation();
 
 		return [
-			'label'   => __( 'Minified files', 'octave-addons' ),
+			'label'   => __( 'Smaller copies of files', 'octave-addons' ),
 			'status'  => 'success',
 			'message' => sprintf(
 				/* translators: 1: number of files, 2: human readable size. */
-				__( 'Cleared %1$d generated files (%2$s).', 'octave-addons' ),
+				__( 'Cleared %1$d files (%2$s).', 'octave-addons' ),
 				$deleted['files'],
 				size_format( $deleted['bytes'] ) ?: '0 B'
 			),
@@ -357,6 +360,57 @@ class Octave_Addons_Perf_Cache {
 
 		add_action( 'wp_ajax_breakdance_save_font_families', [ __CLASS__, 'on_breakdance_global' ], 1 );
 		add_action( 'wp_ajax_breakdance_regenerate_global_settings_cache', [ __CLASS__, 'on_breakdance_global' ], 1 );
+
+		// Divi 4 and 5: its own clearing of generated CSS, its theme options and global colours.
+		add_action( 'et_core_static_resources_removed', [ __CLASS__, 'on_divi_resources_removed' ] );
+		add_action( 'et_epanel_update_option', [ __CLASS__, 'on_divi_global' ] );
+		add_action( 'et_global_colors_saved', [ __CLASS__, 'on_divi_global' ] );
+
+	}
+
+	/*
+	ON DIVI RESOURCES REMOVED
+	-- Divi clears its generated CSS for one post when that post is saved,
+	-- or for the whole site when a Theme Builder template, global module,
+	-- preset or setting changes. A site-wide clear purges everything, at
+	-- most once a minute; one post's pages are already queued by its save
+	---------------------------------------------------------- */
+
+	public static function on_divi_resources_removed( $post_id = 'all' ): void {
+
+		$id = is_numeric( $post_id ) ? (int) $post_id : 0;
+
+		if ( $id > 0 ) {
+
+			$post = get_post( $id );
+
+			if ( $post instanceof WP_Post && 'publish' === $post->post_status && ! in_array( $post->post_type, self::DIVI_SHARED_TYPES, true ) ) {
+
+				self::queue_urls( self::post_urls( $post ) );
+
+				return;
+
+			}
+
+		}
+
+		self::queue_full_purge( 'divi' );
+
+	}
+
+	/*
+	ON DIVI GLOBAL
+	-- Theme options and global colours restyle every page. Divi reports each
+	-- option of one save separately; they become one purge
+	---------------------------------------------------------- */
+
+	public static function on_divi_global(): void {
+
+		if ( current_user_can( 'edit_theme_options' ) || current_user_can( 'edit_posts' ) ) {
+
+			self::queue_full_purge( 'divi' );
+
+		}
 
 	}
 
@@ -540,6 +594,15 @@ class Octave_Addons_Perf_Cache {
 	public static function on_after_insert_post( $post_id, $post = null, $update = false, $post_before = null ): void {
 
 		if ( ! $post instanceof WP_Post || wp_is_post_revision( $post ) || wp_is_post_autosave( $post ) || 'auto-draft' === $post->post_status ) {
+
+			return;
+
+		}
+
+		// A Divi layout or library item can appear on any page.
+		if ( in_array( $post->post_type, self::DIVI_SHARED_TYPES, true ) && ( 'publish' === $post->post_status || ( $post_before instanceof WP_Post && 'publish' === $post_before->post_status ) ) ) {
+
+			self::queue_full_purge( 'divi' );
 
 			return;
 

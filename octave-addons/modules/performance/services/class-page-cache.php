@@ -39,10 +39,10 @@ class Octave_Addons_Perf_Page_Cache {
 	public const MAX_URLS = 50;
 
 	/** Full purges that reach the page cache: every change that alters what pages print or load. */
-	protected const PURGE_ALL_REASONS = [ 'manual', 'breakdance', 'imagify', 'fonts', 'menu', 'settings', 'update', 'environment' ];
+	protected const PURGE_ALL_REASONS = [ 'manual', 'breakdance', 'divi', 'imagify', 'fonts', 'menu', 'settings', 'update', 'environment' ];
 
 	/** Full purges after which the cache is refilled. */
-	protected const WARM_REASONS = [ 'manual', 'breakdance', 'imagify', 'fonts', 'menu', 'settings', 'update', 'environment' ];
+	protected const WARM_REASONS = [ 'manual', 'breakdance', 'divi', 'imagify', 'fonts', 'menu', 'settings', 'update', 'environment' ];
 
 	/** Targeted purges whose URLs are refilled straight away. Content saves queue their own, minus URLs that no longer exist. */
 	protected const WARM_URL_REASONS = [ 'manual', 'lcp' ];
@@ -267,7 +267,7 @@ class Octave_Addons_Perf_Page_Cache {
 
 		if ( ! is_callable( $callback ) ) {
 
-			return [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'This cache has no API for a targeted purge.', 'octave-addons' ) ];
+			return [ 'label' => $label, 'status' => 'skipped', 'message' => __( 'This cache can only be cleared all at once.', 'octave-addons' ) ];
 
 		}
 

@@ -66,7 +66,7 @@ final class Octave_Addons_Site_Status {
 					'octave_addons_status_conflict',
 					sprintf(
 						/* translators: %s: WordPress drop-in filename. */
-						__( 'Octave Addons did not replace the existing wp-content/%s file because it is managed elsewhere.', 'octave-addons' ),
+						__( 'Octave Addons left wp-content/%s alone because another plugin manages it.', 'octave-addons' ),
 						$filename
 					)
 				);
@@ -96,7 +96,7 @@ final class Octave_Addons_Site_Status {
 				'octave_addons_status_write_failed',
 				sprintf(
 					/* translators: %s: WordPress drop-in filename. */
-					__( 'Octave Addons could not create wp-content/%s. Check that the wp-content directory is writable.', 'octave-addons' ),
+					__( 'Octave Addons could not create wp-content/%s. Ask your host to make the wp-content folder writable.', 'octave-addons' ),
 					$filename
 				)
 			);
