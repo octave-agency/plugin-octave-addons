@@ -14,6 +14,8 @@ MODULE: ANIMATIONS
 -- so the largest element is never hidden, animates only what is further
 -- down, and never splits headings into words or lines. It is off unless
 -- chosen, so existing sites keep their motion
+-- Comma-separated ignore selectors opt matching elements and their complete
+-- subtrees out; header and footer also recognise Breakdance templates
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -66,12 +68,13 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 	public function get_defaults(): array {
 
 		return [
-			'enabled'        => false,
-			'type'           => 'luxury',
-			'performance'    => false,
-			'css_override'   => '',
-			'js_override'    => '',
-			'load_in_editor' => false,
+			'enabled'          => false,
+			'type'             => 'luxury',
+			'performance'      => false,
+			'ignore_selectors' => '',
+			'css_override'     => '',
+			'js_override'      => '',
+			'load_in_editor'   => false,
 		];
 
 	}
@@ -148,9 +151,10 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 	public function sanitize( $input ): array {
 
 		$clean                   = $this->get_defaults();
-		$clean['enabled']        = ! empty( $input['enabled'] );
-		$clean['load_in_editor'] = ! empty( $input['load_in_editor'] );
-		$clean['performance']    = ! empty( $input['performance'] );
+		$clean['enabled']          = ! empty( $input['enabled'] );
+		$clean['load_in_editor']   = ! empty( $input['load_in_editor'] );
+		$clean['performance']      = ! empty( $input['performance'] );
+		$clean['ignore_selectors'] = implode( ', ', $this->ignore_selectors( sanitize_text_field( (string) ( $input['ignore_selectors'] ?? '' ) ) ) );
 
 		$type          = sanitize_key( $input['type'] ?? '' );
 		$clean['type'] = array_key_exists( $type, $this->types() ) ? $type : 'luxury';
@@ -201,7 +205,7 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 					<select id="<?= esc_attr( $this->field_id( 'type' ) ); ?>"
 					        name="<?= esc_attr( $this->field_name( 'type' ) ); ?>"
-					        data-controls-row="oaAnimRowEditor,oaAnimRowCss,oaAnimRowJs"
+					        data-controls-row="oaAnimRowIgnore,oaAnimRowEditor,oaAnimRowCss,oaAnimRowJs"
 					        data-controls-value="luxury,editorial,creative,cinematic,minimal,custom">
 						<?php
 
@@ -221,6 +225,24 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 					<?php
 
 					Octave_Addons_Fields::motion_preview( 'scroll', [ 'type' => $this->field_id( 'type' ) ] );
+
+				},
+			] );
+
+			Octave_Addons_Fields::row( [
+				'id'    => 'oaAnimRowIgnore',
+				'for'   => $this->field_id( 'ignore_selectors' ),
+				'label' => __( 'Ignore elements', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					Octave_Addons_Fields::text( [
+						'id'          => $this->field_id( 'ignore_selectors' ),
+						'name'        => $this->field_name( 'ignore_selectors' ),
+						'value'       => $s['ignore_selectors'],
+						'class'       => 'large-text',
+						'placeholder' => 'header, footer, .hero-static',
+						'help'        => __( 'Optional. Enter comma-separated CSS selectors, such as “header, footer, .hero-static”. Use “.class”, not “.class *”: each match and everything inside it stays still automatically. “header” and “footer” also recognise Breakdance templates, even when there is no footer tag.', 'octave-addons' ),
+					] );
 
 				},
 			] );
@@ -290,6 +312,35 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 	public function run( array $s ): void {
 
+		$regions = array_intersect( [ 'header', 'footer' ], $this->ignore_selectors( (string) ( $s['ignore_selectors'] ?? '' ) ) );
+
+		if ( $regions ) {
+
+			add_filter( 'breakdance_render_rendered_html', function ( $html, $post_id ) use ( $regions ) {
+
+				if ( self::is_builder_request() ) {
+
+					return $html;
+
+				}
+
+				$post_type = (string) get_post_type( $post_id );
+				$region    = in_array( $post_type, [ 'breakdance_header', 'oxygen_header' ], true ) ? 'header' : '';
+
+				if ( '' === $region && in_array( $post_type, [ 'breakdance_footer', 'oxygen_footer' ], true ) ) {
+
+					$region = 'footer';
+
+				}
+
+				return in_array( $region, $regions, true )
+					? $this->mark_breakdance_region( (string) $html, $region )
+					: $html;
+
+			}, 10, 2 );
+
+		}
+
 		add_action( 'wp_enqueue_scripts', function () use ( $s ) {
 
 			$this->enqueue_assets( $s );
@@ -350,6 +401,14 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 
 			$this->enqueue_script( $controller, 'controller.js', [], false );
 
+			$ignore_selectors = $this->ignore_selectors( (string) ( $s['ignore_selectors'] ?? '' ) );
+
+			if ( $ignore_selectors ) {
+
+				wp_add_inline_script( $controller, 'window.oaAnimIgnoreSelectors = ' . wp_json_encode( $ignore_selectors ) . ';', 'before' );
+
+			}
+
 			if ( ! empty( $s['performance'] ) ) {
 
 				wp_add_inline_script( $controller, 'window.oaAnimPerformance = true;', 'before' );
@@ -393,6 +452,84 @@ class Octave_Addons_Module_Animations extends Octave_Addons_Module {
 			$this->enqueue_script( $js_handle, 'presets/' . $type . '.js', [ $controller ], true );
 
 		}
+
+	}
+
+	/*
+	IGNORE SELECTORS
+	-- Normalises the comma-separated setting and caps it to a practical size
+	---------------------------------------------------------- */
+
+	protected function ignore_selectors( string $value ): array {
+
+		$selectors = array_map( static function ( string $selector ): string {
+
+			$selector = trim( $selector );
+			$special  = strtolower( $selector );
+
+			return in_array( $special, [ 'header', 'footer' ], true ) ? $special : $selector;
+
+		}, explode( ',', $value ) );
+		$selectors = array_values( array_unique( array_filter( $selectors ) ) );
+
+		return array_slice( array_map( static function ( string $selector ): string {
+
+			return substr( $selector, 0, 200 );
+
+		}, $selectors ), 0, 30 );
+
+	}
+
+	/*
+	MARK BREAKDANCE REGION
+	-- Breakdance renders header and footer templates without semantic wrappers,
+	-- so their sections receive a stable region marker and the existing
+	-- oa-no-anim opt-out class before the browser sees the markup
+	---------------------------------------------------------- */
+
+	protected function mark_breakdance_region( string $html, string $region ): string {
+
+		if ( '' === $html || ! in_array( $region, [ 'header', 'footer' ], true ) ) {
+
+			return $html;
+
+		}
+
+		if ( class_exists( 'WP_HTML_Tag_Processor' ) ) {
+
+			$tags = new WP_HTML_Tag_Processor( $html );
+
+			while ( $tags->next_tag() ) {
+
+				if ( ! $tags->has_class( 'bde-section' ) && ! $tags->has_class( 'oa_anim' ) ) {
+
+					continue;
+
+				}
+
+				$classes = trim( (string) $tags->get_attribute( 'class' ) );
+
+				if ( ! preg_match( '/(?:^|\s)oa-no-anim(?:\s|$)/', $classes ) ) {
+
+					$tags->set_attribute( 'class', trim( $classes . ' oa-no-anim' ) );
+
+				}
+
+				$tags->set_attribute( 'data-oa-anim-region', $region );
+
+			}
+
+			return $tags->get_updated_html();
+
+		}
+
+		return (string) preg_replace_callback( '/<([a-z][a-z0-9:-]*)([^>]*\bclass\s*=\s*(["\']))([^"\']*\b(?:bde-section|oa_anim)\b[^"\']*)(\3)([^>]*)>/i', static function ( array $match ) use ( $region ): string {
+
+			$classes = preg_replace( '/\boa-no-anim\b/', '', $match[4] );
+
+			return '<' . $match[1] . $match[2] . trim( (string) $classes ) . ' oa-no-anim' . $match[5] . ' data-oa-anim-region="' . esc_attr( $region ) . '"' . $match[6] . '>';
+
+		}, $html );
 
 	}
 

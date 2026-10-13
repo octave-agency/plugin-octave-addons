@@ -7,6 +7,8 @@ SCROLL ANIMATION CONTROLLER
 -- Performance mode (window.oaAnimPerformance) hides nothing before the scan,
 -- leaves everything in the first screen untouched so the largest element is
 -- painted at once, and never splits headings
+-- Ignore selectors are marked with the existing oa-no-anim opt-out before
+-- paint; header and footer include semantic and Breakdance template regions
 ---------------------------------------------------------- */
 
 ( function () {
@@ -16,6 +18,27 @@ SCROLL ANIMATION CONTROLLER
 	var root = document.documentElement;
 	var reduced = window.matchMedia && window.matchMedia( '( prefers-reduced-motion: reduce )' ).matches;
 	var light = true === window.oaAnimPerformance;
+	var ignoreSelectors = [];
+
+	( window.oaAnimIgnoreSelectors || [] ).forEach( function ( selector ) {
+
+		selector = String( selector || '' ).trim();
+
+		if ( 'header' === selector.toLowerCase() ) {
+
+			ignoreSelectors.push( 'header', '.bde-header-builder', '[data-oa-anim-region="header"]' );
+
+		} else if ( 'footer' === selector.toLowerCase() ) {
+
+			ignoreSelectors.push( 'footer', '[data-oa-anim-region="footer"]' );
+
+		} else if ( selector ) {
+
+			ignoreSelectors.push( selector );
+
+		}
+
+	} );
 
 	/*
 	TARGETS
@@ -51,6 +74,7 @@ SCROLL ANIMATION CONTROLLER
 	};
 
 	var observer = null;
+	var ignoreObserver = null;
 	var pending = 0;
 	var released = false;
 
@@ -59,6 +83,88 @@ SCROLL ANIMATION CONTROLLER
 	if ( reduced ) {
 
 		return;
+
+	}
+
+	/*
+	IGNORED ELEMENTS
+	-- Mark matching roots while the browser parses the document, before paint,
+	-- so the base stylesheet never hides them or anything inside them
+	---------------------------------------------------------- */
+
+	function isIgnored( element ) {
+
+		return ignoreSelectors.some( function ( selector ) {
+
+			try {
+
+				return !! element.closest( selector );
+
+			} catch ( error ) {
+
+				return false;
+
+			}
+
+		} );
+
+	}
+
+	function markIgnored( scope ) {
+
+		ignoreSelectors.forEach( function ( selector ) {
+
+			try {
+
+				if ( 1 === scope.nodeType && scope.matches( selector ) ) {
+
+					scope.classList.add( 'oa-no-anim' );
+
+				}
+
+				scope.querySelectorAll( selector ).forEach( function ( element ) {
+
+					element.classList.add( 'oa-no-anim' );
+
+				} );
+
+			} catch ( error ) {
+
+				return;
+
+			}
+
+		} );
+
+	}
+
+	if ( ignoreSelectors.length ) {
+
+		markIgnored( document );
+
+		if ( 'function' === typeof window.MutationObserver ) {
+
+			ignoreObserver = new window.MutationObserver( function ( mutations ) {
+
+				mutations.forEach( function ( mutation ) {
+
+					Array.prototype.forEach.call( mutation.addedNodes, function ( node ) {
+
+						if ( 1 === node.nodeType ) {
+
+							markIgnored( node );
+
+						}
+
+					} );
+
+				} );
+
+			} );
+
+			ignoreObserver.observe( document.documentElement, { childList: true, subtree: true } );
+
+		}
 
 	}
 
@@ -465,11 +571,20 @@ SCROLL ANIMATION CONTROLLER
 
 		var targets = [];
 
+		markIgnored( document );
+
+		if ( ignoreObserver ) {
+
+			ignoreObserver.disconnect();
+			ignoreObserver = null;
+
+		}
+
 		kinds.forEach( function ( group ) {
 
 			document.querySelectorAll( group.selector ).forEach( function ( element ) {
 
-				if ( element.hasAttribute( 'data-oa-anim' ) || element.closest( '.oa-no-anim' ) || ! element.getClientRects().length ) {
+				if ( element.hasAttribute( 'data-oa-anim' ) || element.closest( '.oa-no-anim' ) || isIgnored( element ) || ! element.getClientRects().length ) {
 
 					return;
 

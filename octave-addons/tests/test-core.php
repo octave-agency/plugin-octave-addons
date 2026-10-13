@@ -586,3 +586,27 @@ function test_performance_mode_is_opt_in_and_drops_arrival_overlays(): void {
 	oa_assert( $animations->sanitize( [ 'performance' => '1' ] )['performance'] );
 
 }
+
+/*
+ANIMATION IGNORE SELECTORS
+---------------------------------------------------------- */
+
+function test_animation_ignore_selectors_are_normalised_and_mark_breakdance_regions(): void {
+
+	$animations = oa_module( 'animations' );
+	$clean      = $animations->sanitize( [ 'ignore_selectors' => ' HEADER, footer, .hero-static, header ' ] );
+
+	oa_assert_same( 'header, footer, .hero-static', $clean['ignore_selectors'] );
+
+	$markup = '<section class="bde-section"><div class="bde-text">Footer</div></section><div class="oa_anim">Extra</div>';
+
+	$GLOBALS['oa_posts'][91] = [ 'breakdance_footer', 'publish' ];
+	$animations->run( array_merge( $animations->get_defaults(), [ 'ignore_selectors' => 'footer' ] ) );
+
+	$output = apply_filters( 'breakdance_render_rendered_html', $markup, 91 );
+
+	oa_assert_contains( 'class="bde-section oa-no-anim"', $output );
+	oa_assert_contains( 'class="oa_anim oa-no-anim"', $output );
+	oa_assert_same( 2, substr_count( $output, 'data-oa-anim-region="footer"' ) );
+
+}

@@ -418,9 +418,10 @@ SCROLL ANIMATIONS
 -- The controller against a few fake Breakdance elements
 ---------------------------------------------------------- */
 
-function animationEnvironment( light ) {
+function animationEnvironment( light, ignored ) {
 
 	const classes = new Set();
+	const regionClasses = new Set();
 	const listeners = {};
 
 	function element( top ) {
@@ -432,7 +433,7 @@ function animationEnvironment( light ) {
 			childNodes: [],
 			getClientRects: () => [ 1 ],
 			getBoundingClientRect: () => ( { top: top } ),
-			closest: () => null,
+			closest: ( selector ) => ( ignored && /header/.test( selector ) ? {} : null ),
 			hasAttribute: ( name ) => name in attributes,
 			getAttribute: ( name ) => ( name in attributes ? attributes[ name ] : null ),
 			setAttribute: ( name, value ) => {
@@ -448,11 +449,13 @@ function animationEnvironment( light ) {
 
 	const hero = element( 120 );
 	const lower = element( 2400 );
+	const region = { classList: { add: ( name ) => regionClasses.add( name ) } };
 	const observed = [];
 
 	const window = {
 		innerHeight: 900,
 		oaAnimPerformance: light,
+		oaAnimIgnoreSelectors: ignored ? [ 'header' ] : [],
 		matchMedia: () => ( { matches: false } ),
 		setTimeout: () => 0,
 		clearTimeout: () => {},
@@ -473,7 +476,17 @@ function animationEnvironment( light ) {
 			listeners[ name ] = callback;
 
 		},
-		querySelectorAll: ( selector ) => ( /bde-heading/.test( selector ) ? [ hero, lower ] : [] ),
+		querySelectorAll: ( selector ) => {
+
+			if ( 'header' === selector ) {
+
+				return [ region ];
+
+			}
+
+			return /bde-heading/.test( selector ) ? [ hero, lower ] : [];
+
+		},
 	};
 
 	window.document = document;
@@ -483,7 +496,7 @@ function animationEnvironment( light ) {
 	// Splitting needs real text nodes, so only performance mode, which must skip it, asks for it.
 	window.OctaveAnimations.preset( { split: light ? 'words' : false } );
 
-	return { classes, listeners, hero, lower, observed };
+	return { classes, regionClasses, listeners, hero, lower, observed };
 
 }
 
@@ -512,6 +525,20 @@ test( 'without performance mode existing motion is unchanged', () => {
 	env.listeners.DOMContentLoaded();
 
 	assert.strictEqual( env.observed.length, 2, 'every target animates' );
+
+} );
+
+test( 'ignore selectors leave matching elements and their descendants untouched', () => {
+
+	const env = animationEnvironment( false, true );
+
+	assert.ok( env.regionClasses.has( 'oa-no-anim' ), 'ignored root is marked before the document scan' );
+
+	env.listeners.DOMContentLoaded();
+
+	assert.strictEqual( env.hero.getAttribute( 'data-oa-anim' ), null, 'first ignored target is untouched' );
+	assert.strictEqual( env.lower.getAttribute( 'data-oa-anim' ), null, 'lower ignored target is untouched' );
+	assert.deepStrictEqual( env.observed, [], 'ignored targets are never observed' );
 
 } );
 

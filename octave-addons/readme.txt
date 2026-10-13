@@ -28,7 +28,9 @@ Octave Addons ships with a growing collection of focused modules:
     view using one curated preset (Luxury, Editorial, Creative, Cinematic or
     Minimal), Custom only, or Off. Only the selected preset loads, a shared
     safety controller guarantees content is never left hidden, and reduced
-    motion shows everything immediately. CSS and JS overrides remain.
+    motion shows everything immediately. Matching CSS selectors can be kept
+    still, with smart header and Breakdance footer recognition. CSS and JS
+    overrides remain.
 *   **Page Transitions** – an initial loader for full page loads
     (Brand Counter, Logo Mask, Image Window, Curtain Reveal, Orbital Signal or
     Custom only), paced by a single Loader duration, and separate internal page
@@ -165,6 +167,9 @@ automatically during updates and critical errors.
 3. Visit *Octave Addons* in the admin sidebar to turn add-ons on.
 
 == Changelog ==
+
+= 3.42.0 =
+* Scroll Animations gains an Ignore elements field. Comma-separated CSS selectors keep each matching element and everything inside it still; `header` and `footer` also recognise Breakdance templates, including footers that have no semantic footer tag.
 
 = 3.39.0 =
 * Settings, notes and messages across the plugin, and the whole Performance area in particular, are rewritten in plain language. Technical names such as attributes and file paths now only appear in notes marked for developers.
