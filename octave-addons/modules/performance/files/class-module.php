@@ -497,12 +497,14 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		}
 
+		// Content, not modification time: Breakdance rewrites its global files
+		// unchanged every few minutes, which would rename the bundle each time.
 		return [
 			'kind'   => 'file',
 			'href'   => $href,
 			'file'   => $file,
 			'media'  => $media,
-			'source' => $file . '|' . filemtime( $file ) . '|' . filesize( $file ),
+			'source' => $file . '|' . md5_file( $file ),
 		];
 
 	}
@@ -528,9 +530,11 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 	/*
 	BUNDLE MARKUP
 	-- The tag replacing one run: an inline <style> or one <link> to the
-	-- cached bundle file, or '' to keep the original tags. The bundle is
-	-- built by the cache warmer, cron or a scan; a visitor meanwhile gets
-	-- the original links, and that page is kept out of Octave's page cache
+	-- cached bundle file, or '' to keep the original tags. A missing bundle
+	-- is built in the request that needs it: joining and checking a few
+	-- hundred KB of CSS takes milliseconds, while waiting for the warmer
+	-- left every page unbundled and uncached for up to ten minutes after
+	-- each purge or Breakdance save
 	---------------------------------------------------------- */
 
 	protected function bundle_markup( array $run, int $number ): string {
@@ -544,15 +548,6 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 		if ( ! file_exists( $dir . $name ) ) {
 
 			if ( get_transient( 'oa_perf_min_fail_' . $key ) ) {
-
-				return '';
-
-			}
-
-			if ( $this->defer_minify( $key, 'bundle' ) ) {
-
-				Octave_Addons_Perf_Disk_Cache::skip( 'incomplete' );
-				Octave_Addons_Perf_Log::summary( 'css_bundle', [ 'mode' => 'queued', 'bytes' => 0, 'files' => $files ] );
 
 				return '';
 

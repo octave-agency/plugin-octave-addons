@@ -277,7 +277,6 @@ class Octave_Addons_Perf_Diagnostics {
 		$modes = [
 			'inline' => __( 'placed in the page', 'octave-addons' ),
 			'file'   => __( 'served as one file', 'octave-addons' ),
-			'queued' => __( 'being prepared; the original files are used meanwhile', 'octave-addons' ),
 		];
 
 		return [
