@@ -98,12 +98,14 @@ class Octave_Addons_Perf_Google_Fonts {
 
 	/*
 	NORMALIZE
-	-- Decodes &amp; from markup and upgrades protocol-relative URLs to https
+	-- Decodes markup entities, encodes raw whitespace and upgrades
+	-- protocol-relative URLs to https
 	---------------------------------------------------------- */
 
 	public static function normalize( string $url ): string {
 
 		$url = html_entity_decode( trim( $url ), ENT_QUOTES );
+		$url = (string) preg_replace( '/\s+/', '+', $url );
 
 		if ( 0 === strpos( $url, '//' ) ) {
 
@@ -134,10 +136,11 @@ class Octave_Addons_Perf_Google_Fonts {
 
 		$sources = [];
 
-		preg_match_all( '#(?:https?:)?//' . preg_quote( self::CSS_HOST, '#' ) . '/(?:css2?|icon)\?[^"\'\s<>()]+#i', $html, $matches );
+		preg_match_all( '#([\'"])((?:https?:)?//' . preg_quote( self::CSS_HOST, '#' ) . '/(?:css2?|icon)\?[^\'"<>]+)\1|((?:https?:)?//' . preg_quote( self::CSS_HOST, '#' ) . '/(?:css2?|icon)\?[^"\'\s<>()]+)#i', $html, $matches, PREG_SET_ORDER );
 
-		foreach ( $matches[0] as $url ) {
+		foreach ( $matches as $match ) {
 
+			$url = ! empty( $match[2] ) ? $match[2] : ( $match[3] ?? '' );
 			$url = self::normalize( $url );
 
 			if ( self::is_stylesheet_url( $url ) ) {

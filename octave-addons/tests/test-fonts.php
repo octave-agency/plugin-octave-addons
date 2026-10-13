@@ -325,6 +325,7 @@ DETECTION
 
 const OA_WEBFONT_SCRIPT = "<script>WebFont.load({ google: { families: ['Poppins:400,700:latin,latin-ext', 'Open Sans:400'] } });</script>";
 const OA_WEBFONT_CSS    = 'https://fonts.googleapis.com/css?family=Poppins:400,700|Open+Sans:400&subset=latin,latin-ext';
+const OA_VARIABLE_KIT   = 'https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wdth,wght@0,75..100,400..700;1,75..100,400..700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap';
 
 function test_google_fonts_found_in_links_imports_and_webfont_loader(): void {
 
@@ -335,6 +336,14 @@ function test_google_fonts_found_in_links_imports_and_webfont_loader(): void {
 	$sources = Octave_Addons_Perf_Google_Fonts::sources_in( $html );
 
 	oa_assert_same( [ OA_GOOGLE_CSS, 'https://fonts.googleapis.com/css2?family=Lora&display=swap', OA_WEBFONT_CSS ], $sources );
+
+}
+
+function test_google_fonts_kit_with_spaces_is_found_as_one_complete_url(): void {
+
+	$html = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument Sans:ital,wdth,wght@0,75..100,400..700;1,75..100,400..700&amp;family=Bricolage Grotesque:opsz,wdth,wght@12..96,75..100,200..800&amp;display=swap">';
+
+	oa_assert_same( [ OA_VARIABLE_KIT ], Octave_Addons_Perf_Google_Fonts::sources_in( $html ) );
 
 }
 
