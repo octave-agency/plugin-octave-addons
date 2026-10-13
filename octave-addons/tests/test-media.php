@@ -212,12 +212,13 @@ function test_header_images_load_eagerly(): void {
 function test_missing_dimensions_come_from_the_file(): void {
 
 	$full = oa_upload( 'photo.jpg', 120, 60 );
-	$html = oa_media()->transform( oa_page( '<img src="https://example.com/wp-content/uploads/2026/10/photo-300x150.jpg"><img src="" srcset="' . $full . ' 120w"><img src="/remote.png"><img src="' . $full . '" width="10">' ) );
+	$html = oa_media()->transform( oa_page( '<img src="https://example.com/wp-content/uploads/2026/10/photo-300x150.jpg"><img src="" srcset="' . $full . ' 120w"><img src="/remote.png"><img src="' . $full . '" width="10"><img src="' . $full . '" height="15">' ) );
 
 	oa_assert_contains( 'height="150" loading="lazy" width="300" src="https://example.com/wp-content/uploads/2026/10/photo-300x150.jpg"', $html );
 	oa_assert_contains( '<img height="60" width="120" src="" srcset="' . $full . ' 120w">', $html );
 	oa_assert_contains( '<img decoding="async" loading="lazy" src="/remote.png">', $html, 'unknown file untouched' );
-	oa_assert_contains( 'src="' . $full . '" width="10">', $html, 'partial dimensions untouched' );
+	oa_assert_contains( 'height="5" loading="lazy" src="' . $full . '" width="10"', $html, 'missing height follows the file ratio' );
+	oa_assert_contains( 'width="30" src="' . $full . '" height="15"', $html, 'missing width follows the file ratio' );
 
 }
 

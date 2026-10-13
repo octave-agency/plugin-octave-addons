@@ -10,8 +10,8 @@ PERFORMANCE: NEXT-GENERATION IMAGE URLS
 -- Imagify still creates the files beside each original, as photo.jpg.avif.
 -- Wherever such a copy exists, the page points at it directly:
 --   <img> src and srcset, video posters (parked ones included), inline
---   style url()s and image preloads, which also gain a type attribute so a
---   browser without the format skips the preload
+--   style attributes and <style> blocks, and image preloads, which also gain
+--   a type attribute so a browser without the format skips the preload
 -- The page builder's stylesheets (Breakdance's, and Divi's theme and et-cache
 -- CSS) are served as copies in which every background
 -- image declaration is followed, inside the same rule, by an image-set()
@@ -196,9 +196,14 @@ class Octave_Addons_Perf_Nextgen {
 
 		}
 
+		$html     = $tags->get_updated_html();
+		$rewrites = 0;
+		$html     = self::style_blocks( $html, $rewrites );
+		$changed += $rewrites;
+
 		Octave_Addons_Perf_Log::summary( 'nextgen_urls', $changed );
 
-		return $tags->get_updated_html();
+		return $html;
 
 	}
 
@@ -344,6 +349,51 @@ class Octave_Addons_Perf_Nextgen {
 	}
 
 	/*
+	STYLE BLOCKS
+	-- Rewrites background images in inline CSS emitted by either builder.
+	-- Divi commonly places its per-page and critical CSS in <style> elements,
+	-- while Breakdance can inline a generated page stylesheet. Non-CSS style
+	-- blocks and blocks without a usable next-generation copy stay untouched
+	---------------------------------------------------------- */
+
+	public static function style_blocks( string $html, ?int &$changed = null ): string {
+
+		$changed = 0;
+		$path    = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( (string) wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '/'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only the URL path is used as a resolution base.
+		$base    = home_url( '' !== $path ? $path : '/' );
+
+		return (string) preg_replace_callback( '#(<style\b[^>]*>)(.*?)(</style>)#is', static function ( array $match ) use ( $base, &$changed ): string {
+
+			if ( false !== stripos( $match[1], 'data-oa-nextgen' ) ) {
+
+				return $match[0];
+
+			}
+
+			if ( preg_match( '/\btype\s*=\s*(["\'])?([^\s"\'>]+)\1/i', $match[1], $type ) && 'text/css' !== strtolower( $type[2] ) ) {
+
+				return $match[0];
+
+			}
+
+			$css = self::css( $match[2], $base );
+
+			if ( '' === $css ) {
+
+				return $match[0];
+
+			}
+
+			$changed++;
+			$opening = (string) preg_replace( '/>$/', ' data-oa-nextgen>', $match[1] );
+
+			return $opening . $css . $match[3];
+
+		}, $html );
+
+	}
+
+	/*
 	CSS COPY
 	-- URL of a page-builder stylesheet's rewritten copy, written on first use
 	-- and kept until the source, the format or the cache generation changes.
@@ -477,6 +527,12 @@ class Octave_Addons_Perf_Nextgen {
 		$important = (bool) preg_match( '/!\s*important\s*$/i', $value );
 		$value     = trim( (string) preg_replace( '/!\s*important\s*$/i', '', $value ) );
 		$urls      = Octave_Addons_Perf_Css::urls( $value );
+
+		if ( preg_match( '/image-set\(/i', $value ) ) {
+
+			return '';
+
+		}
 
 		// A shorthand only converts when its one url() is its only image.
 		if ( 'background' === $property && ( 1 !== count( $urls ) || preg_match( '/gradient\(|image-set\(|cross-fade\(|element\(/i', $value ) ) ) {

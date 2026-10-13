@@ -565,15 +565,19 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 	/*
 	ADD DIMENSIONS
-	-- Gives an image with neither width nor height the size of its file, as
-	-- WordPress does for content images, so the browser holds its space. The
-	-- size comes from the -WIDTHxHEIGHT suffix of a generated size, or from
-	-- the local file itself. Remote files and SVGs are left alone
+	-- Gives a local image its missing dimensions, as WordPress does for
+	-- content images, so the browser holds its space. When the builder supplied
+	-- one dimension, the other is calculated from the file's aspect ratio.
+	-- The size comes from the -WIDTHxHEIGHT suffix of a generated size, or
+	-- from the local file itself. Remote files and SVGs are left alone
 	---------------------------------------------------------- */
 
 	public static function add_dimensions( WP_HTML_Tag_Processor $tags ): void {
 
-		if ( null !== $tags->get_attribute( 'width' ) || null !== $tags->get_attribute( 'height' ) ) {
+		$width  = absint( $tags->get_attribute( 'width' ) );
+		$height = absint( $tags->get_attribute( 'height' ) );
+
+		if ( $width > 0 && $height > 0 ) {
 
 			return;
 
@@ -589,12 +593,29 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 		$size = '' !== $url ? self::image_size( $url ) : [];
 
-		if ( ! empty( $size ) ) {
+		if ( empty( $size ) ) {
 
-			$tags->set_attribute( 'width', (string) $size[0] );
-			$tags->set_attribute( 'height', (string) $size[1] );
+			return;
 
 		}
+
+		if ( $width > 0 ) {
+
+			$height = max( 1, (int) round( $width * $size[1] / $size[0] ) );
+
+		} elseif ( $height > 0 ) {
+
+			$width = max( 1, (int) round( $height * $size[0] / $size[1] ) );
+
+		} else {
+
+			$width  = $size[0];
+			$height = $size[1];
+
+		}
+
+		$tags->set_attribute( 'width', (string) $width );
+		$tags->set_attribute( 'height', (string) $height );
 
 	}
 

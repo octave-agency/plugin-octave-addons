@@ -24,6 +24,9 @@ PERFORMANCE: FILE OPTIMIZATION
 -- theme stylesheet and its et-cache files) with one bundle of the same CSS
 -- in the same order, inlined when small enough or else served as one
 -- cached file, so first paint waits on one request instead of fifteen.
+-- Each rendered page is inspected independently. Its bundle key contains
+-- that page's exact ordered files, inline CSS and media conditions, so styles
+-- from another URL are never pulled into its generated bundle
 -- It is offered only while Breakdance or Divi is active.
 -- Nothing is removed or loaded late: unused-CSS deletion and asynchronous
 -- loading are deliberately not done, as dynamic states and the header,
@@ -1189,9 +1192,9 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 				Octave_Addons_Fields::section( [ 'label' => __( 'Page-builder styles', 'octave-addons' ) ] );
 
-				$this->switch_row( 'breakdance_css', __( 'Combine page-builder styles', 'octave-addons' ), sprintf(
+				$this->switch_row( 'breakdance_css', __( 'Generate page-specific builder CSS', 'octave-addons' ), sprintf(
 					/* translators: %s: page builder names, e.g. Breakdance or Divi. */
-					__( 'Recommended for %s sites. Your page builder loads its styles as many small files, and a page stays blank until every one has arrived. This combines them into one, in exactly the same order, so the page appears sooner. Small combinations go straight into the page; larger ones become a single file. Octave prepares them in the background, so visitors never wait while it does.', 'octave-addons' ),
+					__( 'Recommended for %s sites. Octave combines only the builder styles present on the current page, in exactly the same order; styles from other pages are never added. Small page combinations go straight into the page and larger ones become one cached file. Octave prepares them in the background, so visitors never wait while it does.', 'octave-addons' ),
 					implode( ' / ', $builders )
 				), $s );
 

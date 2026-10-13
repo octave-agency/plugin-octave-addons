@@ -918,7 +918,15 @@ Settings cards
 
 .oa-settings-card .oa-form-table {
     margin: 0;
-    padding: 4px 20px 12px;
+    padding: 4px 0 12px;
+}
+
+.oa-settings-card .oa-form-table tr > :first-child {
+    padding-left: 20px;
+}
+
+.oa-settings-card .oa-form-table tr > :last-child {
+    padding-right: 20px;
 }
 
 /* --- Panel card ------------------------------------------ */

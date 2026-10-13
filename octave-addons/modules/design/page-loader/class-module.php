@@ -106,7 +106,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 	public function get_title(): string {
 
-		return __( 'Page Loader & Transitions', 'octave-addons' );
+		return __( 'Page Transitions', 'octave-addons' );
 
 	}
 

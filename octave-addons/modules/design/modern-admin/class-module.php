@@ -23,7 +23,7 @@ class Octave_Addons_Module_Modern_Admin extends Octave_Addons_Module {
 
 	public function get_title(): string {
 
-		return __( 'Modern WordPress Admin', 'octave-addons' );
+		return __( 'Modern WordPress', 'octave-addons' );
 
 	}
 

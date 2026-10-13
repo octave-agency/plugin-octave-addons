@@ -131,6 +131,21 @@ function test_posters_inline_styles_and_preloads_point_at_copies(): void {
 
 }
 
+function test_breakdance_and_divi_inline_css_backgrounds_gain_copies(): void {
+
+	oa_nextgen();
+
+	$background = 'background-image:linear-gradient(red,blue),url(' . oa_nextgen_url( 'hero.jpg' ) . ')';
+	$html       = oa_page( '<style id="breakdance-page-css">.bde-section-1-100{' . $background . '}</style><style id="divi-dynamic-critical-inline-css">.et_pb_section_0{' . $background . '}</style><style type="text/less">.x{' . $background . '}</style>' );
+	$updated    = Octave_Addons_Perf_Nextgen::transform( $html );
+
+	oa_assert_same( 2, substr_count( $updated, 'background-image:linear-gradient(red,blue),image-set(' ), 'both builders use the same safe inline-CSS path' );
+	oa_assert_same( 2, substr_count( $updated, oa_nextgen_url( 'hero.jpg' ) . '.avif' ), 'each CSS block points at the AVIF copy' );
+	oa_assert_contains( '<style type="text/less">.x{' . $background . '}</style>', $updated, 'non-CSS blocks stay untouched' );
+	oa_assert_same( $updated, Octave_Addons_Perf_Nextgen::transform( $updated ), 'already rewritten image-set declarations are stable' );
+
+}
+
 /*
 BREAKDANCE CSS
 ---------------------------------------------------------- */

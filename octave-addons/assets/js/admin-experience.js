@@ -93,7 +93,11 @@ WORDPRESS ADMIN EXPERIENCE
         var hoverBackground = rootStyles.getPropertyValue( '--oa-admin-surface-hover' ).trim();
         var text = rootStyles.getPropertyValue( '--oa-admin-text' ).trim();
         var softText = rootStyles.getPropertyValue( '--oa-admin-text-soft' ).trim();
+        var dimText = rootStyles.getPropertyValue( '--oa-admin-text-dim' ).trim();
+        var border = rootStyles.getPropertyValue( '--oa-admin-border' ).trim();
         var accent = rootStyles.getPropertyValue( '--oa-admin-accent-dark' ).trim();
+        var danger = rootStyles.getPropertyValue( '--oa-admin-danger' ).trim();
+        var success = rootStyles.getPropertyValue( '--oa-admin-success' ).trim();
         var style = iframe.contentDocument.getElementById( 'oa-breakdance-tools-theme' );
 
         frameRoot.dataset.oaAdminTheme = activeTheme;
@@ -110,7 +114,11 @@ WORDPRESS ADMIN EXPERIENCE
         style.textContent = 'html, body, .v-application, .v-application__wrap { color: ' + text + ' !important; background: ' + background + ' !important; }'
             + ' .regenerate-cache-description { color: ' + softText + ' !important; }'
             + ' .regenerate-cache-button { color: ' + accent + ' !important; background: ' + softBackground + ' !important; border-color: ' + accent + ' !important; box-shadow: none !important; }'
-            + ' .regenerate-cache-button:hover, .regenerate-cache-button:focus { background: ' + hoverBackground + ' !important; }';
+            + ' .regenerate-cache-button:hover, .regenerate-cache-button:focus { background: ' + hoverBackground + ' !important; }'
+            + ' .regenerate-cache-button:disabled { color: ' + dimText + ' !important; background: ' + hoverBackground + ' !important; border-color: ' + border + ' !important; }'
+            + ' .regenerate-cache-wrapper .breakdance-notification-error, .regenerate-cache-wrapper .breakdance-notification-success { color: ' + text + ' !important; background: ' + softBackground + ' !important; }'
+            + ' .regenerate-cache-wrapper .breakdance-notification-error { border-color: ' + danger + ' !important; }'
+            + ' .regenerate-cache-wrapper .breakdance-notification-success { border-color: ' + success + ' !important; }';
 
         if ( ! iframe.dataset.oaThemeSync ) {
 
