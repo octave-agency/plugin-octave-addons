@@ -33,6 +33,7 @@ class Octave_Addons_Perf_Admin {
 		'oa_perf_imagify_sync'   => 'ajax_imagify_sync',
 		'oa_perf_imagify_test'   => 'ajax_imagify_test',
 		'oa_perf_static_test'    => 'ajax_static_test',
+		'oa_perf_setup'          => 'ajax_setup',
 	];
 
 	/*
@@ -126,6 +127,9 @@ class Octave_Addons_Perf_Admin {
 				'cfEverythingTitle'  => __( 'Clear everything from Cloudflare?', 'octave-addons' ),
 				'cfEverythingText'   => __( 'Cloudflare forgets every saved copy of this site, so the next few visitors will load pages a little more slowly while it saves fresh copies.', 'octave-addons' ),
 				'cfEverythingAction' => __( 'Clear everything', 'octave-addons' ),
+				'setupMaximumTitle'  => __( 'Switch on every speed feature?', 'octave-addons' ),
+				'setupMaximumText'   => __( 'This includes a weekly database cleanup that deletes old revisions, drafts, spam and trash for good, and holds back every known third-party script until visitors interact. Check your key pages afterwards.', 'octave-addons' ),
+				'setupMaximumAction' => __( 'Switch everything on', 'octave-addons' ),
 				'dbNothing'        => __( 'Select at least one item to clean up.', 'octave-addons' ),
 				/* translators: 1: item label, 2: number removed so far. */
 				'dbProgress'       => __( '%1$s: %2$d removed so far…', 'octave-addons' ),
@@ -201,6 +205,53 @@ class Octave_Addons_Perf_Admin {
 
 			<div class="notice notice-error inline oa-inline-notice">
 				<p><strong><?= esc_html( $session_warning ); ?></strong></p>
+			</div>
+
+			<?php
+
+			endif;
+
+			?>
+
+			<?php
+
+			if ( Octave_Addons_Perf_Setup::is_untouched() ) :
+
+			?>
+
+			<div class="oa-perf-card oa-perf-setup">
+				<span class="oa-panel-kicker"><?php esc_html_e( 'Quick setup', 'octave-addons' ); ?></span>
+				<strong><?php esc_html_e( 'Choose how far to go', 'octave-addons' ); ?></strong>
+				<span><?php esc_html_e( 'Switches on the recommended speed features in one go. Every switch can still be changed below afterwards.', 'octave-addons' ); ?></span>
+				<div class="oa-perf-setup-levels">
+
+					<?php
+
+					foreach ( Octave_Addons_Perf_Setup::labels() as $level => $label ) :
+
+					?>
+
+					<div class="oa-perf-setup-level">
+						<strong><?= esc_html( $label['title'] ); ?></strong>
+						<span><?= esc_html( $label['text'] ); ?></span>
+						<button type="button" class="button<?= 'balanced' === $level ? ' button-primary' : ''; ?>" data-oa-perf-action="oa_perf_setup" data-scope="<?= esc_attr( $level ); ?>"<?= 'maximum' === $level ? ' data-confirm="setupMaximum"' : ''; ?> data-result="oa-perf-setup-result">
+							<?php
+
+							/* translators: %s: setup level name. */
+							printf( esc_html__( 'Use %s', 'octave-addons' ), esc_html( $label['title'] ) );
+
+							?>
+						</button>
+					</div>
+
+					<?php
+
+					endforeach;
+
+					?>
+
+				</div>
+				<div id="oa-perf-setup-result" data-oa-perf-result role="status" aria-live="polite"></div>
 			</div>
 
 			<?php
@@ -888,6 +939,25 @@ class Octave_Addons_Perf_Admin {
 
 		/* translators: %s: human readable time difference. */
 		return sprintf( __( '%s ago', 'octave-addons' ), human_time_diff( $time, time() ) );
+
+	}
+
+	/*
+	AJAX SETUP
+	-- Applies one quick-setup level, then the page reloads to show it
+	---------------------------------------------------------- */
+
+	public static function ajax_setup(): void {
+
+		self::guard();
+
+		$level = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : '';
+		$ok    = Octave_Addons_Perf_Setup::apply( $level );
+
+		self::send_result( $ok, [
+			'message' => $ok ? __( 'Speed settings saved. Reloading…', 'octave-addons' ) : __( 'Choose one of the setup levels.', 'octave-addons' ),
+			'reload'  => $ok,
+		] );
 
 	}
 

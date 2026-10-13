@@ -5,9 +5,10 @@ PERFORMANCE: MEDIA LAZY LOADING
 -- Native browser lazy loading for images and iframes. Works with the
 -- always-on Breakdance Lazy Load module rather than beside it: that module
 -- keeps handling HTML5 and background videos, and this one decides whether it may
--- Only attributes are added (loading, decoding, fetchpriority). src, srcset,
--- sizes and picture/source markup are never touched, so WebP and AVIF
--- sources, CDN rewrites and responsive images keep working as delivered
+-- Only attributes are added (loading, decoding, fetchpriority, and auto at
+-- the front of a lazy image's sizes). src, srcset and picture/source
+-- markup are never touched, so WebP and AVIF sources, CDN rewrites and
+-- responsive images keep working as delivered
 -- The likely hero image is kept eager with high priority. Every other image
 -- is left to the browser, which loads lazy images already in view straight away
 -- Two optional fixes for what page builders print: images in the site
@@ -357,17 +358,21 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 
 			}
 
-			if ( '' !== $reason ) {
+			if ( '' === $reason ) {
 
-				continue;
+				$tags->set_attribute( 'loading', 'lazy' );
+
+				if ( 'IMG' === $tag && null === $tags->get_attribute( 'decoding' ) ) {
+
+					$tags->set_attribute( 'decoding', 'async' );
+
+				}
 
 			}
 
-			$tags->set_attribute( 'loading', 'lazy' );
+			if ( 'IMG' === $tag ) {
 
-			if ( 'IMG' === $tag && null === $tags->get_attribute( 'decoding' ) ) {
-
-				$tags->set_attribute( 'decoding', 'async' );
+				self::auto_sizes( $tags );
 
 			}
 
@@ -409,6 +414,30 @@ class Octave_Addons_Module_Performance_Media extends Octave_Addons_Module {
 		}
 
 		return $html;
+
+	}
+
+	/*
+	AUTO SIZES
+	-- Lets the browser pick a lazy image's source from the width it is
+	-- actually shown at. Page builders print sizes for the full content
+	-- width, so a 370px card downloaded its 1024px file. Same rule as
+	-- WordPress's own images: only lazy images with a srcset and both
+	-- dimensions, which keep their shape while the browser sizes them, and
+	-- the original sizes stays behind auto for browsers without support
+	---------------------------------------------------------- */
+
+	public static function auto_sizes( WP_HTML_Tag_Processor $tags ): void {
+
+		$sizes = trim( (string) $tags->get_attribute( 'sizes' ) );
+
+		if ( 'lazy' !== strtolower( (string) $tags->get_attribute( 'loading' ) ) || '' === $sizes || '' === trim( (string) $tags->get_attribute( 'srcset' ) ) || ! is_numeric( $tags->get_attribute( 'width' ) ) || ! is_numeric( $tags->get_attribute( 'height' ) ) || preg_match( '/^auto\s*(,|$)/i', $sizes ) ) {
+
+			return;
+
+		}
+
+		$tags->set_attribute( 'sizes', 'auto, ' . $sizes );
 
 	}
 

@@ -3,8 +3,8 @@
 /*
 BREAKDANCE CSS BUNDLE TESTS
 -- Each unbroken run of Breakdance and Octave stylesheets becomes one
--- bundle with identical order, media and URLs, prepared by the warmer,
--- cached by source, and anything unsafe keeps its original link
+-- bundle with identical order, media and URLs, built on first use,
+-- cached by content, and anything unsafe keeps its original link
 ---------------------------------------------------------- */
 
 /*
@@ -68,22 +68,34 @@ function test_a_run_of_breakdance_stylesheets_becomes_one_ordered_bundle(): void
 
 }
 
-function test_bundles_are_prepared_by_the_warmer_not_a_visitor(): void {
+function test_the_first_visitor_gets_the_bundle_and_the_page_can_be_stored(): void {
 
 	oa_fake_page_cache();
 
 	$html = oa_bundle_page( oa_bd_link( 'a.css', '.a{}' ) . oa_bd_link( 'b.css', '.b{}' ) );
 
-	oa_assert_same( $html, oa_bundle_files()->bundle_styles( $html ), 'the visitor gets the original links' );
+	oa_assert_contains( 'oa-css-bundle-1', oa_bundle_files()->bundle_styles( $html ), 'built in the request, not left for the warmer' );
+	oa_assert_same( '', Octave_Addons_Perf_Disk_Cache::response_bypass( '<!doctype html><html></html>' ), 'the page is not held out of the page cache' );
 
-	$state = Octave_Addons_Perf_Page_Cache::state();
+}
 
-	oa_assert_same( 'bundle', $state['reason'] );
-	oa_assert( ! empty( $state['purge_first'] ), 'the page is purged before the warmer requests it' );
-	oa_assert_same( 'incomplete', Octave_Addons_Perf_Disk_Cache::response_bypass( '<!doctype html><html></html>' ), 'that page is not stored by Octave\'s page cache' );
+function test_a_stylesheet_rewritten_unchanged_keeps_its_bundle(): void {
 
-	oa_assert_contains( 'oa-css-bundle-1', oa_warm_bundle( $html ) );
-	oa_assert_contains( 'oa-css-bundle-1', oa_bundle_files()->bundle_styles( $html ), 'later visitors get the bundle' );
+	$html  = oa_bundle_page( oa_bd_link( 'a.css', '.a{}' ) . oa_bd_link( 'b.css', '.b{}' ) );
+	$dir   = Octave_Addons_Perf_Store::dir( Octave_Addons_Perf_Cache::MIN_DIR );
+	$file  = Octave_Addons_Perf_Admin::local_path( oa_bd_css( 'a.css', '.a{}' ) );
+
+	oa_bundle_files()->bundle_styles( $html );
+
+	$before = glob( $dir . 'bundle-*.css' );
+
+	// Breakdance rewrites its global files with the same content every few minutes.
+	touch( $file, time() + 300 );
+	clearstatcache();
+
+	oa_bundle_files()->bundle_styles( $html );
+
+	oa_assert_same( $before, glob( $dir . 'bundle-*.css' ), 'no new bundle for identical content' );
 
 }
 

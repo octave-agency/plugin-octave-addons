@@ -5637,6 +5637,21 @@ html[data-oa-admin-theme] .oa-confirm-button:focus-visible {
 }
 
 /*
+Destructive confirm button
+-- Stays white on red in both themes: the dark theme's .is-destructive
+-- text colour and the light theme's accent hover would otherwise win
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme] body .oa-confirm-submit.is-destructive {
+    color: #fff;
+}
+
+html[data-oa-admin-theme] body .oa-confirm-submit.is-destructive:hover {
+    border-color: rgba(254, 202, 202, 0.55);
+    background: linear-gradient(135deg, #ef4444, #c81e1e);
+}
+
+/*
 Icon picker dialog
 ---------------------------------------------------------- */
 

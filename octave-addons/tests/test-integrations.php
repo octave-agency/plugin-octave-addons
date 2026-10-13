@@ -392,14 +392,15 @@ function test_breakdance_lazy_toggles_are_removed_when_octave_media_owns_images(
 
 }
 
-function test_breakdance_keeps_its_toggles_when_nobody_owns_image_lazy_loading(): void {
+function test_breakdance_never_lazy_loads_even_when_nobody_else_does(): void {
 
 	oa_set_settings( 'performance-media', [ 'enabled' => false ] );
 
-	oa_assert_same( oa_breakdance_controls(), Octave_Addons_Module_Breakdance_Lazy_Load::filter_controls( oa_breakdance_controls() ), 'controls untouched' );
-	oa_assert_same( oa_breakdance_image_node(), Octave_Addons_Module_Breakdance_Lazy_Load::filter_render_node( oa_breakdance_image_node() ), 'saved value kept' );
-	oa_assert_same( [ 'lazy_load' => true ], Octave_Addons_Module_Breakdance_Lazy_Load::filter_default_properties( [ 'lazy_load' => true ] ), 'Breakdance default kept' );
+	oa_assert_same( 1, count( Octave_Addons_Module_Breakdance_Lazy_Load::filter_controls( oa_breakdance_controls() )['contentSections'][0]['children'] ), 'builder toggle removed' );
+	oa_assert_same( false, Octave_Addons_Module_Breakdance_Lazy_Load::filter_render_node( oa_breakdance_image_node() )['data']['properties']['content']['image']['lazy_load'], 'saved toggle overridden at render' );
+	oa_assert_same( false, Octave_Addons_Module_Breakdance_Lazy_Load::filter_default_properties( [ 'lazy_load' => true ] )['lazy_load'], 'new elements start off' );
 	oa_assert_same( '', Octave_Addons_Module_Breakdance_Lazy_Load::lazy_owner( 'lazy_images' ) );
+	oa_assert_same( 'Nobody (browser default)', Octave_Addons_Module_Breakdance_Lazy_Load::ownership()['lazy_images'] );
 
 	$video = Octave_Addons_Module_Breakdance_Lazy_Load::filter_render_node( [ 'data' => [ 'type' => 'EssentialElements\\Video', 'properties' => [ 'content' => [ 'video' => [ 'video' => 'x' ], 'youtube' => [ 'autoplay' => false ] ] ] ] ] );
 
@@ -407,11 +408,11 @@ function test_breakdance_keeps_its_toggles_when_nobody_owns_image_lazy_loading()
 
 }
 
-function test_breakdance_toggles_are_also_left_when_media_lazy_images_is_off(): void {
+function test_breakdance_lazy_load_stays_off_when_media_lazy_images_is_off(): void {
 
 	oa_set_settings( 'performance-media', [ 'enabled' => true, 'images' => false ] );
 
-	oa_assert_same( oa_breakdance_image_node(), Octave_Addons_Module_Breakdance_Lazy_Load::filter_render_node( oa_breakdance_image_node() ) );
+	oa_assert_same( false, Octave_Addons_Module_Breakdance_Lazy_Load::filter_render_node( oa_breakdance_image_node() )['data']['properties']['content']['image']['lazy_load'] );
 	oa_assert_same( 'Octave Media Lazy Loading', Octave_Addons_Module_Breakdance_Lazy_Load::lazy_owner( 'lazy_iframes' ), 'iframes still owned' );
 
 }

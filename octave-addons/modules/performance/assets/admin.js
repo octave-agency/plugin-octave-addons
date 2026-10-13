@@ -377,6 +377,13 @@ PERFORMANCE ADMIN
 
 			}
 
+			// Settings changed on the server, so the switches below must be redrawn.
+			if ( data.reload ) {
+
+				window.location.reload();
+
+			}
+
 		} ).catch( function () {
 
 			if ( region ) {

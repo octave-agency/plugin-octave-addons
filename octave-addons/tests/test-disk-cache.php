@@ -266,6 +266,34 @@ function test_another_plugins_drop_in_is_never_touched(): void {
 
 }
 
+function test_a_deactivated_wp_rockets_drop_in_is_replaced(): void {
+
+	$path   = Octave_Addons_Perf_Disk_Cache::drop_in_path();
+	$rocket = "<?php\ndefine( 'WP_ROCKET_ADVANCED_CACHE', true );\n";
+
+	file_put_contents( $path, $rocket );
+
+	oa_set_settings( 'performance-page-cache', [ 'enabled' => true ] );
+
+	// Other tests define WP_ROCKET_VERSION for good, so either case may be the one under test.
+	if ( defined( 'WP_ROCKET_VERSION' ) ) {
+
+		oa_assert( Octave_Addons_Perf_Disk_Cache::foreign_drop_in(), 'an active WP Rocket keeps its drop-in' );
+		oa_assert( ! Octave_Addons_Perf_Disk_Cache::install() );
+		oa_assert_same( $rocket, file_get_contents( $path ) );
+
+	} else {
+
+		oa_assert( ! Octave_Addons_Perf_Disk_Cache::foreign_drop_in(), 'a leftover is nobody\'s' );
+		oa_assert( Octave_Addons_Perf_Disk_Cache::install() );
+		oa_assert( Octave_Addons_Perf_Disk_Cache::own_drop_in(), 'replaced by Octave\'s' );
+
+	}
+
+	unlink( $path );
+
+}
+
 function test_own_drop_in_is_installed_and_removed_cleanly(): void {
 
 	oa_set_settings( 'performance-page-cache', [ 'enabled' => true ] );

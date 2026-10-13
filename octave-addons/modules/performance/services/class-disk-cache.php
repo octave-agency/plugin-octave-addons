@@ -6,7 +6,9 @@ PERFORMANCE: OCTAVE PAGE CACHE
 -- the Page Cache module is on and no other page cache was found: Cloudways
 -- Varnish, a page-cache plugin or a managed host always wins, and an
 -- advanced-cache.php written by anything else means another cache owns
--- the site, so Octave never stacks a second cache in front of it
+-- the site, so Octave never stacks a second cache in front of it. The
+-- one exception is a drop-in left behind by a deactivated WP Rocket,
+-- which nothing owns any more and Octave replaces
 -- Pages are stored after every Octave optimisation has run, written beside
 -- their final name and renamed into place, under
 -- wp-content/cache/octave-addons/pages/. Octave's advanced-cache.php
@@ -222,7 +224,31 @@ class Octave_Addons_Perf_Disk_Cache {
 
 		}
 
-		return ! self::own_drop_in();
+		return ! self::own_drop_in() && ! self::stale_drop_in();
+
+	}
+
+	/*
+	STALE DROP-IN
+	-- A drop-in left behind by a caching plugin that is no longer active,
+	-- such as WP Rocket's after a trial. Nothing owns it any more, so Octave
+	-- replaces it instead of standing aside for good
+	---------------------------------------------------------- */
+
+	public static function stale_drop_in(): bool {
+
+		$path = self::drop_in_path();
+
+		if ( ! is_file( $path ) ) {
+
+			return false;
+
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file.
+		$head = (string) file_get_contents( $path, false, null, 0, 4096 );
+
+		return false !== strpos( $head, 'WP_ROCKET_ADVANCED_CACHE' ) && ! defined( 'WP_ROCKET_VERSION' );
 
 	}
 
@@ -349,7 +375,7 @@ class Octave_Addons_Perf_Disk_Cache {
 
 		$path = self::drop_in_path();
 
-		if ( file_exists( $path ) && ! self::own_drop_in() ) {
+		if ( file_exists( $path ) && ! self::own_drop_in() && ! self::stale_drop_in() ) {
 
 			return false;
 

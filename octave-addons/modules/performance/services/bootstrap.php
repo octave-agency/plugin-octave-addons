@@ -35,6 +35,7 @@ require_once __DIR__ . '/class-lcp.php';
 require_once __DIR__ . '/class-imagify.php';
 require_once __DIR__ . '/class-nextgen.php';
 require_once __DIR__ . '/class-diagnostics.php';
+require_once __DIR__ . '/class-setup.php';
 require_once __DIR__ . '/class-admin.php';
 
 class Octave_Addons_Perf {
@@ -57,7 +58,7 @@ class Octave_Addons_Perf {
 
 	}
 
-	protected static function manager(): ?Octave_Addons_Module_Manager {
+	public static function manager(): ?Octave_Addons_Module_Manager {
 
 		if ( null !== self::$manager ) {
 

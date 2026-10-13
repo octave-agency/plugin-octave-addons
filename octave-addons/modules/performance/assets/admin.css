@@ -102,6 +102,39 @@ STATUS CARDS
 }
 
 /*
+Quick setup
+---------------------------------------------------------- */
+
+.oa-perf-setup {
+    margin-bottom: 12px;
+}
+
+.oa-perf-setup-levels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.oa-perf-setup-level {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--oa-border);
+    border-radius: 10px;
+}
+
+.oa-perf-card .oa-perf-setup-level strong {
+    font-size: 15px;
+}
+
+.oa-perf-setup-level .button {
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+/*
 RESULTS
 -- Live regions stay empty until an action reports back, then hold one of
 -- the plugin's standard inline notices

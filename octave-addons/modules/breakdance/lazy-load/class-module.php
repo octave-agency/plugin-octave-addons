@@ -2,12 +2,11 @@
 
 /*
 BREAKDANCE LAZY LOAD
--- Decides who lazy loads Breakdance media. Breakdance's own image "Lazy
--- Load" toggles use a script and data-src markup, so when Octave's Media
--- Lazy Loading or a detected third-party plugin lazy loads images, those
--- toggles are removed from the builder and forced off in the defaults and
--- the rendered output, so the page is never processed twice. With no other
--- owner, Breakdance keeps its toggles, defaults and saved values untouched
+-- Breakdance never lazy loads anything itself. Its image "Lazy Load"
+-- toggles use a script and data-src markup, so they are always removed
+-- from the builder and forced off in the defaults and the rendered output.
+-- Images are left to Octave's Media Lazy Loading, a third-party plugin or
+-- the browser's native loading="lazy"
 -- Breakdance has no iframe lazy-load toggles; iframes belong to the Media
 -- module, a third-party plugin or the browser
 -- Videos are always handled here and lazy loaded by default: Breakdance
@@ -53,11 +52,6 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 	 * Whether this request rendered a video that needs the viewport loader.
 	 */
 	protected static $needs_script = false;
-
-	/**
-	 * Who lazy loads images this request, once decided.
-	 */
-	protected static ?string $image_owner = null;
 
 	/*
 	GET ID
@@ -108,7 +102,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 	LAZY OWNER
 	-- Who lazy loads images or iframes: a third-party plugin first, since
 	-- Octave steps aside for it, then Media Lazy Loading. '' means nobody,
-	-- which for images leaves the job to Breakdance's own toggles
+	-- which leaves the job to the browser
 	---------------------------------------------------------- */
 
 	public static function lazy_owner( string $feature ): string {
@@ -128,27 +122,8 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 	}
 
-	/*
-	OWNS BREAKDANCE IMAGES
-	-- Whether Breakdance's image toggles are taken over. Decided once per
-	-- request, so the builder and the rendered page always agree
-	---------------------------------------------------------- */
-
-	public static function suppresses_breakdance_toggles(): bool {
-
-		if ( null === self::$image_owner ) {
-
-			self::$image_owner = self::lazy_owner( 'lazy_images' );
-
-		}
-
-		return '' !== self::$image_owner;
-
-	}
-
 	public static function reset(): void {
 
-		self::$image_owner  = null;
 		self::$needs_script = false;
 
 	}
@@ -163,17 +138,11 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 		$images  = self::lazy_owner( 'lazy_images' );
 		$iframes = self::lazy_owner( 'lazy_iframes' );
 
-		if ( '' === $images ) {
-
-			$images = class_exists( 'Octave_Addons' ) && Octave_Addons::is_breakdance_active() ? __( 'Breakdance (its own Lazy Load toggles)', 'octave-addons' ) : __( 'Nobody (browser default)', 'octave-addons' );
-
-		}
-
 		/** This filter is documented in modules/breakdance/lazy-load/class-module.php */
 		$videos = (bool) apply_filters( 'octave_addons_lazy_videos', true );
 
 		return [
-			'lazy_images'  => $images,
+			'lazy_images'  => '' !== $images ? $images : __( 'Nobody (browser default)', 'octave-addons' ),
 			'lazy_iframes' => '' !== $iframes ? $iframes : __( 'Nobody (browser default)', 'octave-addons' ),
 			'lazy_videos'  => $videos ? __( 'Octave Breakdance video loader', 'octave-addons' ) : __( 'Nobody (switched off in Lazy Loading)', 'octave-addons' ),
 		];
@@ -225,14 +194,13 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 	/*
 	FILTER CONTROLS
-	-- Removes every Lazy Load toggle from the builder panels while another
-	-- owner lazy loads images, so editors are not offered a switch that
-	-- would be overridden at render anyway
+	-- Removes every Lazy Load toggle from the builder panels, so editors are
+	-- not offered a switch that would be overridden at render anyway
 	---------------------------------------------------------- */
 
 	public static function filter_controls( $controls ) {
 
-		if ( ! is_array( $controls ) || ! self::suppresses_breakdance_toggles() ) {
+		if ( ! is_array( $controls ) ) {
 
 			return $controls;
 
@@ -280,7 +248,6 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 	FILTER DEFAULT PROPERTIES
 	-- Breakdance hands the builder each element's starting properties here, so
 	-- an element dropped onto the canvas arrives with Lazy Load already off
-	-- while another owner lazy loads images
 	-- Elements with no defaults return false rather than an array
 	---------------------------------------------------------- */
 
@@ -292,11 +259,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
-		if ( self::suppresses_breakdance_toggles() ) {
-
-			$properties = self::disable_lazy_load( $properties );
-
-		}
+		$properties = self::disable_lazy_load( $properties );
 
 		// Defaults carry no element type, so a Video is recognised by its shape.
 		if ( isset( $properties['content']['video']['video'] ) ) {
@@ -314,7 +277,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 	-- Catches everything the defaults filter cannot reach: saved pages, nested
 	-- child elements shipped inside sliders and accordions, and any toggle an
 	-- editor has switched back on. Saved values are only overridden at render,
-	-- never rewritten, so they return when nobody else owns lazy loading
+	-- never rewritten
 	---------------------------------------------------------- */
 
 	public static function filter_render_node( $node ) {
@@ -325,11 +288,7 @@ class Octave_Addons_Module_Breakdance_Lazy_Load extends Octave_Addons_Module {
 
 		}
 
-		if ( self::suppresses_breakdance_toggles() ) {
-
-			$node['data']['properties'] = self::disable_lazy_load( $node['data']['properties'] );
-
-		}
+		$node['data']['properties'] = self::disable_lazy_load( $node['data']['properties'] );
 
 		if ( self::VIDEO_TYPE === ( $node['data']['type'] ?? '' ) ) {
 

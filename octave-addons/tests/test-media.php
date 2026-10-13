@@ -88,8 +88,21 @@ function test_picture_srcset_and_modern_formats_are_preserved(): void {
 
 	oa_assert_contains( '<source type="image/avif" srcset="/a.avif 1x, /a@2x.avif 2x">', $html );
 	oa_assert_contains( '<source type="image/webp" srcset="/a.webp">', $html );
-	oa_assert_contains( 'srcset="/a.jpg 1x, /a@2x.jpg 2x" sizes="100vw" width="800" height="600" alt="A"', $html );
+	oa_assert_contains( 'srcset="/a.jpg 1x, /a@2x.jpg 2x" sizes="auto, 100vw" width="800" height="600" alt="A"', $html );
 	oa_assert_contains( 'loading="lazy"', $html );
+
+}
+
+function test_lazy_images_with_dimensions_are_sized_by_the_browser(): void {
+
+	$card   = '<img src="/c.jpg" srcset="/c-600.jpg 600w, /c.jpg 980w" sizes="(max-width: 1024px) 100vw, 1024px" width="980" height="653" loading="lazy">';
+	$no_dim = '<img src="/d.jpg" srcset="/d-600.jpg 600w" sizes="100vw" loading="lazy">';
+	$eager  = '<img src="/e.jpg" srcset="/e-600.jpg 600w" sizes="100vw" width="600" height="400" data-oa-no-lazy>';
+	$html   = oa_media()->transform( oa_page( '<img src="/hero.jpg" width="1600" fetchpriority="high">' . $card . $no_dim . $eager ) );
+
+	oa_assert_contains( 'sizes="auto, (max-width: 1024px) 100vw, 1024px"', $html, 'original sizes kept as the fallback' );
+	oa_assert_same( 1, substr_count( $html, 'sizes="auto' ), 'only lazy images with both dimensions' );
+	oa_assert_not_contains( 'auto, auto', oa_media()->transform( $html ), 'never added twice' );
 
 }
 
