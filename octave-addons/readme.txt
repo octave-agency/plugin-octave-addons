@@ -168,6 +168,9 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.43.2 =
+* Fixed Cloudways not being recognised on servers that do not set the cw_allowed_ip value, which left Varnish out of every clear. Octave now also recognises Cloudways by its install path (/home/<server>.cloudwaysapps.com/).
+
 = 3.43.1 =
 * Fixed Cloudways Varnish not being cleared. A clear only counts once Varnish itself confirms it, instead of any reply from the server. Octave now finds Varnish on either address Cloudways uses and remembers the one that works. If Varnish cannot be reached, the clear is reported as failed with the reason.
 

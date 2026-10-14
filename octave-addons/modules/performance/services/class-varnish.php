@@ -14,8 +14,9 @@ PERFORMANCE: CLOUDWAYS VARNISH
 -- cleared. A targeted purge names one path; a full
 -- purge names the site's root path followed by .* and asks for a regex
 -- match through the X-Purge-Method header
--- Cloudways is recognised by the cw_allowed_ip value its servers add to
--- every PHP request, and Varnish by the X-Varnish and X-Application request
+-- Cloudways is recognised by where it installs applications, under
+-- /home/<server>.cloudwaysapps.com/, or by the cw_allowed_ip value some of
+-- its servers add to PHP requests, and Varnish by the X-Varnish and X-Application request
 -- headers it adds while it is switched on. Only front-end requests answer:
 -- admin, AJAX, cron and WP-CLI requests may not pass through Varnish, so
 -- they use the last answer a front-end request recorded
@@ -55,7 +56,14 @@ class Octave_Addons_Perf_Varnish {
 
 	public static function is_cloudways(): bool {
 
-		return isset( $_SERVER['cw_allowed_ip'] );
+		return isset( $_SERVER['cw_allowed_ip'] ) || (bool) preg_match( '#/home/[^/]+\.cloudwaysapps\.com/#', self::root() );
+
+	}
+
+	/** Where WordPress is installed; a method so tests can stand in for a Cloudways server. */
+	protected static function root(): string {
+
+		return (string) apply_filters( 'octave_addons_perf_install_path', ABSPATH );
 
 	}
 

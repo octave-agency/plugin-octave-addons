@@ -209,6 +209,23 @@ function test_only_an_answer_from_varnish_counts_and_the_working_address_is_reme
 
 }
 
+function test_cloudways_is_recognised_by_its_install_path_alone(): void {
+
+	oa_assert( ! Octave_Addons_Perf_Varnish::is_cloudways(), 'an ordinary server' );
+
+	add_filter( 'octave_addons_perf_install_path', static function () {
+
+		return '/home/431062.cloudwaysapps.com/ywhhjtvagt/public_html/';
+
+	} );
+
+	oa_set_settings( 'performance-media', [ 'enabled' => true ] );
+
+	oa_assert( Octave_Addons_Perf_Varnish::is_cloudways(), 'no cw_allowed_ip needed' );
+	oa_assert( isset( Octave_Addons_Perf_Page_Cache::connectors()['Cloudways Varnish'] ), 'so every clear reaches Varnish' );
+
+}
+
 /*
 INTEGRATION
 ---------------------------------------------------------- */
