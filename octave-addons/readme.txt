@@ -168,6 +168,9 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.43.1 =
+* Fixed Cloudways Varnish not being cleared. A clear only counts once Varnish itself confirms it, instead of any reply from the server. Octave now finds Varnish on either address Cloudways uses and remembers the one that works. If Varnish cannot be reached, the clear is reported as failed with the reason.
+
 = 3.43.0 =
 * Clearing the cache now always clears Cloudways Varnish. Octave sends the purge on every Cloudways site instead of only when a request had seen Varnish, so a request that bypassed Varnish can no longer switch the purge off. A purge that fails while Varnish looks switched off is reported as skipped, not as an error.
 * Minified files are kept for 48 hours after a clear, so pages still cached by Varnish, Cloudflare or a browser never link to missing files. They are deleted automatically afterwards.

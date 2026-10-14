@@ -29,9 +29,19 @@ function oa_varnish_answers( int $code = 200 ): void {
 
 	$GLOBALS['oa_http'] = static function () use ( $code ) {
 
-		return oa_http_response( $code, '', 'text/plain' );
+		return oa_varnish_response( $code );
 
 	};
+
+}
+
+function oa_varnish_response( int $code ): array {
+
+	$response = oa_http_response( $code, '', 'text/plain' );
+
+	$response['headers']['x-varnish'] = '2753254';
+
+	return $response;
 
 }
 
@@ -138,7 +148,7 @@ function test_errors_and_refusals_are_reported_and_stop_further_requests(): void
 
 	oa_assert_same( 'error', $result['status'] );
 	oa_assert_contains( 'timed out', $result['message'] );
-	oa_assert_same( 1, count( $GLOBALS['oa_http_log'] ), 'a dead service costs one timeout, not one per URL' );
+	oa_assert_same( count( Octave_Addons_Perf_Varnish::ENDPOINTS ), count( $GLOBALS['oa_http_log'] ), 'a dead service costs one try per address, not one per URL' );
 
 	oa_test_reset();
 	oa_cloudways();
@@ -161,6 +171,41 @@ function test_a_failure_while_varnish_is_not_known_to_be_on_is_skipped(): void {
 	};
 
 	oa_assert_same( 'skipped', Octave_Addons_Perf_Varnish::purge_all()['status'] );
+
+}
+
+function test_only_an_answer_from_varnish_counts_and_the_working_address_is_remembered(): void {
+
+	$_SERVER['cw_allowed_ip'] = '1';
+	$GLOBALS['oa_http']       = static function ( string $url ) {
+
+		// Apache on 8080 answers a PURGE with WordPress's own page.
+		return 0 === strpos( $url, 'http://127.0.0.1:8080/' ) ? oa_http_response( 200, '<html>', 'text/html' ) : oa_varnish_response( 200 );
+
+	};
+
+	oa_assert_same( 'success', Octave_Addons_Perf_Varnish::purge_all()['status'] );
+	oa_assert_same( [ 'http://127.0.0.1:8080/.*', 'http://127.0.0.1/.*' ], array_column( $GLOBALS['oa_http_log'], 'url' ), 'a 200 without Varnish is not a purge' );
+	oa_assert_same( '127.0.0.1', get_option( Octave_Addons_Perf_Varnish::ENDPOINT_OPTION ) );
+
+	$GLOBALS['oa_http_log'] = [];
+
+	Octave_Addons_Perf_Varnish::purge_urls( [ 'https://example.com/about/' ] );
+
+	oa_assert_same( [ 'http://127.0.0.1/about/' ], array_column( $GLOBALS['oa_http_log'], 'url' ), 'the remembered address goes first' );
+
+	$GLOBALS['oa_http'] = static function () {
+
+		return oa_http_response( 200, '<html>', 'text/html' );
+
+	};
+
+	oa_cloudways();
+
+	$result = Octave_Addons_Perf_Varnish::purge_all();
+
+	oa_assert_same( 'error', $result['status'], 'never reported as cleared when Varnish did not answer' );
+	oa_assert_contains( 'Varnish was not found', $result['message'] );
 
 }
 

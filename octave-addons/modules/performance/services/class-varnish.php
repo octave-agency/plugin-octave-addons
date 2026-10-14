@@ -5,8 +5,13 @@ PERFORMANCE: CLOUDWAYS VARNISH
 -- Clears the Varnish page cache Cloudways runs in front of WordPress. The
 -- application talks to the Varnish service on its own server, so no
 -- Cloudways API credentials are needed
--- Protocol: an HTTP PURGE request to 127.0.0.1:8080 carrying the site's
--- public host in the Host header. A targeted purge names one path; a full
+-- Protocol: an HTTP PURGE request to this server carrying the site's
+-- public host in the Host header. Cloudways stacks differ in where Varnish
+-- listens, so 127.0.0.1:8080 and then 127.0.0.1 (through Nginx) are tried,
+-- and the first that Varnish itself answers is remembered. Only a reply
+-- carrying Varnish's X-Varnish header counts: Apache answers a PURGE with
+-- WordPress's own page, which once looked like success while nothing was
+-- cleared. A targeted purge names one path; a full
 -- purge names the site's root path followed by .* and asks for a regex
 -- match through the X-Purge-Method header
 -- Cloudways is recognised by the cw_allowed_ip value its servers add to
@@ -30,8 +35,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Octave_Addons_Perf_Varnish {
 
-	/** Where the Cloudways Varnish service listens. */
-	public const ENDPOINT = '127.0.0.1:8080';
+	/** Where Cloudways Varnish may be reached, tried in order. */
+	public const ENDPOINTS = [ '127.0.0.1:8080', '127.0.0.1' ];
+
+	/** The endpoint Varnish last answered on. */
+	public const ENDPOINT_OPTION = 'octave_addons_perf_varnish_endpoint';
 
 	/** Seconds one purge request may take. */
 	public const TIMEOUT = 2;
@@ -251,36 +259,76 @@ class Octave_Addons_Perf_Varnish {
 
 		}
 
-		$response = wp_remote_request( 'http://' . self::ENDPOINT . $path, [
-			'method'      => 'PURGE',
-			'timeout'     => self::TIMEOUT,
-			'redirection' => 0,
-			'blocking'    => true,
-			'headers'     => [
-				'Host'           => $host,
-				'X-Purge-Method' => $method,
-			],
-		] );
+		/**
+		 * Filters where Octave looks for Cloudways Varnish, as host[:port], in order.
+		 *
+		 * @param string[] $endpoints Endpoints.
+		 */
+		$endpoints = array_values( array_filter( array_map( 'strval', (array) apply_filters( 'octave_addons_perf_varnish_endpoints', self::ENDPOINTS ) ) ) );
+		$known     = (string) get_option( self::ENDPOINT_OPTION, '' );
 
-		if ( is_wp_error( $response ) ) {
+		if ( in_array( $known, $endpoints, true ) ) {
 
-			Octave_Addons_Perf_Log::error( 'page-cache', $response->get_error_message(), self::LABEL );
-
-			/* translators: %s: error message. */
-			return sprintf( __( 'Cloudways Varnish did not respond: %s', 'octave-addons' ), $response->get_error_message() );
+			$endpoints = array_values( array_unique( array_merge( [ $known ], $endpoints ) ) );
 
 		}
 
-		$code = (int) wp_remote_retrieve_response_code( $response );
+		$error = '';
 
-		if ( $code < 200 || $code >= 300 ) {
+		foreach ( $endpoints as $endpoint ) {
 
-			/* translators: %d: HTTP status code. */
-			return sprintf( __( 'Cloudways Varnish would not clear the page (error %d).', 'octave-addons' ), $code );
+			$response = wp_remote_request( 'http://' . $endpoint . $path, [
+				'method'      => 'PURGE',
+				'timeout'     => self::TIMEOUT,
+				'redirection' => 0,
+				'blocking'    => true,
+				'headers'     => [
+					'Host'           => $host,
+					'X-Purge-Method' => $method,
+				],
+			] );
+
+			if ( is_wp_error( $response ) ) {
+
+				/* translators: 1: address, 2: error message. */
+				$error = sprintf( __( 'Cloudways Varnish did not respond at %1$s: %2$s', 'octave-addons' ), $endpoint, $response->get_error_message() );
+
+				continue;
+
+			}
+
+			$code = (int) wp_remote_retrieve_response_code( $response );
+
+			// Something else answered, such as Apache or an Nginx redirect.
+			if ( '' === (string) wp_remote_retrieve_header( $response, 'x-varnish' ) ) {
+
+				/* translators: 1: address, 2: HTTP status code. */
+				$error = sprintf( __( 'Varnish was not found at %1$s (the server answered %2$d instead).', 'octave-addons' ), $endpoint, $code );
+
+				continue;
+
+			}
+
+			if ( $code < 200 || $code >= 300 ) {
+
+				/* translators: 1: HTTP status code, 2: address. */
+				return sprintf( __( 'Cloudways Varnish would not clear the page (error %1$d at %2$s).', 'octave-addons' ), $code, $endpoint );
+
+			}
+
+			if ( $known !== $endpoint ) {
+
+				update_option( self::ENDPOINT_OPTION, $endpoint, false );
+
+			}
+
+			return '';
 
 		}
 
-		return '';
+		Octave_Addons_Perf_Log::error( 'page-cache', $error, self::LABEL );
+
+		return $error;
 
 	}
 
