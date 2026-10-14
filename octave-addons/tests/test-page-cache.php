@@ -107,7 +107,7 @@ function test_full_purge_warms_public_pages_in_small_batches(): void {
 	$queue = Octave_Addons_Perf_Page_Cache::state()['queue'];
 
 	oa_assert_same( [ 'https://example.com/', 'https://example.com/about/', 'https://example.com/blog/', 'https://example.com/team/', 'https://example.com/contact/' ], $queue, 'login, cart and noindex pages skipped' );
-	oa_assert_same( Octave_Addons_Perf_Page_Cache::WARM_HOOK, $GLOBALS['oa_cron'][0]['hook'], 'runs from cron, not during the purge' );
+	oa_assert_same( 1, count( oa_cron_hooks( Octave_Addons_Perf_Page_Cache::WARM_HOOK ) ), 'runs from cron, not during the purge' );
 	oa_assert_same( [], $GLOBALS['oa_http_log'] );
 
 	$GLOBALS['oa_post_ids'][] = 8;
@@ -156,7 +156,7 @@ function test_queue_is_extended_not_duplicated_and_long_queues_continue(): void 
 	Octave_Addons_Perf_Page_Cache::warm_batch();
 
 	oa_assert_same( 5, count( Octave_Addons_Perf_Page_Cache::state()['queue'] ) );
-	oa_assert_same( 2, count( $GLOBALS['oa_cron'] ), 'next batch booked' );
+	oa_assert_same( 2, count( oa_cron_hooks( Octave_Addons_Perf_Page_Cache::WARM_HOOK ) ), 'next batch booked' );
 
 	set_transient( 'oa_perf_warm_lock', 1 );
 
@@ -171,6 +171,36 @@ function test_nothing_is_warmed_without_a_page_cache_or_minified_files(): void {
 	Octave_Addons_Perf_Cache::purge_all( 'all', 'manual' );
 
 	oa_assert_same( [], Octave_Addons_Perf_Page_Cache::state()['queue'] );
-	oa_assert_same( [], $GLOBALS['oa_cron'] );
+	oa_assert_same( [], oa_cron_hooks( Octave_Addons_Perf_Page_Cache::WARM_HOOK ) );
+
+}
+
+function test_a_warmed_page_linking_to_missing_minified_files_is_purged_and_rechecked_once(): void {
+
+	oa_fake_page_cache();
+
+	$min = Octave_Addons_Perf_Store::dir( 'min' );
+	$url = Octave_Addons_Perf_Store::url( 'min' );
+
+	Octave_Addons_Perf_Store::write( $min . 'here.min.js', 'a' );
+
+	$GLOBALS['oa_http'] = static function () use ( $url ) {
+
+		return oa_http_response( 200, '<script src="' . $url . 'here.min.js"></script><script src="' . $url . 'gone-abc.min.js?ver=1"></script>', 'text/html' );
+
+	};
+
+	oa_assert_same( [ 'gone-abc.min.js' ], Octave_Addons_Perf_Page_Cache::missing_files( (string) $GLOBALS['oa_http']()['body'] ) );
+
+	Octave_Addons_Perf_Page_Cache::queue_warm( 'manual', [ 'https://example.com/about/' ] );
+	Octave_Addons_Perf_Page_Cache::warm_batch();
+
+	oa_assert_same( [ [ 'https://example.com/about/' ] ], $GLOBALS['oa_cache_calls'], 'the stale page was purged' );
+	oa_assert_same( [ 'https://example.com/about/' ], Octave_Addons_Perf_Page_Cache::state()['queue'], 'and queued for one more look' );
+
+	delete_transient( 'oa_perf_warm_lock' );
+	Octave_Addons_Perf_Page_Cache::warm_batch();
+
+	oa_assert_same( [], Octave_Addons_Perf_Page_Cache::state()['queue'], 'never a loop' );
 
 }

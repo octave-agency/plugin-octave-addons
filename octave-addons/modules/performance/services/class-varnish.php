@@ -11,9 +11,12 @@ PERFORMANCE: CLOUDWAYS VARNISH
 -- match through the X-Purge-Method header
 -- Cloudways is recognised by the cw_allowed_ip value its servers add to
 -- every PHP request, and Varnish by the X-Varnish and X-Application request
--- headers it adds while it is switched on. Cron and WP-CLI requests carry
--- no headers, so the last answer from a web request is remembered for
--- them. With no answer at all, Varnish is treated as absent
+-- headers it adds while it is switched on. Only front-end requests answer:
+-- admin, AJAX, cron and WP-CLI requests may not pass through Varnish, so
+-- they use the last answer a front-end request recorded
+-- Every Cloudways site is purged whatever that answer says, because a wrong
+-- "off" left visitors on pages linking to files that no longer existed. A
+-- purge that fails while Varnish is not known to be on counts as skipped
 -- Requests use a short timeout. When one fails or times out the rest are
 -- skipped, so a stopped service can never hold up the request for long
 -- Only paths built from URLs on this site are ever purged
@@ -82,7 +85,7 @@ class Octave_Addons_Perf_Varnish {
 
 	public static function request_state(): string {
 
-		if ( ! self::is_cloudways() || ( defined( 'WP_CLI' ) && WP_CLI ) || wp_doing_cron() ) {
+		if ( ! self::is_cloudways() || ( defined( 'WP_CLI' ) && WP_CLI ) || wp_doing_cron() || is_admin() ) {
 
 			return '';
 
@@ -175,7 +178,7 @@ class Octave_Addons_Perf_Varnish {
 
 			if ( '' !== $error ) {
 
-				return self::result( 'error', $error );
+				return self::failed( $error );
 
 			}
 
@@ -195,7 +198,19 @@ class Octave_Addons_Perf_Varnish {
 
 		$error = self::send( self::path( home_url( '/' ) ) . '.*', 'regex' );
 
-		return '' === $error ? self::result( 'success', __( 'Cleared everything.', 'octave-addons' ) ) : self::result( 'error', $error );
+		return '' === $error ? self::result( 'success', __( 'Cleared everything.', 'octave-addons' ) ) : self::failed( $error );
+
+	}
+
+	/*
+	FAILED
+	-- An error while Varnish is known to be on; otherwise most likely it is
+	-- switched off, which is nothing to clear
+	---------------------------------------------------------- */
+
+	protected static function failed( string $error ): array {
+
+		return self::is_running() ? self::result( 'error', $error ) : self::result( 'skipped', __( 'Cloudways Varnish looks switched off, so there was nothing to clear.', 'octave-addons' ) );
 
 	}
 

@@ -447,3 +447,18 @@ function test_delivery_test_checks_the_returned_format(): void {
 	oa_assert_contains( 'instead of image/avif', Octave_Addons_Perf_Imagify::test_delivery()['message'] );
 
 }
+
+function test_a_delivery_test_from_another_method_is_not_shown(): void {
+
+	$current = Octave_Addons_Perf_Imagify::delivery_method();
+	$other   = 'rewrite' === $current ? 'picture' : 'rewrite';
+
+	update_option( Octave_Addons_Perf_Imagify::STATUS_OPTION, [ 'test' => [ 'ok' => false, 'message' => 'Served as image/jpeg', 'method' => $other ] ] );
+
+	oa_assert( ! isset( Octave_Addons_Perf_Imagify::status()['test'] ), 'an old result never describes the current setup' );
+
+	update_option( Octave_Addons_Perf_Imagify::STATUS_OPTION, [ 'test' => [ 'ok' => true, 'message' => 'Served as image/avif', 'method' => $current ] ] );
+
+	oa_assert( Octave_Addons_Perf_Imagify::status()['test']['ok'] );
+
+}

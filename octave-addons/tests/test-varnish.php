@@ -126,6 +126,8 @@ function test_other_hosts_and_unsafe_paths_are_never_purged(): void {
 
 function test_errors_and_refusals_are_reported_and_stop_further_requests(): void {
 
+	oa_cloudways();
+
 	$GLOBALS['oa_http'] = static function () {
 
 		return new WP_Error( 'timeout', 'Operation timed out' );
@@ -139,6 +141,7 @@ function test_errors_and_refusals_are_reported_and_stop_further_requests(): void
 	oa_assert_same( 1, count( $GLOBALS['oa_http_log'] ), 'a dead service costs one timeout, not one per URL' );
 
 	oa_test_reset();
+	oa_cloudways();
 	oa_varnish_answers( 405 );
 
 	$result = Octave_Addons_Perf_Varnish::purge_all();
@@ -148,9 +151,44 @@ function test_errors_and_refusals_are_reported_and_stop_further_requests(): void
 
 }
 
+function test_a_failure_while_varnish_is_not_known_to_be_on_is_skipped(): void {
+
+	$_SERVER['cw_allowed_ip'] = '1';
+	$GLOBALS['oa_http']       = static function () {
+
+		return new WP_Error( 'http_request_failed', 'Connection refused' );
+
+	};
+
+	oa_assert_same( 'skipped', Octave_Addons_Perf_Varnish::purge_all()['status'] );
+
+}
+
 /*
 INTEGRATION
 ---------------------------------------------------------- */
+
+function test_cloudways_is_purged_even_when_an_admin_request_cannot_see_varnish(): void {
+
+	oa_cloudways();
+
+	Octave_Addons_Perf_Varnish::is_running();
+
+	unset( $_SERVER['HTTP_X_VARNISH'] );
+	$_SERVER['HTTP_X_APPLICATION'] = 'varnishpass';
+	$GLOBALS['oa_flags']['admin']  = true;
+
+	oa_assert( Octave_Addons_Perf_Varnish::is_running(), 'an admin request does not overwrite what the front end saw' );
+
+	delete_option( Octave_Addons_Perf_Varnish::STATE_OPTION );
+	oa_varnish_answers();
+	Octave_Addons_Perf_Page_Cache::boot();
+
+	$report = Octave_Addons_Perf_Cache::purge_all( 'all', 'manual' );
+
+	oa_assert_same( 'success', $report['page-cache-cloudwaysvarnish']['status'], 'purged although no request has seen Varnish yet' );
+
+}
 
 function test_varnish_is_cleared_with_every_purge_and_saves(): void {
 

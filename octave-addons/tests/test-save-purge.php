@@ -68,7 +68,7 @@ function test_purged_pages_are_queued_for_warming(): void {
 
 	$state = Octave_Addons_Perf_Page_Cache::state();
 
-	oa_assert_same( [ 'https://example.com/', 'https://example.com/about/' ], $state['queue'] );
+	oa_assert_same( [ 'https://example.com/about/' ], $state['queue'], 'a page clears only itself' );
 	oa_assert_same( 'content', $state['reason'] );
 	oa_assert_same( Octave_Addons_Perf_Page_Cache::WARM_HOOK, $GLOBALS['oa_cron'][0]['hook'], 'warmed from cron, not by the next visitor' );
 
@@ -117,8 +117,8 @@ function test_unpublishing_purges_the_old_pages_without_warming_the_gone_url(): 
 	oa_save( 8, 'trash', 'publish' );
 	do_action( 'shutdown' );
 
-	oa_assert_same( [ 'https://example.com/', 'https://example.com/about/' ], oa_targeted_calls()[0], 'old address purged' );
-	oa_assert_same( [ 'https://example.com/' ], Octave_Addons_Perf_Page_Cache::state()['queue'], 'the gone page is not refilled' );
+	oa_assert_same( [ 'https://example.com/about/' ], oa_targeted_calls()[0], 'old address purged' );
+	oa_assert_same( [], Octave_Addons_Perf_Page_Cache::state()['queue'], 'the gone page is not refilled' );
 
 }
 

@@ -115,7 +115,8 @@ function test_toolbar_offers_exactly_one_clear_cache_action(): void {
 	oa_set_settings( 'performance-files', [ 'enabled' => true ] );
 	oa_cloudflare();
 
-	$GLOBALS['oa_caps'] = [ 'manage_options' ];
+	$GLOBALS['oa_caps']           = [ 'manage_options' ];
+	$GLOBALS['oa_flags']['admin'] = true;
 
 	$nodes    = oa_toolbar()->nodes;
 	$children = array_values( array_filter( $nodes, static function ( array $node ): bool {
@@ -200,5 +201,35 @@ function test_clear_cache_clears_every_layer_and_says_so_plainly(): void {
 	oa_assert_same( 'Cache cleared.', $text['message'] );
 	oa_assert_contains( 'Broken Cache', $text['warning'], 'a failed layer is named' );
 	oa_assert_not_contains( 'API down', $text['warning'], 'details stay on the settings page' );
+
+}
+
+function test_on_the_site_the_toolbar_also_clears_just_this_page(): void {
+
+	oa_set_settings( 'performance-media', [ 'enabled' => true ] );
+	oa_fake_page_cache();
+
+	$GLOBALS['oa_caps']     = [ 'manage_options' ];
+	$_SERVER['REQUEST_URI'] = '/about/?utm=x';
+
+	$nodes = oa_toolbar()->nodes;
+
+	oa_assert_same( 'Clear this page', $nodes['oa-performance-clear-page']['title'] );
+	oa_assert_contains( 'oa_url=', $nodes['oa-performance-clear-page']['href'] );
+
+	$_GET['_wpnonce'] = 'valid-' . Octave_Addons_Perf_Admin::BAR_ACTION;
+	$_GET['oa_url']   = 'https://example.com/about/';
+
+	$report = Octave_Addons_Perf_Admin::clear_from_toolbar();
+
+	oa_assert_same( [ [ 'https://example.com/about/' ] ], $GLOBALS['oa_cache_calls'], 'only that page was cleared' );
+	oa_assert_same( 'skipped', $report['files']['status'], 'shared minified files untouched' );
+
+	$GLOBALS['oa_cache_calls'] = [];
+	$_GET['oa_url']            = 'https://evil.test/';
+
+	Octave_Addons_Perf_Admin::clear_from_toolbar();
+
+	oa_assert_same( [ 'all' ], $GLOBALS['oa_cache_calls'], 'another site\'s address falls back to a normal clear, never a request elsewhere' );
 
 }

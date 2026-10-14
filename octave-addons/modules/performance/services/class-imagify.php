@@ -800,7 +800,7 @@ class Octave_Addons_Perf_Imagify {
 
 		$config = self::config();
 		$format = (string) ( $config['optimization_format'] ?? 'off' );
-		$method = self::octave_delivery() ? 'octave' : (string) ( $config['display_nextgen_method'] ?? 'picture' );
+		$method = self::delivery_method();
 
 		if ( 'off' === $format || ( empty( $config['display_nextgen'] ) && 'octave' !== $method ) ) {
 
@@ -855,12 +855,6 @@ class Octave_Addons_Perf_Imagify {
 			/* translators: 1: received MIME type, 2: expected MIME type. */
 			$lines[] = sprintf( __( 'Served as %1$s instead of %2$s.', 'octave-addons' ), '' !== $type ? $type : '?', $expected );
 			$lines[] = $rewrite ? __( 'Imagify\'s server rules are not working here. Choose Automatic or Octave Addons Rewriting to fix this.', 'octave-addons' ) : __( 'Your server does not recognise this image format. Ask your host to add it.', 'octave-addons' );
-
-		}
-
-		if ( 'octave' === $method && $ok ) {
-
-			$lines[] = __( 'Octave points your pages straight at this copy, so no server rules are needed.', 'octave-addons' );
 
 		}
 
@@ -954,19 +948,45 @@ class Octave_Addons_Perf_Imagify {
 	}
 
 	/*
+	DELIVERY METHOD
+	-- octave, rewrite or picture: how next-generation images reach visitors
+	---------------------------------------------------------- */
+
+	public static function delivery_method(): string {
+
+		return self::octave_delivery() ? 'octave' : (string) ( self::config()['display_nextgen_method'] ?? 'picture' );
+
+	}
+
+	/*
 	STATUS
-	-- Last synchronisation and delivery test, and the edge last seen
+	-- Last synchronisation and delivery test, and the edge last seen. A
+	-- test made under another delivery method no longer describes the site,
+	-- so it is left out until the next check
 	---------------------------------------------------------- */
 
 	public static function status(): array {
 
 		$status = get_option( self::STATUS_OPTION, [] );
+		$status = is_array( $status ) ? $status : [];
 
-		return is_array( $status ) ? $status : [];
+		if ( isset( $status['test'] ) && ( $status['test']['method'] ?? '' ) !== self::delivery_method() ) {
+
+			unset( $status['test'] );
+
+		}
+
+		return $status;
 
 	}
 
 	protected static function record( string $kind, array $result ): array {
+
+		if ( 'test' === $kind ) {
+
+			$result['method'] = self::delivery_method();
+
+		}
 
 		$status          = self::status();
 		$status[ $kind ] = $result;

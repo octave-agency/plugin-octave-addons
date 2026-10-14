@@ -13,8 +13,9 @@ PERFORMANCE: FONTS
 -- Breakdance custom fonts are already served from this site, so they are
 -- preloaded like any other local font and never treated as Google Fonts
 -- Self-host Google Fonts — serves cached local copies of Google Fonts
--- stylesheets and their font files, so visitors never contact Google. Until
--- a stylesheet has been cached successfully, Google's URL is kept
+-- stylesheets and their font files, so visitors never contact Google. Divi's
+-- inlined copies of Google's CSS are replaced by a link to the local copy.
+-- Until a stylesheet has been cached successfully, Google's URL is kept
 -- Adobe Fonts, Typekit and other licensed services are never touched
 ---------------------------------------------------------- */
 
@@ -577,6 +578,33 @@ class Octave_Addons_Module_Performance_Fonts extends Octave_Addons_Module {
 		}
 
 		$html = $tags->get_updated_html();
+
+		// Divi's "Improve Google Fonts Loading" inlines Google's CSS and names its source in a comment.
+		$html = (string) preg_replace_callback( '#<style([^>]*)>\s*/\*\s*Original:\s*(https://' . preg_quote( $host, '#' ) . '/[^\s*]+)\s*\*/.*?</style>#is', static function ( array $match ) use ( $local_for, &$replaced ): string {
+
+			$source = html_entity_decode( $match[2], ENT_QUOTES );
+
+			if ( ! Octave_Addons_Perf_Google_Fonts::is_stylesheet_url( $source ) ) {
+
+				return $match[0];
+
+			}
+
+			$local = $local_for( $source );
+
+			if ( '' === $local ) {
+
+				return $match[0];
+
+			}
+
+			$replaced++;
+
+			$id = preg_match( '/\bid=([\'"])([^\'"]+)\1/i', $match[1], $found ) ? ' id="' . esc_attr( $found[2] ) . '"' : '';
+
+			return '<link rel="stylesheet"' . $id . ' href="' . esc_url( $local ) . '" data-oa-google-fonts>';
+
+		}, $html );
 
 		// @import url(...) or @import "..." of a Google stylesheet.
 		$html = (string) preg_replace_callback( '#@import\s+(?:url\(\s*)?([\'"]?)((?:https?:)?//' . preg_quote( $host, '#' ) . '/[^\'")\s;]+)\1\s*\)?#i', static function ( array $match ) use ( $local_for, &$replaced ): string {

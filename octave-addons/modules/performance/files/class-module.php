@@ -24,13 +24,17 @@ PERFORMANCE: FILE OPTIMIZATION
 -- theme stylesheet and its et-cache files) with one bundle of the same CSS
 -- in the same order, inlined when small enough or else served as one
 -- cached file, so first paint waits on one request instead of fifteen.
+-- Divi's per-page module styles, printed at the end of <body>, are moved
+-- into the <head> so the hero is styled at first paint.
 -- Each rendered page is inspected independently. Its bundle key contains
 -- that page's exact ordered files, inline CSS and media conditions, so styles
 -- from another URL are never pulled into its generated bundle
 -- It is offered only while Breakdance or Divi is active.
--- Nothing is removed or loaded late: unused-CSS deletion and asynchronous
--- loading are deliberately not done, as dynamic states and the header,
--- navigation and hero must all be styled at first paint
+-- Used CSS, off by default, inlines only the rules a page can use from
+-- each larger local stylesheet (see class-used-css.php) and still loads the
+-- whole file without holding up the page, so a state a script adds later
+-- is styled a moment late rather than never. Breakdance's post-ID.css
+-- files are already page-specific and are left alone
 ---------------------------------------------------------- */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -72,6 +76,13 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 	/** Largest bundle built at all; past it the original links stay. */
 	public const BUNDLE_MAX = 1024 * KB_IN_BYTES;
 
+	/** Smallest stylesheet worth trimming, and the most trimmed CSS one file may inline. */
+	protected const USED_MIN = 4 * KB_IN_BYTES;
+	protected const USED_MAX = 100 * KB_IN_BYTES;
+
+	/** Stylesheets the used-CSS pass leaves whole: Octave's own font copies. Divi's et-cache files are trimmed, as they cover more modules than the page shows. */
+	protected const USED_SKIP = [ '/cache/octave-addons/fonts/' ];
+
 	/** Handles that are never deferred. */
 	protected const PROTECTED_HANDLES = [ 'jquery', 'jquery-core', 'jquery-migrate', 'wp-hooks', 'wp-i18n', 'wp-polyfill' ];
 
@@ -111,6 +122,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 			'inline_css'     => true,
 			'inline_max'     => 4,
 			'breakdance_css' => false,
+			'used_css'       => false,
 			'defer_handles' => '',
 			'exclude'       => '',
 		];
@@ -121,7 +133,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		$clean = parent::sanitize( $input );
 
-		foreach ( [ 'minify_css', 'minify_js', 'defer_js', 'inline_css', 'breakdance_css' ] as $key ) {
+		foreach ( [ 'minify_css', 'minify_js', 'defer_js', 'inline_css', 'breakdance_css', 'used_css' ] as $key ) {
 
 			$clean[ $key ] = ! empty( $input[ $key ] );
 
@@ -165,6 +177,12 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		}
 
+		if ( Octave_Addons_Builders::divi() ) {
+
+			Octave_Addons_Perf_Html::register( 'files-divi-styles', [ $this, 'lift_divi_styles' ], 44 );
+
+		}
+
 		// After the font rewrite (40) and before inlining (50), so the bundle holds the final links.
 		if ( ! empty( $s['breakdance_css'] ) && ! empty( Octave_Addons_Builders::css_paths() ) ) {
 
@@ -178,6 +196,207 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 			Octave_Addons_Perf_Html::register( 'files', [ $this, 'inline_styles' ], 50 );
 
 		}
+
+		// Last, so it trims the final links, the builder bundle file included. ?oa_ucss=1 previews it, ?oa_ucss=0 turns it off.
+		if ( ( ! empty( $s['used_css'] ) || self::used_css_preview() ) && 'off' !== self::used_css_query() ) {
+
+			Octave_Addons_Perf_Html::register( 'files-used-css', [ $this, 'used_styles' ], 55 );
+
+		}
+
+	}
+
+	protected static function used_css_query(): string {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a read-only preview switch.
+		$value = isset( $_GET['oa_ucss'] ) ? sanitize_key( wp_unslash( $_GET['oa_ucss'] ) ) : '';
+
+		return '1' === $value ? 'on' : ( '0' === $value ? 'off' : '' );
+
+	}
+
+	protected static function used_css_preview(): bool {
+
+		return 'on' === self::used_css_query();
+
+	}
+
+	/*
+	USED STYLES
+	-- Replaces each larger local stylesheet with the rules this page can
+	-- use, inlined at the same position, followed by the whole file loaded
+	-- without holding up the page. Trimmed copies are cached per page and
+	-- file, made by the cache warmer, so visitors never wait for them
+	---------------------------------------------------------- */
+
+	public function used_styles( string $html ): string {
+
+		if ( ! Octave_Addons_Perf::has_html_api() || false === stripos( $html, '<link' ) || ( function_exists( 'is_cart' ) && ( is_cart() || is_checkout() || is_account_page() ) ) ) {
+
+			return $html;
+
+		}
+
+		$tokens  = null;
+		$preview = self::used_css_preview();
+
+		return (string) preg_replace_callback( '#<link\b[^>]*>#i', function ( array $match ) use ( $html, &$tokens, $preview ): string {
+
+			$link = $this->used_candidate( $match[0] );
+
+			if ( empty( $link ) ) {
+
+				return $match[0];
+
+			}
+
+			$tokens = $tokens ?? Octave_Addons_Perf_Used_Css::page_tokens( $html );
+			$css    = $this->used_css_for( $link, $tokens, $preview );
+
+			if ( null === $css ) {
+
+				return $match[0];
+
+			}
+
+			$id   = '' !== $link['id'] ? ' id="' . esc_attr( $link['id'] ) . '"' : '';
+			$used = '' !== $link['id'] ? ' id="' . esc_attr( $link['id'] ) . '-used"' : '';
+
+			return '<style' . $used . ' data-oa-used-css>' . $css . '</style>'
+				. '<link rel="stylesheet"' . $id . ' href="' . esc_url( $link['href'] ) . '" media="print" onload="this.media=\'all\'" data-oa-used-full>'
+				. '<noscript><link rel="stylesheet" href="' . esc_url( $link['href'] ) . '"></noscript>';
+
+		}, $html );
+
+	}
+
+	/*
+	USED CANDIDATE
+	-- A <link> the used-CSS pass may trim, or [] to leave it alone
+	---------------------------------------------------------- */
+
+	protected function used_candidate( string $tag ): array {
+
+		$tags = new WP_HTML_Tag_Processor( $tag );
+
+		if ( ! $tags->next_tag( 'LINK' ) || [ 'stylesheet' ] !== preg_split( '/\s+/', strtolower( trim( (string) $tags->get_attribute( 'rel' ) ) ) ) ) {
+
+			return [];
+
+		}
+
+		foreach ( [ 'integrity', 'disabled', 'onload', 'data-oa-no-inline', 'data-oa-no-used' ] as $attribute ) {
+
+			if ( null !== $tags->get_attribute( $attribute ) ) {
+
+				return [];
+
+			}
+
+		}
+
+		$href  = html_entity_decode( trim( (string) $tags->get_attribute( 'href' ) ) );
+		$media = strtolower( trim( (string) $tags->get_attribute( 'media' ) ) );
+		$path  = '' !== $href && Octave_Addons_Perf::is_same_origin( $href ) ? Octave_Addons_Perf_Admin::local_path( $href ) : '';
+
+		if ( '' === $path || ! in_array( $media, [ '', 'all', 'screen' ], true ) || 'css' !== strtolower( pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
+
+			return [];
+
+		}
+
+		$url_path = (string) wp_parse_url( $href, PHP_URL_PATH );
+		$size     = (int) filesize( $path );
+
+		if ( preg_match( self::PAGE_SPECIFIC, $url_path ) || '' !== Octave_Addons_Perf::matches_any( $url_path, self::USED_SKIP ) || '' !== $this->inline_exclusion( (string) $tags->get_attribute( 'id' ), $href ) || $size < self::USED_MIN || $size > self::BUNDLE_MAX ) {
+
+			return [];
+
+		}
+
+		return [ 'href' => $href, 'path' => $path, 'size' => $size, 'id' => (string) $tags->get_attribute( 'id' ) ];
+
+	}
+
+	/*
+	USED CSS FOR
+	-- The trimmed CSS of one stylesheet for this page, from cache or made
+	-- now on a warm request or preview, else null to keep the link as it is
+	---------------------------------------------------------- */
+
+	protected function used_css_for( array $link, array $tokens, bool $preview ): ?string {
+
+		$key  = md5( implode( '|', [ $link['path'], filemtime( $link['path'] ), $link['size'], Octave_Addons_Perf_Used_Css::fingerprint( $tokens ), Octave_Addons_Perf_Cache::generation(), OCTAVE_ADDONS_VERSION ] ) );
+		$dir  = Octave_Addons_Perf_Store::dir( Octave_Addons_Perf_Cache::MIN_DIR . '/used' );
+		$file = $dir . substr( $key, 0, 20 ) . '.css';
+
+		if ( is_file( $file ) ) {
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Octave's own cache file.
+			return (string) file_get_contents( $file );
+
+		}
+
+		if ( get_transient( 'oa_perf_used_fail_' . $key ) || ( ! $preview && $this->defer_minify( $key, 'used_css' ) ) ) {
+
+			Octave_Addons_Perf_Disk_Cache::skip( 'incomplete' );
+
+			return null;
+
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file.
+		$source = (string) file_get_contents( $link['path'] );
+		$source = (string) preg_replace( '/^\s*@charset\s+[^;]+;/i', '', $source );
+		$css    = false === stripos( $source, '@import' ) ? Octave_Addons_Perf_Used_Css::reduce( $source, $tokens ) : null;
+		$css    = null === $css ? null : ( Octave_Addons_Perf_Minifier::css( $css ) ?? $css );
+
+		if ( null === $css || strlen( $css ) > self::USED_MAX || false !== stripos( $css, '</style' ) ) {
+
+			set_transient( 'oa_perf_used_fail_' . $key, 1, DAY_IN_SECONDS );
+
+			return null;
+
+		}
+
+		$css = Octave_Addons_Perf_Minifier::absolutize_css_urls( $css, 0 === strpos( $link['href'], '/' ) && 0 !== strpos( $link['href'], '//' ) ? home_url( $link['href'] ) : $link['href'] );
+
+		Octave_Addons_Perf_Store::write( $file, $css );
+		Octave_Addons_Perf_Log::summary( 'used_css', [ 'file' => $link['href'], 'before' => $link['size'], 'after' => strlen( $css ) ] );
+
+		return $css;
+
+	}
+
+	/*
+	LIFT DIVI STYLES
+	-- Divi prints each page's module styles near the end of <body>, so the
+	-- browser paints the hero before they arrive and then restyles it: the
+	-- page jumps. Moved to the end of <head>, still after every other style,
+	-- they apply from the first paint
+	---------------------------------------------------------- */
+
+	public function lift_divi_styles( string $html ): string {
+
+		$head = stripos( $html, '</head>' );
+		$body = stripos( $html, '<body' );
+
+		if ( false === $head || false === $body || $body < $head ) {
+
+			return $html;
+
+		}
+
+		$lifted = '';
+		$tail   = (string) preg_replace_callback( '#<style\b[^>]*\bid=["\'](?:et-builder-module-design-|et-core-unified-)[^"\']*["\'][^>]*>.*?</style>#is', static function ( array $match ) use ( &$lifted ): string {
+
+			$lifted .= $match[0];
+
+			return '';
+
+		}, substr( $html, $body ) );
+
+		return '' === $lifted ? $html : substr( $html, 0, $head ) . $lifted . substr( $html, $head, $body - $head ) . $tail;
 
 	}
 
@@ -1004,18 +1223,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		}
 
-		// Older copies of this handle are retired once the new one is in place.
-		foreach ( (array) glob( $dir . $slug . '-*.min.' . $type ) as $old ) {
-
-			if ( basename( (string) $old ) !== $name && preg_match( '/^' . preg_quote( $slug, '/' ) . '-[a-f0-9]{12}\.min\.' . $type . '$/', basename( (string) $old ) ) ) {
-
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Octave's own cache file.
-				@unlink( (string) $old );
-
-			}
-
-		}
-
+		// Older copies of this handle stay until the cache manager's sweep: cached pages may still link to them.
 		return Octave_Addons_Perf_Store::url( Octave_Addons_Perf_Cache::MIN_DIR ) . $name;
 
 	}
@@ -1171,7 +1379,7 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 
 		?>
 
-		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Built to avoid breaking your design: each file is made smaller on its own and stays in the same order. Features that remove "unused" styles or load styles late are deliberately left out, because they are the most common cause of broken layouts and menus.', 'octave-addons' ); ?></p>
+		<p class="oa-help oa-help--intro"><?php esc_html_e( 'Built to avoid breaking your design: each file is made smaller on its own and stays in the same order. Removing unused styles is off until you switch it on, and even then every full style file still loads, a moment later, as a safety net.', 'octave-addons' ); ?></p>
 
 		<table class="form-table oa-form-table" role="presentation">
 			<?php
@@ -1204,6 +1412,10 @@ class Octave_Addons_Module_Performance_Files extends Octave_Addons_Module {
 				8  => '8 KB',
 				16 => '16 KB',
 			], __( 'A bigger limit means fewer files to wait for, but every page gets heavier, because styles placed inside a page are downloaded again on each page. Styles used across the whole site always stay as separate files.', 'octave-addons' ), $s );
+
+			Octave_Addons_Fields::section( [ 'label' => __( 'Unused styles', 'octave-addons' ) ] );
+
+			$this->switch_row( 'used_css', __( 'Load only the styles each page uses first', 'octave-addons' ), __( 'Optional. Larger style files are trimmed, page by page, to the rules that page can use, and placed inside the page; the full files still load straight after, so menus, popups and forms opened later keep their styles. Rules are only dropped when they name something that appears nowhere on the page or in its scripts. Preview any page first by adding ?oa_ucss=1 to its address, and check menus, popups and forms.', 'octave-addons' ), $s );
 
 			Octave_Addons_Fields::section( [ 'label' => __( 'Script loading', 'octave-addons' ) ] );
 

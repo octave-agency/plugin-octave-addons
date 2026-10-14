@@ -308,3 +308,17 @@ function test_inlining_records_total_bytes_and_caches_file_reads(): void {
 	oa_assert_same( 4, oa_module( 'performance-files' )->get_defaults()['inline_max'], '4 KB recommended' );
 
 }
+
+function test_divis_module_styles_move_from_the_body_to_the_head(): void {
+
+	$page = '<!doctype html><html><head><style id="theme">a{}</style></head><body class="x"><div class="et_pb_section_0"></div>'
+		. '<style id="et-builder-module-design-tb-69-11-cached-inline-styles">.et_pb_section_0{padding:0}</style><style id="other">b{}</style></body></html>';
+
+	$html = oa_files()->lift_divi_styles( $page );
+
+	oa_assert_contains( '<style id="theme">a{}</style><style id="et-builder-module-design-tb-69-11-cached-inline-styles">.et_pb_section_0{padding:0}</style></head>', $html, 'after every other head style' );
+	oa_assert_same( 1, substr_count( $html, 'et-builder-module-design' ), 'moved, not copied' );
+	oa_assert_contains( '<style id="other">b{}</style></body>', $html, 'other body styles stay' );
+	oa_assert_same( '<html><body><p>x</p></body></html>', oa_files()->lift_divi_styles( '<html><body><p>x</p></body></html>' ), 'no head, no change' );
+
+}

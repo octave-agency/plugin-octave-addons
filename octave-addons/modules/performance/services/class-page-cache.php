@@ -48,7 +48,7 @@ class Octave_Addons_Perf_Page_Cache {
 	protected const WARM_URL_REASONS = [ 'manual', 'lcp' ];
 
 	/** Warming reasons whose page may be held by a cache with older markup, so it is purged before it is requested. */
-	protected const PURGE_FIRST_REASONS = [ 'minify', 'bundle' ];
+	protected const PURGE_FIRST_REASONS = [ 'minify', 'bundle', 'used_css' ];
 
 	/*
 	BOOT
@@ -75,7 +75,7 @@ class Octave_Addons_Perf_Page_Cache {
 
 		$connectors = [];
 
-		if ( Octave_Addons_Perf::is_enabled() && Octave_Addons_Perf_Varnish::is_running() && '' === Octave_Addons_Perf_Varnish::handled_by() ) {
+		if ( Octave_Addons_Perf::is_enabled() && Octave_Addons_Perf_Varnish::is_cloudways() && '' === Octave_Addons_Perf_Varnish::handled_by() ) {
 
 			$connectors[ Octave_Addons_Perf_Varnish::LABEL ] = [
 				'all'  => [ 'Octave_Addons_Perf_Varnish', 'purge_all' ],
@@ -534,6 +534,19 @@ class Octave_Addons_Perf_Page_Cache {
 
 				$state['done'] = (int) ( $state['done'] ?? 0 ) + 1;
 
+				$missing = self::missing_files( (string) wp_remote_retrieve_body( $response ) );
+
+				// A cache served a page linking to files that are gone: purge it and look once more.
+				if ( ! empty( $missing ) && empty( $state['rechecked'][ $url ] ) ) {
+
+					Octave_Addons_Perf_Log::error( 'page-cache', __( 'A cached page linked to minified files that no longer exist, so it was cleared again.', 'octave-addons' ), $url . ' — ' . implode( ', ', array_slice( $missing, 0, 5 ) ) );
+					Octave_Addons_Perf_Cache::purge_urls( [ $url ], 'assets' );
+
+					$state['rechecked'][ $url ] = true;
+					$state['queue'][]           = $url;
+
+				}
+
 			} else {
 
 				$state['failed'][ $url ] = is_wp_error( $response ) ? $response->get_error_message() : 'HTTP ' . $code;
@@ -545,6 +558,8 @@ class Octave_Addons_Perf_Page_Cache {
 		$state['failed'] = array_slice( (array) ( $state['failed'] ?? [] ), -10, null, true );
 
 		if ( empty( $state['queue'] ) ) {
+
+			$state['rechecked'] = [];
 
 			array_unshift( $state['log'], [
 				'time'   => time(),
@@ -569,6 +584,31 @@ class Octave_Addons_Perf_Page_Cache {
 	}
 
 	/*
+	MISSING FILES
+	-- Octave's minified files a page links to that are not on disk, as
+	-- paths inside the minified folder
+	---------------------------------------------------------- */
+
+	public static function missing_files( string $html ): array {
+
+		$base = (string) wp_parse_url( Octave_Addons_Perf_Store::url( Octave_Addons_Perf_Cache::MIN_DIR ), PHP_URL_PATH );
+		$dir  = Octave_Addons_Perf_Store::dir( Octave_Addons_Perf_Cache::MIN_DIR );
+
+		if ( '' === $base || ! preg_match_all( '#' . preg_quote( $base, '#' ) . '([A-Za-z0-9_./-]+)#', $html, $matches ) ) {
+
+			return [];
+
+		}
+
+		return array_values( array_filter( array_unique( $matches[1] ), static function ( string $name ) use ( $dir ): bool {
+
+			return false === strpos( $name, '..' ) && ! is_file( $dir . $name );
+
+		} ) );
+
+	}
+
+	/*
 	STATE
 	-- The queue in progress and the log of finished cycles
 	---------------------------------------------------------- */
@@ -578,7 +618,7 @@ class Octave_Addons_Perf_Page_Cache {
 		$state = get_option( self::WARM_OPTION, [] );
 		$state = is_array( $state ) ? $state : [];
 
-		return array_merge( [ 'queue' => [], 'failed' => [], 'log' => [], 'done' => 0, 'purge_first' => [] ], $state );
+		return array_merge( [ 'queue' => [], 'failed' => [], 'log' => [], 'done' => 0, 'purge_first' => [], 'rechecked' => [] ], $state );
 
 	}
 

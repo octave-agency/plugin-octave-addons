@@ -42,6 +42,20 @@ function test_breakdance_header_change_purges_everything_once_after_the_request(
 
 	oa_assert_same( 1, oa_full_purges(), 'debounced for a minute' );
 
+	$deferred = oa_cron_hooks( Octave_Addons_Perf_Cache::DEFERRED_HOOK );
+
+	oa_assert_same( 1, count( $deferred ), 'held back, not dropped' );
+	oa_assert( $deferred[0]['time'] > time(), 'runs when the minute ends' );
+
+	Octave_Addons_Perf_Cache::queue_full_purge( 'breakdance' );
+	Octave_Addons_Perf_Cache::run_queued_full_purge();
+
+	oa_assert_same( 1, count( oa_cron_hooks( Octave_Addons_Perf_Cache::DEFERRED_HOOK ) ), 'booked once however many saves' );
+
+	do_action( Octave_Addons_Perf_Cache::DEFERRED_HOOK, 'breakdance' );
+
+	oa_assert_same( 2, oa_full_purges(), 'the held-back purge runs' );
+
 }
 
 function test_breakdance_global_styles_purge_everything(): void {

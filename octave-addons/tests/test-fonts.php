@@ -511,3 +511,23 @@ function test_font_changes_retire_cached_pages_and_detection(): void {
 	oa_assert_same( 1, did_action( 'octave_addons_perf_purged_all' ) );
 
 }
+
+function test_divis_inlined_google_css_is_replaced_by_the_local_copy(): void {
+
+	$module = oa_fonts( [ 'self_host' => true ] );
+	$inline = "<style id=\"et-builder-googlefonts-cached-inline\">/* Original: https://fonts.googleapis.com/css?family=Poppins:400,700&#038;subset=latin&#038;display=swap *//* User Agent: Mozilla */@font-face { font-family: 'Poppins'; src: url(https://fonts.gstatic.com/s/poppins/v1/a.woff2) format('woff2'); }</style>";
+	$page   = oa_page( $inline . '<style>body{color:red}</style>' );
+
+	oa_fake_google();
+
+	oa_assert_same( $page, $module->transform( $page ), 'uncached: Divi\'s copy kept' );
+
+	Octave_Addons_Perf_Google_Fonts::process_queue();
+
+	$html = $module->transform( $page );
+
+	oa_assert_not_contains( 'fonts.gstatic.com', $html, 'no font is loaded from Google' );
+	oa_assert_contains( '<link rel="stylesheet" id="et-builder-googlefonts-cached-inline" href="https://example.com/wp-content/cache/octave-addons/fonts/', $html );
+	oa_assert_contains( '<style>body{color:red}</style>', $html, 'other inline styles untouched' );
+
+}

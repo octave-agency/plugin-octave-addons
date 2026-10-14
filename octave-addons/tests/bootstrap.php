@@ -127,6 +127,16 @@ function oa_test_reset(): void {
 
 }
 
+function oa_cron_hooks( string $hook ): array {
+
+	return array_values( array_filter( $GLOBALS['oa_cron'], static function ( $event ) use ( $hook ) {
+
+		return $event['hook'] === $hook;
+
+	} ) );
+
+}
+
 function oa_flag( string $name ): bool {
 
 	return ! empty( $GLOBALS['oa_flags'][ $name ] );
@@ -400,6 +410,12 @@ function wp_is_post_autosave( $post ) {
 function is_post_type_viewable( $type ) {
 
 	return in_array( $type, [ 'post', 'page' ], true );
+
+}
+
+function is_post_type_hierarchical( $type ) {
+
+	return 'page' === $type;
 
 }
 

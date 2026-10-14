@@ -1284,8 +1284,9 @@ class Octave_Addons_Perf_Admin {
 	/*
 	ADMIN BAR
 	-- Only while a Performance feature is switched on, and only for
-	-- administrators: "Performance", linking to its settings, with one
-	-- "Clear cache" action. Per-layer controls stay on the settings page
+	-- administrators: "Performance", linking to its settings, with a
+	-- "Clear cache" action and, on the site itself, "Clear this page".
+	-- Per-layer controls stay on the settings page
 	---------------------------------------------------------- */
 
 	public static function admin_bar( WP_Admin_Bar $bar ): void {
@@ -1309,14 +1310,31 @@ class Octave_Addons_Perf_Admin {
 			'href'   => self::clear_url(),
 		] );
 
+		if ( is_admin() ) {
+
+			return;
+
+		}
+
+		$path   = (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/', PHP_URL_PATH ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only the path is used, and normalised when cleared.
+		$origin = (string) preg_replace( '#^(https?://[^/]+).*$#i', '$1', home_url() );
+
+		$bar->add_node( [
+			'parent' => 'oa-performance',
+			'id'     => 'oa-performance-clear-page',
+			'title'  => esc_html__( 'Clear this page', 'octave-addons' ),
+			'href'   => self::clear_url( $origin . ( '' !== $path ? $path : '/' ) ),
+		] );
+
 	}
 
-	public static function clear_url(): string {
+	public static function clear_url( string $page = '' ): string {
 
-		return add_query_arg( [
+		return add_query_arg( array_filter( [
 			'action'   => self::BAR_ACTION,
 			'_wpnonce' => wp_create_nonce( self::BAR_ACTION ),
-		], admin_url( 'admin-post.php' ) );
+			'oa_url'   => '' !== $page ? rawurlencode( $page ) : '',
+		] ), admin_url( 'admin-post.php' ) );
 
 	}
 
@@ -1347,7 +1365,8 @@ class Octave_Addons_Perf_Admin {
 
 		}
 
-		$report = Octave_Addons_Perf_Cache::purge_all( 'all', 'manual' );
+		$page   = isset( $_GET['oa_url'] ) ? Octave_Addons_Perf_Cache::normalize_urls( [ (string) wp_unslash( $_GET['oa_url'] ) ] ) : []; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalize_urls() keeps only URLs on this site.
+		$report = empty( $page ) ? Octave_Addons_Perf_Cache::purge_all( 'all', 'manual' ) : Octave_Addons_Perf_Cache::purge_urls( $page, 'manual' );
 
 		set_transient( 'oa_perf_notice_' . get_current_user_id(), $report, MINUTE_IN_SECONDS );
 

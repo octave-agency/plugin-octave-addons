@@ -61,6 +61,17 @@ class Octave_Addons_Perf_Cache {
 
 	public const LAST_CLEARS_OPTION = 'octave_addons_perf_last_clears';
 
+	/** When each generation of minified files was retired, newest last. */
+	public const RETIRED_OPTION = 'octave_addons_perf_retired';
+
+	/** How long a retired file is kept for cached pages that still link to it. */
+	public const GRACE = 2 * DAY_IN_SECONDS;
+
+	public const SWEEP_HOOK = 'octave_addons_perf_min_sweep';
+
+	/** A builder's full purge held back by the debounce, run when it ends. */
+	public const DEFERRED_HOOK = 'octave_addons_perf_deferred_purge';
+
 	/*
 	GENERATION
 	-- Changes on every full purge. Part of every generated file's cache key,
@@ -195,27 +206,64 @@ class Octave_Addons_Perf_Cache {
 
 	/*
 	CLEAR FILES
-	-- Removes generated minified files and moves the generation on. Self-hosted
-	-- fonts are kept: they have their own refresh, and dropping them would send
-	-- visitors back to Google until the next download
+	-- Moves the generation on, so every page is given new copies, and
+	-- retires the current ones rather than deleting them: Varnish, Cloudflare
+	-- or a browser may still hold a page that links to them. Retired files
+	-- are swept GRACE after their retirement. Self-hosted fonts are kept:
+	-- they have their own refresh
 	---------------------------------------------------------- */
 
 	protected static function clear_files(): array {
 
-		$deleted = Octave_Addons_Perf_Store::delete( self::MIN_DIR );
+		$retired   = array_map( 'intval', (array) get_option( self::RETIRED_OPTION, [] ) );
+		$retired[] = time();
+
+		update_option( self::RETIRED_OPTION, array_slice( $retired, -20 ), false );
 
 		self::bump_generation();
+
+		$deleted = self::sweep_files();
+
+		if ( ! wp_next_scheduled( self::SWEEP_HOOK ) ) {
+
+			wp_schedule_single_event( time() + self::GRACE + MINUTE_IN_SECONDS, self::SWEEP_HOOK );
+
+		}
 
 		return [
 			'label'   => __( 'Smaller copies of files', 'octave-addons' ),
 			'status'  => 'success',
 			'message' => sprintf(
 				/* translators: 1: number of files, 2: human readable size. */
-				__( 'Cleared %1$d files (%2$s).', 'octave-addons' ),
+				__( 'New copies will be made. Older copies stay for 48 hours for pages still cached elsewhere; %1$d expired files were removed (%2$s).', 'octave-addons' ),
 				$deleted['files'],
 				size_format( $deleted['bytes'] ) ?: '0 B'
 			),
 		];
+
+	}
+
+	/*
+	SWEEP FILES
+	-- Deletes minified files written before the newest retirement that is
+	-- at least GRACE old. Runs on every full purge, and once GRACE after one
+	---------------------------------------------------------- */
+
+	public static function sweep_files(): array {
+
+		$cutoff = 0;
+
+		foreach ( (array) get_option( self::RETIRED_OPTION, [] ) as $time ) {
+
+			if ( (int) $time <= time() - self::GRACE ) {
+
+				$cutoff = max( $cutoff, (int) $time );
+
+			}
+
+		}
+
+		return $cutoff > 0 ? Octave_Addons_Perf_Store::delete( self::MIN_DIR, $cutoff ) : [ 'files' => 0, 'bytes' => 0 ];
 
 	}
 
@@ -337,6 +385,9 @@ class Octave_Addons_Perf_Cache {
 	---------------------------------------------------------- */
 
 	public static function register_invalidation(): void {
+
+		add_action( self::SWEEP_HOOK, [ __CLASS__, 'sweep_files' ] );
+		add_action( self::DEFERRED_HOOK, [ __CLASS__, 'run_deferred_purge' ] );
 
 		add_action( 'wp_after_insert_post', [ __CLASS__, 'on_after_insert_post' ], 20, 4 );
 		add_action( 'before_delete_post', [ __CLASS__, 'on_delete_post' ], 20, 1 );
@@ -469,8 +520,9 @@ class Octave_Addons_Perf_Cache {
 	/*
 	QUEUE FULL PURGE
 	-- One save can update several global options. They become a single full
-	-- purge once the request has finished. Breakdance's purges also run at
-	-- most once a minute, so a burst of builder saves clears caches once
+	-- purge once the request has finished. Builder purges also run at most
+	-- once a minute: a burst of saves clears caches now and once more when
+	-- the minute ends
 	---------------------------------------------------------- */
 
 	public static function queue_full_purge( string $reason ): void {
@@ -568,7 +620,14 @@ class Octave_Addons_Perf_Cache {
 
 		if ( in_array( $reason, self::DEBOUNCED_REASONS, true ) ) {
 
+			// Held back, never dropped: a second shared save inside the window still reaches visitors.
 			if ( false !== get_transient( 'oa_perf_full_purge_' . $reason ) ) {
+
+				if ( ! wp_next_scheduled( self::DEFERRED_HOOK, [ $reason ] ) ) {
+
+					wp_schedule_single_event( time() + self::BREAKDANCE_DEBOUNCE, self::DEFERRED_HOOK, [ $reason ] );
+
+				}
 
 				return [];
 
@@ -579,6 +638,12 @@ class Octave_Addons_Perf_Cache {
 		}
 
 		return self::purge_all( 'all', $reason );
+
+	}
+
+	public static function run_deferred_purge( $reason = 'breakdance' ): array {
+
+		return self::purge_all( 'all', in_array( (string) $reason, self::DEBOUNCED_REASONS, true ) ? (string) $reason : 'breakdance' );
 
 	}
 
@@ -756,13 +821,15 @@ class Octave_Addons_Perf_Cache {
 	/*
 	POST URLS
 	-- The pages a published post appears on: itself, the home page, the posts
-	-- page, its archive and its public terms. Breakdance templates, headers and
-	-- footers have no URL of their own, so they fall back to the home page
+	-- page, its archive and its public terms. A page (any hierarchical type)
+	-- is listed nowhere else, so it clears only itself; the home page clears
+	-- when it is that page. Breakdance templates, headers and footers have no
+	-- URL of their own, so they fall back to the home page
 	---------------------------------------------------------- */
 
 	public static function post_urls( WP_Post $post ): array {
 
-		$urls = [ home_url( '/' ) ];
+		$urls = is_post_type_viewable( $post->post_type ) && is_post_type_hierarchical( $post->post_type ) ? [] : [ home_url( '/' ) ];
 
 		if ( is_post_type_viewable( $post->post_type ) ) {
 

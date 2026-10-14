@@ -426,13 +426,39 @@ function test_purge_all_clears_only_min_folder_and_reports_layers(): void {
 
 	$report = Octave_Addons_Perf_Cache::purge_all( 'all', 'manual' );
 
-	oa_assert( ! file_exists( $min . 'a.min.css' ), 'minified file removed' );
+	oa_assert( file_exists( $min . 'a.min.css' ), 'minified file kept for pages still cached elsewhere' );
 	oa_assert( file_exists( $fonts . 'f.woff2' ), 'self-hosted fonts kept' );
 	oa_assert( file_exists( $foreign ), 'other caches untouched' );
 	oa_assert_same( $generation + 1, Octave_Addons_Perf_Cache::generation() );
 	oa_assert_same( [ 'files', 'host' ], array_keys( $report ) );
 	oa_assert_same( 'Full purge', Octave_Addons_Perf_Cache::last_purge()['label'] );
 	oa_assert_same( [ 'files' ], array_keys( Octave_Addons_Perf_Cache::purge_all( 'files', 'manual' ) ), 'files scope skips other layers' );
+
+}
+
+function test_retired_minified_files_are_swept_after_the_grace_period(): void {
+
+	$min = Octave_Addons_Perf_Store::dir( 'min' );
+
+	Octave_Addons_Perf_Store::write( $min . 'old.min.js', 'a' );
+	Octave_Addons_Perf_Store::write( $min . 'nextgen/k/old.css', 'a{}' );
+	Octave_Addons_Perf_Store::write( $min . 'new.min.js', 'b' );
+	touch( $min . 'old.min.js', time() - 3 * DAY_IN_SECONDS );
+	touch( $min . 'nextgen/k/old.css', time() - 3 * DAY_IN_SECONDS );
+
+	update_option( Octave_Addons_Perf_Cache::RETIRED_OPTION, [ time() - DAY_IN_SECONDS ] );
+
+	oa_assert_same( 0, Octave_Addons_Perf_Cache::sweep_files()['files'], 'nothing goes inside the grace period' );
+
+	update_option( Octave_Addons_Perf_Cache::RETIRED_OPTION, [ time() - Octave_Addons_Perf_Cache::GRACE - 60 ] );
+
+	oa_assert_same( 2, Octave_Addons_Perf_Cache::sweep_files()['files'] );
+	oa_assert( ! file_exists( $min . 'old.min.js' ) && ! file_exists( $min . 'nextgen/k/old.css' ), 'retired files and subfolders swept' );
+	oa_assert( file_exists( $min . 'new.min.js' ), 'files written after the retirement kept' );
+
+	Octave_Addons_Perf_Cache::purge_all( 'all', 'manual' );
+
+	oa_assert_same( 1, count( oa_cron_hooks( Octave_Addons_Perf_Cache::SWEEP_HOOK ) ), 'a sweep is booked after the grace period' );
 
 }
 

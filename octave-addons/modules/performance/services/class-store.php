@@ -97,10 +97,11 @@ class Octave_Addons_Perf_Store {
 	/*
 	DELETE
 	-- Removes a sub-folder, or the whole cache when $sub is empty. Symlinks
-	-- are unlinked rather than followed
+	-- are unlinked rather than followed. With $before, only files last
+	-- written before that time go, and folders only once they are empty
 	---------------------------------------------------------- */
 
-	public static function delete( string $sub = '' ): array {
+	public static function delete( string $sub = '', int $before = 0 ): array {
 
 		$target = untrailingslashit( self::dir( $sub ) );
 		$result = [ 'files' => 0, 'bytes' => 0 ];
@@ -126,12 +127,18 @@ class Octave_Addons_Perf_Store {
 
 			}
 
+			if ( $before > 0 && ! $item->isLink() && $item->getMTime() >= $before ) {
+
+				continue;
+
+			}
+
 			$result['bytes'] += (int) $item->getSize();
 			$result['files'] += self::unlink( $item->getPathname() ) ? 1 : 0;
 
 		}
 
-		if ( '' !== $sub ) {
+		if ( '' !== $sub && 0 === $before ) {
 
 			@rmdir( $target );
 
@@ -164,7 +171,13 @@ class Octave_Addons_Perf_Store {
 			if ( $item->isFile() && 'index.html' !== $item->getFilename() ) {
 
 				$result['files']++;
-				$result['bytes'] += (int) $item->getSize();
+				if ( $before > 0 && ! $item->isLink() && $item->getMTime() >= $before ) {
+
+				continue;
+
+			}
+
+			$result['bytes'] += (int) $item->getSize();
 
 			}
 

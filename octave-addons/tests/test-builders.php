@@ -277,7 +277,7 @@ function test_divi_layouts_clear_everything_and_pages_clear_themselves(): void {
 	do_action( 'et_core_static_resources_removed', 8 );
 	do_action( 'shutdown' );
 
-	oa_assert_same( [ [ 'https://example.com/', 'https://example.com/about/' ] ], $GLOBALS['oa_cache_calls'], 'one page: a targeted clear' );
+	oa_assert_same( [ [ 'https://example.com/about/' ] ], $GLOBALS['oa_cache_calls'], 'one page: a targeted clear' );
 
 	oa_test_reset();
 	oa_builders( [ 'divi' ] );

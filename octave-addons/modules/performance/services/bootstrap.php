@@ -30,6 +30,7 @@ require_once __DIR__ . '/class-html.php';
 require_once __DIR__ . '/class-cloudflare.php';
 require_once __DIR__ . '/class-cleanup.php';
 require_once __DIR__ . '/class-minifier.php';
+require_once __DIR__ . '/class-used-css.php';
 require_once __DIR__ . '/class-google-fonts.php';
 require_once __DIR__ . '/class-lcp.php';
 require_once __DIR__ . '/class-imagify.php';

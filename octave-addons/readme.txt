@@ -168,6 +168,18 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.43.0 =
+* Clearing the cache now always clears Cloudways Varnish. Octave sends the purge on every Cloudways site instead of only when a request had seen Varnish, so a request that bypassed Varnish can no longer switch the purge off. A purge that fails while Varnish looks switched off is reported as skipped, not as an error.
+* Minified files are kept for 48 hours after a clear, so pages still cached by Varnish, Cloudflare or a browser never link to missing files. They are deleted automatically afterwards.
+* The cache warmer checks every page it refills. If a cached page still links to minified files that no longer exist, that page is cleared again and the problem is logged.
+* Saving a page now clears only that page, not the home page as well. Posts still clear the home, blog and category pages that list them.
+* A second template, header or global change inside the same minute is now cleared when the minute ends, instead of being skipped.
+* "Clear this page" in the toolbar on the front end clears only the page you are looking at, then refills it.
+* Divi's page module styles move from the end of the page into the head, so the hero is styled from the first paint instead of jumping into place.
+* Self-hosted Google Fonts now also replaces Divi's inlined copy of Google's font CSS ("Improve Google Fonts Loading").
+* New, off by default: "Load only the styles each page uses first". Larger style files are trimmed per page to the rules that page can use, with the full files still loading straight after as a safety net. Add ?oa_ucss=1 to any address to preview it.
+* The Imagify delivery check no longer shows a result from an earlier delivery method, and no longer repeats one of its messages.
+
 = 3.42.0 =
 * Scroll Animations gains an Ignore elements field. Comma-separated CSS selectors keep each matching element and everything inside it still; `header` and `footer` also recognise Breakdance templates, including footers that have no semantic footer tag.
 
