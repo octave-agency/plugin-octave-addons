@@ -11,6 +11,7 @@ BRAND WIPE TRANSITION
 .oa-transition--brand-wipe .oa-transition__layer {
     z-index: 2;
     background: var(--oa-pm-accent);
+    transform-origin: 0 50%;
 }
 
 .oa-transition--brand-wipe .oa-transition__layer--b {
@@ -46,11 +47,11 @@ html.oa-transition-reveal .oa-transition--brand-wipe .oa-transition__content {
 @keyframes oa-bw-cover {
 
     from {
-        clip-path: inset(0 100% 0 0);
+        transform: scaleX(0);
     }
 
     to {
-        clip-path: inset(0 0 0 0);
+        transform: scaleX(1);
     }
 
 }
@@ -58,11 +59,13 @@ html.oa-transition-reveal .oa-transition--brand-wipe .oa-transition__content {
 @keyframes oa-bw-reveal {
 
     from {
-        clip-path: inset(0 0 0 0);
+        transform: scaleX(1);
+        transform-origin: 100% 50%;
     }
 
     to {
-        clip-path: inset(0 0 0 100%);
+        transform: scaleX(0);
+        transform-origin: 100% 50%;
     }
 
 }

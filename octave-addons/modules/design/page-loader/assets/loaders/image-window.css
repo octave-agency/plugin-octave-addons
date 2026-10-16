@@ -4,6 +4,11 @@ IMAGE WINDOW LOADER
 -- while the page loads, then opens and dissolves into the page
 ---------------------------------------------------------- */
 
+.oa-loader--image-window .oa-loader__inner {
+    flex-direction: column;
+    gap: clamp(18px, 3vw, 32px);
+}
+
 .oa-loader__window {
     position: relative;
     width: min(380px, 62vw);

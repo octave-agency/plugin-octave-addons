@@ -39,16 +39,20 @@ SETTINGS
 function test_new_loader_options_are_cleaned_on_save(): void {
 
 	$clean = oa_module( 'page-loader' )->sanitize( [
-		'loader_content'     => 'logo-text',
-		'loader_tagline'     => '1',
-		'loader_frequency'   => 'once',
-		'transition_content' => 'spinner',
-		'text_size'          => 'xl',
-		'tagline'            => ' <b>Design</b> studio ',
+		'loader_content'       => 'logo-text',
+		'loader_tagline'       => '1',
+		'loader_show_logo'     => '1',
+		'loader_show_text'     => '1',
+		'loader_show_subtitle' => '1',
+		'loader_frequency'     => 'once',
+		'transition_content'   => 'spinner',
+		'text_size'            => 'xl',
+		'tagline'              => ' <b>Design</b> studio ',
 	] );
 
 	oa_assert_same( 'logo-text', $clean['loader_content'] );
 	oa_assert_same( true, $clean['loader_tagline'] );
+	oa_assert_same( [ true, true, true ], [ $clean['loader_show_logo'], $clean['loader_show_text'], $clean['loader_show_subtitle'] ] );
 	oa_assert_same( 'once', $clean['loader_frequency'] );
 	oa_assert_same( 'spinner', $clean['transition_content'] );
 	oa_assert_same( 'xl', $clean['text_size'] );
@@ -88,6 +92,46 @@ function test_loader_shows_text_logo_both_or_nothing(): void {
 
 }
 
+function test_loader_content_checkboxes_can_be_combined_independently(): void {
+
+	$all = oa_loader_call( 'print_mark', 'brand-counter', 'Octave', oa_loader_settings( [
+		'loader_show_logo'     => true,
+		'loader_show_text'     => true,
+		'loader_show_subtitle' => true,
+	] ) );
+
+	oa_assert( strpos( $all, 'oa-pm-logo' ) < strpos( $all, 'oa-pm-text' ) && strpos( $all, 'oa-pm-text' ) < strpos( $all, 'oa-pm-tagline' ), 'the three selected items keep their visual order' );
+
+	$subtitle = oa_loader_call( 'print_mark', 'orbital', 'Octave', oa_loader_settings( [
+		'loader_show_logo'     => false,
+		'loader_show_text'     => false,
+		'loader_show_subtitle' => true,
+	] ) );
+
+	oa_assert_contains( '<span class="oa-pm-tagline">Design studio</span>', $subtitle );
+	oa_assert_not_contains( 'oa-pm-logo', $subtitle );
+	oa_assert_not_contains( 'oa-pm-text', $subtitle );
+
+	$nothing = oa_loader_call( 'print_mark', 'curtain', 'Octave', oa_loader_settings( [
+		'loader_show_logo'     => false,
+		'loader_show_text'     => false,
+		'loader_show_subtitle' => false,
+	] ) );
+
+	oa_assert_same( '', $nothing );
+
+}
+
+function test_legacy_media_loader_defaults_are_preserved(): void {
+
+	$legacy = oa_loader_settings();
+	$method = new ReflectionMethod( oa_module( 'page-loader' ), 'loader_items' );
+
+	oa_assert_same( [ 'logo' => true, 'text' => false, 'subtitle' => false ], $method->invoke( oa_module( 'page-loader' ), 'logo-mask', $legacy ) );
+	oa_assert_same( [ 'logo' => false, 'text' => false, 'subtitle' => false ], $method->invoke( oa_module( 'page-loader' ), 'image-window', $legacy ) );
+
+}
+
 /*
 TRANSITION CONTENT
 ---------------------------------------------------------- */
@@ -118,6 +162,8 @@ function test_brand_wipe_styles_now_use_the_shared_content_element(): void {
 
 	oa_assert_contains( '.oa-transition--brand-wipe .oa-transition__content', $css );
 	oa_assert_not_contains( 'oa-transition__brand', $css );
+	oa_assert_contains( 'transform: scaleX(0);', $css, 'the full-screen wipe stays on the compositor' );
+	oa_assert_not_contains( 'clip-path: inset(0 100% 0 0);', $css, 'the full-screen layer is not repainted on every frame' );
 
 }
 

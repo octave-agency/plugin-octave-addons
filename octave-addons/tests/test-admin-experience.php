@@ -86,3 +86,13 @@ function test_admin_stylesheets_load_separately_for_active_integrations(): void 
 	oa_assert( ! is_dir( WP_CONTENT_DIR . '/uploads/octave-addons/admin-css' ), 'no combined file is written' );
 
 }
+
+function test_dark_media_list_uploader_uses_admin_theme_surfaces(): void {
+
+	$css = file_get_contents( dirname( __DIR__ ) . '/assets/css/admin-experience/base.css' );
+
+	oa_assert_contains( 'body.wp-admin .media-upload-form .media-item {', $css );
+	oa_assert_contains( 'background: var(--oa-admin-surface-soft);', $css );
+	oa_assert_contains( 'body.wp-admin .media-upload-form .media-item .progress {', $css );
+
+}

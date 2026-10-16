@@ -254,13 +254,13 @@ final class Octave_Addons_Site_Status {
 
 		$background = $is_enabled && ! empty( $login['bg_color'] )
 			? sanitize_hex_color( $login['bg_color'] )
-			: '#f0f2f5';
+			: '#ece9e2';
 		$primary    = $is_enabled && ! empty( $login['primary_color'] )
 			? sanitize_hex_color( $login['primary_color'] )
-			: '#4f8ef7';
+			: '#24584a';
 
-		$background = $background ?: '#f0f2f5';
-		$primary    = $primary ?: '#4f8ef7';
+		$background = $background ?: '#ece9e2';
+		$primary    = $primary ?: '#24584a';
 		$is_dark    = self::is_dark_color( $background );
 		$logo_url   = $is_enabled && ! empty( $login['custom_logo_url'] )
 			? esc_url_raw( $login['custom_logo_url'] )
@@ -268,14 +268,14 @@ final class Octave_Addons_Site_Status {
 
 		return [
 			'background'   => $background,
-			'surface'      => $is_dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.94)',
-			'border'       => $is_dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(17, 24, 39, 0.10)',
+			'surface'      => $is_dark ? '#171a19' : '#ffffff',
+			'border'       => $is_dark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(23, 25, 22, 0.17)',
 			'primary'      => $primary,
 			'primary_rgb'  => self::hex_to_rgb( $primary ),
 			'on_primary'   => self::is_dark_color( $primary ) ? '#ffffff' : '#111827',
-			'text'         => $is_dark ? '#f8fafc' : '#111827',
-			'muted'        => $is_dark ? '#c2c8ce' : '#5f6673',
-			'shadow'       => $is_dark ? '0 28px 80px rgba(0, 0, 0, 0.34)' : '0 28px 80px rgba(17, 24, 39, 0.14)',
+			'text'         => $is_dark ? '#f4f2ec' : '#171916',
+			'muted'        => $is_dark ? '#b8bbb4' : '#666960',
+			'shadow'       => $is_dark ? '0 24px 60px rgba(0, 0, 0, 0.24)' : '0 24px 60px rgba(23, 25, 22, 0.09)',
 			'color_scheme' => $is_dark ? 'dark' : 'light',
 			'logo'         => self::logo_source( $logo_url ),
 		];

@@ -3229,6 +3229,33 @@ html[data-oa-admin-theme="dark"] body.wp-admin .media-frame .media-menu {
     background: var(--oa-admin-surface-soft);
 }
 
+/*
+List uploader
+---------------------------------------------------------- */
+
+html[data-oa-admin-theme="dark"] body.wp-admin .media-upload-form .media-item {
+    color: var(--oa-admin-text);
+    background: var(--oa-admin-surface-soft);
+    box-shadow: 0 1px 0 var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .media-upload-form .media-item .filename,
+html[data-oa-admin-theme="dark"] body.wp-admin .media-upload-form .media-item .media-list-title,
+html[data-oa-admin-theme="dark"] body.wp-admin .media-upload-form .media-item .media-list-subtitle,
+html[data-oa-admin-theme="dark"] body.wp-admin .media-upload-form .media-item .describe th,
+html[data-oa-admin-theme="dark"] body.wp-admin .media-upload-form .media-item .describe td {
+    color: var(--oa-admin-text);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .media-upload-form .media-item .describe {
+    border-color: var(--oa-admin-border);
+}
+
+html[data-oa-admin-theme="dark"] body.wp-admin .media-upload-form .media-item .progress {
+    background: var(--oa-admin-surface-hover);
+    box-shadow: inset 0 0 0 1px var(--oa-admin-border);
+}
+
 html[data-oa-admin-theme="dark"] body.wp-admin .media-progress-bar {
     background: var(--oa-admin-surface-hover);
 }

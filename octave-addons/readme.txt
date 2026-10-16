@@ -168,6 +168,16 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.46.1 =
+* Fixed the Media Library list uploader retaining a white upload row and progress track in dark mode.
+
+= 3.46.0 =
+* Custom Login URL can now protect password sign-ins with Google reCAPTCHA or Cloudflare Turnstile, using credentials already saved in Forms or a separate pair of keys.
+* Redesigned the custom login, maintenance and critical-error pages with a quieter, more adaptable visual system.
+
+= 3.45.0 =
+* Made page-loader animation hand-offs smoother and added independent logo, text and subtitle controls for each loader.
+
 = 3.43.2 =
 * Fixed Cloudways not being recognised on servers that do not set the cw_allowed_ip value, which left Varnish out of every clear. Octave now also recognises Cloudways by its install path (/home/<server>.cloudwaysapps.com/).
 

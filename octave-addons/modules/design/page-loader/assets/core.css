@@ -35,6 +35,18 @@ html.oa-loader-active {
     animation: oa-pm-release 0s linear 10s forwards;
 }
 
+html.oa-loader-active .oa-loader::before,
+html.oa-loader-active .oa-loader__inner,
+html.oa-loader-exit .oa-loader::before,
+html.oa-loader-exit .oa-loader__inner,
+html.oa-loader-cover .oa-loader::before,
+html.oa-loader-cover .oa-loader__inner,
+html.oa-transition-out .oa-transition__layer,
+html.oa-transition-in .oa-transition__layer {
+    backface-visibility: hidden;
+    will-change: opacity, transform;
+}
+
 @keyframes oa-pm-failsafe {
 
     to {

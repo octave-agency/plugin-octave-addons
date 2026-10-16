@@ -78,11 +78,6 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 	protected const LOADER_CONTENT = [ '' => true, 'text' => true, 'logo' => true, 'logo-text' => true, 'none' => true ];
 
 	/**
-	 * Loader styles that show the chosen content.
-	 */
-	protected const CONTENT_LOADERS = [ 'brand-counter', 'curtain', 'orbital', 'custom' ];
-
-	/**
 	 * What a transition shows while it covers the page. '' follows the
 	 * style: the site name for Brand Wipe, nothing for the rest.
 	 */
@@ -131,6 +126,9 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			'loader_image'           => 0,
 			'loader_content'         => '',
 			'loader_tagline'         => false,
+			'loader_show_logo'       => null,
+			'loader_show_text'       => null,
+			'loader_show_subtitle'   => null,
 			'loader_css'             => '',
 			'loader_js'              => '',
 
@@ -203,6 +201,9 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$clean['enabled']              = ! empty( $input['enabled'] );
 		$clean['loader_enabled']       = ! empty( $input['loader_enabled'] );
 		$clean['loader_show_progress'] = ! empty( $input['loader_show_progress'] );
+		$clean['loader_show_logo']     = ! empty( $input['loader_show_logo'] );
+		$clean['loader_show_text']     = ! empty( $input['loader_show_text'] );
+		$clean['loader_show_subtitle'] = ! empty( $input['loader_show_subtitle'] );
 		$clean['transitions_enabled']  = ! empty( $input['transitions_enabled'] );
 		$clean['performance']          = ! empty( $input['performance'] );
 
@@ -263,8 +264,9 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$colors   = Octave_Addons_Colors::resolved_values();
 		$controls = [
 			'loaderType'         => $this->field_id( 'loader_type' ),
-			'loaderContent'      => $this->field_id( 'loader_content' ),
-			'loaderTagline'      => $this->field_id( 'loader_tagline' ),
+			'loaderShowLogo'     => $this->field_id( 'loader_show_logo' ),
+			'loaderShowText'     => $this->field_id( 'loader_show_text' ),
+			'loaderShowSubtitle' => $this->field_id( 'loader_show_subtitle' ),
 			'transitionType'     => $this->field_id( 'transition_type' ),
 			'transitionContent'  => $this->field_id( 'transition_content' ),
 			'replayType'         => $this->field_id( 'transition_loader_type' ),
@@ -355,7 +357,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 	protected function render_loader_card( array $s, array $controls, array $colors ): void {
 
-		$rows = [ 'oaPlRowLoaderType', 'oaPlRowLoaderPreview', 'oaPlRowLoaderContent', 'oaPlRowLoaderTagline', 'oaPlRowProgress', 'oaPlRowFrequency', 'oaPlRowDuration', 'oaPlRowLoaderCustom', 'oaPlRowLoaderCss', 'oaPlRowLoaderJs' ];
+		$rows = [ 'oaPlRowLoaderType', 'oaPlRowLoaderPreview', 'oaPlRowLoaderContent', 'oaPlRowProgress', 'oaPlRowFrequency', 'oaPlRowDuration', 'oaPlRowLoaderCustom', 'oaPlRowLoaderCss', 'oaPlRowLoaderJs' ];
 
 		$this->open_card( __( 'Page loader', 'octave-addons' ), __( 'A short animation shown while a page first loads, then lifted away to reveal it.', 'octave-addons' ), 'loader_enabled', $rows, $s );
 
@@ -369,12 +371,12 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 					'loader_type',
 					$this->loader_types(),
 					$s['loader_type'],
-					'oaPlRowLoaderContent:' . implode( '|', self::CONTENT_LOADERS ) . ',oaPlRowProgress:brand-counter'
+					'oaPlRowProgress:brand-counter'
 				);
 
 				?>
 
-				<span class="oa-help"><?php esc_html_e( 'Logo Mask always shows your logo and Image Window your image, both set in Customisation.', 'octave-addons' ); ?></span>
+				<span class="oa-help"><?php esc_html_e( 'Logo Mask animates the selected loader content. Image Window keeps its image and can show your selected content beneath it.', 'octave-addons' ); ?></span>
 				<?php
 
 			},
@@ -392,32 +394,44 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		Octave_Addons_Fields::row( [
 			'id'    => 'oaPlRowLoaderContent',
-			'for'   => $this->field_id( 'loader_content' ),
 			'label' => __( 'Show', 'octave-addons' ),
 			'field' => function () use ( $s ) {
 
-				$this->render_select( 'loader_content', [
-					''          => __( 'What the style normally shows', 'octave-addons' ),
-					'text'      => __( 'Brand text', 'octave-addons' ),
-					'logo'      => __( 'Logo', 'octave-addons' ),
-					'logo-text' => __( 'Logo and brand text', 'octave-addons' ),
-					'none'      => __( 'Nothing', 'octave-addons' ),
-				], $s['loader_content'] );
+				$items = $this->loader_items( $s['loader_type'], $s );
 
-			},
-		] );
+				?>
 
-		Octave_Addons_Fields::row( [
-			'id'    => 'oaPlRowLoaderTagline',
-			'label' => __( 'Tagline', 'octave-addons' ),
-			'field' => function () use ( $s ) {
+				<fieldset class="oa-loader-content-options">
+					<legend class="screen-reader-text"><?php esc_html_e( 'Loader content', 'octave-addons' ); ?></legend>
+					<?php
 
-				Octave_Addons_Fields::switch_field( [
-					'id'      => $this->field_id( 'loader_tagline' ),
-					'name'    => $this->field_name( 'loader_tagline' ),
-					'checked' => ! empty( $s['loader_tagline'] ),
-					'help'    => __( 'Shows the tagline from Customisation under the brand text or logo.', 'octave-addons' ),
-				] );
+					foreach ( [
+						'logo'     => __( 'Logo', 'octave-addons' ),
+						'text'     => __( 'Text', 'octave-addons' ),
+						'subtitle' => __( 'Subtitle', 'octave-addons' ),
+					] as $item => $label ) {
+
+						$key = 'loader_show_' . $item;
+
+						?>
+
+						<label class="oa-loader-content-option">
+							<input type="checkbox"
+							       id="<?= esc_attr( $this->field_id( $key ) ); ?>"
+							       name="<?= esc_attr( $this->field_name( $key ) ); ?>"
+							       value="1" <?php checked( ! empty( $items[ $item ] ) ); ?>>
+							<span><?= esc_html( $label ); ?></span>
+						</label>
+
+						<?php
+
+					}
+
+					?>
+
+				</fieldset>
+				<span class="oa-help"><?php esc_html_e( 'Choose any combination. The values come from Customisation below.', 'octave-addons' ); ?></span>
+				<?php
 
 			},
 		] );
@@ -619,7 +633,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		Octave_Addons_Fields::row( [
 			'for'   => $this->field_id( 'tagline' ),
-			'label' => __( 'Tagline', 'octave-addons' ),
+			'label' => __( 'Subtitle', 'octave-addons' ),
 			'field' => function () use ( $s ) {
 
 				Octave_Addons_Fields::text( [
@@ -627,7 +641,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 					'name'        => $this->field_name( 'tagline' ),
 					'value'       => $s['tagline'],
 					'placeholder' => get_bloginfo( 'description' ),
-					'help'        => __( 'A short line shown under the brand text when the page loader\'s Tagline is on.', 'octave-addons' ),
+					'help'        => __( 'A short line shown when Subtitle is selected for the page loader.', 'octave-addons' ),
 				] );
 
 			},
@@ -1157,7 +1171,6 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 	protected function render_loader( string $type, string $text, array $s ): void {
 
-		$logo  = 'logo-mask' === $type ? Octave_Addons_Fields::media_asset_url( $s['loader_logo'] ) : '';
 		$image = 'image-window' === $type ? Octave_Addons_Fields::media_asset_url( $s['loader_image'] ) : '';
 
 		?>
@@ -1194,25 +1207,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 				?>
 
 				<span class="oa-loader__logo">
-					<?php
-
-					if ( '' !== $logo ) :
-
-					?>
-
-					<img src="<?= esc_url( $logo ); ?>" alt="" decoding="async">
-					<?php
-
-					else :
-
-					?>
-
-					<span class="oa-loader__brand"><?= esc_html( $text ); ?></span>
-					<?php
-
-					endif;
-
-					?>
+					<?php $this->print_mark( $type, $text, $s ); ?>
 
 				</span>
 				<span class="oa-loader__line"><span class="oa-loader__bar"></span></span>
@@ -1237,6 +1232,7 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 					?>
 
 				</span>
+				<?php $this->print_mark( $type, $text, $s ); ?>
 				<?php
 
 				elseif ( 'curtain' === $type ) :
@@ -1280,16 +1276,39 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 	}
 
 	/*
-	PRINT MARK
-	-- What a loader shows in its middle: the brand text, the logo, both or
-	-- nothing, with the tagline under it when chosen. A missing logo falls
-	-- back to the text. The wrapper keeps .oa-loader__brand, which each
-	-- style positions and animates
+	LOADER ITEMS
+	-- Resolves the independent logo, text and subtitle choices. Null values
+	-- identify settings saved before the checkboxes existed, so each loader
+	-- keeps its former default or its legacy Show and Tagline choices
 	---------------------------------------------------------- */
 
-	protected function print_mark( string $type, string $text, array $s, string $attributes = '' ): void {
+	protected function loader_items( string $type, array $s ): array {
 
-		$content = (string) $s['loader_content'];
+		$has_choices = null !== ( $s['loader_show_logo'] ?? null ) || null !== ( $s['loader_show_text'] ?? null ) || null !== ( $s['loader_show_subtitle'] ?? null );
+
+		if ( $has_choices ) {
+
+			return [
+				'logo'     => ! empty( $s['loader_show_logo'] ),
+				'text'     => ! empty( $s['loader_show_text'] ),
+				'subtitle' => ! empty( $s['loader_show_subtitle'] ),
+			];
+
+		}
+
+		if ( 'logo-mask' === $type ) {
+
+			return [ 'logo' => true, 'text' => false, 'subtitle' => false ];
+
+		}
+
+		if ( 'image-window' === $type ) {
+
+			return [ 'logo' => false, 'text' => false, 'subtitle' => false ];
+
+		}
+
+		$content = (string) ( $s['loader_content'] ?? '' );
 
 		if ( '' === $content ) {
 
@@ -1297,16 +1316,35 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		}
 
-		$logo    = in_array( $content, [ 'logo', 'logo-text' ], true ) ? Octave_Addons_Fields::media_asset_url( $s['loader_logo'] ) : '';
-		$tagline = ! empty( $s['loader_tagline'] ) ? trim( (string) $s['tagline'] ) : '';
+		return [
+			'logo'     => in_array( $content, [ 'logo', 'logo-text' ], true ),
+			'text'     => in_array( $content, [ 'text', 'logo-text' ], true ),
+			'subtitle' => ! empty( $s['loader_tagline'] ),
+		];
 
-		if ( 'none' === $content && '' === $tagline ) {
+	}
+
+	/*
+	PRINT MARK
+	-- What a loader shows in its middle: any combination of logo, text and
+	-- subtitle. A selected but missing logo falls back to text so the loader
+	-- never leaves an unexplained blank. The wrapper keeps
+	-- .oa-loader__brand, which each style positions and animates
+	---------------------------------------------------------- */
+
+	protected function print_mark( string $type, string $text, array $s, string $attributes = '' ): void {
+
+		$items    = $this->loader_items( $type, $s );
+		$logo     = $items['logo'] ? Octave_Addons_Fields::media_asset_url( $s['loader_logo'] ) : '';
+		$subtitle = $items['subtitle'] ? trim( (string) $s['tagline'] ) : '';
+
+		if ( ! $items['logo'] && ! $items['text'] && '' === $subtitle ) {
 
 			return;
 
 		}
 
-		$show_text = 'text' === $content || 'logo-text' === $content || ( 'logo' === $content && '' === $logo );
+		$show_text = $items['text'] || ( $items['logo'] && '' === $logo );
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute string from this class.
 		echo '<span class="oa-loader__brand"' . $attributes . '>';
@@ -1323,9 +1361,9 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		}
 
-		if ( '' !== $tagline ) {
+		if ( '' !== $subtitle ) {
 
-			echo '<span class="oa-pm-tagline">' . esc_html( $tagline ) . '</span>';
+			echo '<span class="oa-pm-tagline">' . esc_html( $subtitle ) . '</span>';
 
 		}
 

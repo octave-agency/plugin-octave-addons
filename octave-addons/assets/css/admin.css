@@ -929,6 +929,28 @@ Settings cards
     padding-right: 20px;
 }
 
+.oa-loader-content-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.oa-loader-content-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--oa-text);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.oa-loader-content-option input {
+    margin: 0;
+}
+
 /* --- Panel card ------------------------------------------ */
 
 .oa-panel {

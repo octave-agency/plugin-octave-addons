@@ -264,12 +264,23 @@ PAGE TRANSITIONS CORE
 		var finished = false;
 		var exited = false;
 		var lastPercent = -1;
+		var lastProgress = '';
 		var frame = null;
 		var closed = false;
 		var timers = [];
 		var phases = { loading: 0.15, interactive: 0.55, complete: 1 };
 		var base = cfg.duration || 900;
-		var started = Date.now();
+		var clock = window.performance && window.performance.now ? function () {
+
+			return window.performance.now();
+
+		} : function () {
+
+			return Date.now();
+
+		};
+		var started = clock();
+		var lastFrame = started;
 		var minTime = base * 5 / 3;
 
 		root.classList.add( 'oa-loader-active' );
@@ -303,15 +314,28 @@ PAGE TRANSITIONS CORE
 			loader = loader || document.getElementById( 'oa-page-loader' );
 
 			var percent = Math.round( progress * 100 );
+			var progressValue = progress.toFixed( 3 );
 
-			if ( ! loader || percent === lastPercent ) {
+			if ( ! loader ) {
+
+				return;
+
+			}
+
+			if ( progressValue !== lastProgress ) {
+
+				lastProgress = progressValue;
+				loader.style.setProperty( '--oa-progress', progressValue );
+
+			}
+
+			if ( percent === lastPercent ) {
 
 				return;
 
 			}
 
 			lastPercent = percent;
-			loader.style.setProperty( '--oa-progress', progress.toFixed( 3 ) );
 
 			var count = loader.querySelector( '[data-oa-loader-count]' );
 
@@ -368,7 +392,7 @@ PAGE TRANSITIONS CORE
 		// instantly still counts up rather than flashing.
 		function paced() {
 
-			var t = Math.min( 1, ( Date.now() - started ) / minTime );
+			var t = Math.min( 1, ( clock() - started ) / minTime );
 
 			return t * ( 2 - t );
 
@@ -386,7 +410,7 @@ PAGE TRANSITIONS CORE
 			target = 1;
 
 			// Lets the number catch up, without waiting on a paused frame loop.
-			timers.push( window.setTimeout( exit, Math.max( 0, minTime - ( Date.now() - started ) ) + base * 0.47 ) );
+			timers.push( window.setTimeout( exit, Math.max( 0, minTime - ( clock() - started ) ) + base * 0.47 ) );
 
 		}
 
@@ -401,8 +425,12 @@ PAGE TRANSITIONS CORE
 				}
 
 				var goal = Math.min( target, paced() );
+				var now = clock();
+				var elapsed = Math.max( 0, Math.min( 100, now - lastFrame ) );
+				var blend = 1 - Math.pow( 0.82, elapsed / ( 1000 / 60 ) );
 
-				shown += ( goal - shown ) * 0.18;
+				lastFrame = now;
+				shown += ( goal - shown ) * blend;
 
 				if ( goal - shown < 0.004 ) {
 

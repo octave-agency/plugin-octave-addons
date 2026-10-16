@@ -16,6 +16,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
 
+	protected const SCRIPT_HANDLE = 'octave-addons-custom-login';
+	protected const GOOGLE_ACTION = 'octave_login';
+	protected const GOOGLE_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
+	protected const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+
+	protected static array $runtime_settings = [];
 
     public function get_id(): string {
 
@@ -43,13 +49,18 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
             'redirect_url'    => '',
             'custom_logo_url' => '',
             'bg_color'        => '',
-            'primary_color'   => '',
-            'custom_css'      => '',
+			'primary_color'     => '',
+			'captcha_mode'      => '',
+			'captcha_site_key'  => '',
+			'captcha_secret_key' => '',
+			'custom_css'        => '',
         ];
 
     }
 
     public function sanitize( $input ): array {
+
+		$input = is_array( $input ) ? $input : [];
 
         $clean            = $this->get_defaults();
         $clean['enabled'] = ! empty( $input['enabled'] );
@@ -73,6 +84,18 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
         $clean['primary_color']   = isset( $input['primary_color'] )
             ? ( sanitize_hex_color( wp_unslash( $input['primary_color'] ) ) ?? '' )
             : '';
+
+		$captcha_mode = sanitize_key( (string) ( $input['captcha_mode'] ?? '' ) );
+
+		if ( ! in_array( $captcha_mode, [ '', 'forms-google', 'custom-google', 'forms-turnstile', 'custom-turnstile' ], true ) ) {
+
+			$captcha_mode = '';
+
+		}
+
+		$clean['captcha_mode']       = $captcha_mode;
+		$clean['captcha_site_key']   = sanitize_text_field( wp_unslash( (string) ( $input['captcha_site_key'] ?? '' ) ) );
+		$clean['captcha_secret_key'] = sanitize_text_field( wp_unslash( (string) ( $input['captcha_secret_key'] ?? '' ) ) );
 
         // Raw CSS — only manage_options users can reach this field.
         $clean['custom_css'] = isset( $input['custom_css'] )
@@ -135,6 +158,63 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
 
                 },
             ] ); ?>
+			<?php Octave_Addons_Fields::section( [
+				'label' => __( 'Login Protection', 'octave-addons' ),
+			] ); ?>
+			<?php Octave_Addons_Fields::row( [
+				'for'   => $this->field_id( 'captcha_mode' ),
+				'label' => __( 'Captcha', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					?>
+
+					<select
+						id="<?= esc_attr( $this->field_id( 'captcha_mode' ) ); ?>"
+						name="<?= esc_attr( $this->field_name( 'captcha_mode' ) ); ?>"
+						data-controls-row="oaLoginCaptchaSite:custom-google|custom-turnstile,oaLoginCaptchaSecret:custom-google|custom-turnstile"
+					>
+						<option value=""<?php selected( '', $s['captcha_mode'] ); ?>><?php esc_html_e( 'Off', 'octave-addons' ); ?></option>
+						<option value="forms-google"<?php selected( 'forms-google', $s['captcha_mode'] ); ?>><?php esc_html_e( 'Google reCAPTCHA — use Forms keys', 'octave-addons' ); ?></option>
+						<option value="custom-google"<?php selected( 'custom-google', $s['captcha_mode'] ); ?>><?php esc_html_e( 'Google reCAPTCHA — custom keys', 'octave-addons' ); ?></option>
+						<option value="forms-turnstile"<?php selected( 'forms-turnstile', $s['captcha_mode'] ); ?>><?php esc_html_e( 'Cloudflare Turnstile — use Forms keys', 'octave-addons' ); ?></option>
+						<option value="custom-turnstile"<?php selected( 'custom-turnstile', $s['captcha_mode'] ); ?>><?php esc_html_e( 'Cloudflare Turnstile — custom keys', 'octave-addons' ); ?></option>
+					</select>
+					<span class="oa-help"><?php esc_html_e( 'Protects password sign-ins. Forms keys come from the Breakdance Forms module; custom keys are kept in this module.', 'octave-addons' ); ?></span>
+
+					<?php
+
+				},
+			] ); ?>
+			<?php Octave_Addons_Fields::row( [
+				'id'    => 'oaLoginCaptchaSite',
+				'for'   => $this->field_id( 'captcha_site_key' ),
+				'label' => __( 'Captcha site key', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					?>
+
+					<input type="text" id="<?= esc_attr( $this->field_id( 'captcha_site_key' ) ); ?>" name="<?= esc_attr( $this->field_name( 'captcha_site_key' ) ); ?>" value="<?= esc_attr( $s['captcha_site_key'] ); ?>" class="regular-text" autocomplete="off" required>
+					<span class="oa-help"><?php esc_html_e( 'The public site key for the provider selected above.', 'octave-addons' ); ?></span>
+
+					<?php
+
+				},
+			] ); ?>
+			<?php Octave_Addons_Fields::row( [
+				'id'    => 'oaLoginCaptchaSecret',
+				'for'   => $this->field_id( 'captcha_secret_key' ),
+				'label' => __( 'Captcha secret key', 'octave-addons' ),
+				'field' => function () use ( $s ) {
+
+					?>
+
+					<input type="password" id="<?= esc_attr( $this->field_id( 'captcha_secret_key' ) ); ?>" name="<?= esc_attr( $this->field_name( 'captcha_secret_key' ) ); ?>" value="<?= esc_attr( $s['captcha_secret_key'] ); ?>" class="regular-text" autocomplete="off" required>
+					<span class="oa-help"><?php esc_html_e( 'The private secret stays on the server and is never sent to the browser.', 'octave-addons' ); ?></span>
+
+					<?php
+
+				},
+			] ); ?>
             <?php Octave_Addons_Fields::section( [
                 'label' => __( 'Login Page Appearance', 'octave-addons' ),
             ] ); ?>
@@ -209,6 +289,8 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
 
     public function run( array $s ): void {
 
+		self::$runtime_settings = array_merge( $this->get_defaults(), $s );
+
         $slug     = trim( $s['login_slug'] ?? 'login', '/' );
         $redirect = $s['redirect_url'] ?? '';
 
@@ -261,15 +343,16 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
             return home_url( '/' );
         } );
 
+		add_action( 'login_form', [ __CLASS__, 'render_captcha' ] );
+		add_filter( 'authenticate', [ __CLASS__, 'validate_login_captcha' ], 30, 3 );
+
         // --- Login page styles ------------------------------------------
 
         add_action( 'login_enqueue_scripts', function () use ( $s ) {
 
-            $css_path = OCTAVE_ADDONS_DIR . 'modules/design/custom-login/assets/login.css';
-            $css_url  = OCTAVE_ADDONS_URL . 'modules/design/custom-login/assets/login.css';
-            $version  = file_exists( $css_path ) ? (string) filemtime( $css_path ) : OCTAVE_ADDONS_VERSION;
+			$asset = self::asset( 'modules/design/custom-login/assets/login.css' );
 
-            wp_enqueue_style( 'oa-custom-login', $css_url, [], $version );
+			wp_enqueue_style( 'oa-custom-login', $asset['url'], [], $asset['version'] );
 
             $inline = '';
 
@@ -292,6 +375,7 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
             if ( $primary ) {
 
                 $token_overrides .= '--oa-login-primary:' . esc_attr( $primary ) . ';';
+				$token_overrides .= '--oa-login-on-primary:' . ( $this->is_dark_color( $primary ) ? '#ffffff' : '#171916' ) . ';';
                 // Recompute the pre-computed shadows with the chosen colour.
                 $rgba = $this->hex_to_rgba( $primary );
                 if ( $rgba ) {
@@ -332,6 +416,8 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
                 wp_add_inline_style( 'oa-custom-login', (string) $s['custom_css'] );
 
             }
+
+			self::enqueue_captcha_assets();
         } );
 
         // --- Request interception ---------------------------------------
@@ -392,6 +478,263 @@ class Octave_Addons_Module_Custom_Login extends Octave_Addons_Module {
         }, 10 );
 
     }
+
+	/*
+	RENDER CAPTCHA
+	-- Adds the selected challenge to password login forms only
+	---------------------------------------------------------- */
+
+	public static function render_captcha(): void {
+
+		$provider = self::captcha_provider();
+		$site_key = self::captcha_key( 'site', $provider );
+
+		if ( '' === $provider ) {
+
+			return;
+
+		}
+
+		?>
+
+		<div class="oa-login-captcha" data-oa-login-captcha="<?= esc_attr( $provider ); ?>">
+
+			<?php
+
+			if ( '' === $site_key ) :
+
+			?>
+
+			<p class="oa-login-captcha__error" role="alert"><?php esc_html_e( 'Captcha is not configured. Please contact the site administrator.', 'octave-addons' ); ?></p>
+
+			<?php
+
+			elseif ( 'google' === $provider ) :
+
+			?>
+
+			<input type="hidden" name="oa_login_captcha_token" value="">
+			<p class="oa-login-captcha__status" aria-live="polite"><?php esc_html_e( 'Protected by reCAPTCHA', 'octave-addons' ); ?></p>
+
+			<?php
+
+			else :
+
+			?>
+
+			<div class="oa-login-captcha__widget" aria-live="polite"></div>
+
+			<?php
+
+			endif;
+
+			?>
+
+		</div>
+
+		<?php
+
+	}
+
+	/*
+	ENQUEUE CAPTCHA ASSETS
+	-- Loads the chosen provider only when a public key is available
+	---------------------------------------------------------- */
+
+	public static function enqueue_captcha_assets(): void {
+
+		$provider = self::captcha_provider();
+		$site_key = self::captcha_key( 'site', $provider );
+
+		if ( '' === $provider || '' === $site_key ) {
+
+			return;
+
+		}
+
+		if ( 'google' === $provider ) {
+
+			$provider_handle = 'octave-addons-google-recaptcha';
+			$provider_url    = add_query_arg( [ 'render' => $site_key ], 'https://www.google.com/recaptcha/api.js' );
+
+		} else {
+
+			$provider_handle = 'octave-addons-cloudflare-turnstile';
+			$provider_url    = add_query_arg( [ 'render' => 'explicit' ], 'https://challenges.cloudflare.com/turnstile/v0/api.js' );
+
+		}
+
+		$asset = self::asset( 'modules/design/custom-login/assets/login.js' );
+
+		wp_enqueue_script( $provider_handle, $provider_url, [], null, true );
+		wp_enqueue_script( self::SCRIPT_HANDLE, $asset['url'], [ $provider_handle ], $asset['version'], true );
+		wp_localize_script(
+			self::SCRIPT_HANDLE,
+			'OctaveCustomLoginCaptcha',
+			[
+				'provider'     => $provider,
+				'siteKey'      => $site_key,
+				'googleAction' => self::GOOGLE_ACTION,
+				'errorMessage' => __( 'We could not complete the security check. Please try again.', 'octave-addons' ),
+			]
+		);
+
+	}
+
+	/*
+	VALIDATE LOGIN CAPTCHA
+	-- Rejects password login attempts until the provider verifies the token
+	---------------------------------------------------------- */
+
+	public static function validate_login_captcha( $user, string $username, string $password ) {
+
+		$provider = self::captcha_provider();
+
+		if ( '' === $provider || ! isset( $_POST['log'], $_POST['pwd'] ) ) {
+
+			return $user;
+
+		}
+
+		$field = 'google' === $provider ? 'oa_login_captcha_token' : 'cf-turnstile-response';
+		$token = isset( $_POST[ $field ] ) ? sanitize_text_field( wp_unslash( (string) $_POST[ $field ] ) ) : '';
+		$ip    = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) ) : '';
+
+		if ( '' !== $token && self::verify_captcha_response( $provider, $token, $ip ) ) {
+
+			return $user;
+
+		}
+
+		return new WP_Error(
+			'octave_login_captcha_failed',
+			__( '<strong>Error:</strong> The security check could not be verified. Please try again.', 'octave-addons' )
+		);
+
+	}
+
+	/*
+	VERIFY CAPTCHA RESPONSE
+	-- Checks the provider response server-side and enforces the Google action
+	---------------------------------------------------------- */
+
+	public static function verify_captcha_response( string $provider, string $token, string $ip = '' ): bool {
+
+		if ( ! in_array( $provider, [ 'google', 'turnstile' ], true ) || '' === $token ) {
+
+			return false;
+
+		}
+
+		$secret = self::captcha_key( 'secret', $provider );
+
+		if ( '' === $secret ) {
+
+			return false;
+
+		}
+
+		$url      = 'google' === $provider ? self::GOOGLE_VERIFY_URL : self::TURNSTILE_VERIFY_URL;
+		$response = wp_remote_post(
+			$url,
+			[
+				'body'    => [
+					'secret'   => $secret,
+					'response' => $token,
+					'remoteip' => $ip,
+				],
+				'timeout' => 10,
+			]
+		);
+
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+
+			return false;
+
+		}
+
+		$result = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( ! is_array( $result ) || empty( $result['success'] ) ) {
+
+			return false;
+
+		}
+
+		if ( 'google' === $provider ) {
+
+			$score  = isset( $result['score'] ) ? (float) $result['score'] : 0.0;
+			$action = (string) ( $result['action'] ?? '' );
+
+			return $score >= 0.5 && self::GOOGLE_ACTION === $action;
+
+		}
+
+		return true;
+
+	}
+
+	/*
+	CAPTCHA PROVIDER
+	-- Resolves the provider encoded in the selected credential mode
+	---------------------------------------------------------- */
+
+	protected static function captcha_provider(): string {
+
+		$mode = (string) ( self::$runtime_settings['captcha_mode'] ?? '' );
+
+		if ( false !== strpos( $mode, 'google' ) ) {
+
+			return 'google';
+
+		}
+
+		if ( false !== strpos( $mode, 'turnstile' ) ) {
+
+			return 'turnstile';
+
+		}
+
+		return '';
+
+	}
+
+	/*
+	CAPTCHA KEY
+	-- Uses module-specific credentials or the matching Forms credentials
+	---------------------------------------------------------- */
+
+	protected static function captcha_key( string $type, string $provider ): string {
+
+		$mode = (string) ( self::$runtime_settings['captcha_mode'] ?? '' );
+
+		if ( 0 === strpos( $mode, 'custom-' ) ) {
+
+			return (string) ( self::$runtime_settings[ 'captcha_' . $type . '_key' ] ?? '' );
+
+		}
+
+		$all_settings = get_option( OCTAVE_ADDONS_OPTION_KEY, [] );
+		$forms        = is_array( $all_settings ) && isset( $all_settings['breakdance-forms'] ) && is_array( $all_settings['breakdance-forms'] )
+			? $all_settings['breakdance-forms']
+			: [];
+		$key          = (string) ( $forms[ $provider . '_' . $type . '_key' ] ?? '' );
+
+		if ( '' === $key && 'google' === $provider ) {
+
+			$constant = 'site' === $type ? 'BREAKDANCE_RECAPTCHA_SITE_KEY_NAME' : 'BREAKDANCE_RECAPTCHA_SECRET_KEY_NAME';
+
+			if ( function_exists( 'Breakdance\\APIKeys\\getKey' ) && defined( $constant ) ) {
+
+				$key = (string) \Breakdance\APIKeys\getKey( constant( $constant ) );
+
+			}
+
+		}
+
+		return $key;
+
+	}
 
     // ---- Helpers -----------------------------------------------------------
 

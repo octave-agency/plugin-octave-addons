@@ -4847,12 +4847,14 @@ MOTION PREVIEWS
 
 		function loaderMark( parent, type, className ) {
 
-			var content = value( 'loaderContent' ) || ( 'orbital' === type ? 'none' : 'text' );
-			var tagline = field( 'loaderTagline' ) && field( 'loaderTagline' ).checked ? value( 'tagline' ) : '';
-			var logoUrl = 'logo' === content || 'logo-text' === content ? media( 'logo' ) : '';
+			var showLogo = field( 'loaderShowLogo' ) && field( 'loaderShowLogo' ).checked;
+			var showText = field( 'loaderShowText' ) && field( 'loaderShowText' ).checked;
+			var showSubtitle = field( 'loaderShowSubtitle' ) && field( 'loaderShowSubtitle' ).checked;
+			var subtitle = showSubtitle ? value( 'tagline' ) : '';
+			var logoUrl = showLogo ? media( 'logo' ) : '';
 			var text = value( 'text' ) || controls.siteName || '';
 
-			if ( 'none' === content && ! tagline ) {
+			if ( ! showLogo && ! showText && ! subtitle ) {
 
 				return null;
 
@@ -4868,15 +4870,15 @@ MOTION PREVIEWS
 
 			}
 
-			if ( 'text' === content || 'logo-text' === content || ( 'logo' === content && ! logoUrl ) ) {
+			if ( showText || ( showLogo && ! logoUrl ) ) {
 
 				make( 'span', '', mark, text );
 
 			}
 
-			if ( tagline ) {
+			if ( subtitle ) {
 
-				make( 'span', 'oa-pv-tagline', mark, tagline );
+				make( 'span', 'oa-pv-tagline', mark, subtitle );
 
 			}
 
@@ -4959,15 +4961,8 @@ MOTION PREVIEWS
 
 			} else if ( 'logo-mask' === type ) {
 
-				var logoUrl = media( 'logo' );
-				var logo = make( 'span', 'oa-pv-logo', inner, logoUrl ? '' : text );
+				var logo = loaderMark( inner, type, 'oa-pv-logo' ) || make( 'span', 'oa-pv-logo', inner );
 				var logoLine = make( 'span', 'oa-pv-line oa-pv-line--short', inner );
-
-				if ( logoUrl ) {
-
-					make( 'img', '', logo ).src = logoUrl;
-
-				}
 
 				progress = make( 'span', 'oa-pv-progress', logoLine );
 
@@ -4989,6 +4984,8 @@ MOTION PREVIEWS
 					animate( picture, [ { transform: 'scale(1.18)' }, { transform: 'scale(1.06)' } ], { duration: 1300 * scale, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
 
 				}
+
+				loaderMark( inner, type, '' );
 
 				animate( frame, [ { clipPath: 'inset(38% 32% 38% 32%)' }, { clipPath: 'inset(18% 26% 30% 14%)', offset: 0.4 }, { clipPath: 'inset(8% 6% 12% 22%)' } ], { duration: 1300 * scale, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' } );
 				exits.push( [ frame, [ { clipPath: 'inset(8% 6% 12% 22%)' }, { clipPath: 'inset(0 0 0 0)', transform: 'scale(1.06)' } ], sweep, 1 ] );
@@ -5164,8 +5161,8 @@ MOTION PREVIEWS
 
 			} else if ( 'brand-wipe' === type ) {
 
-				var wipeIn = [ { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' } ];
-				var wipeOut = [ { clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 0 100%)' } ];
+				var wipeIn = [ { transform: 'scaleX(0)', transformOrigin: '0 50%' }, { transform: 'scaleX(1)', transformOrigin: '0 50%' } ];
+				var wipeOut = [ { transform: 'scaleX(1)', transformOrigin: '100% 50%' }, { transform: 'scaleX(0)', transformOrigin: '100% 50%' } ];
 
 				layerB.hidden = false;
 				layer.classList.add( 'oa-pv-layer--accent' );

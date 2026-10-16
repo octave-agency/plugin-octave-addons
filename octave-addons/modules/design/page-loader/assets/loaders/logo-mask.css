@@ -43,6 +43,7 @@ LOGO MASK LOADER
     background: var(--oa-pm-accent);
     transform: scaleX(var(--oa-progress, 0));
     transform-origin: 0 50%;
+    will-change: transform;
 }
 
 html.oa-loader-exit .oa-loader--logo-mask .oa-loader__logo {

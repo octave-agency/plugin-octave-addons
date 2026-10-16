@@ -21,6 +21,7 @@ const folders = [
 	'modules/breakdance/forms/assets',
 	'modules/design/animations/assets',
 	'modules/design/animations/assets/presets',
+	'modules/design/custom-login/assets',
 	'modules/design/page-loader/assets',
 	'modules/design/page-loader/assets/loaders',
 	'modules/design/page-loader/assets/transitions',

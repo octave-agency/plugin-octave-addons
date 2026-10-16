@@ -46,6 +46,7 @@ BRAND COUNTER LOADER
     background: var(--oa-pm-accent);
     transform: scaleX(var(--oa-progress, 0));
     transform-origin: 0 50%;
+    will-change: transform;
 }
 
 .oa-loader__count {
