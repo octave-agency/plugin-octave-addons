@@ -172,9 +172,9 @@ TRANSITION SURFACE
 
 /*
 TRANSITION CONTENT
--- Brand text, logo, image or spinner in the middle of a covering
--- transition: it rises in once the page is covered and fades as the new
--- page is revealed
+-- The selected brand text, subtitle, logo, image and spinner in the middle
+-- of a covering transition. Items form one centred group which rises in
+-- once the page is covered and fades as the new page is revealed
 ---------------------------------------------------------- */
 
 .oa-transition__content {
@@ -182,9 +182,15 @@ TRANSITION CONTENT
     top: 50%;
     left: 50%;
     z-index: 3;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45em;
     font-size: calc(clamp(18px, 2.4vw, 30px) * var(--oa-pm-text-scale, 1));
     font-weight: 500;
+    line-height: 1.1;
     letter-spacing: -0.01em;
+    text-align: center;
     white-space: nowrap;
     opacity: 0;
     transform: translate(-50%, -50%);

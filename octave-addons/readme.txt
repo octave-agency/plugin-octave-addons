@@ -168,6 +168,9 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.47.0 =
+* Page transitions can now show any combination of logo, text, subtitle, image and loading spinner while the page is covered.
+
 = 3.46.1 =
 * Fixed the Media Library list uploader retaining a white upload row and progress track in dark mode.
 

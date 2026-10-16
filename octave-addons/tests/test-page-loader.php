@@ -39,20 +39,26 @@ SETTINGS
 function test_new_loader_options_are_cleaned_on_save(): void {
 
 	$clean = oa_module( 'page-loader' )->sanitize( [
-		'loader_content'       => 'logo-text',
-		'loader_tagline'       => '1',
-		'loader_show_logo'     => '1',
-		'loader_show_text'     => '1',
-		'loader_show_subtitle' => '1',
-		'loader_frequency'     => 'once',
-		'transition_content'   => 'spinner',
-		'text_size'            => 'xl',
-		'tagline'              => ' <b>Design</b> studio ',
+		'loader_content'            => 'logo-text',
+		'loader_tagline'            => '1',
+		'loader_show_logo'          => '1',
+		'loader_show_text'          => '1',
+		'loader_show_subtitle'      => '1',
+		'transition_show_logo'      => '1',
+		'transition_show_text'      => '1',
+		'transition_show_subtitle'  => '1',
+		'transition_show_image'     => '1',
+		'transition_show_spinner'   => '1',
+		'loader_frequency'          => 'once',
+		'transition_content'        => 'spinner',
+		'text_size'                 => 'xl',
+		'tagline'                   => ' <b>Design</b> studio ',
 	] );
 
 	oa_assert_same( 'logo-text', $clean['loader_content'] );
 	oa_assert_same( true, $clean['loader_tagline'] );
 	oa_assert_same( [ true, true, true ], [ $clean['loader_show_logo'], $clean['loader_show_text'], $clean['loader_show_subtitle'] ] );
+	oa_assert_same( [ true, true, true, true, true ], [ $clean['transition_show_logo'], $clean['transition_show_text'], $clean['transition_show_subtitle'], $clean['transition_show_image'], $clean['transition_show_spinner'] ] );
 	oa_assert_same( 'once', $clean['loader_frequency'] );
 	oa_assert_same( 'spinner', $clean['transition_content'] );
 	oa_assert_same( 'xl', $clean['text_size'] );
@@ -136,16 +142,60 @@ function test_legacy_media_loader_defaults_are_preserved(): void {
 TRANSITION CONTENT
 ---------------------------------------------------------- */
 
-function test_transitions_show_their_chosen_centre_content(): void {
+function test_transition_content_checkboxes_can_be_combined_independently(): void {
 
-	oa_assert_same( 'text', oa_loader_call( 'transition_content', 'brand-wipe', oa_loader_settings() ), 'Brand Wipe keeps its brand text' );
-	oa_assert_same( '', oa_loader_call( 'transition_content', 'slide-up', oa_loader_settings() ), 'other styles show nothing by default' );
-	oa_assert_same( 'image', oa_loader_call( 'transition_content', 'slide-up', oa_loader_settings( [ 'transition_content' => 'image' ] ) ) );
-	oa_assert_same( '', oa_loader_call( 'transition_content', 'brand-wipe', oa_loader_settings( [ 'transition_content' => 'none' ] ) ), 'Brand Wipe without its text' );
+	$settings = oa_loader_settings( [
+		'transition_show_logo'     => true,
+		'transition_show_text'     => true,
+		'transition_show_subtitle' => true,
+		'transition_show_image'    => true,
+		'transition_show_spinner'  => true,
+	] );
+	$method   = new ReflectionMethod( oa_module( 'page-loader' ), 'transition_items' );
+	$items    = $method->invoke( oa_module( 'page-loader' ), 'slide-up', $settings );
+	$all      = oa_loader_call( 'print_transition_content', $items, 'Octave', $settings );
 
-	oa_assert_contains( '<img class="oa-pm-image" src="https://example.com/hero.jpg"', oa_loader_call( 'print_transition_content', 'image', 'Octave', oa_loader_settings() ) );
-	oa_assert_contains( '<span class="oa-pm-spinner"></span>', oa_loader_call( 'print_transition_content', 'spinner', 'Octave', oa_loader_settings() ) );
-	oa_assert_contains( '<span class="oa-pm-text">Octave</span>', oa_loader_call( 'print_transition_content', 'logo', 'Octave', oa_loader_settings( [ 'loader_logo' => '' ] ) ), 'no logo: the text' );
+	oa_assert_same( [ 'logo' => true, 'text' => true, 'subtitle' => true, 'image' => true, 'spinner' => true ], $items );
+
+	oa_assert( strpos( $all, 'oa-pm-logo' ) < strpos( $all, 'oa-pm-text' ), 'logo comes before text' );
+	oa_assert( strpos( $all, 'oa-pm-text' ) < strpos( $all, 'oa-pm-tagline' ), 'text comes before subtitle' );
+	oa_assert( strpos( $all, 'oa-pm-tagline' ) < strpos( $all, 'oa-pm-image' ), 'subtitle comes before image' );
+	oa_assert( strpos( $all, 'oa-pm-image' ) < strpos( $all, 'oa-pm-spinner' ), 'image comes before spinner' );
+
+	$subtitle = oa_loader_call( 'print_transition_content', [
+		'logo'     => false,
+		'text'     => false,
+		'subtitle' => true,
+		'image'    => false,
+		'spinner'  => false,
+	], 'Octave', oa_loader_settings() );
+
+	oa_assert_contains( '<span class="oa-pm-tagline">Design studio</span>', $subtitle );
+	oa_assert_not_contains( 'oa-pm-logo', $subtitle );
+	oa_assert_not_contains( 'oa-pm-text', $subtitle );
+	oa_assert_not_contains( 'oa-pm-image', $subtitle );
+	oa_assert_not_contains( 'oa-pm-spinner', $subtitle );
+
+	$missing_media = oa_loader_call( 'print_transition_content', [
+		'logo'     => true,
+		'text'     => false,
+		'subtitle' => false,
+		'image'    => true,
+		'spinner'  => false,
+	], 'Octave', oa_loader_settings( [ 'loader_logo' => '', 'loader_image' => '' ] ) );
+
+	oa_assert_same( '<span class="oa-pm-text">Octave</span>', $missing_media, 'missing selected media falls back to the text once' );
+
+}
+
+function test_legacy_transition_content_choices_are_preserved(): void {
+
+	$method = new ReflectionMethod( oa_module( 'page-loader' ), 'transition_items' );
+
+	oa_assert_same( [ 'logo' => false, 'text' => true, 'subtitle' => false, 'image' => false, 'spinner' => false ], $method->invoke( oa_module( 'page-loader' ), 'brand-wipe', oa_loader_settings() ), 'Brand Wipe keeps its brand text' );
+	oa_assert_same( [ 'logo' => false, 'text' => false, 'subtitle' => false, 'image' => false, 'spinner' => false ], $method->invoke( oa_module( 'page-loader' ), 'slide-up', oa_loader_settings() ), 'other styles keep showing nothing by default' );
+	oa_assert_same( [ 'logo' => false, 'text' => false, 'subtitle' => false, 'image' => true, 'spinner' => false ], $method->invoke( oa_module( 'page-loader' ), 'slide-up', oa_loader_settings( [ 'transition_content' => 'image' ] ) ) );
+	oa_assert_same( [ 'logo' => false, 'text' => false, 'subtitle' => false, 'image' => false, 'spinner' => false ], $method->invoke( oa_module( 'page-loader' ), 'brand-wipe', oa_loader_settings( [ 'transition_content' => 'none' ] ) ), 'Brand Wipe can keep its previous nothing choice' );
 
 }
 

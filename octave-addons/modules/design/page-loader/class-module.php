@@ -132,14 +132,19 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 			'loader_css'             => '',
 			'loader_js'              => '',
 
-			'transitions_enabled'    => false,
-			'performance'            => false,
-			'transition_type'        => 'slide-up',
-			'transition_loader_type' => 'match',
-			'transition_duration'    => 600,
-			'transition_content'     => '',
-			'transition_css'         => '',
-			'transition_js'          => '',
+			'transitions_enabled'      => false,
+			'performance'              => false,
+			'transition_type'          => 'slide-up',
+			'transition_loader_type'   => 'match',
+			'transition_duration'      => 600,
+			'transition_content'       => '',
+			'transition_show_logo'     => null,
+			'transition_show_text'     => null,
+			'transition_show_subtitle' => null,
+			'transition_show_image'    => null,
+			'transition_show_spinner'  => null,
+			'transition_css'           => '',
+			'transition_js'            => '',
 
 			'accent_source'          => 'brand',
 			'accent_color'           => '#3B82F6',
@@ -198,14 +203,19 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 		$clean    = $this->get_defaults();
 		$defaults = $clean;
 
-		$clean['enabled']              = ! empty( $input['enabled'] );
-		$clean['loader_enabled']       = ! empty( $input['loader_enabled'] );
-		$clean['loader_show_progress'] = ! empty( $input['loader_show_progress'] );
-		$clean['loader_show_logo']     = ! empty( $input['loader_show_logo'] );
-		$clean['loader_show_text']     = ! empty( $input['loader_show_text'] );
-		$clean['loader_show_subtitle'] = ! empty( $input['loader_show_subtitle'] );
-		$clean['transitions_enabled']  = ! empty( $input['transitions_enabled'] );
-		$clean['performance']          = ! empty( $input['performance'] );
+		$clean['enabled']                 = ! empty( $input['enabled'] );
+		$clean['loader_enabled']          = ! empty( $input['loader_enabled'] );
+		$clean['loader_show_progress']    = ! empty( $input['loader_show_progress'] );
+		$clean['loader_show_logo']        = ! empty( $input['loader_show_logo'] );
+		$clean['loader_show_text']        = ! empty( $input['loader_show_text'] );
+		$clean['loader_show_subtitle']    = ! empty( $input['loader_show_subtitle'] );
+		$clean['transition_show_logo']    = ! empty( $input['transition_show_logo'] );
+		$clean['transition_show_text']    = ! empty( $input['transition_show_text'] );
+		$clean['transition_show_subtitle'] = ! empty( $input['transition_show_subtitle'] );
+		$clean['transition_show_image']   = ! empty( $input['transition_show_image'] );
+		$clean['transition_show_spinner'] = ! empty( $input['transition_show_spinner'] );
+		$clean['transitions_enabled']     = ! empty( $input['transitions_enabled'] );
+		$clean['performance']             = ! empty( $input['performance'] );
 
 		$loader_type          = sanitize_key( $input['loader_type'] ?? '' );
 		$clean['loader_type'] = array_key_exists( $loader_type, $this->loader_types() ) ? $loader_type : $defaults['loader_type'];
@@ -263,28 +273,32 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		$colors   = Octave_Addons_Colors::resolved_values();
 		$controls = [
-			'loaderType'         => $this->field_id( 'loader_type' ),
-			'loaderShowLogo'     => $this->field_id( 'loader_show_logo' ),
-			'loaderShowText'     => $this->field_id( 'loader_show_text' ),
-			'loaderShowSubtitle' => $this->field_id( 'loader_show_subtitle' ),
-			'transitionType'     => $this->field_id( 'transition_type' ),
-			'transitionContent'  => $this->field_id( 'transition_content' ),
-			'replayType'         => $this->field_id( 'transition_loader_type' ),
-			'progress'           => $this->field_id( 'loader_show_progress' ),
-			'text'               => $this->field_id( 'loader_text' ),
-			'tagline'            => $this->field_id( 'tagline' ),
-			'textSize'           => $this->field_id( 'text_size' ),
-			'duration'           => $this->field_id( 'loader_duration' ),
-			'transitionDuration' => $this->field_id( 'transition_duration' ),
-			'logo'               => $this->field_id( 'loader_logo' ),
-			'image'              => $this->field_id( 'loader_image' ),
-			'accentSource'       => $this->field_id( 'accent_source' ),
-			'accentColor'        => $this->field_id( 'accent_color' ) . '-value',
-			'backgroundSource'   => $this->field_id( 'background_source' ),
-			'backgroundColor'    => $this->field_id( 'background_color' ) . '-value',
-			'textSource'         => $this->field_id( 'text_source' ),
-			'textColor'          => $this->field_id( 'text_color' ) . '-value',
-			'siteName'           => get_bloginfo( 'name' ),
+			'loaderType'             => $this->field_id( 'loader_type' ),
+			'loaderShowLogo'         => $this->field_id( 'loader_show_logo' ),
+			'loaderShowText'         => $this->field_id( 'loader_show_text' ),
+			'loaderShowSubtitle'     => $this->field_id( 'loader_show_subtitle' ),
+			'transitionType'         => $this->field_id( 'transition_type' ),
+			'transitionShowLogo'     => $this->field_id( 'transition_show_logo' ),
+			'transitionShowText'     => $this->field_id( 'transition_show_text' ),
+			'transitionShowSubtitle' => $this->field_id( 'transition_show_subtitle' ),
+			'transitionShowImage'    => $this->field_id( 'transition_show_image' ),
+			'transitionShowSpinner'  => $this->field_id( 'transition_show_spinner' ),
+			'replayType'             => $this->field_id( 'transition_loader_type' ),
+			'progress'               => $this->field_id( 'loader_show_progress' ),
+			'text'                   => $this->field_id( 'loader_text' ),
+			'tagline'                => $this->field_id( 'tagline' ),
+			'textSize'               => $this->field_id( 'text_size' ),
+			'duration'               => $this->field_id( 'loader_duration' ),
+			'transitionDuration'     => $this->field_id( 'transition_duration' ),
+			'logo'                   => $this->field_id( 'loader_logo' ),
+			'image'                  => $this->field_id( 'loader_image' ),
+			'accentSource'           => $this->field_id( 'accent_source' ),
+			'accentColor'            => $this->field_id( 'accent_color' ) . '-value',
+			'backgroundSource'       => $this->field_id( 'background_source' ),
+			'backgroundColor'        => $this->field_id( 'background_color' ) . '-value',
+			'textSource'             => $this->field_id( 'text_source' ),
+			'textColor'              => $this->field_id( 'text_color' ) . '-value',
+			'siteName'               => get_bloginfo( 'name' ),
 		];
 
 		?>
@@ -538,22 +552,45 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		Octave_Addons_Fields::row( [
 			'id'    => 'oaPlRowTransitionContent',
-			'for'   => $this->field_id( 'transition_content' ),
 			'label' => __( 'Show while covered', 'octave-addons' ),
 			'field' => function () use ( $s ) {
 
-				$this->render_select( 'transition_content', [
-					''        => __( 'What the style normally shows', 'octave-addons' ),
-					'none'    => __( 'Nothing', 'octave-addons' ),
-					'text'    => __( 'Brand text', 'octave-addons' ),
-					'logo'    => __( 'Logo', 'octave-addons' ),
-					'image'   => __( 'Image', 'octave-addons' ),
-					'spinner' => __( 'Loading spinner', 'octave-addons' ),
-				], $s['transition_content'] );
+				$items = $this->transition_items( $s['transition_type'], $s );
 
 				?>
 
-				<span class="oa-help"><?php esc_html_e( 'Appears in the middle of the screen while the next page loads. Brand Wipe normally shows your brand text; the other styles show nothing.', 'octave-addons' ); ?></span>
+				<fieldset class="oa-loader-content-options">
+					<legend class="screen-reader-text"><?php esc_html_e( 'Transition content', 'octave-addons' ); ?></legend>
+					<?php
+
+					foreach ( [
+						'logo'     => __( 'Logo', 'octave-addons' ),
+						'text'     => __( 'Text', 'octave-addons' ),
+						'subtitle' => __( 'Subtitle', 'octave-addons' ),
+						'image'    => __( 'Image', 'octave-addons' ),
+						'spinner'  => __( 'Loading spinner', 'octave-addons' ),
+					] as $item => $label ) {
+
+						$key = 'transition_show_' . $item;
+
+						?>
+
+						<label class="oa-loader-content-option">
+							<input type="checkbox"
+							       id="<?= esc_attr( $this->field_id( $key ) ); ?>"
+							       name="<?= esc_attr( $this->field_name( $key ) ); ?>"
+							       value="1" <?php checked( ! empty( $items[ $item ] ) ); ?>>
+							<span><?= esc_html( $label ); ?></span>
+						</label>
+
+						<?php
+
+					}
+
+					?>
+
+				</fieldset>
+				<span class="oa-help"><?php esc_html_e( 'Choose any combination. Every selected item appears in the middle while the next page loads.', 'octave-addons' ); ?></span>
 				<?php
 
 			},
@@ -1142,13 +1179,13 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 				}
 
-				$content = $this->transition_content( $transition, $s );
+				$items = $this->transition_items( $transition, $s );
 
-				if ( '' !== $content ) :
+				if ( in_array( true, $items, true ) ) :
 
 				?>
 
-				<span class="oa-transition__content oa-transition__content--<?= esc_attr( $content ); ?>"><?php $this->print_transition_content( $content, $text, $s ); ?></span>
+				<span class="oa-transition__content"><?php $this->print_transition_content( $items, $text, $s ); ?></span>
 				<?php
 
 				endif;
@@ -1372,14 +1409,43 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 	}
 
 	/*
-	TRANSITION CONTENT
-	-- What a covering transition shows in the middle, '' for nothing. The
-	-- style's own choice is the site name for Brand Wipe only
+	TRANSITION ITEMS
+	-- Resolves the independent content choices. Null values identify settings
+	-- saved before the checkboxes existed, so the previous single selection or
+	-- Brand Wipe default is preserved until the settings are next saved
 	---------------------------------------------------------- */
 
-	protected function transition_content( string $transition, array $s ): string {
+	protected function transition_items( string $transition, array $s ): array {
 
-		$content = (string) $s['transition_content'];
+		$keys = [ 'logo', 'text', 'subtitle', 'image', 'spinner' ];
+		$has_choices = false;
+
+		foreach ( $keys as $item ) {
+
+			if ( null !== ( $s[ 'transition_show_' . $item ] ?? null ) ) {
+
+				$has_choices = true;
+				break;
+
+			}
+
+		}
+
+		if ( $has_choices ) {
+
+			$items = [];
+
+			foreach ( $keys as $item ) {
+
+				$items[ $item ] = ! empty( $s[ 'transition_show_' . $item ] );
+
+			}
+
+			return $items;
+
+		}
+
+		$content = (string) ( $s['transition_content'] ?? '' );
 
 		if ( '' === $content ) {
 
@@ -1387,31 +1453,55 @@ class Octave_Addons_Module_Page_Loader extends Octave_Addons_Module {
 
 		}
 
-		return 'none' === $content ? '' : $content;
+		return [
+			'logo'     => 'logo' === $content,
+			'text'     => 'text' === $content,
+			'subtitle' => false,
+			'image'    => 'image' === $content,
+			'spinner'  => 'spinner' === $content,
+		];
 
 	}
 
-	protected function print_transition_content( string $content, string $text, array $s ): void {
+	/*
+	PRINT TRANSITION CONTENT
+	-- Outputs every selected item in a consistent visual order
+	---------------------------------------------------------- */
 
-		$logo  = 'logo' === $content ? Octave_Addons_Fields::media_asset_url( $s['loader_logo'] ) : '';
-		$image = 'image' === $content ? Octave_Addons_Fields::media_asset_url( $s['loader_image'] ) : '';
+	protected function print_transition_content( array $items, string $text, array $s ): void {
+
+		$logo      = ! empty( $items['logo'] ) ? Octave_Addons_Fields::media_asset_url( $s['loader_logo'] ) : '';
+		$image     = ! empty( $items['image'] ) ? Octave_Addons_Fields::media_asset_url( $s['loader_image'] ) : '';
+		$subtitle  = ! empty( $items['subtitle'] ) ? trim( (string) $s['tagline'] ) : '';
+		$show_text = ! empty( $items['text'] ) || ( ( ! empty( $items['logo'] ) && '' === $logo ) || ( ! empty( $items['image'] ) && '' === $image ) );
 
 		if ( '' !== $logo ) {
 
 			echo '<img class="oa-pm-logo" src="' . esc_url( $logo ) . '" alt="" decoding="async">';
 
-		} elseif ( '' !== $image ) {
+		}
+
+		if ( $show_text ) {
+
+			echo '<span class="oa-pm-text">' . esc_html( $text ) . '</span>';
+
+		}
+
+		if ( '' !== $subtitle ) {
+
+			echo '<span class="oa-pm-tagline">' . esc_html( $subtitle ) . '</span>';
+
+		}
+
+		if ( '' !== $image ) {
 
 			echo '<img class="oa-pm-image" src="' . esc_url( $image ) . '" alt="" decoding="async">';
 
-		} elseif ( 'spinner' === $content ) {
+		}
+
+		if ( ! empty( $items['spinner'] ) ) {
 
 			echo '<span class="oa-pm-spinner"></span>';
-
-		} else {
-
-			// Text, and the fallback for a logo or image that is not set.
-			echo '<span class="oa-pm-text">' . esc_html( $text ) . '</span>';
 
 		}
 
