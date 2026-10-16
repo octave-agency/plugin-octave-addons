@@ -18,6 +18,7 @@ const folders = [
 	'modules/performance/assets',
 	'modules/breakdance/lazy-load/assets',
 	'modules/breakdance/ajax-filtering/assets',
+	'modules/breakdance/forms/assets',
 	'modules/design/animations/assets',
 	'modules/design/animations/assets/presets',
 	'modules/design/page-loader/assets',

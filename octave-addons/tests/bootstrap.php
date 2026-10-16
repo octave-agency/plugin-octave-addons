@@ -758,6 +758,12 @@ function sanitize_textarea_field( $text ) {
 
 }
 
+function wp_kses_post( $text ) {
+
+	return preg_replace( '#<(script|style)[^>]*>.*?</\\1>#is', '', (string) $text );
+
+}
+
 function sanitize_file_name( $name ) {
 
 	return preg_replace( '/[^a-z0-9._-]/i', '', (string) $name );
@@ -1085,6 +1091,12 @@ function wp_safe_remote_get( $url, $args = [] ) {
 function wp_remote_get( $url, $args = [] ) {
 
 	return wp_safe_remote_get( $url, $args );
+
+}
+
+function wp_remote_post( $url, $args = [] ) {
+
+	return wp_remote_request( $url, $args + [ 'method' => 'POST' ] );
 
 }
 
