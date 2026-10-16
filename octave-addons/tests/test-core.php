@@ -33,7 +33,7 @@ function test_performance_modules_share_one_admin_entry_in_order(): void {
 
 }
 
-function test_only_performance_lists_quick_scroll_links(): void {
+function test_breakdance_and_performance_list_quick_scroll_links(): void {
 
 	require_once OCTAVE_ADDONS_DIR . 'includes/class-admin.php';
 
@@ -41,8 +41,9 @@ function test_only_performance_lists_quick_scroll_links(): void {
 	$scroll = new ReflectionMethod( $admin, 'has_quick_scroll' );
 
 	oa_assert( $scroll->invoke( $admin, [ 'group' => 'performance', 'modules' => [ 'a' => 1, 'b' => 2 ] ] ), 'performance' );
+	oa_assert( $scroll->invoke( $admin, [ 'group' => 'breakdance', 'modules' => [ 'a' => 1, 'b' => 2 ] ] ), 'breakdance' );
 	oa_assert( ! $scroll->invoke( $admin, [ 'group' => 'ai-agents', 'modules' => [ 'a' => 1, 'b' => 2 ] ] ), 'ai agents stays one link' );
-	oa_assert( ! $scroll->invoke( $admin, [ 'group' => 'breakdance', 'modules' => [ 'a' => 1, 'b' => 2 ] ] ), 'breakdance stays one link' );
+	oa_assert( ! $scroll->invoke( $admin, [ 'group' => 'breakdance', 'modules' => [ 'a' => 1 ] ] ), 'single module stays one link' );
 
 }
 

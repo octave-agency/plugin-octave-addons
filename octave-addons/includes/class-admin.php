@@ -167,13 +167,15 @@ class Octave_Addons_Admin {
 
 	/*
 	HAS QUICK SCROLL
-	-- Performance keeps every module on one long page, so its navigation
-	-- lists each panel as a link that scrolls to it.
+	-- Breakdance and Performance keep every module on one long page, so their
+	-- navigation lists each panel as a link that scrolls to it.
 	---------------------------------------------------------- */
 
 	protected function has_quick_scroll( array $entry ): bool {
 
-		return 'performance' === $entry['group'] && count( $entry['modules'] ) > 1;
+		$quick_scroll_groups = [ 'breakdance', 'performance' ];
+
+		return in_array( $entry['group'], $quick_scroll_groups, true ) && count( $entry['modules'] ) > 1;
 
 	}
 
