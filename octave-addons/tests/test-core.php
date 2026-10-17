@@ -75,6 +75,41 @@ function test_area_wide_groups_share_a_page_while_feature_groups_split(): void {
 
 }
 
+function test_custom_post_type_editor_routes_avoid_wordpress_reserved_post_type_arg(): void {
+
+	require_once OCTAVE_ADDONS_DIR . 'includes/class-admin.php';
+
+	$module     = oa_module( 'custom-post-types' );
+	$editor_url = new ReflectionMethod( $module, 'editor_url' );
+
+	parse_str( (string) parse_url( $editor_url->invoke( $module, 'oa_team', 'fields' ), PHP_URL_QUERY ), $editor_args );
+
+	oa_assert_same( 'oa_team', $editor_args['oa_post_type'] ?? '', 'editor route uses plugin-owned post type arg' );
+	oa_assert( ! array_key_exists( 'post_type', $editor_args ), 'editor route avoids WordPress reserved post_type arg' );
+
+	$admin     = ( new ReflectionClass( 'Octave_Addons_Admin' ) )->newInstanceWithoutConstructor();
+	$normalise = new ReflectionMethod( $admin, 'normalise_legacy_route_args' );
+	$legacy    = $normalise->invoke( $admin, [ 'section' => 'fields', 'post_type' => 'oa_team' ], 'custom-post-types' );
+
+	oa_assert_same( 'oa_team', $legacy['oa_post_type'] ?? '', 'legacy route preserves the requested post type' );
+	oa_assert( ! array_key_exists( 'post_type', $legacy ), 'legacy route removes WordPress reserved post_type arg' );
+
+}
+
+function test_plugin_header_and_changelog_versions_match(): void {
+
+	$plugin = (string) file_get_contents( OCTAVE_ADDONS_DIR . 'octave-addons.php' );
+	$readme = (string) file_get_contents( OCTAVE_ADDONS_DIR . 'readme.txt' );
+
+	$has_plugin_version    = 1 === preg_match( '/^\s*\*\s*Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/m', $plugin, $plugin_match );
+	$has_changelog_version = 1 === preg_match( '/^=\s*([0-9]+\.[0-9]+\.[0-9]+)\s*=$/m', $readme, $changelog_match );
+
+	oa_assert( $has_plugin_version, 'plugin header has a semantic version' );
+	oa_assert( $has_changelog_version, 'changelog starts with a semantic version' );
+	oa_assert_same( $plugin_match[1], $changelog_match[1], 'plugin header and latest changelog versions match' );
+
+}
+
 function test_existing_lazy_load_module_is_still_discovered_and_hidden(): void {
 
 	$module = oa_module( 'breakdance-lazy-load' );

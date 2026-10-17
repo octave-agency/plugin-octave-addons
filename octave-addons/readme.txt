@@ -168,6 +168,9 @@ automatically during updates and critical errors.
 
 == Changelog ==
 
+= 3.47.1 =
+* Fixed custom post type taxonomy and field editor links failing to load their Octave Addons admin page.
+
 = 3.47.0 =
 * Page transitions can now show any combination of logo, text, subtitle, image and loading spinner while the page is covered.
 

@@ -1172,13 +1172,13 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 	protected function current_editor( array $post_types ): ?array {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only settings navigation.
-		$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( (string) $_GET['section'] ) ) : '';
+		$section    = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( (string) $_GET['section'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only settings navigation.
-		$key = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( (string) $_GET['post_type'] ) ) : '';
+		$key        = isset( $_GET['oa_post_type'] ) ? sanitize_key( wp_unslash( (string) $_GET['oa_post_type'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only settings navigation.
 		$definition = isset( $_GET['definition'] ) ? sanitize_key( wp_unslash( (string) $_GET['definition'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only settings navigation.
-		$context = isset( $_GET['context'] ) ? sanitize_key( wp_unslash( (string) $_GET['context'] ) ) : '';
+		$context    = isset( $_GET['context'] ) ? sanitize_key( wp_unslash( (string) $_GET['context'] ) ) : '';
 
 		if ( 'library' === $section ) {
 
@@ -2704,8 +2704,8 @@ class Octave_Addons_Module_Custom_Post_Types extends Octave_Addons_Module {
 
 		return add_query_arg(
 			[
-				'section'   => $section,
-				'post_type' => $post_type,
+				'section'      => $section,
+				'oa_post_type' => $post_type,
 			],
 			$this->settings_url()
 		);

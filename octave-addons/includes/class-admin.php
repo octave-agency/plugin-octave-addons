@@ -238,6 +238,8 @@ class Octave_Addons_Admin {
 
 		unset( $args['page'], $args['tab'] );
 
+		$args = $this->normalise_legacy_route_args( $args, $requested );
+
 		// A module that joined a group keeps landing on its own panel.
 		if ( $requested !== $entry_id ) {
 
@@ -248,6 +250,26 @@ class Octave_Addons_Admin {
 		wp_safe_redirect( add_query_arg( $args, self::entry_url( $entry_id ) ) );
 
 		exit;
+
+	}
+
+	/*
+	NORMALISE LEGACY ROUTE ARGS
+	-- Renames query variables that WordPress reserves during admin bootstrap
+	-- before forwarding an old tab URL to the current submenu page.
+	---------------------------------------------------------- */
+
+	protected function normalise_legacy_route_args( array $args, string $requested ): array {
+
+		if ( 'custom-post-types' === $requested && isset( $args['post_type'] ) ) {
+
+			$args['oa_post_type'] = $args['post_type'];
+
+			unset( $args['post_type'] );
+
+		}
+
+		return $args;
 
 	}
 
